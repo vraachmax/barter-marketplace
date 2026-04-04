@@ -23,15 +23,25 @@ import { SearchInputWithSuggestions } from '@/components/search-input-with-sugge
 import { FeedLoadMore } from '@/components/feed-load-more';
 import { SiteFooter } from '@/components/site-footer';
 import {
+  Baby,
+  Briefcase,
+  Car,
+  Dog,
   Heart,
   Home as HomeIcon,
+  Laptop,
   MapPin,
   MessageCircle,
   Plus,
   Search,
+  Shirt,
   SlidersHorizontal,
+  Sofa,
   Sparkles,
+  Trophy,
   User,
+  Building2,
+  Wrench,
 } from 'lucide-react';
 
 type ListingsResponse = {
@@ -365,34 +375,36 @@ export default async function Home({
         </form>
       </SiteHeader>
 
-      <main className="mx-auto max-w-7xl px-3 pb-28 pt-3 md:px-4 md:pb-12 md:pt-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-3 pb-36 pt-3 md:px-4 md:pb-12 md:pt-6 lg:px-8">
         <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
         <div className="space-y-4 md:space-y-5">
           <section className="space-y-4 md:space-y-5">
-            {/* Categories — horizontal scroll on mobile, grid on desktop (Avito-style) */}
-            <div className="rounded-xl bg-white py-3 dark:bg-zinc-900 md:p-4 lg:p-5">
-              <div className="flex gap-2 overflow-x-auto px-3 pb-1 scrollbar-hide md:grid md:grid-cols-5 md:gap-3 md:overflow-x-visible md:px-0 md:pb-0">
+            {/* Categories — 2-row grid on mobile (like Avito), 5-col on desktop */}
+            <div className="rounded-xl bg-white px-3 py-3 dark:bg-zinc-900 md:p-4 lg:p-5">
+              <div className="grid grid-cols-5 gap-x-2 gap-y-2.5 md:gap-3">
                 {(() => {
-                  const CATS = [
-                    { name: 'Авто', slug: 'auto', emoji: '🚗', bg: '#EEF2FF', bgDark: '#1e1b4b' },
-                    { name: 'Недвижимость', slug: 'realty', emoji: '🏠', bg: '#FFF7ED', bgDark: '#451a03' },
-                    { name: 'Работа', slug: 'job', emoji: '💼', bg: '#F0FDF4', bgDark: '#052e16' },
-                    { name: 'Одежда', slug: 'clothes', emoji: '👗', bg: '#FDF2F8', bgDark: '#4a044e' },
-                    { name: 'Электроника', slug: 'electronics', emoji: '📱', bg: '#EFF6FF', bgDark: '#172554' },
-                    { name: 'Для дома', slug: 'home', emoji: '🛋️', bg: '#ECFDF5', bgDark: '#022c22' },
-                    { name: 'Детям', slug: 'kids', emoji: '🧸', bg: '#FFFBEB', bgDark: '#422006' },
-                    { name: 'Хобби', slug: 'hobby', emoji: '⚽', bg: '#FFF7ED', bgDark: '#431407' },
-                    { name: 'Услуги', slug: 'services', emoji: '🔧', bg: '#F5F3FF', bgDark: '#2e1065' },
-                    { name: 'Животные', slug: 'animals', emoji: '🐾', bg: '#FFF1F2', bgDark: '#4c0519' },
+                  const CATS: Array<{ name: string; slug: string; icon: typeof Car; gradient: string; darkGradient: string }> = [
+                    { name: 'Авто', slug: 'auto', icon: Car, gradient: 'from-blue-500 to-indigo-600', darkGradient: 'dark:from-blue-600 dark:to-indigo-700' },
+                    { name: 'Недвижи-\u200Bмость', slug: 'realty', icon: Building2, gradient: 'from-orange-400 to-rose-500', darkGradient: 'dark:from-orange-500 dark:to-rose-600' },
+                    { name: 'Работа', slug: 'job', icon: Briefcase, gradient: 'from-emerald-400 to-teal-600', darkGradient: 'dark:from-emerald-500 dark:to-teal-700' },
+                    { name: 'Одежда', slug: 'clothes', icon: Shirt, gradient: 'from-pink-400 to-fuchsia-600', darkGradient: 'dark:from-pink-500 dark:to-fuchsia-700' },
+                    { name: 'Электро-\u200Bника', slug: 'electronics', icon: Laptop, gradient: 'from-cyan-400 to-blue-600', darkGradient: 'dark:from-cyan-500 dark:to-blue-700' },
+                    { name: 'Для дома', slug: 'home', icon: Sofa, gradient: 'from-lime-400 to-green-600', darkGradient: 'dark:from-lime-500 dark:to-green-700' },
+                    { name: 'Детям', slug: 'kids', icon: Baby, gradient: 'from-sky-400 to-cyan-600', darkGradient: 'dark:from-sky-500 dark:to-cyan-700' },
+                    { name: 'Хобби', slug: 'hobby', icon: Trophy, gradient: 'from-amber-400 to-orange-600', darkGradient: 'dark:from-amber-500 dark:to-orange-700' },
+                    { name: 'Услуги', slug: 'services', icon: Wrench, gradient: 'from-violet-400 to-purple-600', darkGradient: 'dark:from-violet-500 dark:to-purple-700' },
+                    { name: 'Животные', slug: 'animals', icon: Dog, gradient: 'from-rose-400 to-red-600', darkGradient: 'dark:from-rose-500 dark:to-red-700' },
                   ];
                   const catIdMap: Record<string, string> = {};
                   for (const c of categories) {
                     for (const cat of CATS) {
-                      if (c.title.includes(cat.name) || cat.name.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
+                      const plainName = cat.name.replace(/[\u200B\-]/g, '');
+                      if (c.title.includes(plainName) || plainName.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
                     }
                   }
                   return CATS.map((cat) => {
+                    const CatIcon = cat.icon;
                     const catId = catIdMap[cat.slug] || '';
                     const isActive = catId !== '' && catId === urlCategoryId;
                     return (
@@ -402,12 +414,13 @@ export default async function Home({
                           pathname: '/',
                           query: { ...preservedListQuery, categoryId: catId },
                         }}
-                        className={`group flex min-w-[72px] shrink-0 flex-col items-center gap-1.5 rounded-xl px-2 py-2.5 transition-all duration-200 hover:scale-[1.04] hover:shadow-md active:scale-95 md:min-w-0 md:shrink md:flex-row md:gap-3 md:px-3 md:py-3 ${isActive ? 'ring-2 ring-[#00B4D8] shadow-sm' : ''}`}
-                        style={{ background: cat.bg }}
+                        className={`group flex flex-col items-center gap-1 rounded-xl py-2 transition-all duration-200 active:scale-95 md:flex-row md:gap-3 md:rounded-2xl md:bg-zinc-50 md:px-3.5 md:py-3 md:hover:bg-zinc-100 md:dark:bg-zinc-800/50 md:dark:hover:bg-zinc-800 ${isActive ? 'md:ring-2 md:ring-[#00B4D8]' : ''}`}
                       >
-                        <span className="text-2xl md:text-3xl" role="img" aria-label={cat.name}>{cat.emoji}</span>
-                        <span className={`text-center text-[11px] font-medium leading-tight md:text-left md:text-sm ${isActive ? 'text-[#00B4D8]' : 'text-[#374151] dark:text-zinc-300'}`}>
-                          {cat.name}
+                        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br shadow-sm transition-transform group-hover:scale-105 md:h-10 md:w-10 md:rounded-xl ${cat.gradient} ${cat.darkGradient} ${isActive ? 'ring-2 ring-[#00B4D8] ring-offset-1 ring-offset-white dark:ring-offset-zinc-900' : ''}`}>
+                          <CatIcon size={20} strokeWidth={1.8} className="text-white" aria-hidden />
+                        </div>
+                        <span className={`text-center text-[10px] font-medium leading-tight md:text-left md:text-sm ${isActive ? 'text-[#00B4D8]' : 'text-[#374151] dark:text-zinc-300'}`}>
+                          {cat.name.replace('\u200B', '')}
                         </span>
                       </Link>
                     );
