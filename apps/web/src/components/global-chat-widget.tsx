@@ -61,7 +61,8 @@ export function GlobalChatWidget() {
     return (
       <a
         href="/auth?mode=login"
-        style={{ position: 'fixed', bottom: 80, right: 16, zIndex: 9999, width: 52, height: 52, borderRadius: '50%', background: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(2,132,199,.4)', color: '#fff', textDecoration: 'none' }}
+        className="hidden md:flex"
+        style={{ position: 'fixed', bottom: 80, right: 16, zIndex: 9999, width: 52, height: 52, borderRadius: '50%', background: '#0284c7', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(2,132,199,.4)', color: '#fff', textDecoration: 'none' }}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
       </a>
@@ -69,7 +70,7 @@ export function GlobalChatWidget() {
   }
 
   return (
-    <>
+    <div className="hidden md:block">
       {/* Кнопка */}
       <button
         type="button"
@@ -171,6 +172,6 @@ export function GlobalChatWidget() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
