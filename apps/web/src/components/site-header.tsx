@@ -22,6 +22,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { MegaMenu } from '@/components/mega-menu';
+import { ThemeQuickToggle } from '@/components/theme-quick-toggle';
 
 export function SiteHeader({ children }: { children?: ReactNode }) {
   const { ready, user, logout } = useAuth();
@@ -75,10 +76,11 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
             Все категории
           </button>
 
-          {/* Search slot from page.tsx */}
+          {/* Search slot from page.tsx — desktop only */}
           {children}
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
+            <ThemeQuickToggle />
             <div className="flex items-center gap-1">
               <IconButton href="/favorites" label="Избранное">
                 <Heart size={20} strokeWidth={1.8} aria-hidden />
