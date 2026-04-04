@@ -1,6 +1,6 @@
 /**
  * Секции и поля характеристик при создании объявления.
- * Ориентиры: Avito (параметры), eBay / Amazon (item specifics), Vinted / FB Marketplace (состояние, доставка).
+ * Секции и поля характеристик при создании объявления.
  */
 
 export type ListingAttrFieldType = 'select' | 'text' | 'number';
@@ -27,7 +27,7 @@ export const LISTING_ATTR_COMMON_SECTIONS: ListingAttrSection[] = [
     id: 'condition_delivery',
     title: 'Состояние и сделка',
     subtitle:
-      'Как на Avito и западных площадках (eBay, Facebook Marketplace): покупатель видит это до переписки.',
+      'Покупатель видит это до переписки.',
     fields: [
       {
         key: 'condition',
@@ -71,7 +71,7 @@ const AUTO: ListingAttrSection[] = [
   {
     id: 'auto_main',
     title: 'Автомобиль',
-    subtitle: 'Год, пробег, топливо — как в фильтрах Avito и западных авто-сайтов',
+    subtitle: 'Год, пробег, топливо — ключевые характеристики для поиска',
     fields: [
       { key: 'auto_year', label: 'Год выпуска', type: 'number', placeholder: '2018' },
       { key: 'mileage_km', label: 'Пробег, км', type: 'number', placeholder: '87000' },
@@ -131,7 +131,7 @@ const REALTY: ListingAttrSection[] = [
   {
     id: 'realty_main',
     title: 'Недвижимость',
-    subtitle: 'Тип сделки и ключевые метры — как в карточках ЦИАН / Zillow',
+    subtitle: 'Тип сделки и ключевые метры',
     fields: [
       {
         key: 'deal_type',
@@ -177,7 +177,7 @@ const JOB: ListingAttrSection[] = [
   {
     id: 'job_main',
     title: 'Вакансия',
-    subtitle: 'Формат работы — как на LinkedIn и hh.ru',
+    subtitle: 'Формат работы и занятость',
     fields: [
       {
         key: 'employment_type',
@@ -221,7 +221,7 @@ const SERVICES: ListingAttrSection[] = [
   {
     id: 'services_main',
     title: 'Услуга',
-    subtitle: 'Где оказываете и опыт — как в профилях Thumbtack / TaskRabbit',
+    subtitle: 'Где оказываете и опыт',
     fields: [
       {
         key: 'service_format',
@@ -243,7 +243,7 @@ const ELECTRONICS: ListingAttrSection[] = [
   {
     id: 'electronics_main',
     title: 'Электроника',
-    subtitle: 'Бренд и модель — как в Amazon / eBay item specifics',
+    subtitle: 'Бренд и модель — полезно при поиске',
     fields: [
       { key: 'brand', label: 'Бренд', type: 'text', placeholder: 'Apple, Samsung…' },
       { key: 'model', label: 'Модель / артикул', type: 'text', placeholder: 'iPhone 14 Pro 256GB' },
@@ -265,7 +265,7 @@ const HOME: ListingAttrSection[] = [
   {
     id: 'home_main',
     title: 'Для дома и дачи',
-    subtitle: 'Материал и габариты — удобно для поиска как на IKEA Marketplace / Etsy',
+    subtitle: 'Материал и габариты — удобно для поиска',
     fields: [
       {
         key: 'home_item_type',
@@ -289,7 +289,7 @@ const CLOTHES: ListingAttrSection[] = [
   {
     id: 'clothes_main',
     title: 'Одежда и обувь',
-    subtitle: 'Размер и сезон — логика как у Vinted / Depop',
+    subtitle: 'Размер и сезон',
     fields: [
       { key: 'brand', label: 'Бренд', type: 'text', placeholder: 'Zara, Nike…' },
       { key: 'size', label: 'Размер', type: 'text', placeholder: 'M, 42, 27 см…' },
@@ -323,7 +323,7 @@ const KIDS: ListingAttrSection[] = [
   {
     id: 'kids_main',
     title: 'Детские товары',
-    subtitle: 'Возраст и бренд — как в детских разделах Avito / Amazon',
+    subtitle: 'Возраст и бренд — помогает при поиске',
     fields: [
       {
         key: 'age_group',
@@ -346,7 +346,7 @@ const HOBBY: ListingAttrSection[] = [
   {
     id: 'hobby_main',
     title: 'Хобби и отдых',
-    subtitle: 'Категория интереса — как на eBay Collectibles / Etsy handmade',
+    subtitle: 'Категория интереса',
     fields: [
       {
         key: 'hobby_type',
