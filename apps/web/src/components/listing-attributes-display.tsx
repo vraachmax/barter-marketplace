@@ -19,7 +19,7 @@ export default function ListingAttributesDisplay({ attributes }: Props) {
     <div className="mt-6 rounded-2xl border border-zinc-200/90 bg-zinc-50/40 p-4 dark:border-zinc-800 dark:bg-zinc-900/40 md:p-5">
       <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Характеристики</h2>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-        Параметры из формы размещения (как на Avito и зарубежных маркетплейсах).
+        Параметры из формы размещения.
       </p>
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
         {entries.map(([key, value]) => (
