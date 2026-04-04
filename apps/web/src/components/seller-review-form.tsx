@@ -83,7 +83,7 @@ export default function SellerReviewForm({ sellerId, listingId }: Props) {
         </span>
         <div>
           <div className="text-sm font-bold text-zinc-900 dark:text-zinc-50">Оценка продавца</div>
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Как на Avito и eBay — только после переписки здесь</p>
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Только после переписки</p>
         </div>
       </div>
 
@@ -135,7 +135,7 @@ export default function SellerReviewForm({ sellerId, listingId }: Props) {
             {elig?.reason === 'no_chat'
               ? 'Отзыв можно оставить только после начала переписки с продавцом в чате площадки.'
               : elig?.reason === 'need_mutual_messages'
-                ? 'Напишите продавцу и дождитесь ответа в этом чате — после обмена сообщениями отзыв станет доступен (защита от накрутки, как у конкурентов).'
+                ? 'Напишите продавцу и дождитесь ответа в этом чате — после обмена сообщениями отзыв станет доступен (защита от накрутки).'
                 : 'Сейчас отзыв недоступен.'}
           </p>
           <p className="text-xs leading-relaxed opacity-90">
