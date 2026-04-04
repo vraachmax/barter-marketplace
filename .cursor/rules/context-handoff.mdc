@@ -1,0 +1,27 @@
+---
+description: Always load project context from handoff docs
+alwaysApply: true
+---
+
+# Context First Rule
+
+At the start of every new chat/session in this project:
+
+1. Read `HANDOFF.md`.
+2. Read `PRODUCT_BACKLOG.md`.
+3. Read `PROJECT_PLAN.md`.
+3. Treat these files as the source of truth for:
+   - current implementation status,
+   - active priorities,
+   - next milestones.
+
+If user asks to continue work, resume from these docs before proposing a plan.
+If there is a conflict between chat memory and these docs, prefer the docs and ask for clarification.
+
+During implementation (not only at chat start):
+
+1. Re-check `Project Goal` and `Next Priority` in `HANDOFF.md` before major UI/feature edits.
+2. After each major completed block, update `HANDOFF.md` and (if needed) `PRODUCT_BACKLOG.md`.
+3. Keep changes aligned with the current user-approved visual/style direction from latest references.
+4. For **web UI/CSS** in `apps/web`, follow the locked style guide **`docs/MARKETPLACE_UI_STYLE.md`** (and `.cursor/rules/marketplace-ui-style.mdc` when editing `*.tsx`/`*.css` there).
+

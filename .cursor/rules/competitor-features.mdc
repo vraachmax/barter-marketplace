@@ -1,0 +1,37 @@
+---
+description: Features adopted from competitors and remaining gaps
+alwaysApply: true
+---
+
+# Конкурентные фичи — статус
+
+## Реализовано ✅
+- Бейдж «N фото» на карточках
+- Fullscreen галерея (swipe, keyboard, touch)
+- Footer сайта
+- Дата (timeAgo) на карточках
+- Breadcrumbs на карточке объявления
+- Карта Яндекс (РФ-совместимая) с маркерами цен
+- Мини-карта на карточке объявления
+- Типы цен (per_day, per_service, per_sqm и др.)
+- «Поделиться» + «Пожаловаться» + просмотры
+- «Показать телефон» с маскировкой
+- SEO metadata + favicon + PWA manifest
+- 404, error boundary, loading skeletons
+- Пагинация (infinite scroll + load more)
+- Подсказки поиска (категории + история)
+- Мини-чат виджет с анимацией
+- Смена пароля API
+
+## Нужно сделать (по фазам из PRODUCT_BACKLOG.md)
+- Персонализация ленты (Phase 1)
+- Item-to-Item рекомендации (Phase 1)
+- NLP-парсинг запросов (Phase 1)
+- 14 категорий с иллюстрациями (Phase 2)
+- Город + район в карточках (Phase 2)
+- Swipe фото на мобиле в ленте (Phase 2)
+- Верификация продавца (Phase 3)
+- Checkout промо (Phase 4)
+- In-app уведомления (Phase 5)
+- Админка (Phase 6)
+- Безопасная сделка (Phase 7)

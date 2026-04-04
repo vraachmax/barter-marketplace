@@ -1,0 +1,33 @@
+---
+description: Design system rules — shadcn/ui components for Barter
+globs: apps/web/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Design System: shadcn/ui
+
+## Установлено
+shadcn/ui (Radix + Tailwind) в `apps/web`. Компоненты в `src/components/ui/`.
+
+## Доступные компоненты
+Button, Card, Input, Badge, Avatar, Separator, Skeleton,
+DropdownMenu, Dialog, Tabs, Tooltip, Popover, Sheet, ScrollArea, Command, Select, Textarea, InputGroup
+
+## Правила использования
+
+1. **Новые UI-элементы** — ВСЕГДА используй shadcn/ui компоненты вместо кастомных div/button:
+   - `<Button>` вместо `<button className="...">`
+   - `<Card>` вместо `<div className="rounded-2xl border...">`
+   - `<Badge>` вместо `<span className="rounded-md bg-..."`>
+   - `<Input>` вместо `<input className="...">`
+   - `<DropdownMenu>` вместо кастомных дропдаунов
+   - `<Dialog>` вместо кастомных модалок
+   - `<Skeleton>` вместо `<div className="animate-pulse...">`
+
+2. **Импорт**: `import { Button } from "@/components/ui/button"`
+
+3. **Стиль**: чистый, минимальный. Как Авито 2026: белый фон, чёткая типографика, минимум градиентов. CTA — sky/cyan. Акценты — через `variant` prop компонента.
+
+4. **Не мешать с кастомом**: если shadcn-компонент подходит — используй его. className дополнителен, не заменяй базовые стили.
+
+5. **Темная тема**: shadcn уже поддерживает dark mode через CSS variables. Работает с нашим `data-theme="dark"`.

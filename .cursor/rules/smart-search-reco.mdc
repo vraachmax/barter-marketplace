@@ -1,0 +1,56 @@
+---
+description: Smart search and recommendation engine plan (better than Avito)
+alwaysApply: true
+---
+
+# Умный поиск и рекомендации — план
+
+## Текущее состояние
+- Ранжирование: TF-IDF relevance + engagement + freshness + seller + price (listing-ranking.ts)
+- Поведение: VIEW_ITEM, CLICK_ITEM, ADD_TO_FAVORITES, SEND_MESSAGE (UserBehaviorEvent)
+- Синонимы: ручной словарь (querySynonyms в listings.service)
+- Meilisearch: typo tolerance, prefix search, synonyms
+
+## Что нужно для «лучше Авито»
+
+### Phase 1: Персонализация ленты (collaborative filtering light)
+- При каждом VIEW_ITEM/CLICK_ITEM сохраняем categoryId + priceRange пользователя
+- Строим user-profile vector: { категории с весами, средний ценовой диапазон, города }
+- Лента для залогиненного: boost score для объявлений из "его" категорий/ценового диапазона
+- Для гостя: по anonymous_id из cookie + sessionId
+
+### Phase 2: Item-to-Item рекомендации
+- "Похожие" не только по категории, а по behavior: "кто смотрел X, также смотрел Y"
+- Co-view matrix: listing_id × listing_id (обновляется batch'ем)
+- На карточке объявления: "Вместе с этим смотрят" (не только similar по тексту)
+
+### Phase 3: Search intent understanding
+- Классификация запроса: товар / услуга / вакансия / недвижимость
+- Автоматическое добавление фильтров при запросе "квартира 2 комнаты москва"
+- NLP: извлечение сущностей (город, цена, атрибуты) из свободного текста
+- Исправление опечаток на русском (уже частично через Meilisearch)
+
+### Phase 4: Real-time learning
+- A/B framework для формулы ранжирования
+- Click-through rate (CTR) per position → оптимизация весов
+- Decay: "залипшие" объявления теряют score быстрее если их не кликают
+
+### Данные которые уже есть
+- UserBehaviorEvent: sessionId, anonymousId, userId, type, listingId, createdAt
+- Listing: viewsCount, clicksCount, _count.favorites
+- User: responseRate
+- SellerReview: rating
+
+### Алгоритм персонализации (конкретный, для реализации)
+```
+userProfile = aggregate(last 100 behavior events for user):
+  - categoryWeights: { catId: count } normalized to 0..1
+  - priceMedian: median of viewed listing prices
+  - cityAffinity: { city: count }
+
+personalizedScore(listing, userProfile) =
+  baseScore * 0.6
+  + categoryWeight[listing.categoryId] * 0.2
+  + priceProximity(listing.priceRub, userProfile.priceMedian) * 0.1
+  + cityBonus(listing.city, userProfile.cityAffinity) * 0.1
+```

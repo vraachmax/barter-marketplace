@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="675" height="200" viewBox="95 60 675 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ade80"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
+    </linearGradient>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#facc15"/>
+      <stop offset="100%" style="stop-color:#eab308"/>
+    </linearGradient>
+  </defs>
+  <!-- Shapes -->
+  <path d="M150 200 C100 150, 120 80, 200 80 C260 80, 280 150, 240 200 C210 240, 170 240, 150 200 Z" fill="url(#grad1)"/>
+  <path d="M220 210 C180 170, 200 120, 270 120 C330 120, 350 180, 310 220 C280 260, 240 250, 220 210 Z" fill="url(#grad2)"/>
+  <path d="M190 140 C160 110, 190 60, 250 60 C300 60, 320 110, 290 140 C260 170, 220 170, 190 140 Z" fill="url(#grad3)"/>
+
+  <!-- Text -->
+  <text x="380" y="190" font-family="Arial, sans-serif" font-size="90" fill="#e5e7eb" font-weight="700">
+    Бартер
+  </text>
+</svg>

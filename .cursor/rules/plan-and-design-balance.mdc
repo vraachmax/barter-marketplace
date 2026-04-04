@@ -1,0 +1,23 @@
+---
+description: Always follow project plan with function-design balance
+alwaysApply: true
+---
+
+# Plan + Design Rule
+
+At the start of every new session:
+1. Read `HANDOFF.md`.
+2. Read `PRODUCT_BACKLOG.md`.
+3. Read `PROJECT_PLAN.md`.
+
+Implementation policy:
+- Do not work without an explicit task block from the plan or backlog.
+- Treat functionality and design polish as equal priorities.
+- Keep UI visually balanced (content-based sizing, spacing rhythm, clear hierarchy).
+- Favor incremental, testable slices (API + UI + smoke test).
+
+Before marking work complete:
+1. Build/lint the changed areas.
+2. Validate core flow manually.
+3. Update `HANDOFF.md` and, if scope status changed, `PRODUCT_BACKLOG.md`.
+

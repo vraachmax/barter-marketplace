@@ -1,0 +1,23 @@
+---
+description: Marketplace UI style (sky/cyan, rounded-2xl/3xl, dark mode) for apps/web
+globs: apps/web/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Marketplace UI style (Бартер)
+
+When editing UI in **`apps/web`** (pages, components, `globals.css`), follow the canonical spec:
+
+**→ Read `docs/MARKETPLACE_UI_STYLE.md`** for full tokens, patterns, and checklist.
+
+## Short rules
+
+1. **Brand:** primary actions & key links use **sky → cyan** gradients or `sky-*` / `cyan-*` accents; avoid random `blue-*` for new work unless legacy.
+2. **Radius:** large shells / dropdowns **`rounded-3xl`**; section cards **`rounded-2xl`**; controls & dense rows **`rounded-xl`**–**`rounded-2xl`**.
+3. **Dark mode:** use Tailwind **`dark:`** (tied to `html[data-theme="dark"]`). Never leave **`bg-white/95`** without **`dark:`** surface + text on dark pages. Header must read as dark in dark theme.
+4. **Shadows:** `shadow-md`/`shadow-lg`; in dark add **`dark:shadow-black/…`**. Primary buttons: subtle **sky-tinted** shadow.
+5. **Previews:** reuse **`listing-thumb-wrap` / `listing-thumb-img`** from `globals.css` for listing images.
+6. **Z-index:** sticky header above floating widgets (e.g. header **`z-50`**, home chat widget **`z-30`**).
+7. **Navigation:** do not duplicate “Messages” / “Post listing” in profile dropdown or seller cabinet top bar if they exist in sidebar/header; use **“На главную”** where product asks for it.
+
+After a **major new screen** or redesign, add a row to the UI table in **`HANDOFF.md`**.

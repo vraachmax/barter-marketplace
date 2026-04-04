@@ -1,0 +1,16 @@
+{
+  "name": "Barter — маркетплейс объявлений",
+  "short_name": "Barter",
+  "description": "Покупайте и продавайте легко: электроника, авто, недвижимость, услуги.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0284c7",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "categories": ["shopping", "business"]
+}

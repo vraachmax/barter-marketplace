@@ -1,0 +1,29 @@
+---
+description: Coding standards for the Barter project
+alwaysApply: true
+---
+
+# Coding Standards
+
+## TypeScript (shared)
+- Strict mode, no `any` in new code (prefer `unknown` or proper types)
+- Use `class-validator` DTOs on API, Zod or manual validation on web
+- No unused imports; run linter after edits
+
+## API (NestJS)
+- Feature modules: controller + service + dto + module per domain
+- Always use `AuthGuard('jwt')` for protected routes
+- Prisma `select` — pick only needed fields, never `include` full relations
+- Return consistent shapes: `{ ok, data }` or throw NestJS exceptions
+- Keep business logic in services, controllers are thin
+
+## Web (Next.js)
+- App Router, Server Components by default; `'use client'` only when needed
+- API calls via `apiGetJson`/`apiFetchJson` from `lib/api.ts`
+- Tailwind only, no inline styles; follow `docs/MARKETPLACE_UI_STYLE.md`
+- Dark mode: always add `dark:` variants; never leave white surfaces in dark
+- Components in `src/components/`, page-specific logic in page files
+
+## Git
+- No commits without explicit user request
+- No force pushes, no --amend on pushed commits

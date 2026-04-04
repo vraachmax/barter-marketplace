@@ -1,0 +1,25 @@
+{
+  "name": "barter-clone",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,magenta \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\\\npm.ps1 run -w @app/web dev",
+    "dev:api": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\\\npm.ps1 run -w @app/api start:dev",
+    "dev:all": "concurrently -n web,api -c cyan,magenta \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:restart": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\\\free-dev-ports.ps1 && concurrently -n web,api -c cyan,magenta \"npm run dev:web\" \"npm run dev:api\"",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\\\npm.ps1 --workspaces run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "http-proxy": "^1.18.1",
+    "localtunnel": "^2.0.2"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^4.13.15"
+  }
+}

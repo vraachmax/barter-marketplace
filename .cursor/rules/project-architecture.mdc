@@ -1,0 +1,39 @@
+---
+description: Full project architecture reference (monorepo, tech stack, modules, data model)
+alwaysApply: true
+---
+
+# Barter — Architecture Quick Reference
+
+## Monorepo
+- `apps/api` — NestJS 11, Prisma 6, PostgreSQL, Meilisearch, Socket.IO
+- `apps/web` — Next.js 16, React 19, Tailwind 4, lucide-react
+- Root: npm workspaces, `concurrently`, docker-compose (postgres:16 + meili v1.11)
+
+## API Modules (`apps/api/src/`)
+| Module | Key files | Endpoints prefix |
+|--------|-----------|------------------|
+| auth | controller, service, jwt.strategy | `/auth` |
+| categories | controller, service | `/categories` |
+| listings | controller, service, ranking, haversine, text-similarity | `/listings` |
+| search | controller, meilisearch.service, synonyms | `/search` |
+| favorites | controller, service | `/favorites` |
+| chats | controller, service, gateway (Socket.IO) | `/chats` |
+| reviews | controller, service | `/reviews` |
+| users | controller, service | `/users` |
+| analytics | controller, service | `/analytics` |
+| presence | controller, service | `/presence` |
+| prisma | service, exception filter | — |
+
+## Data Model (Prisma)
+Models: User, Category, Listing (lat/lon, attributes JSON), ListingImage (sha256), ListingPromotion, ListingReport, Favorite, Chat, ChatUser, Message (mediaUrl), SellerReview, UserBehaviorEvent.
+Enums: ListingStatus (ACTIVE/PENDING/BLOCKED/SOLD/ARCHIVED), PromotionType (TOP/VIP/XL), AppTheme, MessageMediaType, UserBehaviorEventType.
+
+## Auth
+JWT in cookie `token` + Bearer header. Secret from `JWT_SECRET`. 30d expiry. Passport strategy.
+
+## Web Routes (`apps/web/src/app/`)
+`/` home, `/auth`, `/new`, `/listing/[id]`, `/seller/[id]`, `/favorites`, `/messages`, `/profile`, `/profile/settings`, `/profile/reviews`, `/profile/orders`
+
+## Integration
+Web → API via Next.js rewrites (same-origin). Port 3000 (web), 3001 (API).

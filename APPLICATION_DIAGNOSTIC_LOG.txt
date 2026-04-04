@@ -1,0 +1,140 @@
+================================================================================
+  BARTER-CLONE — ДИАГНОСТИЧЕСКИЙ ЛОГ ПРИЛОЖЕНИЯ (для разбора проблем запуска)
+  Файл сгенерирован автоматически. Секреты из .env не включаются.
+================================================================================
+
+--- 1. СРЕДА (снимок с машины разработки) ---
+Node.js: v24.14.0
+npm:     11.9.0
+ОС (из контекста пользователя): Windows 10
+
+--- 2. СТРУКТУРА МОНОРЕПО ---
+Корень: barter-clone (private, workspaces: apps/*, packages/*)
+
+npm scripts (корень package.json):
+  dev       → concurrently: веб + API (то же, что dev:all)
+  dev:all   → concurrently: dev:web + dev:api
+  dev:web   → только Next, через scripts/npm.ps1 -w @app/web dev
+  dev:api   → Nest watch, -w @app/api start:dev
+  build     → build во всех workspace
+
+Если нужен только фронт — используйте dev:web при уже запущенном API.
+
+--- 3. ПОРТЫ И СЕРВИСЫ ---
+  3000  — Next.js (apps/web)
+  3001  — NestJS API (apps/api), PORT из env или по умолчанию 3001
+  7700  — Meilisearch (docker compose, опционально)
+  PostgreSQL — из DATABASE_URL (внешний процесс/контейнер)
+
+--- 4. ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ (ожидаемые) ---
+
+apps/api (Nest + Prisma):
+  DATABASE_URL   — обязательно для Prisma (postgresql)
+  JWT_SECRET     — опционально, иначе дефолт 'dev-secret-change-me' в коде
+  PORT           — опционально, иначе 3001
+  MEILISEARCH_HOST — опционально; если задан и Meili недоступен, поиск откатывается на Prisma
+  MEILISEARCH_API_KEY — опционально
+
+dotenv: main.ts импортирует 'dotenv/config' — .env обычно в apps/api (cwd при запуске из apps/api).
+
+apps/web (Next):
+  NEXT_PUBLIC_API_URL — опционально; если не задан, SSR использует http://127.0.0.1:3001,
+    в браузере — относительные пути + rewrites в next.config.ts
+
+Файлы env на диске (имена, без содержимого): у пользователя упоминались apps/api/.env, apps/web/.env.local
+Prisma validate: "Environment variables loaded from .env" — .env в apps/api найден.
+
+--- 5. БАЗА ДАННЫХ ---
+Prisma schema: apps/api/prisma/schema.prisma
+  datasource: provider = postgresql, url = env("DATABASE_URL")
+Команда: npx prisma validate (из apps/api) — РЕЗУЛЬТАТ: схема валидна.
+
+Миграции: проверять наличие папки prisma/migrations и выполнение prisma migrate deploy / dev.
+
+--- 6. DOCKER (опционально) ---
+docker-compose.yml в корне: сервис meilisearch (образ getmeili/meilisearch:v1.11), порт 7700.
+
+--- 7. API (Nest) — МОДУЛИ И ТОЧКИ ВХОДА ---
+Точка входа: apps/api/src/main.ts
+  - глобальный PrismaClientExceptionFilter
+  - статика /uploads → process.cwd()/apps/api/uploads (listings, chat-media)
+  - cookieParser, ValidationPipe (whitelist, forbidNonWhitelisted)
+  - CORS origin: true, credentials: true
+  - listen PORT ?? 3001
+
+AppModule imports (порядок):
+  PrismaModule, AuthModule, CategoriesModule, SearchModule, ListingsModule,
+  FavoritesModule, ChatsModule, ReviewsModule, UsersModule
+(+ глобально: AppController, AppService)
+
+Список TypeScript-файлов в apps/api/src (45 файлов), основные области:
+  auth/, categories/, chats/ (+ gateway socket.io), favorites/, listings/,
+  prisma/, reviews/, search/ (meilisearch), users/, presence/
+
+Зависимости API (ключевые): @nestjs/*, @prisma/client, meilisearch, socket.io, bcrypt, passport-jwt, dotenv
+
+Сборка API: npm run build (nest build) — РЕЗУЛЬТАТ НА МОМЕНТ ЛОГА: УСПЕШНО.
+
+--- 8. WEB (Next.js 16) ---
+next.config.ts: rewrites с NEXT_PUBLIC_API_URL || http://127.0.0.1:3001 на пути
+  /auth/*, /categories/*, /listings/*, /favorites/*, /chats/*, /reviews/*,
+  /users/*, /uploads/*, /health, /presence/*, /search/*, /socket.io/*
+
+Страницы (app router, page.tsx):
+  /                    — главная (тяжёлые fetch к API на сервере)
+  /auth
+  /favorites
+  /messages
+  /new
+  /listing/[id]
+  /seller/[id]
+  /profile
+  /profile/settings
+  /profile/reviews
+  /profile/orders
+
+apps/web/src/lib/api.ts:
+  API_URL на сервере без NEXT_PUBLIC_API_URL = http://127.0.0.1:3001
+  В браузере API_URL = '' (same-origin + rewrites)
+
+Сборка web: npm run build — РЕЗУЛЬТАТ НА МОМЕНТ ЛОГА: ОШИБКА (см. ниже).
+
+--- 9. ВЫВОД КОМАНДЫ: next build (падение) ---
+Next.js 16.1.7 (Turbopack)
+Compiled successfully, TypeScript OK.
+При генерации статики /profile:
+
+  useSearchParams() should be wrapped in a suspense boundary at page "/profile"
+  https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+
+Error occurred prerendering page "/profile"
+Export encountered an error on /profile/page: /profile, exiting the build.
+
+Итог: production build Next падает из-за /profile/page.tsx.
+Dev-сервер (next dev) часто всё же поднимается, но build — нет.
+
+Рекомендация для исправления: обернуть клиентскую часть с useSearchParams в <Suspense>
+или вынести в дочерний client component с fallback (см. документацию Next).
+
+--- 10. ТИПИЧНЫЕ ПРИЧИНЫ «НЕ ЗАПУСКАЕТСЯ / НЕ РАБОТАЕТ 3000» ---
+1) Запущен только Next, не запущен Nest на 3001 → SSR fetch падает (ошибка сети в apiGetJson).
+2) PostgreSQL не запущен или неверный DATABASE_URL → Nest падает при первом запросе к Prisma или при старте модулей.
+3) Порт 3000 или 3001 занят другим процессом.
+4) Meilisearch: при недоступном сервере после правок API не должен падать; если старая версия кода — проверить meiliReady.
+5) Windows: предпочтительно открывать http://127.0.0.1:3000 (согласовано с API_URL).
+
+--- 11. ЧЕКЛИСТ ЗАПУСКА (локально) ---
+[ ] PostgreSQL доступен, DATABASE_URL в apps/api/.env
+[ ] prisma migrate (при необходимости), prisma generate
+[ ] Терминал 1: npm run dev:api  (из корня) или cd apps/api && npm run start:dev
+[ ] Терминал 2: npm run dev:web  или npm run dev:all из корня
+[ ] Открыть http://127.0.0.1:3000
+[ ] Опционально: docker compose up -d meilisearch + MEILISEARCH_HOST в apps/api/.env
+
+--- 12. ПОЛЕЗНЫЕ ФАЙЛЫ ДОКУМЕНТАЦИИ В РЕПО ---
+QUICKSTART.md — краткий старт
+apps/api/docs/MEILISEARCH.md — поиск и env
+
+================================================================================
+  КОНЕЦ ЛОГА
+================================================================================

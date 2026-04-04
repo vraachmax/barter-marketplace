@@ -1,0 +1,35 @@
+# Локальная разработка: Postgres + Meilisearch.
+# Запуск: docker compose up -d
+# DATABASE_URL (пример): postgresql://postgres:postgres@localhost:5432/barter?schema=public
+# Meilisearch: в apps/api/.env — MEILISEARCH_HOST=http://127.0.0.1:7700
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: barter
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d barter']
+      interval: 3s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.11
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: development
+    volumes:
+      - meili_data:/meili_data
+
+volumes:
+  pg_data:
+  meili_data:

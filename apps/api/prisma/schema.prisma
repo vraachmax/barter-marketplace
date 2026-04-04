@@ -1,0 +1,289 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email                String?  @unique
+  phone                String?  @unique
+  passwordHash         String
+  name                 String?
+  avatarUrl            String?
+  about                String?
+  companyName          String?
+  companyInfo          String?
+  showEmailPublic      Boolean  @default(false)
+  showPhonePublic      Boolean  @default(false)
+  appTheme             AppTheme @default(SYSTEM)
+  notificationsEnabled Boolean  @default(true)
+  marketingEnabled     Boolean  @default(false)
+  /// Доля ответов в чатах / скорость реакции продавца, 0–1 (для ранжирования)
+  responseRate         Float    @default(0.75)
+
+  listings        Listing[]
+  favorites       Favorite[]
+  chatUsers       ChatUser[]
+  messages        Message[]      @relation("MessageSender")
+  reviewsGiven    SellerReview[] @relation("SellerReviewAuthor")
+  reviewsReceived SellerReview[] @relation("SellerReviewSeller")
+  behaviorEvents  UserBehaviorEvent[]
+  listingReports  ListingReport[]
+
+  @@index([createdAt])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  slug  String @unique
+  title String
+
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+
+  listings Listing[]
+}
+
+model Listing {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title       String
+  description String
+  priceRub    Int?
+  /// Тип цены: null = обычная, per_day, per_hour, per_service, per_sqm, per_month, negotiable
+  priceType   String?
+  city        String
+  /// Широта WGS-84 (для поиска по радиусу, Haversine)
+  latitude    Float?
+  /// Долгота WGS-84
+  longitude   Float?
+  /// Плоские характеристики по категории: состояние, бренд, пробег и т.д. (как «параметры» на Avito / Item specifics)
+  attributes  Json?
+  status      ListingStatus @default(ACTIVE)
+
+  viewsCount  Int @default(0)
+  clicksCount Int @default(0)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  favorites  Favorite[]
+  chats      Chat[]
+  promotions ListingPromotion[]
+  images     ListingImage[]
+  reviews    SellerReview[]
+  behaviorEvents UserBehaviorEvent[]
+  reports    ListingReport[]
+
+  /// Повторное использование фото с других объявлений (анти-спам)
+  duplicateImageFlag Boolean @default(false)
+
+  @@index([createdAt])
+  @@index([city])
+  @@index([status])
+  @@index([categoryId])
+  @@index([latitude, longitude])
+}
+
+model SellerReview {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rating Int
+  text   String?
+
+  sellerId String
+  seller   User   @relation("SellerReviewSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("SellerReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([authorId, listingId])
+  @@index([sellerId, createdAt])
+}
+
+model ListingImage {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  sortOrder Int      @default(0)
+  url       String
+  /// SHA-256 содержимого файла (дедупликация фото)
+  sha256    String?
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, sortOrder])
+  @@index([sha256])
+}
+
+/// Жалоба на объявление (>3 → скрытие, статус BLOCKED)
+model ListingReport {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String?
+
+  @@unique([listingId, reporterId])
+  @@index([listingId])
+}
+
+model ListingPromotion {
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now())
+  startsAt  DateTime
+  endsAt    DateTime
+  type      PromotionType
+  weight    Int
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([endsAt])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  @@unique([userId, listingId])
+  @@index([createdAt])
+}
+
+model Chat {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Когда уже отправлен блок сообщений помощника (сделка / безопасность / отзыв)
+  assistantDealFlowAt DateTime?
+
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id])
+
+  users    ChatUser[]
+  messages Message[]
+
+  @@index([updatedAt])
+}
+
+model ChatUser {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  lastReadAt DateTime?
+
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([chatId, userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id])
+
+  senderId String
+  sender   User   @relation("MessageSender", fields: [senderId], references: [id])
+
+  text      String
+  mediaUrl  String?
+  mediaType MessageMediaType?
+}
+
+enum ListingStatus {
+  ACTIVE
+  /// На модерации (например повтор фото с другого объявления)
+  PENDING
+  /// Скрыто из-за жалоб
+  BLOCKED
+  SOLD
+  ARCHIVED
+}
+
+enum PromotionType {
+  TOP
+  VIP
+  XL
+}
+
+enum AppTheme {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+enum MessageMediaType {
+  IMAGE
+  VIDEO
+}
+
+/// События поведения пользователя (рекомендации, ранжирование, воронки)
+enum UserBehaviorEventType {
+  VIEW_ITEM
+  CLICK_ITEM
+  ADD_TO_FAVORITES
+  SEND_MESSAGE
+}
+
+model UserBehaviorEvent {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  type      UserBehaviorEventType
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  sessionId String
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  anonymousId String?
+
+  @@index([listingId, createdAt])
+  @@index([userId, createdAt])
+  @@index([anonymousId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([type, createdAt])
+}
