@@ -11,15 +11,21 @@ import {
 
 export function ThemeSync() {
   useEffect(() => {
+    // Apply stored local preference first (defaults to LIGHT if none)
     const stored = getStoredThemePreference();
     applyThemePreference(stored ?? 'LIGHT');
 
+    // Only sync from API if user has NO local preference saved yet
+    // This prevents the API from overriding the user's explicit local choice
     let cancelled = false;
-    (async () => {
-      const me = await apiFetchJson<AuthMe>('/auth/me');
-      if (cancelled || !me.ok) return;
-      applyThemePreference((me.data.appTheme ?? 'SYSTEM') as ThemePreference);
-    })();
+    if (!stored) {
+      (async () => {
+        const me = await apiFetchJson<AuthMe>('/auth/me');
+        if (cancelled || !me.ok) return;
+        const apiTheme = (me.data.appTheme ?? 'LIGHT') as ThemePreference;
+        applyThemePreference(apiTheme);
+      })();
+    }
 
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const onMedia = () => reapplyCurrentTheme();
@@ -33,4 +39,3 @@ export function ThemeSync() {
 
   return null;
 }
-
