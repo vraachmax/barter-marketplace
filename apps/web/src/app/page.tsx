@@ -370,32 +370,31 @@ export default async function Home({
 
         <div className="space-y-4 md:space-y-5">
           <section className="space-y-4 md:space-y-5">
-            {/* Categories grid — generated 3D images */}
-            <div className="rounded-xl bg-white p-3 dark:bg-zinc-900 md:p-4 lg:p-5">
-              <div className="grid grid-cols-4 gap-2 md:grid-cols-5 md:gap-2.5">
+            {/* Categories — horizontal scroll on mobile, grid on desktop (Avito-style) */}
+            <div className="rounded-xl bg-white py-3 dark:bg-zinc-900 md:p-4 lg:p-5">
+              <div className="flex gap-2 overflow-x-auto px-3 pb-1 scrollbar-hide md:grid md:grid-cols-5 md:gap-3 md:overflow-x-visible md:px-0 md:pb-0">
                 {(() => {
                   const CATS = [
-                    { name: 'Авто', slug: 'auto', bg: '#EEF2FF', img: '/categories/auto.png' },
-                    { name: 'Недвижимость', slug: 'realty', bg: '#FFF7ED', img: '/categories/realty.png' },
-                    { name: 'Работа', slug: 'job', bg: '#F0FDF4', img: '/categories/job.png' },
-                    { name: 'Одежда и обувь', slug: 'clothes', bg: '#FDF2F8', img: '/categories/clothes.png' },
-                    { name: 'Электроника', slug: 'electronics', bg: '#EFF6FF', img: '/categories/electronics.png' },
-                    { name: 'Для дома и дачи', slug: 'home', bg: '#F0FDF4', img: '/categories/home.png' },
-                    { name: 'Детские товары', slug: 'kids', bg: '#FFFBEB', img: '/categories/kids.png' },
-                    { name: 'Хобби и отдых', slug: 'hobby', bg: '#FFF7ED', img: '/categories/hobby.png' },
-                    { name: 'Услуги', slug: 'services', bg: '#F5F3FF', img: '/categories/services.png' },
-                    { name: 'Животные', slug: 'animals', bg: '#FFF1F2', img: '/categories/animals.png' },
+                    { name: 'Авто', slug: 'auto', emoji: '🚗', bg: '#EEF2FF', bgDark: '#1e1b4b' },
+                    { name: 'Недвижимость', slug: 'realty', emoji: '🏠', bg: '#FFF7ED', bgDark: '#451a03' },
+                    { name: 'Работа', slug: 'job', emoji: '💼', bg: '#F0FDF4', bgDark: '#052e16' },
+                    { name: 'Одежда', slug: 'clothes', emoji: '👗', bg: '#FDF2F8', bgDark: '#4a044e' },
+                    { name: 'Электроника', slug: 'electronics', emoji: '📱', bg: '#EFF6FF', bgDark: '#172554' },
+                    { name: 'Для дома', slug: 'home', emoji: '🛋️', bg: '#ECFDF5', bgDark: '#022c22' },
+                    { name: 'Детям', slug: 'kids', emoji: '🧸', bg: '#FFFBEB', bgDark: '#422006' },
+                    { name: 'Хобби', slug: 'hobby', emoji: '⚽', bg: '#FFF7ED', bgDark: '#431407' },
+                    { name: 'Услуги', slug: 'services', emoji: '🔧', bg: '#F5F3FF', bgDark: '#2e1065' },
+                    { name: 'Животные', slug: 'animals', emoji: '🐾', bg: '#FFF1F2', bgDark: '#4c0519' },
                   ];
-                  // Match CATS to real category IDs from API
                   const catIdMap: Record<string, string> = {};
                   for (const c of categories) {
                     for (const cat of CATS) {
-                      if (c.title === cat.name) catIdMap[cat.slug] = c.id;
+                      if (c.title.includes(cat.name) || cat.name.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
                     }
                   }
                   return CATS.map((cat) => {
                     const catId = catIdMap[cat.slug] || '';
-                    const isActive = catId === urlCategoryId;
+                    const isActive = catId !== '' && catId === urlCategoryId;
                     return (
                       <Link
                         key={cat.slug}
@@ -403,19 +402,13 @@ export default async function Home({
                           pathname: '/',
                           query: { ...preservedListQuery, categoryId: catId },
                         }}
-                        className={`relative block h-[70px] overflow-hidden rounded-xl transition-shadow hover:shadow-[0_2px_10px_rgba(0,0,0,0.12)] md:h-20 ${isActive ? 'ring-2 ring-[#00B4D8]' : ''}`}
+                        className={`group flex min-w-[72px] shrink-0 flex-col items-center gap-1.5 rounded-xl px-2 py-2.5 transition-all duration-200 hover:scale-[1.04] hover:shadow-md active:scale-95 md:min-w-0 md:shrink md:flex-row md:gap-3 md:px-3 md:py-3 ${isActive ? 'ring-2 ring-[#00B4D8] shadow-sm' : ''}`}
                         style={{ background: cat.bg }}
                       >
-                        <span className={`absolute left-2 top-2 z-[2] text-[11px] font-medium leading-tight md:left-3 md:top-2.5 md:text-xs ${isActive ? 'text-[#00B4D8]' : 'text-[#1a1a1a]'}`} style={{ maxWidth: '60%' }}>
+                        <span className="text-2xl md:text-3xl" role="img" aria-label={cat.name}>{cat.emoji}</span>
+                        <span className={`text-center text-[11px] font-medium leading-tight md:text-left md:text-sm ${isActive ? 'text-[#00B4D8]' : 'text-[#374151] dark:text-zinc-300'}`}>
                           {cat.name}
                         </span>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={cat.img}
-                          alt={cat.name}
-                          className="absolute -bottom-2 -right-3 z-[1] h-[90%] w-auto object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] md:h-[95%]"
-                          style={{ mixBlendMode: 'multiply' }}
-                        />
                       </Link>
                     );
                   });
@@ -424,14 +417,20 @@ export default async function Home({
             </div>
 
             {/* Recommendations section */}
-            {!hasSearchQuery ? (
-            <div className="py-2 dark:bg-transparent">
-              <h2 className="mb-3 text-base font-bold text-[#1a1a1a] dark:text-white md:mb-4 md:text-xl">Рекомендации для вас</h2>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {!hasSearchQuery && recommended.items.length > 0 ? (
+            <div className="animate-fade-in-up">
+              <div className="mb-3 flex items-center justify-between md:mb-4">
+                <h2 className="text-base font-bold text-[#1a1a1a] dark:text-white md:text-xl">Рекомендации для вас</h2>
+                <span className="text-xs font-medium text-[#00B4D8]">
+                  <Sparkles size={14} className="mr-1 inline-block" aria-hidden />
+                  Подобрано для вас
+                </span>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-x-visible md:pb-0">
                 {recommended.items.map((x) => (
                   <div
                     key={x.id}
-                    className={recommendedListingCardClass(x.promoType)}
+                    className={`${recommendedListingCardClass(x.promoType)} min-w-[160px] shrink-0 md:min-w-0 md:shrink`}
                   >
                     <TrackedListingLink href={`/listing/${x.id}`} listingId={x.id} className="block">
                       <FeedListingHoverThumb
@@ -451,21 +450,16 @@ export default async function Home({
                           <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-12" />
                         }
                       />
-                      <div className="p-[10px_12px_14px]">
-                        <div className="line-clamp-2 text-sm font-normal text-[#1a1a1a] group-hover:underline dark:text-zinc-100 mb-1.5">
+                      <div className="p-2.5 md:p-3">
+                        <div className="line-clamp-2 text-[13px] font-normal leading-snug text-[#1a1a1a] group-hover:underline dark:text-zinc-100 mb-1">
                           {x.title}
                         </div>
                         <div className={recommendedListingPriceClass()}>{formatRub(x.priceRub, x.priceType)}</div>
-                        <div className="text-xs text-[#909090] truncate">{x.city} · {x.category.title}</div>
+                        <div className="text-[11px] text-[#909090] truncate">{x.city} · {x.category.title}</div>
                       </div>
                     </TrackedListingLink>
                   </div>
                 ))}
-                {recommended.items.length === 0 ? (
-                  <div className="col-span-2 rounded-lg bg-white p-4 text-sm text-[#6b7280] dark:bg-zinc-800/50 dark:text-zinc-400 md:col-span-4">
-                    Пока нет рекомендаций. Посмотрите объявления в нужной категории — блок начнёт подстраиваться.
-                  </div>
-                ) : null}
               </div>
             </div>
             ) : null}
@@ -537,11 +531,22 @@ export default async function Home({
               </section>
             ) : null}
 
-            {/* Feed listing cards - 4 column vertical cards */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {/* Feed listing cards */}
+            <div>
+              {listings.items.length > 0 ? (
+                <div className="mb-3 flex items-center justify-between md:mb-4">
+                  <h2 className="text-base font-bold text-[#1a1a1a] dark:text-white md:text-xl">
+                    {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
+                  </h2>
+                  <span className="text-xs text-[#909090]">{listings.total} объявлений</span>
+                </div>
+              ) : null}
+              <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
               {listings.items.length === 0 ? (
-                <div className="col-span-2 md:col-span-4 rounded-lg bg-white p-5 text-center text-sm text-[#6b7280] dark:bg-zinc-800/40 dark:text-zinc-400">
-                  По текущим фильтрам объявлений пока нет. Попробуйте снять категорию или изменить город.
+                <div className="col-span-2 md:col-span-3 lg:col-span-4 rounded-xl bg-white p-8 text-center dark:bg-zinc-900">
+                  <div className="mx-auto mb-3 text-4xl">🔍</div>
+                  <p className="text-sm font-medium text-[#374151] dark:text-zinc-300">Ничего не нашлось</p>
+                  <p className="mt-1 text-xs text-[#909090] dark:text-zinc-500">Попробуйте снять категорию или изменить город</p>
                 </div>
               ) : null}
               {listings.items.map((x) => (
@@ -568,19 +573,19 @@ export default async function Home({
                       <>
                         <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
                         {x.isBoosted ? (
-                          <span className="absolute top-2 left-2 z-[1] rounded-[4px] bg-[#FFD166] px-2 py-0.5 text-[11px] font-semibold text-[#1a1a1a]">
+                          <span className="absolute top-2 left-2 z-[1] rounded-[6px] bg-[#FFD166] px-2 py-0.5 text-[11px] font-semibold text-[#1a1a1a] shadow-sm">
                             Поднято
                           </span>
                         ) : null}
                       </>
                     }
                   />
-                  <div className="p-[10px_12px_14px]">
-                    <div className="line-clamp-2 text-sm font-normal text-[#1a1a1a] group-hover:underline dark:text-zinc-100 mb-1.5">
+                  <div className="p-2.5 md:p-3">
+                    <div className="line-clamp-2 text-[13px] font-normal leading-snug text-[#1a1a1a] group-hover:underline dark:text-zinc-100 mb-1">
                       {x.title}
                     </div>
                     <div className={feedListingPriceClass()}>{formatRub(x.priceRub, x.priceType)}</div>
-                    <div className="text-xs text-[#909090] truncate">
+                    <div className="text-[11px] text-[#909090] truncate">
                       {x.city} · {x.category.title}
                       {typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
                     </div>
@@ -597,57 +602,50 @@ export default async function Home({
                   apiBase={API_URL}
                 />
               ) : null}
+              </div>
             </div>
           </section>
         </div>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 md:hidden">
-        <div className="mx-auto max-w-lg px-3 pb-[env(safe-area-inset-bottom,0px)] pt-1">
-          <div className="grid grid-cols-5 items-end gap-1 rounded-t-2xl bg-white/95 px-1 py-2 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] backdrop-blur-md dark:bg-zinc-950/95">
+        <div className="border-t border-[#f0f0f0] bg-white/98 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/98">
+          <div className="mx-auto grid max-w-lg grid-cols-5 items-center px-1">
             <Link
               href="/"
-              className="flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[10px] font-semibold text-[#00B4D8]"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#00B4D8] transition-colors"
             >
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#e0f5fb]">
-                <HomeIcon size={20} strokeWidth={1.8} className="text-[#00B4D8]" aria-hidden />
-              </span>
+              <HomeIcon size={22} strokeWidth={1.8} aria-hidden />
               <span>Главная</span>
             </Link>
             <Link
-              href="/messages"
-              className="flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[10px] font-semibold text-[#909090] transition active:scale-95 dark:text-zinc-400"
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-lg">
-                <MessageCircle size={20} strokeWidth={1.8} className="text-[#909090]" aria-hidden />
-              </span>
-              <span>Чаты</span>
-            </Link>
-            <Link
-              href="/new"
-              className="-mt-5 flex flex-col items-center gap-0.5 px-1 pb-0.5 text-[10px] font-bold"
-            >
-              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#00B4D8] shadow-lg shadow-[#00B4D8]/30 ring-4 ring-white dark:ring-zinc-950">
-                <Plus size={26} strokeWidth={1.8} className="text-white" aria-hidden />
-              </span>
-              <span className="mt-1 text-[#00B4D8]">Подать</span>
-            </Link>
-            <Link
               href="/favorites"
-              className="flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[10px] font-semibold text-[#909090] transition active:scale-95 dark:text-zinc-400"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#909090] transition-colors active:text-[#00B4D8] dark:text-zinc-400"
             >
-              <span className="grid h-9 w-9 place-items-center rounded-lg">
-                <Heart size={20} strokeWidth={1.8} className="text-[#909090]" aria-hidden />
-              </span>
+              <Heart size={22} strokeWidth={1.8} aria-hidden />
               <span>Избранное</span>
             </Link>
             <Link
-              href="/profile"
-              className="flex flex-col items-center gap-0.5 rounded-lg px-1 py-1 text-[10px] font-semibold text-[#909090] transition active:scale-95 dark:text-zinc-400"
+              href="/new"
+              className="-mt-4 flex flex-col items-center gap-1 text-[10px] font-bold"
             >
-              <span className="grid h-9 w-9 place-items-center rounded-lg">
-                <User size={20} strokeWidth={1.8} className="text-[#909090] dark:text-zinc-400" aria-hidden />
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-[#00B4D8] shadow-lg shadow-[#00B4D8]/25 transition-transform active:scale-90">
+                <Plus size={24} strokeWidth={2} className="text-white" aria-hidden />
               </span>
+              <span className="text-[#00B4D8]">Подать</span>
+            </Link>
+            <Link
+              href="/messages"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#909090] transition-colors active:text-[#00B4D8] dark:text-zinc-400"
+            >
+              <MessageCircle size={22} strokeWidth={1.8} aria-hidden />
+              <span>Чаты</span>
+            </Link>
+            <Link
+              href="/profile"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#909090] transition-colors active:text-[#00B4D8] dark:text-zinc-400"
+            >
+              <User size={22} strokeWidth={1.8} aria-hidden />
               <span>Профиль</span>
             </Link>
           </div>
