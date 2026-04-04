@@ -395,6 +395,7 @@ export default async function Home({
                   }
                   return CATS.map((cat) => {
                     const catId = catIdMap[cat.slug] || '';
+                    const isActive = catId === urlCategoryId;
                     return (
                       <Link
                         key={cat.slug}
