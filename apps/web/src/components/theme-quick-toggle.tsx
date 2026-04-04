@@ -32,10 +32,14 @@ export function ThemeQuickToggle() {
     setTheme(next);
     applyThemePreference(next);
     setBusy(true);
-    await apiFetchJson('/auth/me', {
-      method: 'PATCH',
-      body: JSON.stringify({ appTheme: next }),
-    });
+    try {
+      await apiFetchJson('/auth/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ appTheme: next }),
+      });
+    } catch {
+      // Not logged in — theme still saved locally
+    }
     setBusy(false);
   }
 
