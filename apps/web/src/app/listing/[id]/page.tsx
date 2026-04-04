@@ -186,7 +186,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                         ? 'В архиве'
                         : listing.status === 'PENDING'
                           ? listing.duplicateImageFlag
-                            ? 'На модерации: те же фото, что у другого объявления. В кабинете продавца можно подтвердить публикацию.'
+                            ? 'На модерации: те ϶е фото, что у другого объявления. В кабинете продавца можно подтвердить публикацию.'
                             : 'На модерации.'
                           : listing.status === 'BLOCKED'
                             ? 'Скрыто из-за жалоб пользователей.'
@@ -218,8 +218,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                 <p className="font-bold">Безопасная сделка</p>
                 <p className="mt-1 text-xs leading-relaxed opacity-95">
                   Не переходите в WhatsApp, Telegram и другие мессенджеры по просьбе продавцов и покупателей — так
-                  действуют мошенники. Договаривайтесь и переписывайтесь здесь, как рекомендуют Avito и крупные
-                  маркетплейсы.
+                  действуют мошенники. Договаривайтесь и переписывайтесь здесь, как рекомендуют крупные маркетплейсы.
                 </p>
               </div>
             </div>
@@ -236,7 +235,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             />
           </div>
 
-          {/* Боковая панель — как «Buy box» на Amazon / блок справа на eBay */}
+          {/* Боковая панель — блок покупки справа */}
           <aside className="space-y-4 lg:sticky lg:top-20">
             <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-lg shadow-zinc-200/40 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40">
               <div className="flex items-start gap-3">
