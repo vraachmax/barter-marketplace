@@ -11,7 +11,7 @@ import { HomePreferenceCookieSync } from '@/components/home-preference-cookie-sy
 import ListingPlaceholder from '@/components/listing-placeholder';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import {
-  feedListingCardClass,h
+  feedListingCardClass,
   feedListingPriceClass,
   listingThumbPromoExtraClass,
   recommendedListingCardClass,
