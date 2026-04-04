@@ -11,7 +11,7 @@ import express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new PrismaClientExceptionFilter());
-  const uploadsRoot = join(process.cwd(), 'apps', 'api', 'uploads');
+  const uploadsRoot = join(__dirname, '..', 'uploads');
   mkdirSync(join(uploadsRoot, 'listings'), { recursive: true });
   mkdirSync(join(uploadsRoot, 'chat-media'), { recursive: true });
   app.use('/uploads', express.static(uploadsRoot));
