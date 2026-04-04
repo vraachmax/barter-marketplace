@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: `%s | Barter`,
   },
   description: SITE_DESC,
-  keywords: ['объявления', 'маркетплейс', 'купить', 'продать', 'авито', 'бартер', 'электроника', 'авто', 'недвижимость'],
+  keywords: ['объявления', 'маркетплейс', 'купить', 'продать', 'бартер', 'электроника', 'авто', 'недвижимость'],
   openGraph: {
     type: 'website',
     locale: 'ru_RU',
