@@ -278,7 +278,7 @@ export default function NewListingPage() {
             </p>
           </div>
 
-          {/* Steps — eBay / Marketplace style */}
+          {/* Steps indicator */}
           <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
             <div className="flex items-center gap-2">
               {step1Done ? (
@@ -518,7 +518,7 @@ export default function NewListingPage() {
                   <div>
                     <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Характеристики по категории</h2>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Разделы меняются при смене категории — логика как у Avito и западных карточек (eBay, Amazon, Vinted).
+                      Разделы меняются при смене категории — помогает быстрее найти нужное объявление.
                     </p>
                   </div>
                 </div>
