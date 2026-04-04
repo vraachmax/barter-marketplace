@@ -11,7 +11,7 @@ import { HomePreferenceCookieSync } from '@/components/home-preference-cookie-sy
 import ListingPlaceholder from '@/components/listing-placeholder';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import {
-  feedListingCardClass,
+  feedListingCardClass,h
   feedListingPriceClass,
   listingThumbPromoExtraClass,
   recommendedListingCardClass,
@@ -365,14 +365,14 @@ export default async function Home({
         </form>
       </SiteHeader>
 
-      <main className="mx-auto max-w-7xl px-4 pb-32 pt-4 md:pb-12 md:pt-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-3 pb-28 pt-3 md:px-4 md:pb-12 md:pt-6 lg:px-8">
         <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
         <div className="space-y-4 md:space-y-5">
           <section className="space-y-4 md:space-y-5">
             {/* Categories grid — generated 3D images */}
-            <div style={{ background: 'white', borderBottom: '1px solid #f0f0f0', padding: '16px 24px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+            <div className="rounded-xl bg-white p-3 dark:bg-zinc-900 md:p-4 lg:p-5">
+              <div className="grid grid-cols-4 gap-2 md:grid-cols-5 md:gap-2.5">
                 {(() => {
                   const CATS = [
                     { name: 'Авто', slug: 'auto', bg: '#EEF2FF', img: '/categories/auto.png' },
@@ -402,47 +402,18 @@ export default async function Home({
                           pathname: '/',
                           query: { ...preservedListQuery, categoryId: catId },
                         }}
-                        style={{
-                          position: 'relative',
-                          background: cat.bg,
-                          borderRadius: 10,
-                          overflow: 'hidden',
-                          height: 80,
-                          display: 'block',
-                          cursor: 'pointer',
-                          textDecoration: 'none',
-                          transition: 'box-shadow 0.15s',
-                        }}
-                        className="hover:shadow-[0_2px_10px_rgba(0,0,0,0.12)]"
+                        className={`relative block h-[70px] overflow-hidden rounded-xl transition-shadow hover:shadow-[0_2px_10px_rgba(0,0,0,0.12)] md:h-20 ${isActive ? 'ring-2 ring-[#00B4D8]' : ''}`}
+                        style={{ background: cat.bg }}
                       >
-                        <span style={{
-                          position: 'absolute',
-                          top: 10,
-                          left: 12,
-                          fontSize: 12,
-                          fontWeight: 500,
-                          color: catId === urlCategoryId ? '#00B4D8' : '#1a1a1a',
-                          zIndex: 2,
-                          lineHeight: '1.3',
-                          maxWidth: '55%',
-                        }}>
+                        <span className={`absolute left-2 top-2 z-[2] text-[11px] font-medium leading-tight md:left-3 md:top-2.5 md:text-xs ${isActive ? 'text-[#00B4D8]' : 'text-[#1a1a1a]'}`} style={{ maxWidth: '60%' }}>
                           {cat.name}
                         </span>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={cat.img}
                           alt={cat.name}
-                          style={{
-                            position: 'absolute',
-                            bottom: -10,
-                            right: -12,
-                            height: '95%',
-                            width: 'auto',
-                            objectFit: 'contain',
-                            zIndex: 1,
-                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.12))',
-                            mixBlendMode: 'multiply',
-                          }}
+                          className="absolute -bottom-2 -right-3 z-[1] h-[90%] w-auto object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] md:h-[95%]"
+                          style={{ mixBlendMode: 'multiply' }}
                         />
                       </Link>
                     );
@@ -454,7 +425,7 @@ export default async function Home({
             {/* Recommendations section */}
             {!hasSearchQuery ? (
             <div className="py-2 dark:bg-transparent">
-              <h2 className="mb-4 text-xl font-bold text-[#1a1a1a] dark:text-white">Рекомендации для вас</h2>
+              <h2 className="mb-3 text-base font-bold text-[#1a1a1a] dark:text-white md:mb-4 md:text-xl">Рекомендации для вас</h2>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {recommended.items.map((x) => (
                   <div
