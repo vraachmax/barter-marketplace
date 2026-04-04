@@ -13,7 +13,9 @@ import {
   MessageCircle,
   Package,
   Plus,
+  Search,
   Settings,
+  SlidersHorizontal,
   Star,
   Tag,
   User,
@@ -57,7 +59,8 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
   return (
     <>
       <header className="sticky top-0 z-[100] bg-white dark:bg-zinc-950" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-6">
+        {/* Desktop header row */}
+        <div className="mx-auto hidden h-14 max-w-7xl items-center gap-3 px-6 md:flex">
           <div className="shrink-0">
             <BarterHomeLogo />
           </div>
@@ -66,7 +69,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
           <button
             type="button"
             onClick={() => setMegaOpen((v) => !v)}
-            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-[#00B4D8] px-3.5 py-2 text-sm font-medium text-white transition hover:bg-[#0096b5] md:inline-flex"
+            className="shrink-0 items-center gap-1.5 rounded-lg bg-[#00B4D8] px-3.5 py-2 text-sm font-medium text-white transition hover:bg-[#0096b5] inline-flex"
           >
             <LayoutGrid size={18} strokeWidth={1.8} aria-hidden />
             Все категории
@@ -76,7 +79,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
           {children}
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <div className="hidden items-center gap-1 md:flex">
+            <div className="flex items-center gap-1">
               <IconButton href="/favorites" label="Избранное">
                 <Heart size={20} strokeWidth={1.8} aria-hidden />
               </IconButton>
@@ -93,7 +96,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#00B4D8] px-[18px] py-2 text-sm font-semibold text-white transition hover:bg-[#0096b5]"
             >
               <Plus size={16} strokeWidth={1.8} aria-hidden />
-              <span className="hidden sm:inline">Разместить</span>
+              Разместить
             </Link>
 
             {ready ? (
@@ -169,17 +172,28 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-1.5 md:hidden">
-          {[
-            { href: '/messages', icon: <MessageCircle size={16} strokeWidth={1.8} />, label: 'Чаты' },
-            { href: '/favorites', icon: <Heart size={16} strokeWidth={1.8} />, label: 'Избранное' },
-            { href: '/profile', icon: <User size={16} strokeWidth={1.8} />, label: 'Профиль' },
-          ].map(({ href, icon, label }) => (
-            <Link key={href} href={href} className="flex shrink-0 items-center gap-1 rounded-full bg-[#f0f0f0] px-2.5 py-1 text-xs font-medium text-[#909090] transition hover:bg-[#e0f5fb] hover:text-[#00B4D8] dark:bg-zinc-800 dark:text-zinc-400">
-              {icon}
-              {label}
-            </Link>
-          ))}
+        {/* Mobile header */}
+        <div className="flex items-center gap-2 px-4 py-2.5 md:hidden">
+          <div className="shrink-0">
+            <BarterHomeLogo />
+          </div>
+          <form action="/" method="GET" className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-[#f0f0f0] px-3 py-2 dark:bg-zinc-800">
+            <Search size={16} strokeWidth={1.8} className="shrink-0 text-[#b0b0b0]" aria-hidden />
+            <input
+              type="text"
+              name="q"
+              placeholder="Поиск по объявлениям"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#1a1a1a] outline-none placeholder:text-[#b0b0b0] dark:text-zinc-100"
+            />
+          </form>
+          <button
+            type="button"
+            onClick={() => setMegaOpen((v) => !v)}
+            className="grid size-10 shrink-0 place-items-center rounded-lg text-[#909090] transition hover:bg-[#f0f0f0] dark:text-zinc-400 dark:hover:bg-zinc-800"
+            aria-label="Категории"
+          >
+            <SlidersHorizontal size={20} strokeWidth={1.8} aria-hidden />
+          </button>
         </div>
       </header>
 
