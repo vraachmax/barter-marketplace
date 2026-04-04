@@ -12,7 +12,7 @@ import {
 export function ThemeSync() {
   useEffect(() => {
     const stored = getStoredThemePreference();
-    applyThemePreference(stored ?? 'SYSTEM');
+    applyThemePreference(stored ?? 'LIGHT');
 
     let cancelled = false;
     (async () => {

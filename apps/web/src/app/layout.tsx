@@ -64,7 +64,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=localStorage.getItem('barter_theme_pref');var r='light';if(p==='DARK')r='dark';else if(p==='LIGHT')r='light';else if(window.matchMedia('(prefers-color-scheme: dark)').matches)r='dark';var el=document.documentElement;el.setAttribute('data-theme',r);el.classList.toggle('dark',r==='dark');el.setAttribute('data-theme-pref',p||'SYSTEM');}catch(e){}})();`,
+            __html: `(function(){try{var p=localStorage.getItem('barter_theme_pref');var r='light';if(p==='DARK')r='dark';else if(p==='LIGHT')r='light';else if(p==='SYSTEM'&&window.matchMedia('(prefers-color-scheme: dark)').matches)r='dark';var el=document.documentElement;el.setAttribute('data-theme',r);el.classList.toggle('dark',r==='dark');el.setAttribute('data-theme-pref',p||'LIGHT');}catch(e){}})();`,
           }}
         />
       </head>
