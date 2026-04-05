@@ -358,7 +358,7 @@ export default async function Home({
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#000', fontFamily: 'Inter, sans-serif', WebkitFontSmoothing: 'antialiased', paddingBottom: 96 }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#F2F3F5', fontFamily: 'Inter, sans-serif', WebkitFontSmoothing: 'antialiased', paddingBottom: 96 }}>
       {apiBackendDown ? (
         <div role="alert" style={{ borderBottom: '1px solid #FCD34D', background: '#FFFBEB', padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#78350F' }}>
           <strong>Не удаётся связаться с API</strong> ({API_URL || 'сервер'}). Запустите бэкенд.
@@ -440,9 +440,9 @@ export default async function Home({
                 <Link
                   key={cat.slug}
                   href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                  style={{ background: '#1c1c1e', borderRadius: 16, padding: 12, height: 112, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none' }}
+                  style={{ background: `${cat.accent}18`, borderRadius: 16, padding: 12, height: 112, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', border: `1px solid ${cat.accent}30` }}
                 >
-                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
+                  <span style={{ color: '#1c1b1b', fontSize: 13, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
                   <div style={{ position: 'absolute', bottom: -4, right: -4, width: 64, height: 64, background: cat.accent, borderRadius: 12, transform: 'rotate(12deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
                     {cat.emoji}
                   </div>
@@ -459,9 +459,9 @@ export default async function Home({
                 <Link
                   key={cat.slug + cat.name}
                   href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                  style={{ minWidth: 110, background: '#1c1c1e', borderRadius: 16, padding: 12, height: 96, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0 }}
+                  style={{ minWidth: 110, background: `${cat.accent}18`, borderRadius: 16, padding: 12, height: 96, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0, border: `1px solid ${cat.accent}30` }}
                 >
-                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
+                  <span style={{ color: '#1c1b1b', fontSize: 13, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
                   <div style={{ position: 'absolute', bottom: -8, right: -8, width: 48, height: 48, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
                     {cat.emoji}
                   </div>
