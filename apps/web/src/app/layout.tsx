@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeSync } from "@/components/theme-sync";
 import { GlobalChatWidget } from "@/components/global-chat-widget";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { PresenceProvider } from "@/components/presence-provider";
 import { AuthProvider } from "@/components/auth-provider";
 
@@ -71,6 +72,7 @@ export default function RootLayout({
           <PresenceProvider>
             <GlobalChatWidget />
             {children}
+            <MobileBottomNav />
           </PresenceProvider>
         </AuthProvider>
       </body>

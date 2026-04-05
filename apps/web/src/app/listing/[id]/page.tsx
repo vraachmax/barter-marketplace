@@ -293,20 +293,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         <SiteFooter />
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 p-3 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">{listing.title}</div>
-            <div className="truncate text-base font-black text-sky-700 dark:text-sky-400">{formatRub(listing.priceRub)}</div>
-          </div>
-          <Link
-            href={`/messages?listingId=${listing.id}`}
-            className="shrink-0 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-sky-600/25"
-          >
-            Чат
-          </Link>
-        </div>
-      </div>
+      {/* Bottom nav is in layout.tsx — MobileBottomNav component */}
     </div>
   );
 }

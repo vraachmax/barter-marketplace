@@ -625,38 +625,7 @@ export default async function Home({
         </section>
       </main>
 
-      {/* ===== BOTTOM NAV BAR with FAB ===== */}
-      <nav className="md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 50 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 16px 16px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '24px 24px 0 0', boxShadow: '0 -4px 20px rgba(0,103,125,0.06)' }}>
-          {/* Главная */}
-          <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00B4D8', fontWeight: 700, textDecoration: 'none' }}>
-            <HomeIcon size={24} strokeWidth={1.8} fill="#00B4D8" aria-hidden />
-            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Главная</span>
-          </Link>
-          {/* Избранное */}
-          <Link href="/favorites" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', textDecoration: 'none' }}>
-            <Heart size={24} strokeWidth={1.8} aria-hidden />
-            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Избранное</span>
-          </Link>
-          {/* CENTER FAB — Разместить */}
-          <div style={{ position: 'relative', top: -24 }}>
-            <Link href="/new" style={{ display: 'flex', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(to bottom, #00B4D8, #00677d)', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,103,125,0.3)', color: '#fff', textDecoration: 'none' }}>
-              <Plus size={28} strokeWidth={2.5} aria-hidden />
-            </Link>
-            <span style={{ position: 'absolute', top: 56, left: '50%', transform: 'translateX(-50%)', fontSize: 10, fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap' }}>Разместить</span>
-          </div>
-          {/* Сообщения */}
-          <Link href="/messages" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', textDecoration: 'none' }}>
-            <MessageCircle size={24} strokeWidth={1.8} aria-hidden />
-            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Сообщения</span>
-          </Link>
-          {/* Профиль */}
-          <Link href="/profile" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', textDecoration: 'none' }}>
-            <User size={24} strokeWidth={1.8} aria-hidden />
-            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Профиль</span>
-          </Link>
-        </div>
-      </nav>
+      {/* Bottom nav moved to layout.tsx — MobileBottomNav component */}
 
       <div className="hidden pb-0 md:block">
         <SiteFooter />
