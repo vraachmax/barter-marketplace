@@ -62,23 +62,23 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
   return (
     <>
       <header className="sticky top-0 z-[100] bg-white dark:bg-zinc-950 border-b border-[#E8E8E8] dark:border-zinc-800">
-        {/* Top utility bar â desktop only */}
+        {/* Top utility bar — desktop only */}
         <div className="hidden border-b border-[#F0F0F0] dark:border-zinc-800 md:block">
           <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">
             <div className="flex items-center gap-4 text-xs text-[#707070] dark:text-zinc-400">
-              <span className="cursor-default hover:text-[#007AFF] transition-colors">ÐÐ°ÑÑÐµÑÐ°</span>
-              <span className="cursor-default hover:text-[#007AFF] transition-colors">ÐÐ¾Ð¼Ð¾ÑÑ</span>
+              <span className="cursor-default hover:text-[#007AFF] transition-colors">Карьера</span>
+              <span className="cursor-default hover:text-[#007AFF] transition-colors">Помощь</span>
             </div>
             <div className="flex items-center gap-3">
               <ThemeQuickToggle />
               <Link href="/favorites" className="flex items-center gap-1 text-xs text-[#707070] hover:text-[#007AFF] transition-colors dark:text-zinc-400">
                 <Heart size={14} strokeWidth={1.8} />
-                <span className="hidden lg:inline">ÐÐ·Ð±ÑÐ°Ð½Ð½Ð¾Ðµ</span>
+                <span className="hidden lg:inline">Избранное</span>
               </Link>
               {ready && user ? (
                 <Link href="/messages" className="flex items-center gap-1 text-xs text-[#707070] hover:text-[#007AFF] transition-colors dark:text-zinc-400">
                   <MessageCircle size={14} strokeWidth={1.8} />
-                  <span className="hidden lg:inline">Ð¡Ð¾Ð¾Ð±ÑÐµÐ½Ð¸Ñ</span>
+                  <span className="hidden lg:inline">Сообщения</span>
                 </Link>
               ) : null}
               {ready ? (
@@ -89,11 +89,11 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
                     className="flex items-center gap-1 text-xs text-[#707070] hover:text-[#007AFF] transition-colors dark:text-zinc-400"
                   >
                     <User size={14} strokeWidth={1.8} />
-                    <span className="hidden lg:inline">{user.name ?? 'ÐÑÐ¾ÑÐ¸Ð»Ñ'}</span>
+                    <span className="hidden lg:inline">{user.name ?? 'Профиль'}</span>
                   </button>
                 ) : (
                   <Link href="/auth?mode=login" className="text-xs font-medium text-[#007AFF] hover:text-[#0066DD] transition-colors">
-                    ÐÑÐ¾Ð´ Ð¸ ÑÐµÐ³Ð¸ÑÑÑÐ°ÑÐ¸Ñ
+                    Вход и регистрация
                   </Link>
                 )
               ) : null}
@@ -102,7 +102,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
                 className="inline-flex items-center gap-1 rounded-md bg-[#007AFF] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#0066DD]"
               >
                 <Plus size={14} strokeWidth={2} />
-                Ð Ð°Ð·Ð¼ÐµÑÑÐ¸ÑÑ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ðµ
+                Разместить объявление
               </Link>
             </div>
           </div>
@@ -121,10 +121,10 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
             className="shrink-0 items-center gap-1.5 rounded-lg bg-[#007AFF] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#0066DD] inline-flex"
           >
             <LayoutGrid size={16} strokeWidth={1.8} aria-hidden />
-            ÐÑÐµ ÐºÐ°ÑÐµÐ³Ð¾ÑÐ¸Ð¸
+            Все категории
           </button>
 
-          {/* Search slot from page.tsx â desktop only */}
+          {/* Search slot from page.tsx — desktop only */}
           {children}
         </div>
 
@@ -139,7 +139,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-[#111] dark:text-zinc-50">
-                      {user?.name ?? 'ÐÐ¾Ð»ÑÐ·Ð¾Ð²Ð°ÑÐµÐ»Ñ'}
+                      {user?.name ?? 'Пользователь'}
                     </p>
                     <p className="truncate text-xs text-[#707070] dark:text-zinc-400">{user?.email ?? user?.phone}</p>
                   </div>
@@ -147,11 +147,11 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
               </div>
               <div className="py-1.5">
                 {[
-                  { href: '/profile', icon: <Tag size={18} strokeWidth={1.8} />, label: 'ÐÐ¾Ð¸ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ' },
-                  { href: '/profile/orders', icon: <Package size={18} strokeWidth={1.8} />, label: 'ÐÐ°ÐºÐ°Ð·Ñ' },
-                  { href: '/profile/reviews', icon: <Star size={18} strokeWidth={1.8} fill="currentColor" />, label: 'ÐÐ¾Ð¸ Ð¾ÑÐ·ÑÐ²Ñ' },
-                  { href: '/favorites', icon: <Heart size={18} strokeWidth={1.8} />, label: 'ÐÐ·Ð±ÑÐ°Ð½Ð½Ð¾Ðµ' },
-                  { href: '/wallet', icon: <Wallet size={18} strokeWidth={1.8} />, label: 'ÐÐ¾ÑÐµÐ»ÑÐº' },
+                  { href: '/profile', icon: <Tag size={18} strokeWidth={1.8} />, label: 'Мои объявления' },
+                  { href: '/profile/orders', icon: <Package size={18} strokeWidth={1.8} />, label: 'Заказы' },
+                  { href: '/profile/reviews', icon: <Star size={18} strokeWidth={1.8} fill="currentColor" />, label: 'Мои отзывы' },
+                  { href: '/favorites', icon: <Heart size={18} strokeWidth={1.8} />, label: 'Избранное' },
+                  { href: '/wallet', icon: <Wallet size={18} strokeWidth={1.8} />, label: 'Кошелёк' },
                 ].map(({ href, icon, label }) => (
                   <Link key={href} href={href} onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-[#111] transition hover:bg-[#F4F4F4] dark:text-zinc-300 dark:hover:bg-zinc-800">
                     <span className="shrink-0 text-[#707070] dark:text-zinc-400">{icon}</span>
@@ -162,11 +162,11 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
               <div className="border-t border-[#E8E8E8] py-1.5 dark:border-zinc-800">
                 <Link href="/profile/settings" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-[#111] transition hover:bg-[#F4F4F4] dark:text-zinc-300 dark:hover:bg-zinc-800">
                   <Settings size={18} strokeWidth={1.8} className="shrink-0 text-[#707070]" />
-                  ÐÐ°ÑÑÑÐ¾Ð¹ÐºÐ¸
+                  Настройки
                 </Link>
                 <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20">
                   <LogOut size={18} strokeWidth={1.8} className="shrink-0" />
-                  ÐÑÐ¹ÑÐ¸
+                  Выйти
                 </button>
               </div>
             </div>
@@ -183,7 +183,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
             <input
               type="text"
               name="q"
-              placeholder="ÐÐ¾Ð¸ÑÐº Ð¿Ð¾ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸ÑÐ¼"
+              placeholder="Поиск по объявлениям"
               className="min-w-0 flex-1 bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
             />
           </form>
@@ -191,7 +191,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
             type="button"
             onClick={() => setMegaOpen((v) => !v)}
             className="grid size-10 shrink-0 place-items-center rounded-lg text-[#707070] transition hover:bg-[#F0F0F0] dark:text-zinc-400 dark:hover:bg-zinc-800"
-            aria-label="ÐÐ°ÑÐµÐ³Ð¾ÑÐ¸Ð¸"
+            aria-label="Категории"
           >
             <SlidersHorizontal size={20} strokeWidth={1.8} aria-hidden />
           </button>
