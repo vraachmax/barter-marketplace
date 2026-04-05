@@ -65,14 +65,14 @@ export default function ProfileSidebar({
         href={href}
         className={`group flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm transition ${
           isActive
-            ? 'bg-[#e0f5fb] font-medium text-[#00B4D8]'
+            ? 'bg-[#E8F2FF] font-medium text-[#007AFF]'
             : 'text-[#1a1a1a] hover:bg-[#f0f9ff] dark:text-zinc-300 dark:hover:bg-zinc-800'
         }`}
       >
         <span className="inline-flex min-w-0 items-center gap-2.5">
           <span
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-              isActive ? 'text-[#00B4D8]' : 'text-[#6b7280] dark:text-zinc-400'
+              isActive ? 'text-[#007AFF]' : 'text-[#6b7280] dark:text-zinc-400'
             }`}
           >
             {icon}
@@ -84,7 +84,7 @@ export default function ProfileSidebar({
             <span
               className={`rounded-full px-2 py-0.5 text-xs font-bold ${
                 isActive
-                  ? 'bg-[#00B4D8]/15 text-[#00B4D8]'
+                  ? 'bg-[#007AFF]/15 text-[#007AFF]'
                   : 'bg-[#f0f0f0] text-[#6b7280] dark:bg-zinc-700 dark:text-zinc-200'
               }`}
             >
@@ -94,7 +94,7 @@ export default function ProfileSidebar({
           <ChevronRight
             size={18}
             strokeWidth={navStroke}
-            className={isActive ? 'text-[#00B4D8]' : 'text-[#6b7280] opacity-0 group-hover:opacity-100'}
+            className={isActive ? 'text-[#007AFF]' : 'text-[#6b7280] opacity-0 group-hover:opacity-100'}
             aria-hidden
           />
         </span>
@@ -130,19 +130,19 @@ export default function ProfileSidebar({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">{profileName ?? 'Профиль'}</div>
+              <div className="truncate text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">{profileName ?? 'ÐÑÐ¾ÑÐ¸Ð»Ñ'}</div>
               <div className="mt-0.5 flex items-center gap-1 text-xs text-[#6b7280] dark:text-zinc-400">
                 <Star size={14} strokeWidth={navStroke} className="shrink-0 text-[#FFD166]" fill="currentColor" aria-hidden />
-                <span className="font-semibold">{ratingAvg ? ratingAvg.toFixed(1) : '—'}</span>
+                <span className="font-semibold">{ratingAvg ? ratingAvg.toFixed(1) : 'â'}</span>
                 <span>
-                  {ratingCount > 0 ? `· ${ratingCount} отзывов` : '· нет отзывов'}
+                  {ratingCount > 0 ? `Â· ${ratingCount} Ð¾ÑÐ·ÑÐ²Ð¾Ð²` : 'Â· Ð½ÐµÑ Ð¾ÑÐ·ÑÐ²Ð¾Ð²'}
                 </span>
               </div>
               <Link
                 href="/profile/settings?section=storefront"
-                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#00B4D8] hover:underline"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#007AFF] hover:underline"
               >
-                Редактировать профиль
+                Ð ÐµÐ´Ð°ÐºÑÐ¸ÑÐ¾Ð²Ð°ÑÑ Ð¿ÑÐ¾ÑÐ¸Ð»Ñ
                 <ChevronRight size={14} strokeWidth={navStroke} aria-hidden />
               </Link>
             </div>
@@ -150,79 +150,79 @@ export default function ProfileSidebar({
           {sellerUserId ? (
             <Link
               href={`/seller/${sellerUserId}`}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-[1.5px] border-[#00B4D8] bg-transparent py-2 text-xs font-semibold text-[#00B4D8] transition hover:bg-[#e0f5fb]"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-[1.5px] border-[#007AFF] bg-transparent py-2 text-xs font-semibold text-[#007AFF] transition hover:bg-[#E8F2FF]"
             >
               <Link2 size={16} strokeWidth={navStroke} aria-hidden />
-              Как вас видят покупатели
+              ÐÐ°Ðº Ð²Ð°Ñ Ð²Ð¸Ð´ÑÑ Ð¿Ð¾ÐºÑÐ¿Ð°ÑÐµÐ»Ð¸
             </Link>
           ) : null}
         </div>
 
         <nav className="p-3">
-          <NavHeading>Продажи</NavHeading>
+          <NavHeading>ÐÑÐ¾Ð´Ð°Ð¶Ð¸</NavHeading>
           <div className="space-y-0.5">
             <NavItem
               href="/profile"
               icon={<Tag size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Объявления"
+              label="ÐÐ±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ"
               right={activeCount}
               isActive={active === 'profile'}
             />
             <NavItem
               href="/profile?tab=ARCHIVED"
               icon={<Archive size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Архив"
+              label="ÐÑÑÐ¸Ð²"
               right={archivedCount > 0 ? archivedCount : undefined}
             />
             <NavItem
               href="/messages"
               icon={<MessageCircle size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Сообщения"
+              label="Ð¡Ð¾Ð¾Ð±ÑÐµÐ½Ð¸Ñ"
             />
             <NavItem
               href="/favorites"
               icon={<Heart size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Избранное"
+              label="ÐÐ·Ð±ÑÐ°Ð½Ð½Ð¾Ðµ"
             />
           </div>
 
-          <NavHeading>Аккаунт</NavHeading>
+          <NavHeading>ÐÐºÐºÐ°ÑÐ½Ñ</NavHeading>
           <div className="space-y-0.5">
             <NavItem
               href="/profile/orders"
               icon={<Package size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Заказы"
+              label="ÐÐ°ÐºÐ°Ð·Ñ"
               isActive={active === 'orders'}
             />
             <NavItem
               href="/profile/reviews"
               icon={<Star size={20} strokeWidth={navStroke} className={iconMuted} fill="currentColor" />}
-              label="Отзывы"
+              label="ÐÑÐ·ÑÐ²Ñ"
               isActive={active === 'reviews'}
             />
             <NavItem
               href="/profile/settings"
               icon={<Settings size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Настройки"
+              label="ÐÐ°ÑÑÑÐ¾Ð¹ÐºÐ¸"
               isActive={active === 'settings'}
             />
             <NavItem
               href="/profile/settings?section=notifications"
               icon={<Bell size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Уведомления"
+              label="Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ñ"
             />
           </div>
 
-          <NavHeading>Быстро</NavHeading>
+          <NavHeading>ÐÑÑÑÑÐ¾</NavHeading>
           <div className="space-y-0.5">
             <Link
               href="/new"
-              className="flex w-full items-center gap-2.5 rounded-lg bg-[#e0f5fb] px-3 py-2.5 text-sm font-semibold text-[#00B4D8] transition hover:bg-[#cceef5] dark:bg-sky-950/30 dark:text-sky-200 dark:hover:bg-sky-950/50"
+              className="flex w-full items-center gap-2.5 rounded-lg bg-[#E8F2FF] px-3 py-2.5 text-sm font-semibold text-[#007AFF] transition hover:bg-[#D4E3FF] dark:bg-sky-950/30 dark:text-sky-200 dark:hover:bg-sky-950/50"
             >
-              <span className="grid h-8 w-8 place-items-center rounded-md bg-[#00B4D8]">
+              <span className="grid h-8 w-8 place-items-center rounded-md bg-[#007AFF]">
                 <Plus size={20} strokeWidth={navStroke} className="text-white" aria-hidden />
               </span>
-              Новое объявление
+              ÐÐ¾Ð²Ð¾Ðµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ðµ
             </Link>
           </div>
         </nav>
@@ -235,7 +235,7 @@ export default function ProfileSidebar({
               className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] transition hover:bg-red-50 hover:text-red-700 dark:text-zinc-400 dark:hover:bg-red-950/40 dark:hover:text-rose-400"
             >
               <LogOut size={20} strokeWidth={navStroke} aria-hidden />
-              Выйти из аккаунта
+              ÐÑÐ¹ÑÐ¸ Ð¸Ð· Ð°ÐºÐºÐ°ÑÐ½ÑÐ°
             </button>
           ) : (
             <Link
@@ -243,7 +243,7 @@ export default function ProfileSidebar({
               className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] hover:bg-[#f0f9ff] dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
               <LogOut size={20} strokeWidth={navStroke} aria-hidden />
-              Выйти
+              ÐÑÐ¹ÑÐ¸
             </Link>
           )}
         </div>
