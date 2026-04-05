@@ -49,8 +49,8 @@ const PROMO_TIERS: Array<{
 }> = [
   {
     type: 'TOP',
-    title: 'Ð¢Ð¾Ð¿',
-    blurb: 'ÐÑÑÐµ Ð² Ð¾Ð±ÑÐµÐ¹ Ð»ÐµÐ½ÑÐµ',
+    title: 'Топ',
+    blurb: 'Выше в общей ленте',
     icon: Star,
     shell:
       'bg-white hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] dark:bg-zinc-900',
@@ -58,7 +58,7 @@ const PROMO_TIERS: Array<{
   {
     type: 'VIP',
     title: 'VIP',
-    blurb: 'ÐÐ¾Ð»ÑÑÐµ Ð¿Ð¾ÐºÐ°Ð·Ð¾Ð² Ð¸ Ð´Ð¾Ð²ÐµÑÐ¸Ñ',
+    blurb: 'Больше показов и доверия',
     icon: Sparkles,
     shell:
       'bg-white hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] dark:bg-zinc-900',
@@ -66,7 +66,7 @@ const PROMO_TIERS: Array<{
   {
     type: 'XL',
     title: 'XL',
-    blurb: 'ÐÑÑÐ¿Ð½Ð¾Ðµ ÑÐ¾ÑÐ¾ Ð² ÑÐµÐºÐ¾Ð¼ÐµÐ½Ð´Ð°ÑÐ¸ÑÑ',
+    blurb: 'Крупное фото в рекомендациях',
     icon: Camera,
     shell:
       'bg-white hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] dark:bg-zinc-900',
@@ -170,7 +170,7 @@ export function ProfileContent() {
   }
 
   async function removeListing(id: string) {
-    const ok = window.confirm('Ð£Ð´Ð°Ð»Ð¸ÑÑ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ðµ Ð±ÐµÐ·Ð²Ð¾Ð·Ð²ÑÐ°ÑÐ½Ð¾?');
+    const ok = window.confirm('Удалить объявление безвозвратно?');
     if (!ok) return;
     const res = await apiFetchJson<{ ok: true }>(`/listings/${id}`, { method: 'DELETE' });
     if (res.ok) await loadMe();
@@ -226,7 +226,7 @@ export function ProfileContent() {
   }, []);
 
   const strictActiveCount = listings.filter((x) => x.status === 'ACTIVE').length;
-  /** ÐÐºÑÐ¸Ð²Ð½ÑÐµ + Ð½Ð° Ð¼Ð¾Ð´ÐµÑÐ°ÑÐ¸Ð¸ (Ð²Ð¸Ð´Ð½Ñ Ð²Ð¾ Ð²ÐºÐ»Ð°Ð´ÐºÐµ Â«ÐÐºÑÐ¸Ð²Ð½ÑÐµÂ»). */
+  /** Активные + на модерации (видны во вкладке «Активные»). */
   const activeCount = listings.filter((x) => x.status === 'ACTIVE' || x.status === 'PENDING').length;
   const archivedCount = listings.filter((x) => x.status === 'ARCHIVED').length;
   const soldCount = listings.filter((x) => x.status === 'SOLD').length;
@@ -253,27 +253,27 @@ export function ProfileContent() {
     profileCompletion < 100
       ? {
           key: 'profile',
-          title: 'ÐÐ°Ð¿Ð¾Ð»Ð½Ð¸ÑÐµ Ð¿ÑÐ¾ÑÐ¸Ð»Ñ',
-          hint: `Ð¡ÐµÐ¹ÑÐ°Ñ ${profileCompletion}% â Ð´Ð¾Ð±Ð°Ð²ÑÑÐµ Ð´Ð°Ð½Ð½ÑÐµ Ð´Ð»Ñ Ð´Ð¾Ð²ÐµÑÐ¸Ñ`,
+          title: 'Заполните профиль',
+          hint: `Сейчас ${profileCompletion}% — добавьте данные для доверия`,
           href: '/profile/settings',
         }
       : null,
     strictActiveCount === 0 && !listings.some((x) => x.status === 'PENDING')
-      ? { key: 'listing', title: 'ÐÐµÑÐ²Ð¾Ðµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ðµ', hint: 'Ð Ð°Ð·Ð¼ÐµÑÑÐ¸ÑÐµ ÑÐ¾Ð²Ð°Ñ Ð¸Ð»Ð¸ ÑÑÐ»ÑÐ³Ñ', href: '/new' }
+      ? { key: 'listing', title: 'Первое объявление', hint: 'Разместите товар или услугу', href: '/new' }
       : null,
     listings.some((x) => !x.activePromotion)
-      ? { key: 'promo', title: 'ÐÑÐ¾Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ', hint: 'TOP / VIP / XL ÑÐ²ÐµÐ»Ð¸ÑÐ¸Ð²Ð°ÑÑ Ð¾ÑÐ²Ð°Ñ', href: '/profile?tab=ACTIVE' }
+      ? { key: 'promo', title: 'Продвижение', hint: 'TOP / VIP / XL увеличивают охват', href: '/profile?tab=ACTIVE' }
       : null,
   ].filter(Boolean) as Array<{ key: string; title: string; hint: string; href: string }>;
 
   function statusLabel(s: MyListing['status']) {
-    if (s === 'ACTIVE') return { text: 'ÐÐºÑÐ¸Ð²Ð½Ð¾', className: 'bg-emerald-50 text-emerald-800 ring-emerald-200' };
+    if (s === 'ACTIVE') return { text: 'Активно', className: 'bg-emerald-50 text-emerald-800 ring-emerald-200' };
     if (s === 'PENDING')
-      return { text: 'ÐÐ¾Ð´ÐµÑÐ°ÑÐ¸Ñ', className: 'bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-100 dark:ring-amber-800' };
+      return { text: 'Модерация', className: 'bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-100 dark:ring-amber-800' };
     if (s === 'BLOCKED')
-      return { text: 'Ð¡ÐºÑÑÑÐ¾', className: 'bg-red-50 text-red-800 ring-red-200 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-900' };
-    if (s === 'SOLD') return { text: 'ÐÑÐ¾Ð´Ð°Ð½Ð¾', className: 'bg-sky-50 text-sky-800 ring-sky-200' };
-    return { text: 'ÐÑÑÐ¸Ð²', className: 'bg-violet-50 text-violet-800 ring-violet-200' };
+      return { text: 'Скрыто', className: 'bg-red-50 text-red-800 ring-red-200 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-900' };
+    if (s === 'SOLD') return { text: 'Продано', className: 'bg-sky-50 text-sky-800 ring-sky-200' };
+    return { text: 'Архив', className: 'bg-violet-50 text-violet-800 ring-violet-200' };
   }
 
   return (
@@ -282,15 +282,15 @@ export function ProfileContent() {
       <header className="sticky top-0 z-20 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md dark:bg-zinc-950/95 md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="min-w-0">
-            <div className="truncate text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">ÐÐ°Ð±Ð¸Ð½ÐµÑ Ð¿ÑÐ¾Ð´Ð°Ð²ÑÐ°</div>
-            <div className="text-xs text-[#6b7280] dark:text-zinc-400">ÐÐ°ÑÑÐµÑ</div>
+            <div className="truncate text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">Кабинет продавца</div>
+            <div className="text-xs text-[#6b7280] dark:text-zinc-400">Бартер</div>
           </div>
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#007AFF] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#0066DD]"
           >
             <Home size={18} strokeWidth={s} className="text-white" aria-hidden />
-            ÐÐ° Ð³Ð»Ð°Ð²Ð½ÑÑ
+            На главную
           </Link>
         </div>
       </header>
@@ -299,7 +299,7 @@ export function ProfileContent() {
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
             <span className="inline-block size-10 animate-spin rounded-full border-2 border-sky-500 border-t-transparent dark:border-cyan-400 dark:border-t-transparent" aria-hidden />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">ÐÐ°Ð³ÑÑÐ¶Ð°ÐµÐ¼ ÐºÐ°Ð±Ð¸Ð½ÐµÑâ¦</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Загружаем кабинет…</p>
           </div>
         ) : null}
 
@@ -310,15 +310,15 @@ export function ProfileContent() {
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg bg-white dark:bg-zinc-900">
                   <Sparkles size={32} strokeWidth={s} className="text-[#007AFF]" aria-hidden />
                 </div>
-                <h1 className="mt-4 text-xl font-bold text-[#1a1a1a] dark:text-zinc-100">ÐÐ°Ð±Ð¸Ð½ÐµÑ Ð¿ÑÐ¾Ð´Ð°Ð²ÑÐ°</h1>
-                <p className="mt-2 text-sm text-[#6b7280] dark:text-zinc-400">ÐÐ¾Ð¹Ð´Ð¸ÑÐµ, ÑÑÐ¾Ð±Ñ ÑÐ¿ÑÐ°Ð²Ð»ÑÑÑ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸ÑÐ¼Ð¸ Ð¸ Ð·Ð°ÐºÐ°Ð·Ð°Ð¼Ð¸.</p>
+                <h1 className="mt-4 text-xl font-bold text-[#1a1a1a] dark:text-zinc-100">Кабинет продавца</h1>
+                <p className="mt-2 text-sm text-[#6b7280] dark:text-zinc-400">Войдите, чтобы управлять объявлениями и заказами.</p>
               </div>
               <div className="p-6">
                 <Link
                   href="/auth"
                   className="flex h-12 w-full items-center justify-center rounded-lg bg-[#007AFF] text-sm font-semibold text-white transition hover:bg-[#0066DD]"
                 >
-                  ÐÐ¾Ð¹ÑÐ¸ Ð¸Ð»Ð¸ Ð·Ð°ÑÐµÐ³Ð¸ÑÑÑÐ¸ÑÐ¾Ð²Ð°ÑÑÑÑ
+                  Войти или зарегистрироваться
                 </Link>
               </div>
             </div>
@@ -327,7 +327,7 @@ export function ProfileContent() {
 
         {status === 'error' ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-            ÐÐµ ÑÐ´Ð°Ð»Ð¾ÑÑ Ð·Ð°Ð³ÑÑÐ·Ð¸ÑÑ Ð´Ð°Ð½Ð½ÑÐµ. ÐÐ¾Ð¿ÑÐ¾Ð±ÑÐ¹ÑÐµ Ð¾Ð±Ð½Ð¾Ð²Ð¸ÑÑ ÑÑÑÐ°Ð½Ð¸ÑÑ.
+            Не удалось загрузить данные. Попробуйте обновить страницу.
           </div>
         ) : null}
 
@@ -337,7 +337,7 @@ export function ProfileContent() {
               active="profile"
               activeCount={activeCount}
               archivedCount={archivedCount}
-              profileName={me.name ?? me.email ?? 'ÐÑÐ¾ÑÐ¸Ð»Ñ'}
+              profileName={me.name ?? me.email ?? 'Профиль'}
               profileAvatarUrl={avatarUrl}
               ratingAvg={publicProfile?.rating.avg ?? null}
               ratingCount={publicProfile?.rating.count ?? 0}
@@ -349,9 +349,9 @@ export function ProfileContent() {
               {/* Desktop title */}
               <div className="hidden items-start justify-between gap-4 md:flex">
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 lg:text-3xl">ÐÐ°Ð±Ð¸Ð½ÐµÑ Ð¿ÑÐ¾Ð´Ð°Ð²ÑÐ°</h1>
+                  <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 lg:text-3xl">Кабинет продавца</h1>
                   <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                    ÐÐµÑÑÐ¸ÐºÐ¸, Ð·Ð°Ð´Ð°ÑÐ¸ Ð¸ ÑÐ¿ÑÐ°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð»Ð¾ÑÐ°Ð¼Ð¸ Ð² Ð¾Ð´Ð½Ð¾Ð¼ Ð¼ÐµÑÑÐµ.
+                    Метрики, задачи и управление лотами в одном месте.
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap justify-end gap-2">
@@ -360,16 +360,16 @@ export function ProfileContent() {
                     className="inline-flex items-center gap-2 rounded-lg bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0066DD]"
                   >
                     <Home size={20} strokeWidth={s} className="text-white" aria-hidden />
-                    ÐÐ° Ð³Ð»Ð°Ð²Ð½ÑÑ
+                    На главную
                   </Link>
                 </div>
               </div>
 
-              {/* KPI strip â Seller Hub */}
+              {/* KPI strip — Seller Hub */}
               <div className="overflow-hidden rounded-lg bg-white dark:bg-zinc-900/80">
                 <div className="bg-[#007AFF] px-5 py-4 text-white">
-                  <p className="text-xs font-medium uppercase tracking-wide text-white/80">Ð¡Ð²Ð¾Ð´ÐºÐ°</p>
-                  <p className="mt-1 text-lg font-bold">ÐÐ´ÑÐ°Ð²ÑÑÐ²ÑÐ¹ÑÐµ, {me.name?.split(' ')[0] ?? 'Ð¿ÑÐ¾Ð´Ð°Ð²ÐµÑ'}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-white/80">Сводка</p>
+                  <p className="mt-1 text-lg font-bold">Здравствуйте, {me.name?.split(' ')[0] ?? 'продавец'}</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4">
                   <button
@@ -380,7 +380,7 @@ export function ProfileContent() {
                     }`}
                   >
                     <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{activeCount}</span>
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">ÐÐºÑÐ¸Ð²Ð½ÑÐµ</span>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Активные</span>
                   </button>
                   <button
                     type="button"
@@ -390,7 +390,7 @@ export function ProfileContent() {
                     }`}
                   >
                     <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{soldCount}</span>
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">ÐÑÐ¾Ð´Ð°Ð½Ð¾</span>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Продано</span>
                   </button>
                   <button
                     type="button"
@@ -400,7 +400,7 @@ export function ProfileContent() {
                     }`}
                   >
                     <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{archivedCount}</span>
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Ð Ð°ÑÑÐ¸Ð²Ðµ</span>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">В архиве</span>
                   </button>
                   <Link
                     href="/messages"
@@ -408,34 +408,34 @@ export function ProfileContent() {
                   >
                     <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{chatCount}</span>
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 dark:text-sky-400">
-                      ÐÐ¸Ð°Ð»Ð¾Ð³Ð¸
+                      Диалоги
                       <ChevronRight size={14} strokeWidth={s} aria-hidden />
                     </span>
                   </Link>
                 </div>
                 <div className="grid gap-3 p-4 sm:grid-cols-3">
                   <div className="rounded-lg bg-[#f7f7f7] px-4 py-3 dark:bg-zinc-950/50">
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">ÐÑÐ¾ÑÐ¸Ð»Ñ Ð·Ð°Ð¿Ð¾Ð»Ð½ÐµÐ½</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Профиль заполнен</div>
                     <div className="mt-1 flex items-baseline gap-2">
                       <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{profileCompletion}%</span>
                       <Link href="/profile/settings" className="text-xs font-semibold text-[#007AFF] hover:underline">
-                        Ð£Ð»ÑÑÑÐ¸ÑÑ
+                        Улучшить
                       </Link>
                     </div>
                   </div>
                   <div className="rounded-lg bg-[#f7f7f7] px-4 py-3 dark:bg-zinc-950/50">
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">ÐÐ°ÑÐµÑÑÐ²Ð¾ ÐºÐ°ÑÑÐ¾ÑÐµÐº</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Качество карточек</div>
                     <div className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-100">{listingQuality}%</div>
-                    <div className="text-[11px] text-zinc-500 dark:text-zinc-400">ÐÐ¾Ð»Ñ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ð¹ Ñ ÑÐ¾ÑÐ¾</div>
+                    <div className="text-[11px] text-zinc-500 dark:text-zinc-400">Доля объявлений с фото</div>
                   </div>
                   <div className="rounded-lg bg-[#f7f7f7] px-4 py-3 dark:bg-zinc-950/50">
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Ð ÐµÐ¹ÑÐ¸Ð½Ð³</div>
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Рейтинг</div>
                     <div className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                      {publicProfile?.rating.avg ? publicProfile.rating.avg.toFixed(1) : 'â'}
+                      {publicProfile?.rating.avg ? publicProfile.rating.avg.toFixed(1) : '—'}
                       <span className="text-sm font-normal text-zinc-500 dark:text-zinc-400">/5</span>
                     </div>
                     <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                      {publicProfile?.rating.count ?? 0} Ð¾ÑÐ·ÑÐ²Ð¾Ð²
+                      {publicProfile?.rating.count ?? 0} отзывов
                     </div>
                   </div>
                 </div>
@@ -446,7 +446,7 @@ export function ProfileContent() {
                 <div className="rounded-lg bg-[#f0fdf9] p-4 dark:bg-emerald-950/30">
                   <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">
                     <Sparkles size={20} strokeWidth={s} className="text-[#FF6F00]" aria-hidden />
-                    Ð ÐµÐºÐ¾Ð¼ÐµÐ½Ð´ÑÐµÐ¼ ÑÐ´ÐµÐ»Ð°ÑÑ
+                    Рекомендуем сделать
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3">
                     {actionItems.map((item) => (
@@ -466,13 +466,13 @@ export function ProfileContent() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 text-sm font-medium text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-100">
-                  ÐÑÐµ Ð¾ÑÐ½Ð¾Ð²Ð½ÑÐµ Ð·Ð°Ð´Ð°ÑÐ¸ Ð²ÑÐ¿Ð¾Ð»Ð½ÐµÐ½Ñ â Ð¾ÑÐ»Ð¸ÑÐ½Ð°Ñ ÑÐ°Ð±Ð¾ÑÐ°.
+                  Все основные задачи выполнены — отличная работа.
                 </div>
               )}
 
               {/* Trust badges */}
               <div className="rounded-lg bg-white p-4 dark:bg-zinc-900/80">
-                <div className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6b7280] dark:text-zinc-500">ÐÐ¾Ð²ÐµÑÐ¸Ðµ Ð¿Ð¾ÐºÑÐ¿Ð°ÑÐµÐ»ÐµÐ¹</div>
+                <div className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6b7280] dark:text-zinc-500">Доверие покупателей</div>
                 <div className="flex flex-wrap gap-2">
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
@@ -482,7 +482,7 @@ export function ProfileContent() {
                     }`}
                   >
                     <CheckCircle size={16} strokeWidth={s} aria-hidden />
-                    ÐÐºÑÐ¸Ð²Ð½ÑÐ¹ Ð¿ÑÐ¾Ð´Ð°Ð²ÐµÑ
+                    Активный продавец
                   </span>
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
@@ -492,7 +492,7 @@ export function ProfileContent() {
                     }`}
                   >
                     <Clock size={16} strokeWidth={s} aria-hidden />
-                    ÐÑÐ²ÐµÑÑ Ð² ÑÐ°ÑÐµ
+                    Ответы в чате
                   </span>
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
@@ -507,13 +507,13 @@ export function ProfileContent() {
                 </div>
               </div>
 
-              {/* Reputation â collapsible */}
+              {/* Reputation — collapsible */}
               {publicProfile ? (
                 <details className="group rounded-2xl border border-zinc-200 bg-white shadow-sm open:shadow-md">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                     <span className="inline-flex items-center gap-2 text-sm font-bold text-zinc-900">
                       <Eye size={20} strokeWidth={s} aria-hidden />
-                      Ð ÐµÐ¿ÑÑÐ°ÑÐ¸Ñ Ð¸ Ð¾ÑÐ·ÑÐ²Ñ
+                      Репутация и отзывы
                     </span>
                     <ChevronDown
                       size={18}
@@ -525,17 +525,17 @@ export function ProfileContent() {
                   <div className="border-t border-zinc-100 px-4 py-4">
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                       <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-                        <div className="text-xs text-zinc-500">ÐÑÐ·ÑÐ²Ñ</div>
+                        <div className="text-xs text-zinc-500">Отзывы</div>
                         <div className="text-lg font-bold">{publicProfile.rating.count}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
-                        <div className="text-xs text-zinc-500">ÐÐºÑÐ¸Ð²Ð½ÑÐµ Ð½Ð° Ð²Ð¸ÑÑÐ¸Ð½Ðµ</div>
+                        <div className="text-xs text-zinc-500">Активные на витрине</div>
                         <div className="text-lg font-bold">{publicProfile.activeListings.length}</div>
                       </div>
                       <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-3 md:col-span-1 col-span-2">
                         <div className="inline-flex items-center gap-1 text-xs text-zinc-500">
                           <Calendar size={14} strokeWidth={s} aria-hidden />
-                          ÐÐ° Ð¿Ð»Ð¾ÑÐ°Ð´ÐºÐµ Ñ
+                          На площадке с
                         </div>
                         <div className="text-lg font-bold">
                           {new Date(publicProfile.user.createdAt).toLocaleDateString('ru-RU')}
@@ -545,19 +545,19 @@ export function ProfileContent() {
                     <div className="mt-4">
                       <div className="mb-2 inline-flex items-center gap-1 text-xs font-bold text-zinc-600">
                         <FileText size={14} strokeWidth={s} aria-hidden />
-                        ÐÐ¾ÑÐ»ÐµÐ´Ð½Ð¸Ðµ Ð¾ÑÐ·ÑÐ²Ñ
+                        Последние отзывы
                       </div>
                       {publicProfile.reviews.length === 0 ? (
-                        <p className="text-sm text-zinc-500">ÐÐ¾ÐºÐ° Ð½ÐµÑ Ð¾ÑÐ·ÑÐ²Ð¾Ð² Ð¾Ñ Ð¿Ð¾ÐºÑÐ¿Ð°ÑÐµÐ»ÐµÐ¹.</p>
+                        <p className="text-sm text-zinc-500">Пока нет отзывов от покупателей.</p>
                       ) : (
                         <ul className="space-y-2">
                           {publicProfile.reviews.slice(0, 5).map((r) => (
                             <li key={r.id} className="rounded-xl border border-zinc-100 bg-zinc-50/80 p-3 text-sm">
                               <div className="flex items-center justify-between text-xs text-zinc-500">
-                                <span className="font-medium text-zinc-700">{r.author.name ?? 'ÐÐ¾ÐºÑÐ¿Ð°ÑÐµÐ»Ñ'}</span>
+                                <span className="font-medium text-zinc-700">{r.author.name ?? 'Покупатель'}</span>
                                 <span>{new Date(r.createdAt).toLocaleDateString('ru-RU')}</span>
                               </div>
-                              <div className="mt-1 font-semibold text-amber-700">â {r.rating}/5</div>
+                              <div className="mt-1 font-semibold text-amber-700">★ {r.rating}/5</div>
                               {r.text ? <p className="mt-1 text-zinc-700">{r.text}</p> : null}
                             </li>
                           ))}
@@ -575,17 +575,17 @@ export function ProfileContent() {
                   className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
                 >
                   <Settings size={18} strokeWidth={s} aria-hidden />
-                  ÐÐ°ÑÑÑÐ¾Ð¹ÐºÐ¸ Ð¿ÑÐ¾ÑÐ¸Ð»Ñ
+                  Настройки профиля
                 </Link>
                 <Link
                   href={`/seller/${me.id}`}
                   className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
                 >
-                  ÐÑÐ±Ð»Ð¸ÑÐ½Ð°Ñ Ð²Ð¸ÑÑÐ¸Ð½Ð°
+                  Публичная витрина
                   <ChevronRight size={16} strokeWidth={s} className="opacity-60" aria-hidden />
                 </Link>
                 <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-sky-700">
-                  ÐÐ° Ð³Ð»Ð°Ð²Ð½ÑÑ
+                  На главную
                 </Link>
               </div>
 
@@ -593,8 +593,8 @@ export function ProfileContent() {
               <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="text-lg font-bold text-zinc-900">Ð£Ð¿ÑÐ°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸ÑÐ¼Ð¸</h2>
-                    <p className="text-xs text-zinc-500">ÐÑÐµÐ³Ð¾ Ð² ÐºÐ°Ð±Ð¸Ð½ÐµÑÐµ: {listings.length}</p>
+                    <h2 className="text-lg font-bold text-zinc-900">Управление объявлениями</h2>
+                    <p className="text-xs text-zinc-500">Всего в кабинете: {listings.length}</p>
                   </div>
                 </div>
 
@@ -602,10 +602,10 @@ export function ProfileContent() {
                 <div className="mb-5 flex flex-wrap gap-2 rounded-xl bg-zinc-100 p-1">
                   {(
                     [
-                      ['ACTIVE', 'ÐÐºÑÐ¸Ð²Ð½ÑÐµ', activeCount],
-                      ['SOLD', 'ÐÑÐ¾Ð´Ð°Ð½Ð¾', soldCount],
-                      ['ARCHIVED', 'ÐÑÑÐ¸Ð²', archivedCount],
-                      ['ALL', 'ÐÑÐµ', listings.length],
+                      ['ACTIVE', 'Активные', activeCount],
+                      ['SOLD', 'Продано', soldCount],
+                      ['ARCHIVED', 'Архив', archivedCount],
+                      ['ALL', 'Все', listings.length],
                     ] as const
                   ).map(([tab, label, count]) => (
                     <button
@@ -636,12 +636,12 @@ export function ProfileContent() {
                   <>
                     {visibleListings.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 py-12 text-center">
-                        <p className="text-sm font-medium text-zinc-600">Ð ÑÑÐ¾Ð¼ ÑÐ°Ð·Ð´ÐµÐ»Ðµ Ð¿Ð¾ÐºÐ° Ð¿ÑÑÑÐ¾</p>
+                        <p className="text-sm font-medium text-zinc-600">В этом разделе пока пусто</p>
                         <Link
                           href="/new"
                           className="mt-3 inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
                         >
-                          Ð¡Ð¾Ð·Ð´Ð°ÑÑ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ðµ
+                          Создать объявление
                         </Link>
                       </div>
                     ) : null}
@@ -689,22 +689,22 @@ export function ProfileContent() {
                                   </span>
                                 </div>
                                 <div className="mt-1 text-xl font-bold text-zinc-900">
-                                  {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} â½` : 'Ð¦ÐµÐ½Ð° Ð½Ðµ ÑÐºÐ°Ð·Ð°Ð½Ð°'}
+                                  {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена не указана'}
                                 </div>
                                 <div className="mt-1 text-xs text-zinc-500">
-                                  {x.city} Â· {x.category.title} Â·{' '}
+                                  {x.city} · {x.category.title} ·{' '}
                                   {new Date(x.createdAt).toLocaleDateString('ru-RU')}
                                 </div>
                                 {x.activePromotion ? (
                                   <p className="mt-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                                    ÐÑÐ¾Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ Ð°ÐºÑÐ¸Ð²Ð½Ð¾ Ð´Ð¾ {formatPromoEndsAt(x.activePromotion.endsAt)}
+                                    Продвижение активно до {formatPromoEndsAt(x.activePromotion.endsAt)}
                                   </p>
                                 ) : null}
                               </div>
 
                               <div className="flex flex-col gap-2 lg:w-56 lg:shrink-0">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">
-                                  ÐÑÐ¾Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ Â· 3 Ð´Ð½Ñ
+                                  Продвижение · 3 дня
                                 </p>
                                 <div className="flex flex-col gap-2">
                                   {x.status === 'ACTIVE' ? (
@@ -732,10 +732,10 @@ export function ProfileContent() {
                                   ) : (
                                     <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400">
                                       {x.status === 'PENDING'
-                                        ? 'ÐÑÐ¾Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ Ð´Ð¾ÑÑÑÐ¿Ð½Ð¾ Ð¿Ð¾ÑÐ»Ðµ Ð¿ÑÐ±Ð»Ð¸ÐºÐ°ÑÐ¸Ð¸ Ð² Ð»ÐµÐ½ÑÐµ.'
+                                        ? 'Продвижение доступно после публикации в ленте.'
                                         : x.status === 'BLOCKED'
-                                          ? 'ÐÐ±ÑÑÐ²Ð»ÐµÐ½Ð¸Ðµ ÑÐºÑÑÑÐ¾ â Ð¿ÑÐ¾Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ Ð½ÐµÐ´Ð¾ÑÑÑÐ¿Ð½Ð¾.'
-                                          : 'ÐÑÐ¾Ð´Ð²Ð¸Ð¶ÐµÐ½Ð¸Ðµ ÑÐ¾Ð»ÑÐºÐ¾ Ð´Ð»Ñ Ð°ÐºÑÐ¸Ð²Ð½ÑÑ Ð»Ð¾ÑÐ¾Ð².'}
+                                          ? 'Объявление скрыто — продвижение недоступно.'
+                                          : 'Продвижение только для активных лотов.'}
                                     </p>
                                   )}
                                 </div>
@@ -745,7 +745,7 @@ export function ProfileContent() {
                                     onClick={() => void publishAfterImageReview(x.id)}
                                     className="w-full rounded-xl border border-emerald-200 bg-emerald-50 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100"
                                   >
-                                    ÐÐ¾Ð´ÑÐ²ÐµÑÐ´Ð¸ÑÑ Ð¿ÑÐ±Ð»Ð¸ÐºÐ°ÑÐ¸Ñ Ð² Ð»ÐµÐ½ÑÐµ
+                                    Подтвердить публикацию в ленте
                                   </button>
                                 ) : null}
                                 <button
@@ -753,7 +753,7 @@ export function ProfileContent() {
                                   onClick={() => startEdit(x)}
                                   className="w-full rounded-xl border border-zinc-200 bg-white py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
                                 >
-                                  Ð ÐµÐ´Ð°ÐºÑÐ¸ÑÐ¾Ð²Ð°ÑÑ
+                                  Редактировать
                                 </button>
                                 <button
                                   type="button"
@@ -761,7 +761,7 @@ export function ProfileContent() {
                                   onClick={() => void setListingStatus(x.id, x.status === 'SOLD' ? 'ACTIVE' : 'SOLD')}
                                   className="w-full rounded-xl border border-zinc-200 bg-white py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                  {x.status === 'SOLD' ? 'ÐÐµÑÐ½ÑÑÑ Ð² Ð°ÐºÑÐ¸Ð²Ð½ÑÐµ' : 'ÐÑÐ¼ÐµÑÐ¸ÑÑ Ð¿ÑÐ¾Ð´Ð°Ð½Ð½ÑÐ¼'}
+                                  {x.status === 'SOLD' ? 'Вернуть в активные' : 'Отметить проданным'}
                                 </button>
                                 <button
                                   type="button"
@@ -771,7 +771,7 @@ export function ProfileContent() {
                                   }
                                   className="w-full rounded-xl border border-zinc-200 bg-white py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                  {x.status === 'ARCHIVED' ? 'ÐÐ· Ð°ÑÑÐ¸Ð²Ð°' : 'Ð Ð°ÑÑÐ¸Ð²'}
+                                  {x.status === 'ARCHIVED' ? 'Из архива' : 'В архив'}
                                 </button>
                                 <button
                                   type="button"
@@ -779,7 +779,7 @@ export function ProfileContent() {
                                   className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-red-200 bg-red-50/50 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
                                 >
                                   <Trash2 size={16} strokeWidth={1.8} aria-hidden />
-                                  Ð£Ð´Ð°Ð»Ð¸ÑÑ
+                                  Удалить
                                 </button>
                               </div>
                             </div>
@@ -791,20 +791,20 @@ export function ProfileContent() {
                                     value={editForm.title}
                                     onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
                                     className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/15"
-                                    placeholder="ÐÐ°Ð·Ð²Ð°Ð½Ð¸Ðµ"
+                                    placeholder="Название"
                                   />
                                   <textarea
                                     value={editForm.description}
                                     onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
                                     className="min-h-24 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/15"
-                                    placeholder="ÐÐ¿Ð¸ÑÐ°Ð½Ð¸Ðµ (Ð½ÐµÐ¾Ð±ÑÐ·Ð°ÑÐµÐ»ÑÐ½Ð¾, Ð¾Ñ 10 ÑÐ¸Ð¼Ð²Ð¾Ð»Ð¾Ð²)"
+                                    placeholder="Описание (необязательно, от 10 символов)"
                                   />
                                   <div className="grid gap-2 sm:grid-cols-3">
                                     <input
                                       value={editForm.city}
                                       onChange={(e) => setEditForm((p) => ({ ...p, city: e.target.value }))}
                                       className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-sky-400"
-                                      placeholder="ÐÐ¾ÑÐ¾Ð´"
+                                      placeholder="Город"
                                     />
                                     <UiSelect
                                       value={editForm.categoryId}
@@ -819,7 +819,7 @@ export function ProfileContent() {
                                         setEditForm((p) => ({ ...p, priceRub: e.target.value.replace(/[^\d]/g, '') }))
                                       }
                                       className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-sky-400"
-                                      placeholder="Ð¦ÐµÐ½Ð° â½"
+                                      placeholder="Цена ₽"
                                     />
                                   </div>
                                   <div className="flex flex-wrap gap-2">
@@ -828,14 +828,14 @@ export function ProfileContent() {
                                       onClick={() => void saveEdit(x.id)}
                                       className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
                                     >
-                                      Ð¡Ð¾ÑÑÐ°Ð½Ð¸ÑÑ
+                                      Сохранить
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => setEditingId(null)}
                                       className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
                                     >
-                                      ÐÑÐ¼ÐµÐ½Ð°
+                                      Отмена
                                     </button>
                                   </div>
                                 </div>
