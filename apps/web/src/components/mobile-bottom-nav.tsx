@@ -4,13 +4,20 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home as HomeIcon, Heart, Plus, MessageCircle, User } from 'lucide-react';
 
-const NAV_ITEMS = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof HomeIcon;
+  isFab?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Главная', icon: HomeIcon },
   { href: '/favorites', label: 'Избранное', icon: Heart },
   { href: '/new', label: 'Разместить', icon: Plus, isFab: true },
   { href: '/messages', label: 'Сообщения', icon: MessageCircle },
   { href: '/profile', label: 'Профиль', icon: User },
-] as const;
+];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
