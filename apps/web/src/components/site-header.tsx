@@ -10,17 +10,18 @@ import {
   Heart,
   LayoutGrid,
   LogOut,
+  MapPin,
   MessageCircle,
   Package,
   Plus,
   Search,
   Settings,
+  ShoppingCart,
   SlidersHorizontal,
   Star,
   Tag,
   User,
   Wallet,
-  ShoppingCart,
   ChevronDown,
 } from 'lucide-react';
 import { MegaMenu } from '@/components/mega-menu';
@@ -66,6 +67,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
         <div className="hidden border-b border-[#F0F0F0] dark:border-zinc-800 md:block">
           <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">
             <div className="flex items-center gap-4 text-xs text-[#707070] dark:text-zinc-400">
+              <span className="cursor-default hover:text-[#007AFF] transition-colors">Для бизнеса</span>
               <span className="cursor-default hover:text-[#007AFF] transition-colors">Карьера</span>
               <span className="cursor-default hover:text-[#007AFF] transition-colors">Помощь</span>
             </div>
@@ -74,6 +76,9 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
               <Link href="/favorites" className="flex items-center gap-1 text-xs text-[#707070] hover:text-[#007AFF] transition-colors dark:text-zinc-400">
                 <Heart size={14} strokeWidth={1.8} />
                 <span className="hidden lg:inline">Избранное</span>
+              </Link>
+              <Link href="/cart" className="flex items-center gap-1 text-xs text-[#707070] hover:text-[#007AFF] transition-colors dark:text-zinc-400">
+                <ShoppingCart size={14} strokeWidth={1.8} />
               </Link>
               {ready && user ? (
                 <Link href="/messages" className="flex items-center gap-1 text-xs text-[#707070] hover:text-[#007AFF] transition-colors dark:text-zinc-400">
@@ -126,6 +131,15 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
 
           {/* Search slot from page.tsx — desktop only */}
           {children}
+
+          {/* Region selector — Avito-style */}
+          <button
+            type="button"
+            className="shrink-0 items-center gap-1.5 rounded-lg border border-[#D1D5DB] px-3 py-2.5 text-sm text-[#333] transition hover:border-[#007AFF] hover:text-[#007AFF] dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-[#4DA6FF] dark:hover:text-[#4DA6FF] hidden md:inline-flex"
+          >
+            <MapPin size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
+            <span className="whitespace-nowrap">Во всех регионах</span>
+          </button>
         </div>
 
         {/* Profile dropdown (anchored to top bar) */}
