@@ -187,6 +187,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
               className="min-w-0 flex-1 bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
             />
           </form>
+          <ThemeQuickToggle />
           <button
             type="button"
             onClick={() => setMegaOpen((v) => !v)}
