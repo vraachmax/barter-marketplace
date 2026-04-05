@@ -390,14 +390,20 @@ export default async function Home({
       </div>
 
       {/* ===== DARK GRADIENT TOP AREA (mobile-first, visible on all) ===== */}
-      <div style={{ background: 'linear-gradient(to bottom, #00B4D8, #000000)', paddingBottom: 24 }} className="md:hidden">
+      <div style={{ background: 'linear-gradient(to bottom, #00B4D8, #0097A7)', paddingBottom: 24 }} className="md:hidden">
         {/* Mobile Header */}
-        <header style={{ position: 'sticky', top: 0, width: '100%', zIndex: 50, padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <header className="mobile-header" style={{ position: 'sticky', top: 0, width: '100%', zIndex: 50, padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Logo */}
-            <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/logo_dark.svg" alt="Бартер" style={{ height: 32, width: 'auto' }} />
+            {/* Logo — 3 bubbles + text */}
+            <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ position: 'relative', width: 28, height: 28 }}>
+                  <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#4FC3F7', top: 0, left: 0 }}/>
+                  <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#FFD54F', top: 4, left: 6 }}/>
+                  <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#66BB6A', top: 8, left: 2 }}/>
+                </div>
+                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Бартер</span>
+              </div>
             </Link>
             {/* Search bar */}
             <form action="/" method="GET" style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
