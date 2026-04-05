@@ -68,21 +68,21 @@ const getRussianCities = cache(async () => {
   } catch {
     // fallback below
   }
-  return ['ÐÐ¾ÑÐºÐ²Ð°', 'Ð¡Ð°Ð½ÐºÑ-ÐÐµÑÐµÑÐ±ÑÑÐ³', 'ÐÐ°Ð·Ð°Ð½Ñ'];
+  return ['Москва', 'Санкт-Петербург', 'Казань'];
 });
 
 const PRICE_TYPE_SUFFIX: Record<string, string> = {
-  per_day: 'Ð·Ð° ÑÑÑÐºÐ¸',
-  per_hour: 'Ð² ÑÐ°Ñ',
-  per_service: 'Ð·Ð° ÑÑÐ»ÑÐ³Ñ',
-  per_sqm: 'Ð·Ð° Ð¼Â²',
-  per_month: 'Ð² Ð¼ÐµÑÑÑ',
-  per_shift: 'Ð·Ð° ÑÐ¼ÐµÐ½Ñ',
+  per_day: 'за сутки',
+  per_hour: 'в час',
+  per_service: 'за услугу',
+  per_sqm: 'за м²',
+  per_month: 'в месяц',
+  per_shift: 'за смену',
 };
 
 function formatRub(v: number | null, priceType?: string | null) {
-  if (v == null) return 'Ð¦ÐµÐ½Ð° Ð½Ðµ ÑÐºÐ°Ð·Ð°Ð½Ð°';
-  const base = `${v.toLocaleString('ru-RU')} â½`;
+  if (v == null) return 'Цена не указана';
+  const base = `${v.toLocaleString('ru-RU')} ₽`;
   const suffix = priceType ? PRICE_TYPE_SUFFIX[priceType] : undefined;
   return suffix ? `${base} ${suffix}` : base;
 }
@@ -215,7 +215,7 @@ export default async function Home({
     lonN <= 180;
   const apiSort = sp.sort === 'nearby' && !geoOk ? 'relevant' : currentSort;
   const currentRadiusKm = (sp.radiusKm ?? '').trim() || '25';
-  const currentCity = sp.city ?? prefCity ?? 'ÐÐ¾ÑÐºÐ²Ð°';
+  const currentCity = sp.city ?? prefCity ?? 'Москва';
   const currentQ = sp.q ?? '';
   const urlCategoryId = (sp.categoryId ?? '').trim();
   const currentPriceMin = sp.priceMin ?? '';
@@ -282,7 +282,7 @@ export default async function Home({
 
   const emptyListings: ListingsResponse = { page: 1, limit: 20, total: 0, vipStrip: [], items: [] };
   const emptyRecommended: ListingsResponse = { page: 1, limit: 8, total: 0, items: [] };
-  const defaultCities = ['ÐÐ¾ÑÐºÐ²Ð°', 'Ð¡Ð°Ð½ÐºÑ-ÐÐµÑÐµÑÐ±ÑÑÐ³', 'ÐÐ°Ð·Ð°Ð½Ñ'];
+  const defaultCities = ['Москва', 'Санкт-Петербург', 'Казань'];
 
   const [catRes, listRes, recRes, citiesRes] = await Promise.allSettled([
     categoriesPromise,
@@ -304,15 +304,15 @@ export default async function Home({
     : [currentCity, ...russianCitiesRaw];
   const cityOptions = russianCities.map((city) => ({ value: city, label: city }));
   const categoryOptions = [
-    { value: '', label: 'ÐÐ°ÑÐµÐ³Ð¾ÑÐ¸Ñ' },
+    { value: '', label: 'Категория' },
     ...categories.map((c) => ({ value: c.id, label: c.title })),
   ];
   const sortOptions = [
-    { value: 'relevant', label: 'Ð ÐµÐ»ÐµÐ²Ð°Ð½ÑÐ½ÑÐµ' },
-    { value: 'new', label: 'ÐÐ¾ Ð½Ð¾Ð²Ð¸Ð·Ð½Ðµ' },
-    { value: 'cheap', label: 'ÐÐµÑÐµÐ²Ð»Ðµ' },
-    { value: 'expensive', label: 'ÐÐ¾ÑÐ¾Ð¶Ðµ' },
-    { value: 'nearby', label: 'ÐÐ¾ ÑÐ°ÑÑÑÐ¾ÑÐ½Ð¸Ñ' },
+    { value: 'relevant', label: 'Релевантные' },
+    { value: 'new', label: 'По новизне' },
+    { value: 'cheap', label: 'Дешевле' },
+    { value: 'expensive', label: 'Дороже' },
+    { value: 'nearby', label: 'По расстоянию' },
   ];
 
   const geoHidden = geoOk ? (
@@ -333,16 +333,16 @@ export default async function Home({
   };
 
   const CATS: Array<{ name: string; slug: string; icon: typeof Car; color: string; bgColor: string; darkBg: string; darkColor: string }> = [
-    { name: 'ÐÐ²ÑÐ¾', slug: 'auto', icon: Car, color: '#2563EB', bgColor: '#DBEAFE', darkBg: '#1e3a5f', darkColor: '#60a5fa' },
-    { name: 'ÐÐµÐ´Ð²Ð¸Ð¶Ð¸Ð¼Ð¾ÑÑÑ', slug: 'realty', icon: Building2, color: '#EA580C', bgColor: '#FFF7ED', darkBg: '#431407', darkColor: '#fb923c' },
-    { name: 'Ð Ð°Ð±Ð¾ÑÐ°', slug: 'job', icon: Briefcase, color: '#059669', bgColor: '#ECFDF5', darkBg: '#064e3b', darkColor: '#34d399' },
-    { name: 'ÐÐ´ÐµÐ¶Ð´Ð°', slug: 'clothes', icon: Shirt, color: '#DB2777', bgColor: '#FDF2F8', darkBg: '#4a0828', darkColor: '#f472b6' },
-    { name: 'Ð­Ð»ÐµÐºÑÑÐ¾Ð½Ð¸ÐºÐ°', slug: 'electronics', icon: Laptop, color: '#7C3AED', bgColor: '#F5F3FF', darkBg: '#2e1065', darkColor: '#a78bfa' },
-    { name: 'ÐÐ»Ñ Ð´Ð¾Ð¼Ð°', slug: 'home', icon: Sofa, color: '#16A34A', bgColor: '#F0FDF4', darkBg: '#14532d', darkColor: '#4ade80' },
-    { name: 'ÐÐµÑÑÐ¼', slug: 'kids', icon: Baby, color: '#0891B2', bgColor: '#ECFEFF', darkBg: '#164e63', darkColor: '#22d3ee' },
-    { name: 'Ð¥Ð¾Ð±Ð±Ð¸', slug: 'hobby', icon: Trophy, color: '#D97706', bgColor: '#FFFBEB', darkBg: '#451a03', darkColor: '#fbbf24' },
-    { name: 'Ð£ÑÐ»ÑÐ³Ð¸', slug: 'services', icon: Wrench, color: '#9333EA', bgColor: '#FAF5FF', darkBg: '#3b0764', darkColor: '#c084fc' },
-    { name: 'ÐÐ¸Ð²Ð¾ÑÐ½ÑÐµ', slug: 'animals', icon: Dog, color: '#E11D48', bgColor: '#FFF1F2', darkBg: '#4c0519', darkColor: '#fb7185' },
+    { name: 'Авто', slug: 'auto', icon: Car, color: '#2563EB', bgColor: '#DBEAFE', darkBg: '#1e3a5f', darkColor: '#60a5fa' },
+    { name: 'Недвижимость', slug: 'realty', icon: Building2, color: '#EA580C', bgColor: '#FFF7ED', darkBg: '#431407', darkColor: '#fb923c' },
+    { name: 'Работа', slug: 'job', icon: Briefcase, color: '#059669', bgColor: '#ECFDF5', darkBg: '#064e3b', darkColor: '#34d399' },
+    { name: 'Одежда', slug: 'clothes', icon: Shirt, color: '#DB2777', bgColor: '#FDF2F8', darkBg: '#4a0828', darkColor: '#f472b6' },
+    { name: 'Электроника', slug: 'electronics', icon: Laptop, color: '#7C3AED', bgColor: '#F5F3FF', darkBg: '#2e1065', darkColor: '#a78bfa' },
+    { name: 'Для дома', slug: 'home', icon: Sofa, color: '#16A34A', bgColor: '#F0FDF4', darkBg: '#14532d', darkColor: '#4ade80' },
+    { name: 'Детям', slug: 'kids', icon: Baby, color: '#0891B2', bgColor: '#ECFEFF', darkBg: '#164e63', darkColor: '#22d3ee' },
+    { name: 'Хобби', slug: 'hobby', icon: Trophy, color: '#D97706', bgColor: '#FFFBEB', darkBg: '#451a03', darkColor: '#fbbf24' },
+    { name: 'Услуги', slug: 'services', icon: Wrench, color: '#9333EA', bgColor: '#FAF5FF', darkBg: '#3b0764', darkColor: '#c084fc' },
+    { name: 'Животные', slug: 'animals', icon: Dog, color: '#E11D48', bgColor: '#FFF1F2', darkBg: '#4c0519', darkColor: '#fb7185' },
   ];
 
   const catIdMap: Record<string, string> = {};
@@ -359,11 +359,11 @@ export default async function Home({
           role="alert"
           className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
         >
-          <strong>ÐÐµ ÑÐ´Ð°ÑÑÑÑ ÑÐ²ÑÐ·Ð°ÑÑÑÑ Ñ API</strong> ({API_URL || 'ÑÐµÑÐ²ÐµÑ'}). ÐÐ°Ð¿ÑÑÑÐ¸ÑÐµ Ð±ÑÐºÐµÐ½Ð´: Ð² ÐºÐ¾ÑÐ½Ðµ
-          Ð¿ÑÐ¾ÐµÐºÑÐ°{' '}
-          <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev</code> Ð¸Ð»Ð¸{' '}
+          <strong>Не удаётся связаться с API</strong> ({API_URL || 'сервер'}). Запустите бэкенд: в корне
+          проекта{' '}
+          <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev</code> или{' '}
           <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev:api</code>{' '}
-          (Ð¿Ð¾ÑÑ 3001). ÐÐµÐ½ÑÐ° Ð¸ ÐºÐ°ÑÐµÐ³Ð¾ÑÐ¸Ð¸ Ð²ÑÐµÐ¼ÐµÐ½Ð½Ð¾ Ð¿ÑÑÑÑÐµ.
+          (порт 3001). Лента и категории временно пустые.
         </div>
       ) : null}
       <SiteHeader>
@@ -378,14 +378,14 @@ export default async function Home({
               defaultValue={currentQ}
               categories={categories}
               className="h-10 w-full border-none bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
-              placeholder="ÐÐ¾Ð¸ÑÐº Ð¿Ð¾ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸ÑÐ¼"
+              placeholder="Поиск по объявлениям"
             />
           </div>
           <button
             type="submit"
             className="h-10 shrink-0 rounded-r-lg bg-[#007AFF] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#0066DD]"
           >
-            ÐÐ°Ð¹ÑÐ¸
+            Найти
           </button>
         </form>
       </SiteHeader>
@@ -394,7 +394,7 @@ export default async function Home({
         <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
         <div className="space-y-5 md:space-y-6">
-          {/* Categories â Avito-style flat tiles */}
+          {/* Categories — Avito-style flat tiles */}
           <section>
             <div className="rounded-xl bg-white p-4 dark:bg-zinc-900 md:p-5">
               <div className="grid grid-cols-5 gap-2.5 md:grid-cols-5 md:gap-3 lg:gap-4">
@@ -431,7 +431,7 @@ export default async function Home({
           {!hasSearchQuery && recommended.items.length > 0 ? (
           <section className="animate-fade-in-up">
             <div className="mb-3 flex items-center justify-between md:mb-4">
-              <h2 className="text-base font-bold text-[#111] dark:text-white md:text-lg">Ð ÐµÐºÐ¾Ð¼ÐµÐ½Ð´Ð°ÑÐ¸Ð¸ Ð´Ð»Ñ Ð²Ð°Ñ</h2>
+              <h2 className="text-base font-bold text-[#111] dark:text-white md:text-lg">Рекомендации для мас</h2>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-x-visible md:pb-0 md:gap-4">
               {recommended.items.map((x) => (
@@ -478,10 +478,10 @@ export default async function Home({
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="inline-flex items-center gap-1.5 rounded-md bg-[#007AFF] px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
                   <Sparkles size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
-                  Ð ÐµÐ¶Ð¸Ð¼ Ð¿Ð¾Ð´Ð±Ð¾ÑÐ°
+                  Режим подбора
                 </span>
                 <span className="text-[#333] dark:text-zinc-300">
-                  ÐÐ¾ÐºÐ°Ð·ÑÐ²Ð°ÐµÐ¼ Ð»ÐµÐ½ÑÑ Ð¿Ð¾ Ð²Ð°ÑÐ¸Ð¼ Ð½ÐµÐ´Ð°Ð²Ð½Ð¸Ð¼ Ð¿ÑÐ¾ÑÐ¼Ð¾ÑÑÐ°Ð¼ Ð¸ Ð¸Ð½ÑÐµÑÐµÑÐ°Ð¼.
+                  Показываем ленту по вашим недавним просмотрам и интересам.
                 </span>
               </div>
             </div>
@@ -489,7 +489,7 @@ export default async function Home({
 
           {(listings.vipStrip ?? []).length > 0 ? (
             <section
-              aria-label="VIP Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ"
+              aria-label="VIP объявления"
               className="rounded-xl bg-white p-4 dark:bg-zinc-900"
             >
               <div className="mb-3 flex items-center gap-2">
@@ -497,7 +497,7 @@ export default async function Home({
                   VIP
                 </span>
                 <span className="text-sm text-[#707070] dark:text-zinc-400">
-                  ÐÐ°ÐºÑÐµÐ¿Ð»ÑÐ½Ð½ÑÐµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ
+                  Закреплённые объявления
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
@@ -533,7 +533,7 @@ export default async function Home({
                         {x.title}
                       </div>
                       <div className="text-xs text-[#999] truncate">
-                        {x.city} Â· {x.category.title}
+                        {x.city} · {x.category.title}
                       </div>
                     </div>
                   </TrackedListingLink>
@@ -547,17 +547,17 @@ export default async function Home({
             {listings.items.length > 0 ? (
               <div className="mb-3 flex items-center justify-between md:mb-4">
                 <h2 className="text-base font-bold text-[#111] dark:text-white md:text-lg">
-                  {currentQ ? `Ð ÐµÐ·ÑÐ»ÑÑÐ°ÑÑ: Â«${currentQ}Â»` : 'ÐÑÐµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ'}
+                  {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
                 </h2>
-                <span className="text-xs text-[#999]">{listings.total} Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ð¹</span>
+                <span className="text-xs text-[#999]">{listings.total} объявлений</span>
               </div>
             ) : null}
             <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
             {listings.items.length === 0 ? (
               <div className="col-span-2 md:col-span-3 lg:col-span-4 rounded-xl bg-white p-8 text-center dark:bg-zinc-900">
-                <div className="mx-auto mb-3 text-4xl">ð</div>
-                <p className="text-sm font-medium text-[#333] dark:text-zinc-300">ÐÐ¸ÑÐµÐ³Ð¾ Ð½Ðµ Ð½Ð°ÑÐ»Ð¾ÑÑ</p>
-                <p className="mt-1 text-xs text-[#999] dark:text-zinc-500">ÐÐ¾Ð¿ÑÐ¾Ð±ÑÐ¹ÑÐµ ÑÐ½ÑÑÑ ÐºÐ°ÑÐµÐ³Ð¾ÑÐ¸Ñ Ð¸Ð»Ð¸ Ð¸Ð·Ð¼ÐµÐ½Ð¸ÑÑ Ð³Ð¾ÑÐ¾Ð´</p>
+                <div className="mx-auto mb-3 text-4xl">🔍</div>
+                <p className="text-sm font-medium text-[#333] dark:text-zinc-300">Ничего не нашлось</p>
+                <p className="mt-1 text-xs text-[#999] dark:text-zinc-500">Попробуйте снять категорию или изменить город</p>
               </div>
             ) : null}
             {listings.items.map((x) => (
@@ -585,7 +585,7 @@ export default async function Home({
                       <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
                       {x.isBoosted ? (
                         <span className="absolute top-2 left-2 z-[1] rounded-md bg-[#FF6F00] px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
-                          ÐÐ¾Ð´Ð½ÑÑÐ¾
+                          Поднято
                         </span>
                       ) : null}
                     </>
@@ -599,8 +599,8 @@ export default async function Home({
                     {x.title}
                   </div>
                   <div className="text-[11px] text-[#999] truncate">
-                    {x.city} Â· {x.category.title}
-                    {typeof x.distanceKm === 'number' ? ` Â· ${x.distanceKm} ÐºÐ¼` : ''}
+                    {x.city} · {x.category.title}
+                    {typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
                   </div>
                 </div>
               </TrackedListingLink>
@@ -629,14 +629,14 @@ export default async function Home({
               className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#007AFF] transition-colors"
             >
               <HomeIcon size={22} strokeWidth={1.8} aria-hidden />
-              <span>ÐÐ»Ð°Ð²Ð½Ð°Ñ</span>
+              <span>Главная</span>
             </Link>
             <Link
               href="/favorites"
               className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
             >
               <Heart size={22} strokeWidth={1.8} aria-hidden />
-              <span>ÐÐ·Ð±ÑÐ°Ð½Ð½Ð¾Ðµ</span>
+              <span>Избранное</span>
             </Link>
             <Link
               href="/new"
@@ -645,21 +645,21 @@ export default async function Home({
               <span className="grid h-12 w-12 place-items-center rounded-full bg-[#007AFF] shadow-lg shadow-[#007AFF]/25 transition-transform active:scale-90">
                 <Plus size={24} strokeWidth={2} className="text-white" aria-hidden />
               </span>
-              <span className="text-[#007AFF]">ÐÐ¾Ð´Ð°ÑÑ</span>
+              <span className="text-[#007AFF]">Подать</span>
             </Link>
             <Link
               href="/messages"
               className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
             >
               <MessageCircle size={22} strokeWidth={1.8} aria-hidden />
-              <span>Ð§Ð°ÑÑ</span>
+              <span>Чаты</span>
             </Link>
             <Link
               href="/profile"
               className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
             >
               <User size={22} strokeWidth={1.8} aria-hidden />
-              <span>ÐÑÐ¾ÑÐ¸Ð»Ñ</span>
+              <span>Профиль</span>
             </Link>
           </div>
         </div>
