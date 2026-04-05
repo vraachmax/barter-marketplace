@@ -310,8 +310,7 @@ export function ProfileSettingsContent() {
                     Настройки приложения
                   </h1>
                   <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                    Как в кабинетах eBay и маркетплейсов: разделы слева, формы справа. Изменения применяются по кнопке
-                    «Сохранить».
+                    Разделы слева, формы справа. Изменения применяются по кнопке «Сохранить».
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
@@ -342,7 +341,7 @@ export function ProfileSettingsContent() {
                 </div>
 
                 <div className="flex flex-col lg:flex-row lg:min-h-[420px]">
-                  {/* Section nav — vertical like Stripe / Amazon account */}
+                  {/* Section nav — vertical sidebar */}
                   <nav className="border-b border-zinc-100 lg:w-56 lg:shrink-0 lg:border-b-0 lg:border-r lg:bg-zinc-50/50 lg:p-3 dark:border-zinc-800 dark:lg:bg-zinc-950/50">
                     <p className="hidden px-2 pb-2 text-[11px] font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 lg:block">
                       Разделы
@@ -384,7 +383,7 @@ export function ProfileSettingsContent() {
                       {section === 'account' ? (
                         <div className="space-y-4">
                           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                            Эти данные используются для входа и связи с вами. Публичная видимость настраивается в разделе
+                            Эти данные используются для мхода и связи с вами. Публичная видимость настраивается в разделе
                             «Приватность».
                           </p>
                           <label className="block">
@@ -419,12 +418,11 @@ export function ProfileSettingsContent() {
                       {section === 'storefront' ? (
                         <div className="space-y-6">
                           <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50/90 to-cyan-50/40 px-4 py-3 text-sm text-sky-950 dark:border-sky-900/40 dark:from-sky-950/35 dark:to-cyan-950/25 dark:text-sky-100">
-                            <p className="font-semibold">Как у крупных маркетплейсов</p>
+                            <p className="font-semibold">Витрина продавца</p>
                             <p className="mt-1 text-xs leading-relaxed text-sky-900/90 dark:text-sky-200/90">
-                              На eBay и Amazon у продавца есть <strong>отображаемое имя</strong>,{' '}
+                              Заполните <strong>отображаемое имя</strong>,{' '}
                               <strong>«О продавце»</strong> (опыт, условия, сроки ответа) и при необходимости блок{' '}
-                              <strong>компании</strong> — юр. название и описание. Здесь то же: заполните витрину, чтобы
-                              покупателям было проще доверять и связываться с вами.
+                              <strong>компании</strong> — юр. название и описание. Так покупателям будет проще доверять и связываться с вами.
                             </p>
                             {me?.id ? (
                               <Link
@@ -467,7 +465,7 @@ export function ProfileSettingsContent() {
                               autoComplete="off"
                             />
                             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                              Аватар на странице продавца; позже можно будет загружать файл, как на Vinted или Etsy.
+                              Аватар на странице продавца; позже можно будет загружать файл напрямую.
                             </p>
                           </label>
 
@@ -486,7 +484,7 @@ export function ProfileSettingsContent() {
                               onChange={(e) => setForm((p) => ({ ...p, about: e.target.value }))}
                               rows={6}
                               className="min-h-[140px] w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-500/15 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-sky-500 dark:focus:bg-zinc-900"
-                              placeholder="Расскажите о себе: чем торгуете, как долго на площадке, как быстро отвечаете в чате, условия возврата или самовывоза — по аналогии с блоком «About the seller» на eBay или описанием магазина на Amazon."
+                              placeholder="Расскажите о себе: чем торгуете, как долго на площадке, как быстро отвечаете в чате, условия возврата или самовывоза."
                             />
                           </label>
 
@@ -502,8 +500,7 @@ export function ProfileSettingsContent() {
                               <Building2 size={16} strokeWidth={stroke} className="mt-0.5 shrink-0" aria-hidden />
                               <span>
                                 Если продаёте как <strong className="text-zinc-800 dark:text-zinc-200">юрлицо или ИП</strong>
-                                , укажите название и реквизиты — покупатели увидят их на вашей публичной странице (как
-                                «Business seller» на Amazon или сведения о магазине на Etsy).
+                                , укажите название и реквизиты — покупатели увидят их на вашей публичной странице.
                               </span>
                             </div>
                             <label className="block">
@@ -594,8 +591,7 @@ export function ProfileSettingsContent() {
                       {section === 'notifications' ? (
                         <div className="space-y-3">
                           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                            Управляйте тем, как площадка напоминает о сообщениях и активности — по аналогии с настройками
-                            уведомлений в приложениях маркетплейсов.
+                            Управляйте тем, как Бартер напоминает о сообщениях и активности.
                           </p>
                           <SettingsToggleRow
                             checked={form.notificationsEnabled}
@@ -648,8 +644,7 @@ export function ProfileSettingsContent() {
                               <div>
                                 <p className="text-sm font-semibold text-amber-950 dark:text-amber-100">Скоро здесь будет больше</p>
                                 <p className="mt-1 text-sm text-amber-900/90 dark:text-amber-200/90">
-                                  Планируем смену пароля, список активных сессий и выход со всех устройств — как в
-                                  настройках безопасности крупных площадок.
+                                  Планируем смену пароля, список активных сессий и выход со всех устройств.
                                 </p>
                               </div>
                             </div>
