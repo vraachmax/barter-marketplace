@@ -497,10 +497,10 @@ export default async function Home({
                     apiBase={API_URL}
                     thumbClassName="listing-thumb-wrap relative overflow-hidden"
                     imageClassName="listing-thumb-img w-full"
-                    thumbStyle={{ position: 'relative', overflow: 'hidden', height: 130, background: '#EBEBEB' }}
+                    thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }}
                     imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     placeholder={
-                      <div style={{ height: 130, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
                         </svg>
@@ -545,7 +545,7 @@ export default async function Home({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
               {(listings.vipStrip ?? []).map((x) => (
                 <TrackedListingLink key={x.id} href={`/listing/${x.id}`} listingId={x.id} style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}>
-                  <FeedListingHoverThumb images={x.images} title={x.title} apiBase={API_URL} thumbClassName="listing-thumb-wrap relative overflow-hidden" imageClassName="listing-thumb-img w-full" thumbStyle={{ position: 'relative', overflow: 'hidden', height: 130, background: '#EBEBEB' }} imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} placeholder={<div style={{ height: 130, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>} badges={null} />
+                  <FeedListingHoverThumb images={x.images} title={x.title} apiBase={API_URL} thumbClassName="listing-thumb-wrap relative overflow-hidden" imageClassName="listing-thumb-img w-full" thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }} imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} placeholder={<div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>} badges={null} />
                   <div style={{ padding: 12 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
                     <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
@@ -588,10 +588,10 @@ export default async function Home({
                   apiBase={API_URL}
                   thumbClassName="listing-thumb-wrap relative overflow-hidden"
                   imageClassName="listing-thumb-img w-full"
-                  thumbStyle={{ position: 'relative', overflow: 'hidden', height: 130, background: '#EBEBEB' }}
+                  thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }}
                   imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   placeholder={
-                    <div style={{ height: 130, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
                       </svg>
