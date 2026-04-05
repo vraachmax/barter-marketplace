@@ -11,6 +11,7 @@ import express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new PrismaClientExceptionFilter());
+  // В dev cwd = корень monorepo, в prod (Render) cwd = apps/api
   const uploadsRoot = join(__dirname, '..', 'uploads');
   mkdirSync(join(uploadsRoot, 'listings'), { recursive: true });
   mkdirSync(join(uploadsRoot, 'chat-media'), { recursive: true });

@@ -123,7 +123,7 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
           >
             <Link
               href={`/listing/${x.id}`}
-              className="font-bold text-sky-800 hover:underline dark:text-sky-300"
+              className="block truncate font-bold text-sky-800 hover:underline dark:text-sky-300"
             >
               {x.title}
             </Link>

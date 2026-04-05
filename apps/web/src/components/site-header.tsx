@@ -62,7 +62,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
 
   return (
     <>
-      <header className="sticky top-0 z-[100] bg-white dark:bg-zinc-950 border-b border-[#E8E8E8] dark:border-zinc-800">
+      <header className="sticky top-0 z-[100] bg-white dark:bg-zinc-950 border-b border-[#F0F0F0] dark:border-zinc-800">
         {/* Top utility bar — desktop only */}
         <div className="hidden border-b border-[#F0F0F0] dark:border-zinc-800 md:block">
           <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">
@@ -187,28 +187,68 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
           </div>
         ) : null}
 
-        {/* Mobile header */}
-        <div className="flex items-center gap-2 px-4 py-2.5 md:hidden">
-          <div className="shrink-0">
+        {/* Mobile header — inline styles */}
+        <div className="md:hidden" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', minHeight: 56 }}>
+          <div style={{ flexShrink: 0 }}>
             <BarterHomeLogo />
           </div>
-          <form action="/" method="GET" className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-[#F0F0F0] px-3 py-2 dark:bg-zinc-800">
-            <Search size={16} strokeWidth={1.8} className="shrink-0 text-[#999]" aria-hidden />
+          <form action="/" method="GET" style={{
+            display: 'flex',
+            flex: 1,
+            minWidth: 0,
+            alignItems: 'center',
+            gap: 8,
+            borderRadius: 22,
+            backgroundColor: '#F5F5F5',
+            padding: '10px 16px',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
             <input
               type="text"
               name="q"
               placeholder="Поиск по объявлениям"
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
+              style={{
+                flex: 1,
+                minWidth: 0,
+                border: 'none',
+                background: 'transparent',
+                fontSize: 15,
+                color: '#111',
+                outline: 'none',
+              }}
             />
           </form>
-          <ThemeQuickToggle />
           <button
             type="button"
             onClick={() => setMegaOpen((v) => !v)}
-            className="grid size-10 shrink-0 place-items-center rounded-lg text-[#707070] transition hover:bg-[#F0F0F0] dark:text-zinc-400 dark:hover:bg-zinc-800"
-            aria-label="Категории"
+            style={{
+              flexShrink: 0,
+              width: 40,
+              height: 40,
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: '#707070',
+            }}
+            aria-label="Фильтры"
           >
-            <SlidersHorizontal size={20} strokeWidth={1.8} aria-hidden />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14"/>
+              <line x1="4" y1="10" x2="4" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12" y2="3"/>
+              <line x1="20" y1="21" x2="20" y2="16"/>
+              <line x1="20" y1="12" x2="20" y2="3"/>
+              <line x1="1" y1="14" x2="7" y2="14"/>
+              <line x1="9" y1="8" x2="15" y2="8"/>
+              <line x1="17" y1="16" x2="23" y2="16"/>
+            </svg>
           </button>
         </div>
       </header>

@@ -27,14 +27,18 @@ npm run dev:web      # Web (3000)
 - `.cursor/rules/execution-order.mdc` — строгий порядок: читать контекст → работать по backlog → обновлять docs
 - `.cursor/rules/smart-search-reco.mdc` — алгоритмы персонализации
 
-## Последний завершённый шаг
-- Web: иконки только **lucide-react**; удалены Solar (`solar-icon.tsx`, `solar-icons.ts`, subset JSON, скрипт `icons:subset`). Чат-виджет: ChevronUp/Down; `page.tsx`: алиас `Home as HomeIcon` (конфликт с `export default function Home`).
-- Создан FULL_AVITO_SPEC.md с полным функционалом Авито + цены Barter
-- Подключен shadcn/ui (18 компонентов)
-- Обновлен PRODUCT_BACKLOG.md (12 фаз)
-- Созданы правила: pricing.mdc, design-system.mdc
+## Последний завершённый шаг (2026-04-05)
+- Полный редизайн главной страницы (page.tsx) — Avito-style категории, карточки, VIP-лента, мобильная навигация
+- Фикс мобильных переполнений текста на странице объявления (listing/[id]/page.tsx) — break-words, truncate, overflow-hidden
+- Фикс truncate заголовков похожих объявлений в бот-помощнике (listing-bot-assistant.tsx)
+- Обновлён render.yaml: nest build, NPM_CONFIG_PRODUCTION=false
+- .gitignore: добавлены .mcp.json, awesome-design-md/, $null
+- Установлен awesome-design-md (54 файла дизайн-референсов)
+- Установлен ui-ux-pro-max skill
+- Настроен 21st.dev MCP (локально, не в репо)
+- Деплой на Vercel работает (web-one-blond-66.vercel.app)
 
 ## Что делать дальше
 Открой `PRODUCT_BACKLOG.md` → Phase 1 → задача 1.1 (шапка на shadcn/ui).
 shadcn/ui компоненты: `src/components/ui/` (Button, Card, DropdownMenu, Command и др.)
-Главная страница: `apps/web/src/app/page.tsx` (~1100 строк)
+Главная страница: `apps/web/src/app/page.tsx` (~673 строк)

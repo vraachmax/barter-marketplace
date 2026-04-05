@@ -12,6 +12,10 @@ type Props = {
   thumbClassName: string;
   /** Классы для <img> */
   imageClassName: string;
+  /** Inline стили для обёртки */
+  thumbStyle?: React.CSSProperties;
+  /** Inline стили для <img> */
+  imageStyle?: React.CSSProperties;
   /** Если нет фото */
   placeholder: React.ReactNode;
   /** Бейджи, затемнение — поверх картинки, pointer-events-none сами по себе */
@@ -28,6 +32,8 @@ export default function FeedListingHoverThumb({
   apiBase,
   thumbClassName,
   imageClassName,
+  thumbStyle,
+  imageStyle,
   placeholder,
   badges,
 }: Props) {
@@ -90,7 +96,7 @@ export default function FeedListingHoverThumb({
 
   if (n === 0) {
     return (
-      <div ref={wrapRef} className={thumbClassName}>
+      <div ref={wrapRef} className={thumbClassName} style={thumbStyle}>
         {placeholder}
         {badges}
       </div>
@@ -103,12 +109,13 @@ export default function FeedListingHoverThumb({
     <div
       ref={wrapRef}
       className={thumbClassName}
+      style={thumbStyle}
       onMouseEnter={onMouseEnter}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`${apiBase}${current.url}`} alt={title} className={imageClassName} loading="lazy" />
+      <img src={`${apiBase}${current.url}`} alt={title} className={imageClassName} style={imageStyle} loading="lazy" />
       {badges}
       {n > 1 ? (
         <>

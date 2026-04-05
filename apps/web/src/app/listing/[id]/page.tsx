@@ -140,18 +140,18 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
           <span className="truncate font-medium text-zinc-700 dark:text-zinc-300">{listing.title}</span>
         </nav>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
-          <div className="min-w-0 space-y-5">
+        <div className="listing-detail-grid grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
+          <div className="listing-detail-main min-w-0 space-y-5">
             <ListingGallery images={images} title={listing.title} apiBase={API_URL} placeholder={galleryPlaceholder} />
 
             <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-md shadow-zinc-200/30 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/30">
               <div className="border-b border-zinc-100 px-4 py-4 dark:border-zinc-800 sm:px-6 sm:py-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <h1 className="text-xl font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl lg:text-3xl">
+                  <h1 className="min-w-0 break-words text-xl font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl lg:text-3xl">
                     {listing.title}
                   </h1>
                   <div className="shrink-0 text-left sm:text-right">
-                    <div className="text-2xl font-black tabular-nums text-sky-700 dark:text-sky-400 sm:text-3xl">
+                    <div className="truncate text-2xl font-black tabular-nums text-sky-700 dark:text-sky-400 sm:text-3xl">
                       {formatRub(listing.priceRub)}
                     </div>
                     <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Включая торг — уточняйте в чате</p>
@@ -197,7 +197,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
 
               <div className="px-4 py-5 sm:px-6">
                 <h2 className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Описание</h2>
-                <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                <div className="mt-2 overflow-hidden break-words whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
                   {listing.description}
                 </div>
                 <ListingAttributesDisplay attributes={listing.attributes} />
@@ -236,7 +236,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Боковая панель — блок покупки справа */}
-          <aside className="space-y-4 lg:sticky lg:top-20">
+          <aside className="listing-detail-aside space-y-4 lg:sticky lg:top-20">
             <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-lg shadow-zinc-200/40 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40">
               <div className="flex items-start gap-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-100 to-cyan-100 dark:from-sky-950 dark:to-cyan-950">
@@ -297,7 +297,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         <div className="mx-auto flex max-w-7xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">{listing.title}</div>
-            <div className="text-base font-black text-sky-700 dark:text-sky-400">{formatRub(listing.priceRub)}</div>
+            <div className="truncate text-base font-black text-sky-700 dark:text-sky-400">{formatRub(listing.priceRub)}</div>
           </div>
           <Link
             href={`/messages?listingId=${listing.id}`}

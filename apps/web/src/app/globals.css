@@ -2,8 +2,8 @@
 @custom-variant dark (&:where(html[data-theme="dark"] *));
 
 :root {
-  --color-primary: #007AFF;
-  --color-primary-hover: #0066DD;
+  --color-primary: #00677d;
+  --color-primary-hover: #004E5F;
   --color-primary-light: #E8F2FF;
   --color-secondary: #00AAFF;
   --color-accent: #FF6F00;
@@ -28,8 +28,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-inter);
 }
 
 html[data-theme='dark'] {
@@ -53,18 +53,52 @@ html[data-theme='light'] {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  font-family: 'Inter', var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  color: #1c1b1b;
+}
+
+/* White section blocks — Avito-style */
+.section-white {
+  background: #FFFFFF;
+  border-radius: 16px;
+  margin: 0 0 8px 0;
+}
+html[data-theme='dark'] .section-white {
+  background: #0f172a;
 }
 
 html, body { max-width: 100vw; overflow-x: hidden; }
 
 @media (max-width: 768px) {
   input, select, textarea { font-size: 16px; }
+
+  /* BUG 1: listing detail — prevent overlapping blocks on mobile */
+  .listing-detail-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  .listing-detail-grid > * {
+    position: relative !important;
+    width: 100% !important;
+  }
+  .listing-detail-main > * {
+    margin-bottom: 12px;
+  }
+  .listing-detail-main > *:last-child {
+    margin-bottom: 0;
+  }
+  .listing-detail-aside > * {
+    margin-bottom: 12px;
+  }
+  .listing-detail-aside > *:last-child {
+    margin-bottom: 0;
+  }
 }
 
 /* Brand logo swap */

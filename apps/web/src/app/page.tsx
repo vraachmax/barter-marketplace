@@ -332,336 +332,330 @@ export default async function Home({
     ...(geoOk ? { lat: String(latN), lon: String(lonN), radiusKm: currentRadiusKm } : {}),
   };
 
-  const CATS: Array<{ name: string; slug: string; icon: typeof Car; color: string; bgColor: string; darkBg: string; darkColor: string }> = [
-    { name: 'Авто', slug: 'auto', icon: Car, color: '#2563EB', bgColor: '#DBEAFE', darkBg: '#1e3a5f', darkColor: '#60a5fa' },
-    { name: 'Недвижимость', slug: 'realty', icon: Building2, color: '#EA580C', bgColor: '#FFF7ED', darkBg: '#431407', darkColor: '#fb923c' },
-    { name: 'Работа', slug: 'job', icon: Briefcase, color: '#059669', bgColor: '#ECFDF5', darkBg: '#064e3b', darkColor: '#34d399' },
-    { name: 'Одежда', slug: 'clothes', icon: Shirt, color: '#DB2777', bgColor: '#FDF2F8', darkBg: '#4a0828', darkColor: '#f472b6' },
-    { name: 'Электроника', slug: 'electronics', icon: Laptop, color: '#7C3AED', bgColor: '#F5F3FF', darkBg: '#2e1065', darkColor: '#a78bfa' },
-    { name: 'Для дома', slug: 'home', icon: Sofa, color: '#16A34A', bgColor: '#F0FDF4', darkBg: '#14532d', darkColor: '#4ade80' },
-    { name: 'Детям', slug: 'kids', icon: Baby, color: '#0891B2', bgColor: '#ECFEFF', darkBg: '#164e63', darkColor: '#22d3ee' },
-    { name: 'Хобби', slug: 'hobby', icon: Trophy, color: '#D97706', bgColor: '#FFFBEB', darkBg: '#451a03', darkColor: '#fbbf24' },
-    { name: 'Услуги', slug: 'services', icon: Wrench, color: '#9333EA', bgColor: '#FAF5FF', darkBg: '#3b0764', darkColor: '#c084fc' },
-    { name: 'Животные', slug: 'animals', icon: Dog, color: '#E11D48', bgColor: '#FFF1F2', darkBg: '#4c0519', darkColor: '#fb7185' },
+  const CATS_TOP: Array<{ name: string; slug: string; emoji: string; accent: string }> = [
+    { name: 'Авто', slug: 'auto', emoji: '🚗', accent: '#4A90D9' },
+    { name: 'Недвижи-\nмость', slug: 'realty', emoji: '🏢', accent: '#E8A87C' },
+    { name: 'Работа', slug: 'job', emoji: '💼', accent: '#c4a484' },
   ];
+  const CATS_SCROLL: Array<{ name: string; slug: string; emoji: string; accent: string }> = [
+    { name: 'Услуги', slug: 'services', emoji: '🔧', accent: '#3B82F6' },
+    { name: 'Электро-\nника', slug: 'electronics', emoji: '📱', accent: '#8B5CF6' },
+    { name: 'Жильё для\nпутешествий', slug: 'home', emoji: '🏡', accent: '#F59E0B' },
+    { name: 'Для дома\nи дачи', slug: 'home', emoji: '🛋️', accent: '#10B981' },
+    { name: 'Одежда', slug: 'clothes', emoji: '👗', accent: '#EC4899' },
+    { name: 'Детям', slug: 'kids', emoji: '🧸', accent: '#F97316' },
+    { name: 'Хобби', slug: 'hobby', emoji: '⚽', accent: '#EF4444' },
+    { name: 'Животные', slug: 'animals', emoji: '🐕', accent: '#14B8A6' },
+  ];
+  const ALL_CATS = [...CATS_TOP, ...CATS_SCROLL];
 
   const catIdMap: Record<string, string> = {};
   for (const c of categories) {
-    for (const cat of CATS) {
-      if (c.title.includes(cat.name) || cat.name.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
+    for (const cat of ALL_CATS) {
+      const cleanName = cat.name.replace(/[\n-]/g, '');
+      if (c.title.includes(cleanName) || cleanName.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] text-[#111] antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div style={{ minHeight: '100vh', backgroundColor: '#000', fontFamily: 'Inter, sans-serif', WebkitFontSmoothing: 'antialiased', paddingBottom: 96 }}>
       {apiBackendDown ? (
-        <div
-          role="alert"
-          className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
-        >
-          <strong>Не удаётся связаться с API</strong> ({API_URL || 'сервер'}). Запустите бэкенд: в корне
-          проекта{' '}
-          <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev</code> или{' '}
-          <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev:api</code>{' '}
-          (порт 3001). Лента и категории временно пустые.
+        <div role="alert" style={{ borderBottom: '1px solid #FCD34D', background: '#FFFBEB', padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#78350F' }}>
+          <strong>Не удаётся связаться с API</strong> ({API_URL || 'сервер'}). Запустите бэкенд.
         </div>
       ) : null}
-      <SiteHeader>
-        <form action="/" method="GET" className="hidden min-w-0 flex-1 items-center md:flex">
-          {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
-          {geoHidden}
-          {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
-          <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-l-lg border border-r-0 border-[#D1D5DB] bg-white px-3.5 dark:border-zinc-700 dark:bg-zinc-900">
-            <Search size={16} strokeWidth={1.8} className="shrink-0 text-[#999]" aria-hidden />
-            <SearchInputWithSuggestions
-              formKey={currentQ}
-              defaultValue={currentQ}
-              categories={categories}
-              className="h-10 w-full border-none bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
-              placeholder="Поиск по объявлениям"
-            />
+
+      {/* Desktop header — hidden on mobile */}
+      <div className="hidden md:block">
+        <SiteHeader>
+          <form action="/" method="GET" className="hidden min-w-0 flex-1 items-center md:flex">
+            {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
+            {geoHidden}
+            {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
+            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-l-lg border border-r-0 border-[#D1D5DB] bg-white px-3.5 dark:border-zinc-700 dark:bg-zinc-900">
+              <Search size={16} strokeWidth={1.8} className="shrink-0 text-[#999]" aria-hidden />
+              <SearchInputWithSuggestions
+                formKey={currentQ}
+                defaultValue={currentQ}
+                categories={categories}
+                className="h-10 w-full border-none bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
+                placeholder="Поиск по объявлениям"
+              />
+            </div>
+            <button type="submit" className="h-10 shrink-0 rounded-r-lg bg-[#00B4D8] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#0097A7]">
+              Найти
+            </button>
+          </form>
+        </SiteHeader>
+      </div>
+
+      {/* ===== DARK GRADIENT TOP AREA (mobile-first, visible on all) ===== */}
+      <div style={{ background: 'linear-gradient(to bottom, #00B4D8, #000000)', paddingBottom: 24 }} className="md:hidden">
+        {/* Mobile Header */}
+        <header style={{ position: 'sticky', top: 0, width: '100%', zIndex: 50, padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Search bar */}
+            <form action="/" method="GET" style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+              {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
+              {geoHidden}
+              {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
+              <Search size={18} strokeWidth={1.8} color="#94A3B8" style={{ marginRight: 8, flexShrink: 0 }} aria-hidden />
+              <input
+                name="q"
+                defaultValue={currentQ}
+                type="text"
+                placeholder={`Поиск в ${currentCity}`}
+                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 15, width: '100%', color: '#1E293B' }}
+              />
+              <button type="button" style={{ marginLeft: 8, flexShrink: 0, display: 'flex' }}>
+                <SlidersHorizontal size={20} strokeWidth={1.8} color="#475569" aria-label="Фильтры" />
+              </button>
+            </form>
+            {/* Cart button */}
+            <Link href="/favorites" style={{ width: 48, height: 48, background: 'rgba(223,223,223,0.8)', backdropFilter: 'blur(8px)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>
+              <Heart size={22} strokeWidth={1.8} color="#F59E0B" fill="#F59E0B" aria-hidden />
+            </Link>
           </div>
-          <button
-            type="submit"
-            className="h-10 shrink-0 rounded-r-lg bg-[#007AFF] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#0066DD]"
-          >
-            Найти
-          </button>
-        </form>
-      </SiteHeader>
 
-      <main className="mx-auto max-w-7xl px-3 pb-36 pt-4 md:px-6 md:pb-12 md:pt-6 lg:px-8">
-        <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
-
-        <div className="space-y-5 md:space-y-6">
-          {/* Categories — Avito-style flat tiles */}
-          <section>
-            <div className="rounded-xl bg-white p-4 dark:bg-zinc-900 md:p-5">
-              <div className="grid grid-cols-5 gap-2.5 md:grid-cols-5 md:gap-3 lg:gap-4">
-                {CATS.map((cat) => {
-                  const CatIcon = cat.icon;
-                  const catId = catIdMap[cat.slug] || '';
-                  const isActive = catId !== '' && catId === urlCategoryId;
-                  return (
-                    <Link
-                      key={cat.slug}
-                      href={{
-                        pathname: '/',
-                        query: { ...preservedListQuery, categoryId: catId },
-                      }}
-                      className={`group flex flex-col items-center gap-2 rounded-xl p-2.5 transition-all duration-150 hover:bg-[#F0F0F0] active:scale-95 dark:hover:bg-zinc-800 md:flex-row md:gap-3 md:rounded-2xl md:px-4 md:py-3 ${isActive ? 'bg-[#E8F2FF] dark:bg-blue-950/40' : ''}`}
-                    >
-                      <div
-                        className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-transform group-hover:scale-105 md:h-11 md:w-11 md:rounded-lg ${isActive ? 'ring-2 ring-[#007AFF] ring-offset-1 ring-offset-white dark:ring-offset-zinc-900' : ''}`}
-                        style={{ backgroundColor: cat.bgColor }}
-                      >
-                        <CatIcon size={22} strokeWidth={1.8} style={{ color: cat.color }} aria-hidden />
-                      </div>
-                      <span className={`text-center text-[11px] font-medium leading-tight md:text-left md:text-sm ${isActive ? 'text-[#007AFF]' : 'text-[#333] dark:text-zinc-300'}`}>
-                        {cat.name}
-                      </span>
-                    </Link>
-                  );
-                })}
+          {/* Promo Strip */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff' }}>
+              <span style={{ fontSize: 17, fontWeight: 700 }}>Размещение бесплатно</span>
+              <div style={{ background: '#fff', borderRadius: 50, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
               </div>
             </div>
-          </section>
-
-          {/* Recommendations section */}
-          {!hasSearchQuery && recommended.items.length > 0 ? (
-          <section className="animate-fade-in-up">
-            <div className="mb-3 flex items-center justify-between md:mb-4">
-              <h2 className="text-base font-bold text-[#111] dark:text-white md:text-lg">Рекомендации для мас</h2>
+            <div style={{ background: '#ff4d4d', borderRadius: 8, padding: 6, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(255,77,77,0.4)', transform: 'rotate(12deg)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-x-visible md:pb-0 md:gap-4">
-              {recommended.items.map((x) => (
-                <div
-                  key={x.id}
-                  className={`${recommendedListingCardClass(x.promoType)} min-w-[160px] shrink-0 md:min-w-0 md:shrink`}
+          </div>
+        </header>
+
+        {/* Categories Section — Dark Cards */}
+        <section style={{ marginTop: 24, padding: '0 16px' }}>
+          {/* Top row: 3 big cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            {CATS_TOP.map((cat) => {
+              const catId = catIdMap[cat.slug] || '';
+              return (
+                <Link
+                  key={cat.slug}
+                  href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                  style={{ background: '#1c1c1e', borderRadius: 16, padding: 12, height: 112, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none' }}
                 >
-                  <TrackedListingLink href={`/listing/${x.id}`} listingId={x.id} className="block">
-                    <FeedListingHoverThumb
-                      images={x.images}
-                      title={x.title}
-                      apiBase={API_URL}
-                      thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
-                      imageClassName={`listing-thumb-img w-full aspect-[4/3]`}
-                      placeholder={
-                        <ListingPlaceholder
-                          title={x.title}
-                          categoryTitle={x.category.title}
-                          className="aspect-[4/3]"
-                        />
-                      }
-                      badges={
-                        <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-12" />
-                      }
-                    />
-                    <div className="p-3">
-                      <div className="text-[15px] font-bold text-[#111] dark:text-zinc-50 mb-1">
-                        {formatRub(x.priceRub, x.priceType)}
+                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
+                  <div style={{ position: 'absolute', bottom: -4, right: -4, width: 64, height: 64, background: cat.accent, borderRadius: 12, transform: 'rotate(12deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+                    {cat.emoji}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Second row: horizontal scroll */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
+            {CATS_SCROLL.map((cat) => {
+              const catId = catIdMap[cat.slug] || '';
+              return (
+                <Link
+                  key={cat.slug + cat.name}
+                  href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                  style={{ minWidth: 110, background: '#1c1c1e', borderRadius: 16, padding: 12, height: 96, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0 }}
+                >
+                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 500, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
+                  <div style={{ position: 'absolute', bottom: -8, right: -8, width: 48, height: 48, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                    {cat.emoji}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* ===== MAIN CONTENT — Light Surface with rounded top ===== */}
+      <main style={{ background: '#FCF9F8', borderRadius: '32px 32px 0 0', marginTop: -16, position: 'relative', zIndex: 20, padding: '24px 12px 32px' }} className="md:rounded-none md:mt-0">
+        <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
+
+        {/* Recommendations section */}
+        {!hasSearchQuery && recommended.items.length > 0 ? (
+          <section style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: 12 }}>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1c1b1b' }}>Рекомендации для вас</h2>
+              <Link href="/" style={{ fontSize: 13, fontWeight: 500, color: '#00B4D8', textDecoration: 'none' }}>Смотреть все →</Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {recommended.items.slice(0, 4).map((x) => (
+                <TrackedListingLink
+                  key={x.id}
+                  href={`/listing/${x.id}`}
+                  listingId={x.id}
+                  style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}
+                >
+                  <FeedListingHoverThumb
+                    images={x.images}
+                    title={x.title}
+                    apiBase={API_URL}
+                    thumbClassName="listing-thumb-wrap relative overflow-hidden"
+                    imageClassName="listing-thumb-img w-full"
+                    thumbStyle={{ position: 'relative', overflow: 'hidden', height: 130, background: '#EBEBEB' }}
+                    imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    placeholder={
+                      <div style={{ height: 130, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
+                        </svg>
                       </div>
-                      <div className="line-clamp-2 text-[13px] leading-snug text-[#333] group-hover:text-[#007AFF] dark:text-zinc-300 mb-1.5">
-                        {x.title}
+                    }
+                    badges={
+                      <div style={{ position: 'absolute', top: 8, right: 8, padding: 6, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', borderRadius: '50%', color: '#fff', display: 'flex' }}>
+                        <Heart size={14} strokeWidth={1.8} aria-hidden />
                       </div>
-                      <div className="text-[11px] text-[#999] truncate">{x.city}</div>
-                    </div>
-                  </TrackedListingLink>
-                </div>
+                    }
+                  />
+                  <div style={{ padding: 12 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
+                    <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
+                    <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>{x.city}</div>
+                  </div>
+                </TrackedListingLink>
               ))}
             </div>
           </section>
-          ) : null}
+        ) : null}
 
-          {effectiveRecoMode ? (
-            <div className="rounded-lg bg-[#E8F2FF] p-3.5 dark:bg-blue-950/40">
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#007AFF] px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
-                  <Sparkles size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
-                  Режим подбора
-                </span>
-                <span className="text-[#333] dark:text-zinc-300">
-                  Показываем ленту по вашим недавним просмотрам и интересам.
-                </span>
-              </div>
+        {effectiveRecoMode ? (
+          <div style={{ borderRadius: 8, background: '#E8F2FF', padding: 14, marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, fontSize: 14 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 6, background: '#00B4D8', padding: '2px 8px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>
+                <Sparkles size={14} strokeWidth={1.8} aria-hidden />
+                Режим подбора
+              </span>
+              <span style={{ color: '#333' }}>Показываем ленту по вашим недавним просмотрам.</span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* VIP strip */}
+        {(listings.vipStrip ?? []).length > 0 ? (
+          <section aria-label="VIP объявления" style={{ borderRadius: 14, background: '#fff', padding: 16, marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 6, background: '#FF6F00', padding: '4px 10px', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>VIP</span>
+              <span style={{ fontSize: 14, color: '#6d797e' }}>Закреплённые объявления</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {(listings.vipStrip ?? []).map((x) => (
+                <TrackedListingLink key={x.id} href={`/listing/${x.id}`} listingId={x.id} style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}>
+                  <FeedListingHoverThumb images={x.images} title={x.title} apiBase={API_URL} thumbClassName="listing-thumb-wrap relative overflow-hidden" imageClassName="listing-thumb-img w-full" thumbStyle={{ position: 'relative', overflow: 'hidden', height: 130, background: '#EBEBEB' }} imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} placeholder={<div style={{ height: 130, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>} badges={null} />
+                  <div style={{ padding: 12 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
+                    <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
+                    <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>{x.city} · {x.category.title}</div>
+                  </div>
+                </TrackedListingLink>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {/* All listings section */}
+        <section>
+          {listings.items.length > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 4px 12px' }}>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1c1b1b' }}>
+                {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
+              </h2>
+              <Link href="/" style={{ fontSize: 13, fontWeight: 500, color: '#00B4D8', textDecoration: 'none' }}>Смотреть все →</Link>
             </div>
           ) : null}
-
-          {(listings.vipStrip ?? []).length > 0 ? (
-            <section
-              aria-label="VIP объявления"
-              className="rounded-xl bg-white p-4 dark:bg-zinc-900"
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#FF6F00] px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-white">
-                  VIP
-                </span>
-                <span className="text-sm text-[#707070] dark:text-zinc-400">
-                  Закреплённые объявления
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-                {(listings.vipStrip ?? []).map((x) => (
-                  <TrackedListingLink
-                    key={x.id}
-                    className={feedListingCardClass(x.promoType)}
-                    href={`/listing/${x.id}`}
-                    listingId={x.id}
-                  >
-                    <FeedListingHoverThumb
-                      images={x.images}
-                      title={x.title}
-                      apiBase={API_URL}
-                      thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
-                      imageClassName="listing-thumb-img w-full aspect-[4/3]"
-                      placeholder={
-                        <ListingPlaceholder
-                          title={x.title}
-                          categoryTitle={x.category.title}
-                          className="aspect-[4/3]"
-                        />
-                      }
-                      badges={
-                        <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
-                      }
-                    />
-                    <div className="p-3">
-                      <div className="text-[15px] font-bold text-[#111] dark:text-zinc-50 mb-1">
-                        {formatRub(x.priceRub, x.priceType)}
-                      </div>
-                      <div className="line-clamp-2 text-sm text-[#333] group-hover:text-[#007AFF] dark:text-zinc-300 mb-1.5">
-                        {x.title}
-                      </div>
-                      <div className="text-xs text-[#999] truncate">
-                        {x.city} · {x.category.title}
-                      </div>
-                    </div>
-                  </TrackedListingLink>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {/* Main feed listing cards */}
-          <section>
-            {listings.items.length > 0 ? (
-              <div className="mb-3 flex items-center justify-between md:mb-4">
-                <h2 className="text-base font-bold text-[#111] dark:text-white md:text-lg">
-                  {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
-                </h2>
-                <span className="text-xs text-[#999]">{listings.total} объявлений</span>
-              </div>
-            ) : null}
-            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
             {listings.items.length === 0 ? (
-              <div className="col-span-2 md:col-span-3 lg:col-span-4 rounded-xl bg-white p-8 text-center dark:bg-zinc-900">
-                <div className="mx-auto mb-3 text-4xl">🔍</div>
-                <p className="text-sm font-medium text-[#333] dark:text-zinc-300">Ничего не нашлось</p>
-                <p className="mt-1 text-xs text-[#999] dark:text-zinc-500">Попробуйте снять категорию или изменить город</p>
+              <div style={{ gridColumn: '1 / -1', borderRadius: 12, background: '#fff', padding: 32, textAlign: 'center' }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#1c1b1b' }}>Ничего не нашлось</p>
+                <p style={{ fontSize: 12, color: '#6d797e', marginTop: 4 }}>Попробуйте снять категорию или изменить город</p>
               </div>
             ) : null}
             {listings.items.map((x) => (
               <TrackedListingLink
                 key={x.id}
-                className={feedListingCardClass(x.promoType)}
                 href={`/listing/${x.id}`}
                 listingId={x.id}
+                style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}
               >
                 <FeedListingHoverThumb
                   images={x.images}
                   title={x.title}
                   apiBase={API_URL}
-                  thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
-                  imageClassName="listing-thumb-img w-full aspect-[4/3]"
+                  thumbClassName="listing-thumb-wrap relative overflow-hidden"
+                  imageClassName="listing-thumb-img w-full"
+                  thumbStyle={{ position: 'relative', overflow: 'hidden', height: 130, background: '#EBEBEB' }}
+                  imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   placeholder={
-                    <ListingPlaceholder
-                      title={x.title}
-                      categoryTitle={x.category.title}
-                      className="aspect-[4/3]"
-                    />
+                    <div style={{ height: 130, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
+                      </svg>
+                    </div>
                   }
                   badges={
                     <>
-                      <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
                       {x.isBoosted ? (
-                        <span className="absolute top-2 left-2 z-[1] rounded-md bg-[#FF6F00] px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
-                          Поднято
-                        </span>
+                        <span style={{ position: 'absolute', top: 8, left: 8, zIndex: 1, borderRadius: 6, background: '#FF6F00', padding: '2px 8px', fontSize: 11, fontWeight: 600, color: '#fff' }}>Поднято</span>
                       ) : null}
+                      <div style={{ position: 'absolute', top: 8, right: 8, padding: 6, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', borderRadius: '50%', color: '#fff', display: 'flex' }}>
+                        <Heart size={14} strokeWidth={1.8} aria-hidden />
+                      </div>
                     </>
                   }
                 />
-                <div className="p-3">
-                  <div className="text-[15px] font-bold text-[#111] dark:text-zinc-50 mb-1">
-                    {formatRub(x.priceRub, x.priceType)}
-                  </div>
-                  <div className="line-clamp-2 text-[13px] leading-snug text-[#333] group-hover:text-[#007AFF] dark:text-zinc-300 mb-1.5">
-                    {x.title}
-                  </div>
-                  <div className="text-[11px] text-[#999] truncate">
-                    {x.city} · {x.category.title}
-                    {typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
+                <div style={{ padding: 12 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
+                  <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
+                  <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>
+                    {x.city}{typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
                   </div>
                 </div>
               </TrackedListingLink>
             ))}
 
             {!effectiveRecoMode && listings.total > listings.items.length ? (
-              <FeedLoadMore
-                initialPage={1}
-                total={listings.total}
-                limit={20}
-                basePath={feedApiPath}
-                apiBase={API_URL}
-              />
+              <FeedLoadMore initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
             ) : null}
-            </div>
-          </section>
-        </div>
+          </div>
+        </section>
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 md:hidden">
-        <div className="border-t border-[#E8E8E8] bg-white/98 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/98">
-          <div className="mx-auto grid max-w-lg grid-cols-5 items-center px-1">
-            <Link
-              href="/"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#007AFF] transition-colors"
-            >
-              <HomeIcon size={22} strokeWidth={1.8} aria-hidden />
-              <span>Главная</span>
+      {/* ===== BOTTOM NAV BAR with FAB ===== */}
+      <nav className="md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 50 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 16px 16px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: '24px 24px 0 0', boxShadow: '0 -4px 20px rgba(0,103,125,0.06)' }}>
+          {/* Главная */}
+          <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#00B4D8', fontWeight: 700, textDecoration: 'none' }}>
+            <HomeIcon size={24} strokeWidth={1.8} fill="#00B4D8" aria-hidden />
+            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Главная</span>
+          </Link>
+          {/* Избранное */}
+          <Link href="/favorites" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', textDecoration: 'none' }}>
+            <Heart size={24} strokeWidth={1.8} aria-hidden />
+            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Избранное</span>
+          </Link>
+          {/* CENTER FAB — Разместить */}
+          <div style={{ position: 'relative', top: -24 }}>
+            <Link href="/new" style={{ display: 'flex', width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(to bottom, #00B4D8, #00677d)', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(0,103,125,0.3)', color: '#fff', textDecoration: 'none' }}>
+              <Plus size={28} strokeWidth={2.5} aria-hidden />
             </Link>
-            <Link
-              href="/favorites"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
-            >
-              <Heart size={22} strokeWidth={1.8} aria-hidden />
-              <span>Избранное</span>
-            </Link>
-            <Link
-              href="/new"
-              className="-mt-4 flex flex-col items-center gap-1 text-[10px] font-bold"
-            >
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-[#007AFF] shadow-lg shadow-[#007AFF]/25 transition-transform active:scale-90">
-                <Plus size={24} strokeWidth={2} className="text-white" aria-hidden />
-              </span>
-              <span className="text-[#007AFF]">Подать</span>
-            </Link>
-            <Link
-              href="/messages"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
-            >
-              <MessageCircle size={22} strokeWidth={1.8} aria-hidden />
-              <span>Чаты</span>
-            </Link>
-            <Link
-              href="/profile"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
-            >
-              <User size={22} strokeWidth={1.8} aria-hidden />
-              <span>Профиль</span>
-            </Link>
+            <span style={{ position: 'absolute', top: 56, left: '50%', transform: 'translateX(-50%)', fontSize: 10, fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap' }}>Разместить</span>
           </div>
+          {/* Сообщения */}
+          <Link href="/messages" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', textDecoration: 'none' }}>
+            <MessageCircle size={24} strokeWidth={1.8} aria-hidden />
+            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Сообщения</span>
+          </Link>
+          {/* Профиль */}
+          <Link href="/profile" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', textDecoration: 'none' }}>
+            <User size={24} strokeWidth={1.8} aria-hidden />
+            <span style={{ fontSize: 10, fontWeight: 500, marginTop: 4 }}>Профиль</span>
+          </Link>
         </div>
       </nav>
 

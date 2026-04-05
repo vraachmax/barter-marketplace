@@ -8,6 +8,7 @@ type Props = Omit<LinkProps, 'href'> & {
   href: string;
   listingId: string;
   className?: string;
+  style?: React.CSSProperties;
   children: ReactNode;
 };
 

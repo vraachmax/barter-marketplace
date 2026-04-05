@@ -11,3 +11,6 @@ uploads/
 .playwright-mcp/
 .claude/
 .turbo/
+.mcp.json
+awesome-design-md/
+$null
