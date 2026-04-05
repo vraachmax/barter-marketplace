@@ -3,10 +3,6 @@ import { TrackedListingLink } from '@/components/tracked-listing-link';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { API_URL, apiGetJson, type Category, type ListingCard } from '@/lib/api';
-import {
-  CategoryGradientSquare,
-  resolveCategoryPreset,
-} from '@/components/category-gradient-icon';
 import { HomePreferenceCookieSync } from '@/components/home-preference-cookie-sync';
 import ListingPlaceholder from '@/components/listing-placeholder';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
@@ -48,7 +44,6 @@ type ListingsResponse = {
   page: number;
   limit: number;
   total: number;
-  /** VIP-объявления — отдельная полоса; id не повторяются в `items` */
   vipStrip?: ListingCard[];
   items: ListingCard[];
 };
@@ -73,21 +68,21 @@ const getRussianCities = cache(async () => {
   } catch {
     // fallback below
   }
-  return ['Москва', 'Санкт-Петербург', 'Казань'];
+  return ['ÐÐ¾ÑÐºÐ²Ð°', 'Ð¡Ð°Ð½ÐºÑ-ÐÐµÑÐµÑÐ±ÑÑÐ³', 'ÐÐ°Ð·Ð°Ð½Ñ'];
 });
 
 const PRICE_TYPE_SUFFIX: Record<string, string> = {
-  per_day: 'за сутки',
-  per_hour: 'в час',
-  per_service: 'за услугу',
-  per_sqm: 'за м²',
-  per_month: 'в месяц',
-  per_shift: 'за смену',
+  per_day: 'Ð·Ð° ÑÑÑÐºÐ¸',
+  per_hour: 'Ð² ÑÐ°Ñ',
+  per_service: 'Ð·Ð° ÑÑÐ»ÑÐ³Ñ',
+  per_sqm: 'Ð·Ð° Ð¼Â²',
+  per_month: 'Ð² Ð¼ÐµÑÑÑ',
+  per_shift: 'Ð·Ð° ÑÐ¼ÐµÐ½Ñ',
 };
 
 function formatRub(v: number | null, priceType?: string | null) {
-  if (v == null) return 'Цена не указана';
-  const base = `${v.toLocaleString('ru-RU')} ₽`;
+  if (v == null) return 'Ð¦ÐµÐ½Ð° Ð½Ðµ ÑÐºÐ°Ð·Ð°Ð½Ð°';
+  const base = `${v.toLocaleString('ru-RU')} â½`;
   const suffix = priceType ? PRICE_TYPE_SUFFIX[priceType] : undefined;
   return suffix ? `${base} ${suffix}` : base;
 }
@@ -220,7 +215,7 @@ export default async function Home({
     lonN <= 180;
   const apiSort = sp.sort === 'nearby' && !geoOk ? 'relevant' : currentSort;
   const currentRadiusKm = (sp.radiusKm ?? '').trim() || '25';
-  const currentCity = sp.city ?? prefCity ?? 'Москва';
+  const currentCity = sp.city ?? prefCity ?? 'ÐÐ¾ÑÐºÐ²Ð°';
   const currentQ = sp.q ?? '';
   const urlCategoryId = (sp.categoryId ?? '').trim();
   const currentPriceMin = sp.priceMin ?? '';
@@ -287,7 +282,7 @@ export default async function Home({
 
   const emptyListings: ListingsResponse = { page: 1, limit: 20, total: 0, vipStrip: [], items: [] };
   const emptyRecommended: ListingsResponse = { page: 1, limit: 8, total: 0, items: [] };
-  const defaultCities = ['Москва', 'Санкт-Петербург', 'Казань'];
+  const defaultCities = ['ÐÐ¾ÑÐºÐ²Ð°', 'Ð¡Ð°Ð½ÐºÑ-ÐÐµÑÐµÑÐ±ÑÑÐ³', 'ÐÐ°Ð·Ð°Ð½Ñ'];
 
   const [catRes, listRes, recRes, citiesRes] = await Promise.allSettled([
     categoriesPromise,
@@ -309,15 +304,15 @@ export default async function Home({
     : [currentCity, ...russianCitiesRaw];
   const cityOptions = russianCities.map((city) => ({ value: city, label: city }));
   const categoryOptions = [
-    { value: '', label: 'Категория' },
+    { value: '', label: 'ÐÐ°ÑÐµÐ³Ð¾ÑÐ¸Ñ' },
     ...categories.map((c) => ({ value: c.id, label: c.title })),
   ];
   const sortOptions = [
-    { value: 'relevant', label: 'Релевантные' },
-    { value: 'new', label: 'По новизне' },
-    { value: 'cheap', label: 'Дешевле' },
-    { value: 'expensive', label: 'Дороже' },
-    { value: 'nearby', label: 'По расстоянию' },
+    { value: 'relevant', label: 'Ð ÐµÐ»ÐµÐ²Ð°Ð½ÑÐ½ÑÐµ' },
+    { value: 'new', label: 'ÐÐ¾ Ð½Ð¾Ð²Ð¸Ð·Ð½Ðµ' },
+    { value: 'cheap', label: 'ÐÐµÑÐµÐ²Ð»Ðµ' },
+    { value: 'expensive', label: 'ÐÐ¾ÑÐ¾Ð¶Ðµ' },
+    { value: 'nearby', label: 'ÐÐ¾ ÑÐ°ÑÑÑÐ¾ÑÐ½Ð¸Ñ' },
   ];
 
   const geoHidden = geoOk ? (
@@ -337,329 +332,334 @@ export default async function Home({
     ...(geoOk ? { lat: String(latN), lon: String(lonN), radiusKm: currentRadiusKm } : {}),
   };
 
+  const CATS: Array<{ name: string; slug: string; icon: typeof Car; color: string; bgColor: string; darkBg: string; darkColor: string }> = [
+    { name: 'ÐÐ²ÑÐ¾', slug: 'auto', icon: Car, color: '#2563EB', bgColor: '#DBEAFE', darkBg: '#1e3a5f', darkColor: '#60a5fa' },
+    { name: 'ÐÐµÐ´Ð²Ð¸Ð¶Ð¸Ð¼Ð¾ÑÑÑ', slug: 'realty', icon: Building2, color: '#EA580C', bgColor: '#FFF7ED', darkBg: '#431407', darkColor: '#fb923c' },
+    { name: 'Ð Ð°Ð±Ð¾ÑÐ°', slug: 'job', icon: Briefcase, color: '#059669', bgColor: '#ECFDF5', darkBg: '#064e3b', darkColor: '#34d399' },
+    { name: 'ÐÐ´ÐµÐ¶Ð´Ð°', slug: 'clothes', icon: Shirt, color: '#DB2777', bgColor: '#FDF2F8', darkBg: '#4a0828', darkColor: '#f472b6' },
+    { name: 'Ð­Ð»ÐµÐºÑÑÐ¾Ð½Ð¸ÐºÐ°', slug: 'electronics', icon: Laptop, color: '#7C3AED', bgColor: '#F5F3FF', darkBg: '#2e1065', darkColor: '#a78bfa' },
+    { name: 'ÐÐ»Ñ Ð´Ð¾Ð¼Ð°', slug: 'home', icon: Sofa, color: '#16A34A', bgColor: '#F0FDF4', darkBg: '#14532d', darkColor: '#4ade80' },
+    { name: 'ÐÐµÑÑÐ¼', slug: 'kids', icon: Baby, color: '#0891B2', bgColor: '#ECFEFF', darkBg: '#164e63', darkColor: '#22d3ee' },
+    { name: 'Ð¥Ð¾Ð±Ð±Ð¸', slug: 'hobby', icon: Trophy, color: '#D97706', bgColor: '#FFFBEB', darkBg: '#451a03', darkColor: '#fbbf24' },
+    { name: 'Ð£ÑÐ»ÑÐ³Ð¸', slug: 'services', icon: Wrench, color: '#9333EA', bgColor: '#FAF5FF', darkBg: '#3b0764', darkColor: '#c084fc' },
+    { name: 'ÐÐ¸Ð²Ð¾ÑÐ½ÑÐµ', slug: 'animals', icon: Dog, color: '#E11D48', bgColor: '#FFF1F2', darkBg: '#4c0519', darkColor: '#fb7185' },
+  ];
+
+  const catIdMap: Record<string, string> = {};
+  for (const c of categories) {
+    for (const cat of CATS) {
+      if (c.title.includes(cat.name) || cat.name.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-[#f7f7f7] text-[#1a1a1a] antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="min-h-screen bg-[#F4F4F4] text-[#111] antialiased dark:bg-zinc-950 dark:text-zinc-100">
       {apiBackendDown ? (
         <div
           role="alert"
           className="border-b border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
         >
-          <strong>Не удаётся связаться с API</strong> ({API_URL || 'сервер'}). Запустите бэкенд: в корне
-          проекта{' '}
-          <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev</code> или{' '}
+          <strong>ÐÐµ ÑÐ´Ð°ÑÑÑÑ ÑÐ²ÑÐ·Ð°ÑÑÑÑ Ñ API</strong> ({API_URL || 'ÑÐµÑÐ²ÐµÑ'}). ÐÐ°Ð¿ÑÑÑÐ¸ÑÐµ Ð±ÑÐºÐµÐ½Ð´: Ð² ÐºÐ¾ÑÐ½Ðµ
+          Ð¿ÑÐ¾ÐµÐºÑÐ°{' '}
+          <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev</code> Ð¸Ð»Ð¸{' '}
           <code className="rounded bg-amber-200/60 px-1.5 py-0.5 text-xs dark:bg-amber-900/60">npm run dev:api</code>{' '}
-          (порт 3001). Лента и категории временно пустые.
+          (Ð¿Ð¾ÑÑ 3001). ÐÐµÐ½ÑÐ° Ð¸ ÐºÐ°ÑÐµÐ³Ð¾ÑÐ¸Ð¸ Ð²ÑÐµÐ¼ÐµÐ½Ð½Ð¾ Ð¿ÑÑÑÑÐµ.
         </div>
       ) : null}
       <SiteHeader>
-        <form action="/" method="GET" className="hidden min-w-0 flex-1 items-center md:flex mx-4">
+        <form action="/" method="GET" className="hidden min-w-0 flex-1 items-center md:flex">
           {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
           {geoHidden}
           {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
-          <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-l-lg border-[1.5px] border-r-0 border-[#00B4D8] bg-white px-3.5">
-            <Search size={16} strokeWidth={1.8} className="shrink-0 text-[#b0b0b0]" aria-hidden />
+          <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-l-lg border border-r-0 border-[#D1D5DB] bg-white px-3.5 dark:border-zinc-700 dark:bg-zinc-900">
+            <Search size={16} strokeWidth={1.8} className="shrink-0 text-[#999]" aria-hidden />
             <SearchInputWithSuggestions
               formKey={currentQ}
               defaultValue={currentQ}
               categories={categories}
-              className="h-10 w-full border-none bg-transparent text-sm text-[#1a1a1a] outline-none placeholder:text-[#b0b0b0] dark:text-zinc-100"
-              placeholder="Поиск по объявлениям"
+              className="h-10 w-full border-none bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
+              placeholder="ÐÐ¾Ð¸ÑÐº Ð¿Ð¾ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸ÑÐ¼"
             />
           </div>
           <button
             type="submit"
-            className="h-10 shrink-0 rounded-l-none rounded-r-lg border-none bg-[#00B4D8] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#0096b5]"
+            className="h-10 shrink-0 rounded-r-lg bg-[#007AFF] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#0066DD]"
           >
-            Найти
+            ÐÐ°Ð¹ÑÐ¸
           </button>
         </form>
       </SiteHeader>
 
-      <main className="mx-auto max-w-7xl px-3 pb-36 pt-3 md:px-4 md:pb-12 md:pt-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-3 pb-36 pt-4 md:px-6 md:pb-12 md:pt-6 lg:px-8">
         <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
-        <div className="space-y-4 md:space-y-5">
-          <section className="space-y-4 md:space-y-5">
-            {/* Categories — 2-row grid on mobile (like Avito), 5-col on desktop */}
-            <div className="rounded-xl bg-white px-3 py-3 dark:bg-zinc-900 md:p-4 lg:p-5">
-              <div className="grid grid-cols-5 gap-x-2 gap-y-2.5 md:gap-3">
-                {(() => {
-                  const CATS: Array<{ name: string; slug: string; icon: typeof Car; gradient: string; darkGradient: string }> = [
-                    { name: 'Авто', slug: 'auto', icon: Car, gradient: 'from-blue-500 to-indigo-600', darkGradient: 'dark:from-blue-600 dark:to-indigo-700' },
-                    { name: 'Недвижи-\u200Bмость', slug: 'realty', icon: Building2, gradient: 'from-orange-400 to-rose-500', darkGradient: 'dark:from-orange-500 dark:to-rose-600' },
-                    { name: 'Работа', slug: 'job', icon: Briefcase, gradient: 'from-emerald-400 to-teal-600', darkGradient: 'dark:from-emerald-500 dark:to-teal-700' },
-                    { name: 'Одежда', slug: 'clothes', icon: Shirt, gradient: 'from-pink-400 to-fuchsia-600', darkGradient: 'dark:from-pink-500 dark:to-fuchsia-700' },
-                    { name: 'Электро-\u200Bника', slug: 'electronics', icon: Laptop, gradient: 'from-cyan-400 to-blue-600', darkGradient: 'dark:from-cyan-500 dark:to-blue-700' },
-                    { name: 'Для дома', slug: 'home', icon: Sofa, gradient: 'from-lime-400 to-green-600', darkGradient: 'dark:from-lime-500 dark:to-green-700' },
-                    { name: 'Детям', slug: 'kids', icon: Baby, gradient: 'from-sky-400 to-cyan-600', darkGradient: 'dark:from-sky-500 dark:to-cyan-700' },
-                    { name: 'Хобби', slug: 'hobby', icon: Trophy, gradient: 'from-amber-400 to-orange-600', darkGradient: 'dark:from-amber-500 dark:to-orange-700' },
-                    { name: 'Услуги', slug: 'services', icon: Wrench, gradient: 'from-violet-400 to-purple-600', darkGradient: 'dark:from-violet-500 dark:to-purple-700' },
-                    { name: 'Животные', slug: 'animals', icon: Dog, gradient: 'from-rose-400 to-red-600', darkGradient: 'dark:from-rose-500 dark:to-red-700' },
-                  ];
-                  const catIdMap: Record<string, string> = {};
-                  for (const c of categories) {
-                    for (const cat of CATS) {
-                      const plainName = cat.name.replace(/[\u200B\-]/g, '');
-                      if (c.title.includes(plainName) || plainName.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
-                    }
-                  }
-                  return CATS.map((cat) => {
-                    const CatIcon = cat.icon;
-                    const catId = catIdMap[cat.slug] || '';
-                    const isActive = catId !== '' && catId === urlCategoryId;
-                    return (
-                      <Link
-                        key={cat.slug}
-                        href={{
-                          pathname: '/',
-                          query: { ...preservedListQuery, categoryId: catId },
-                        }}
-                        className={`group flex flex-col items-center gap-1 rounded-xl py-2 transition-all duration-200 active:scale-95 md:flex-row md:gap-3 md:rounded-2xl md:bg-zinc-50 md:px-3.5 md:py-3 md:hover:bg-zinc-100 md:dark:bg-zinc-800/50 md:dark:hover:bg-zinc-800 ${isActive ? 'md:ring-2 md:ring-[#00B4D8]' : ''}`}
+        <div className="space-y-5 md:space-y-6">
+          {/* Categories â Avito-style flat tiles */}
+          <section>
+            <div className="rounded-xl bg-white p-4 dark:bg-zinc-900 md:p-5">
+              <div className="grid grid-cols-5 gap-2.5 md:grid-cols-5 md:gap-3 lg:gap-4">
+                {CATS.map((cat) => {
+                  const CatIcon = cat.icon;
+                  const catId = catIdMap[cat.slug] || '';
+                  const isActive = catId !== '' && catId === urlCategoryId;
+                  return (
+                    <Link
+                      key={cat.slug}
+                      href={{
+                        pathname: '/',
+                        query: { ...preservedListQuery, categoryId: catId },
+                      }}
+                      className={`group flex flex-col items-center gap-2 rounded-xl p-2.5 transition-all duration-150 hover:bg-[#F0F0F0] active:scale-95 dark:hover:bg-zinc-800 md:flex-row md:gap-3 md:rounded-2xl md:px-4 md:py-3 ${isActive ? 'bg-[#E8F2FF] dark:bg-blue-950/40' : ''}`}
+                    >
+                      <div
+                        className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-transform group-hover:scale-105 md:h-11 md:w-11 md:rounded-lg ${isActive ? 'ring-2 ring-[#007AFF] ring-offset-1 ring-offset-white dark:ring-offset-zinc-900' : ''}`}
+                        style={{ backgroundColor: cat.bgColor }}
                       >
-                        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br shadow-sm transition-transform group-hover:scale-105 md:h-10 md:w-10 md:rounded-xl ${cat.gradient} ${cat.darkGradient} ${isActive ? 'ring-2 ring-[#00B4D8] ring-offset-1 ring-offset-white dark:ring-offset-zinc-900' : ''}`}>
-                          <CatIcon size={20} strokeWidth={1.8} className="text-white" aria-hidden />
-                        </div>
-                        <span className={`text-center text-[10px] font-medium leading-tight md:text-left md:text-sm ${isActive ? 'text-[#00B4D8]' : 'text-[#374151] dark:text-zinc-300'}`}>
-                          {cat.name.replace('\u200B', '')}
-                        </span>
-                      </Link>
-                    );
-                  });
-                })()}
+                        <CatIcon size={22} strokeWidth={1.8} style={{ color: cat.color }} aria-hidden />
+                      </div>
+                      <span className={`text-center text-[11px] font-medium leading-tight md:text-left md:text-sm ${isActive ? 'text-[#007AFF]' : 'text-[#333] dark:text-zinc-300'}`}>
+                        {cat.name}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
+          </section>
 
-            {/* Recommendations section */}
-            {!hasSearchQuery && recommended.items.length > 0 ? (
-            <div className="animate-fade-in-up">
-              <div className="mb-3 flex items-center justify-between md:mb-4">
-                <h2 className="text-base font-bold text-[#1a1a1a] dark:text-white md:text-xl">Рекомендации для вас</h2>
-                <span className="text-xs font-medium text-[#00B4D8]">
-                  <Sparkles size={14} className="mr-1 inline-block" aria-hidden />
-                  Подобрано для вас
+          {/* Recommendations section */}
+          {!hasSearchQuery && recommended.items.length > 0 ? (
+          <section className="animate-fade-in-up">
+            <div className="mb-3 flex items-center justify-between md:mb-4">
+              <h2 className="text-base font-bold text-[#111] dark:text-white md:text-lg">Ð ÐµÐºÐ¾Ð¼ÐµÐ½Ð´Ð°ÑÐ¸Ð¸ Ð´Ð»Ñ Ð²Ð°Ñ</h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-x-visible md:pb-0 md:gap-4">
+              {recommended.items.map((x) => (
+                <div
+                  key={x.id}
+                  className={`${recommendedListingCardClass(x.promoType)} min-w-[160px] shrink-0 md:min-w-0 md:shrink`}
+                >
+                  <TrackedListingLink href={`/listing/${x.id}`} listingId={x.id} className="block">
+                    <FeedListingHoverThumb
+                      images={x.images}
+                      title={x.title}
+                      apiBase={API_URL}
+                      thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
+                      imageClassName={`listing-thumb-img w-full aspect-[4/3]`}
+                      placeholder={
+                        <ListingPlaceholder
+                          title={x.title}
+                          categoryTitle={x.category.title}
+                          className="aspect-[4/3]"
+                        />
+                      }
+                      badges={
+                        <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-12" />
+                      }
+                    />
+                    <div className="p-3">
+                      <div className="text-[15px] font-bold text-[#111] dark:text-zinc-50 mb-1">
+                        {formatRub(x.priceRub, x.priceType)}
+                      </div>
+                      <div className="line-clamp-2 text-[13px] leading-snug text-[#333] group-hover:text-[#007AFF] dark:text-zinc-300 mb-1.5">
+                        {x.title}
+                      </div>
+                      <div className="text-[11px] text-[#999] truncate">{x.city}</div>
+                    </div>
+                  </TrackedListingLink>
+                </div>
+              ))}
+            </div>
+          </section>
+          ) : null}
+
+          {effectiveRecoMode ? (
+            <div className="rounded-lg bg-[#E8F2FF] p-3.5 dark:bg-blue-950/40">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#007AFF] px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
+                  <Sparkles size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
+                  Ð ÐµÐ¶Ð¸Ð¼ Ð¿Ð¾Ð´Ð±Ð¾ÑÐ°
+                </span>
+                <span className="text-[#333] dark:text-zinc-300">
+                  ÐÐ¾ÐºÐ°Ð·ÑÐ²Ð°ÐµÐ¼ Ð»ÐµÐ½ÑÑ Ð¿Ð¾ Ð²Ð°ÑÐ¸Ð¼ Ð½ÐµÐ´Ð°Ð²Ð½Ð¸Ð¼ Ð¿ÑÐ¾ÑÐ¼Ð¾ÑÑÐ°Ð¼ Ð¸ Ð¸Ð½ÑÐµÑÐµÑÐ°Ð¼.
                 </span>
               </div>
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide md:grid md:grid-cols-4 md:overflow-x-visible md:pb-0">
-                {recommended.items.map((x) => (
-                  <div
+            </div>
+          ) : null}
+
+          {(listings.vipStrip ?? []).length > 0 ? (
+            <section
+              aria-label="VIP Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ"
+              className="rounded-xl bg-white p-4 dark:bg-zinc-900"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#FF6F00] px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-white">
+                  VIP
+                </span>
+                <span className="text-sm text-[#707070] dark:text-zinc-400">
+                  ÐÐ°ÐºÑÐµÐ¿Ð»ÑÐ½Ð½ÑÐµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+                {(listings.vipStrip ?? []).map((x) => (
+                  <TrackedListingLink
                     key={x.id}
-                    className={`${recommendedListingCardClass(x.promoType)} min-w-[160px] shrink-0 md:min-w-0 md:shrink`}
+                    className={feedListingCardClass(x.promoType)}
+                    href={`/listing/${x.id}`}
+                    listingId={x.id}
                   >
-                    <TrackedListingLink href={`/listing/${x.id}`} listingId={x.id} className="block">
-                      <FeedListingHoverThumb
-                        images={x.images}
-                        title={x.title}
-                        apiBase={API_URL}
-                        thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
-                        imageClassName={`listing-thumb-img w-full aspect-[4/3]`}
-                        placeholder={
-                          <ListingPlaceholder
-                            title={x.title}
-                            categoryTitle={x.category.title}
-                            className="aspect-[4/3]"
-                          />
-                        }
-                        badges={
-                          <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-12" />
-                        }
-                      />
-                      <div className="p-2.5 md:p-3">
-                        <div className="line-clamp-2 text-[13px] font-normal leading-snug text-[#1a1a1a] group-hover:underline dark:text-zinc-100 mb-1">
-                          {x.title}
-                        </div>
-                        <div className={recommendedListingPriceClass()}>{formatRub(x.priceRub, x.priceType)}</div>
-                        <div className="text-[11px] text-[#909090] truncate">{x.city} · {x.category.title}</div>
+                    <FeedListingHoverThumb
+                      images={x.images}
+                      title={x.title}
+                      apiBase={API_URL}
+                      thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
+                      imageClassName="listing-thumb-img w-full aspect-[4/3]"
+                      placeholder={
+                        <ListingPlaceholder
+                          title={x.title}
+                          categoryTitle={x.category.title}
+                          className="aspect-[4/3]"
+                        />
+                      }
+                      badges={
+                        <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
+                      }
+                    />
+                    <div className="p-3">
+                      <div className="text-[15px] font-bold text-[#111] dark:text-zinc-50 mb-1">
+                        {formatRub(x.priceRub, x.priceType)}
                       </div>
-                    </TrackedListingLink>
-                  </div>
+                      <div className="line-clamp-2 text-sm text-[#333] group-hover:text-[#007AFF] dark:text-zinc-300 mb-1.5">
+                        {x.title}
+                      </div>
+                      <div className="text-xs text-[#999] truncate">
+                        {x.city} Â· {x.category.title}
+                      </div>
+                    </div>
+                  </TrackedListingLink>
                 ))}
               </div>
-            </div>
-            ) : null}
+            </section>
+          ) : null}
 
-            {effectiveRecoMode ? (
-              <div className="rounded-lg bg-[#e0f5fb] p-3.5 dark:bg-sky-950/40">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-[#00B4D8] px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
-                    <Sparkles size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
-                    Режим подбора
-                  </span>
-                  <span className="text-[#1a1a1a] dark:text-zinc-300">
-                    Показываем ленту по вашим недавним просмотрам и интересам.
-                  </span>
-                </div>
+          {/* Main feed listing cards */}
+          <section>
+            {listings.items.length > 0 ? (
+              <div className="mb-3 flex items-center justify-between md:mb-4">
+                <h2 className="text-base font-bold text-[#111] dark:text-white md:text-lg">
+                  {currentQ ? `Ð ÐµÐ·ÑÐ»ÑÑÐ°ÑÑ: Â«${currentQ}Â»` : 'ÐÑÐµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ'}
+                </h2>
+                <span className="text-xs text-[#999]">{listings.total} Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ð¹</span>
               </div>
             ) : null}
-
-            {(listings.vipStrip ?? []).length > 0 ? (
-              <section
-                aria-label="VIP объявления"
-                className="rounded-lg bg-white p-3 dark:bg-zinc-900 md:p-4"
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+            {listings.items.length === 0 ? (
+              <div className="col-span-2 md:col-span-3 lg:col-span-4 rounded-xl bg-white p-8 text-center dark:bg-zinc-900">
+                <div className="mx-auto mb-3 text-4xl">ð</div>
+                <p className="text-sm font-medium text-[#333] dark:text-zinc-300">ÐÐ¸ÑÐµÐ³Ð¾ Ð½Ðµ Ð½Ð°ÑÐ»Ð¾ÑÑ</p>
+                <p className="mt-1 text-xs text-[#999] dark:text-zinc-500">ÐÐ¾Ð¿ÑÐ¾Ð±ÑÐ¹ÑÐµ ÑÐ½ÑÑÑ ÐºÐ°ÑÐµÐ³Ð¾ÑÐ¸Ñ Ð¸Ð»Ð¸ Ð¸Ð·Ð¼ÐµÐ½Ð¸ÑÑ Ð³Ð¾ÑÐ¾Ð´</p>
+              </div>
+            ) : null}
+            {listings.items.map((x) => (
+              <TrackedListingLink
+                key={x.id}
+                className={feedListingCardClass(x.promoType)}
+                href={`/listing/${x.id}`}
+                listingId={x.id}
               >
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-[#06D6A0] px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-white">
-                    VIP
-                  </span>
-                  <span className="text-sm text-[#6b7280] dark:text-zinc-400">
-                    Закреплённые объявления
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                  {(listings.vipStrip ?? []).map((x) => (
-                    <TrackedListingLink
-                      key={x.id}
-                      className={feedListingCardClass(x.promoType)}
-                      href={`/listing/${x.id}`}
-                      listingId={x.id}
-                    >
-                      <FeedListingHoverThumb
-                        images={x.images}
-                        title={x.title}
-                        apiBase={API_URL}
-                        thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
-                        imageClassName="listing-thumb-img w-full aspect-[4/3]"
-                        placeholder={
-                          <ListingPlaceholder
-                            title={x.title}
-                            categoryTitle={x.category.title}
-                            className="aspect-[4/3]"
-                          />
-                        }
-                        badges={
-                          <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
-                        }
-                      />
-                      <div className="p-[10px_12px_14px]">
-                        <div className="line-clamp-2 text-sm font-normal text-[#1a1a1a] group-hover:underline dark:text-zinc-100 mb-1.5">
-                          {x.title}
-                        </div>
-                        <div className={feedListingPriceClass()}>{formatRub(x.priceRub, x.priceType)}</div>
-                        <div className="text-xs text-[#909090] truncate">
-                          {x.city} · {x.category.title}
-                        </div>
-                      </div>
-                    </TrackedListingLink>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            {/* Feed listing cards */}
-            <div>
-              {listings.items.length > 0 ? (
-                <div className="mb-3 flex items-center justify-between md:mb-4">
-                  <h2 className="text-base font-bold text-[#1a1a1a] dark:text-white md:text-xl">
-                    {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
-                  </h2>
-                  <span className="text-xs text-[#909090]">{listings.total} объявлений</span>
-                </div>
-              ) : null}
-              <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
-              {listings.items.length === 0 ? (
-                <div className="col-span-2 md:col-span-3 lg:col-span-4 rounded-xl bg-white p-8 text-center dark:bg-zinc-900">
-                  <div className="mx-auto mb-3 text-4xl">🔍</div>
-                  <p className="text-sm font-medium text-[#374151] dark:text-zinc-300">Ничего не нашлось</p>
-                  <p className="mt-1 text-xs text-[#909090] dark:text-zinc-500">Попробуйте снять категорию или изменить город</p>
-                </div>
-              ) : null}
-              {listings.items.map((x) => (
-                <TrackedListingLink
-                  key={x.id}
-                  className={feedListingCardClass(x.promoType)}
-                  href={`/listing/${x.id}`}
-                  listingId={x.id}
-                >
-                  <FeedListingHoverThumb
-                    images={x.images}
-                    title={x.title}
-                    apiBase={API_URL}
-                    thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
-                    imageClassName="listing-thumb-img w-full aspect-[4/3]"
-                    placeholder={
-                      <ListingPlaceholder
-                        title={x.title}
-                        categoryTitle={x.category.title}
-                        className="aspect-[4/3]"
-                      />
-                    }
-                    badges={
-                      <>
-                        <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
-                        {x.isBoosted ? (
-                          <span className="absolute top-2 left-2 z-[1] rounded-[6px] bg-[#FFD166] px-2 py-0.5 text-[11px] font-semibold text-[#1a1a1a] shadow-sm">
-                            Поднято
-                          </span>
-                        ) : null}
-                      </>
-                    }
-                  />
-                  <div className="p-2.5 md:p-3">
-                    <div className="line-clamp-2 text-[13px] font-normal leading-snug text-[#1a1a1a] group-hover:underline dark:text-zinc-100 mb-1">
-                      {x.title}
-                    </div>
-                    <div className={feedListingPriceClass()}>{formatRub(x.priceRub, x.priceType)}</div>
-                    <div className="text-[11px] text-[#909090] truncate">
-                      {x.city} · {x.category.title}
-                      {typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
-                    </div>
-                  </div>
-                </TrackedListingLink>
-              ))}
-
-              {!effectiveRecoMode && listings.total > listings.items.length ? (
-                <FeedLoadMore
-                  initialPage={1}
-                  total={listings.total}
-                  limit={20}
-                  basePath={feedApiPath}
+                <FeedListingHoverThumb
+                  images={x.images}
+                  title={x.title}
                   apiBase={API_URL}
+                  thumbClassName={`listing-thumb-wrap relative overflow-hidden rounded-t-xl ${listingThumbPromoExtraClass(x.promoType)}`.trim()}
+                  imageClassName="listing-thumb-img w-full aspect-[4/3]"
+                  placeholder={
+                    <ListingPlaceholder
+                      title={x.title}
+                      categoryTitle={x.category.title}
+                      className="aspect-[4/3]"
+                    />
+                  }
+                  badges={
+                    <>
+                      <div className="listing-thumb-shade pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10" />
+                      {x.isBoosted ? (
+                        <span className="absolute top-2 left-2 z-[1] rounded-md bg-[#FF6F00] px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">
+                          ÐÐ¾Ð´Ð½ÑÑÐ¾
+                        </span>
+                      ) : null}
+                    </>
+                  }
                 />
-              ) : null}
-              </div>
+                <div className="p-3">
+                  <div className="text-[15px] font-bold text-[#111] dark:text-zinc-50 mb-1">
+                    {formatRub(x.priceRub, x.priceType)}
+                  </div>
+                  <div className="line-clamp-2 text-[13px] leading-snug text-[#333] group-hover:text-[#007AFF] dark:text-zinc-300 mb-1.5">
+                    {x.title}
+                  </div>
+                  <div className="text-[11px] text-[#999] truncate">
+                    {x.city} Â· {x.category.title}
+                    {typeof x.distanceKm === 'number' ? ` Â· ${x.distanceKm} ÐºÐ¼` : ''}
+                  </div>
+                </div>
+              </TrackedListingLink>
+            ))}
+
+            {!effectiveRecoMode && listings.total > listings.items.length ? (
+              <FeedLoadMore
+                initialPage={1}
+                total={listings.total}
+                limit={20}
+                basePath={feedApiPath}
+                apiBase={API_URL}
+              />
+            ) : null}
             </div>
           </section>
         </div>
       </main>
 
+      {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 md:hidden">
-        <div className="border-t border-[#f0f0f0] bg-white/98 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/98">
+        <div className="border-t border-[#E8E8E8] bg-white/98 pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/98">
           <div className="mx-auto grid max-w-lg grid-cols-5 items-center px-1">
             <Link
               href="/"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#00B4D8] transition-colors"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#007AFF] transition-colors"
             >
               <HomeIcon size={22} strokeWidth={1.8} aria-hidden />
-              <span>Главная</span>
+              <span>ÐÐ»Ð°Ð²Ð½Ð°Ñ</span>
             </Link>
             <Link
               href="/favorites"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#909090] transition-colors active:text-[#00B4D8] dark:text-zinc-400"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
             >
               <Heart size={22} strokeWidth={1.8} aria-hidden />
-              <span>Избранное</span>
+              <span>ÐÐ·Ð±ÑÐ°Ð½Ð½Ð¾Ðµ</span>
             </Link>
             <Link
               href="/new"
               className="-mt-4 flex flex-col items-center gap-1 text-[10px] font-bold"
             >
-              <span className="grid h-12 w-12 place-items-center rounded-full bg-[#00B4D8] shadow-lg shadow-[#00B4D8]/25 transition-transform active:scale-90">
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-[#007AFF] shadow-lg shadow-[#007AFF]/25 transition-transform active:scale-90">
                 <Plus size={24} strokeWidth={2} className="text-white" aria-hidden />
               </span>
-              <span className="text-[#00B4D8]">Подать</span>
+              <span className="text-[#007AFF]">ÐÐ¾Ð´Ð°ÑÑ</span>
             </Link>
             <Link
               href="/messages"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#909090] transition-colors active:text-[#00B4D8] dark:text-zinc-400"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
             >
               <MessageCircle size={22} strokeWidth={1.8} aria-hidden />
-              <span>Чаты</span>
+              <span>Ð§Ð°ÑÑ</span>
             </Link>
             <Link
               href="/profile"
-              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#909090] transition-colors active:text-[#00B4D8] dark:text-zinc-400"
+              className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-[#999] transition-colors active:text-[#007AFF] dark:text-zinc-400"
             >
               <User size={22} strokeWidth={1.8} aria-hidden />
-              <span>Профиль</span>
+              <span>ÐÑÐ¾ÑÐ¸Ð»Ñ</span>
             </Link>
           </div>
         </div>
