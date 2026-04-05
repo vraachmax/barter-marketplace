@@ -130,19 +130,19 @@ export default function ProfileSidebar({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">{profileName ?? 'ÐÑÐ¾ÑÐ¸Ð»Ñ'}</div>
+              <div className="truncate text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">{profileName ?? 'Профиль'}</div>
               <div className="mt-0.5 flex items-center gap-1 text-xs text-[#6b7280] dark:text-zinc-400">
                 <Star size={14} strokeWidth={navStroke} className="shrink-0 text-[#FFD166]" fill="currentColor" aria-hidden />
-                <span className="font-semibold">{ratingAvg ? ratingAvg.toFixed(1) : 'â'}</span>
+                <span className="font-semibold">{ratingAvg ? ratingAvg.toFixed(1) : '—'}</span>
                 <span>
-                  {ratingCount > 0 ? `Â· ${ratingCount} Ð¾ÑÐ·ÑÐ²Ð¾Ð²` : 'Â· Ð½ÐµÑ Ð¾ÑÐ·ÑÐ²Ð¾Ð²'}
+                  {ratingCount > 0 ? `· ${ratingCount} отзывов` : '· нет отзывов'}
                 </span>
               </div>
               <Link
                 href="/profile/settings?section=storefront"
                 className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#007AFF] hover:underline"
               >
-                Ð ÐµÐ´Ð°ÐºÑÐ¸ÑÐ¾Ð²Ð°ÑÑ Ð¿ÑÐ¾ÑÐ¸Ð»Ñ
+                Редактировать профиль
                 <ChevronRight size={14} strokeWidth={navStroke} aria-hidden />
               </Link>
             </div>
@@ -153,67 +153,67 @@ export default function ProfileSidebar({
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-[1.5px] border-[#007AFF] bg-transparent py-2 text-xs font-semibold text-[#007AFF] transition hover:bg-[#E8F2FF]"
             >
               <Link2 size={16} strokeWidth={navStroke} aria-hidden />
-              ÐÐ°Ðº Ð²Ð°Ñ Ð²Ð¸Ð´ÑÑ Ð¿Ð¾ÐºÑÐ¿Ð°ÑÐµÐ»Ð¸
+              Как вас видят покупатели
             </Link>
           ) : null}
         </div>
 
         <nav className="p-3">
-          <NavHeading>ÐÑÐ¾Ð´Ð°Ð¶Ð¸</NavHeading>
+          <NavHeading>Продажи</NavHeading>
           <div className="space-y-0.5">
             <NavItem
               href="/profile"
               icon={<Tag size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="ÐÐ±ÑÑÐ²Ð»ÐµÐ½Ð¸Ñ"
+              label="Объявления"
               right={activeCount}
               isActive={active === 'profile'}
             />
             <NavItem
               href="/profile?tab=ARCHIVED"
               icon={<Archive size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="ÐÑÑÐ¸Ð²"
+              label="Архив"
               right={archivedCount > 0 ? archivedCount : undefined}
             />
             <NavItem
               href="/messages"
               icon={<MessageCircle size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Ð¡Ð¾Ð¾Ð±ÑÐµÐ½Ð¸Ñ"
+              label="Сообщения"
             />
             <NavItem
               href="/favorites"
               icon={<Heart size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="ÐÐ·Ð±ÑÐ°Ð½Ð½Ð¾Ðµ"
+              label="Избранное"
             />
           </div>
 
-          <NavHeading>ÐÐºÐºÐ°ÑÐ½Ñ</NavHeading>
+          <NavHeading>Аккаунт</NavHeading>
           <div className="space-y-0.5">
             <NavItem
               href="/profile/orders"
               icon={<Package size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="ÐÐ°ÐºÐ°Ð·Ñ"
+              label="Заказы"
               isActive={active === 'orders'}
             />
             <NavItem
               href="/profile/reviews"
               icon={<Star size={20} strokeWidth={navStroke} className={iconMuted} fill="currentColor" />}
-              label="ÐÑÐ·ÑÐ²Ñ"
+              label="Отзывы"
               isActive={active === 'reviews'}
             />
             <NavItem
               href="/profile/settings"
               icon={<Settings size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="ÐÐ°ÑÑÑÐ¾Ð¹ÐºÐ¸"
+              label="Настройки"
               isActive={active === 'settings'}
             />
             <NavItem
               href="/profile/settings?section=notifications"
               icon={<Bell size={20} strokeWidth={navStroke} className={iconMuted} />}
-              label="Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ñ"
+              label="Уведомления"
             />
           </div>
 
-          <NavHeading>ÐÑÑÑÑÐ¾</NavHeading>
+          <NavHeading>Быстро</NavHeading>
           <div className="space-y-0.5">
             <Link
               href="/new"
@@ -222,7 +222,7 @@ export default function ProfileSidebar({
               <span className="grid h-8 w-8 place-items-center rounded-md bg-[#007AFF]">
                 <Plus size={20} strokeWidth={navStroke} className="text-white" aria-hidden />
               </span>
-              ÐÐ¾Ð²Ð¾Ðµ Ð¾Ð±ÑÑÐ²Ð»ÐµÐ½Ð¸Ðµ
+              Новое объявление
             </Link>
           </div>
         </nav>
@@ -235,7 +235,7 @@ export default function ProfileSidebar({
               className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] transition hover:bg-red-50 hover:text-red-700 dark:text-zinc-400 dark:hover:bg-red-950/40 dark:hover:text-rose-400"
             >
               <LogOut size={20} strokeWidth={navStroke} aria-hidden />
-              ÐÑÐ¹ÑÐ¸ Ð¸Ð· Ð°ÐºÐºÐ°ÑÐ½ÑÐ°
+              Выйти из аккаунта
             </button>
           ) : (
             <Link
@@ -243,7 +243,7 @@ export default function ProfileSidebar({
               className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] hover:bg-[#f0f9ff] dark:text-zinc-400 dark:hover:bg-zinc-800"
             >
               <LogOut size={20} strokeWidth={navStroke} aria-hidden />
-              ÐÑÐ¹ÑÐ¸
+              Выйти
             </Link>
           )}
         </div>
