@@ -159,11 +159,15 @@ type Props = {
 
 export function MegaMenu({ open, onClose }: Props) {
   const [hoveredIdx, setHoveredIdx] = useState(0);
+  const [mobileExpandedIdx, setMobileExpandedIdx] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Reset to first category when opening
+  // Reset when opening
   useEffect(() => {
-    if (open) setHoveredIdx(0);
+    if (open) {
+      setHoveredIdx(0);
+      setMobileExpandedIdx(null);
+    }
   }, [open]);
 
   // ESC to close
@@ -175,6 +179,13 @@ export function MegaMenu({ open, onClose }: Props) {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
+
+  // Lock body scroll on mobile when open
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
   if (!open) return null;
 
@@ -189,10 +200,10 @@ export function MegaMenu({ open, onClose }: Props) {
         style={{ animation: 'megaFadeIn 150ms ease-out' }}
       />
 
-      {/* Panel */}
+      {/* Desktop Panel */}
       <div
         ref={panelRef}
-        className="fixed left-0 right-0 z-[201]"
+        className="fixed left-0 right-0 z-[201] hidden md:block"
         style={{
           top: 56,
           animation: 'megaSlideIn 150ms ease-out',
@@ -276,6 +287,61 @@ export function MegaMenu({ open, onClose }: Props) {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Panel — full-screen accordion */}
+      <div className="fixed inset-0 z-[201] flex flex-col bg-white dark:bg-zinc-950 md:hidden" style={{ animation: 'megaSlideIn 150ms ease-out' }}>
+        <div className="flex items-center justify-between border-b border-[#E8E8E8] px-4 py-3 dark:border-zinc-800">
+          <h2 className="text-base font-bold text-[#111] dark:text-zinc-100">Все категории</h2>
+          <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-[#707070] hover:bg-[#F0F0F0] dark:text-zinc-400 dark:hover:bg-zinc-800">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom,0px)]">
+          {MEGA_CATEGORIES.map((cat, i) => (
+            <div key={cat.slug}>
+              <button
+                type="button"
+                onClick={() => setMobileExpandedIdx(mobileExpandedIdx === i ? null : i)}
+                className={`flex w-full items-center gap-3 border-b border-[#F0F0F0] px-4 py-3 text-left dark:border-zinc-800 ${
+                  mobileExpandedIdx === i ? 'bg-[#E8F2FF] dark:bg-sky-950/30' : ''
+                }`}
+              >
+                <CategoryGradientSquare preset={cat.preset} boxSize={36} iconSize={20} radius={10} />
+                <span className={`flex-1 text-sm ${mobileExpandedIdx === i ? 'font-bold text-[#007AFF]' : 'font-medium text-[#111] dark:text-zinc-100'}`}>
+                  {cat.title}
+                </span>
+                <ChevronRight
+                  size={16}
+                  strokeWidth={1.8}
+                  className={`shrink-0 transition-transform ${mobileExpandedIdx === i ? 'rotate-90 text-[#007AFF]' : 'text-[#c0c0c0]'}`}
+                  aria-hidden
+                />
+              </button>
+              {mobileExpandedIdx === i ? (
+                <div className="border-b border-[#F0F0F0] bg-[#FAFAFA] px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+                  {cat.subcategories.map((sub) => (
+                    <Link
+                      key={sub}
+                      href={`/?categoryId=${cat.slug}&sub=${encodeURIComponent(sub)}`}
+                      onClick={onClose}
+                      className="block py-2 pl-12 text-sm text-[#111] transition-colors hover:text-[#007AFF] dark:text-zinc-300"
+                    >
+                      {sub}
+                    </Link>
+                  ))}
+                  <Link
+                    href={`/?categoryId=${cat.slug}`}
+                    onClick={onClose}
+                    className="block py-2 pl-12 text-sm font-medium text-[#007AFF]"
+                  >
+                    Смотреть все в «{cat.title}»
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          ))}
         </div>
       </div>
     </>
