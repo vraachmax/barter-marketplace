@@ -394,6 +394,11 @@ export default async function Home({
         {/* Mobile Header */}
         <header style={{ position: 'sticky', top: 0, width: '100%', zIndex: 50, padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Logo */}
+            <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/logo_dark.svg" alt="Бартер" style={{ height: 32, width: 'auto' }} />
+            </Link>
             {/* Search bar */}
             <form action="/" method="GET" style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
               {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
@@ -407,14 +412,11 @@ export default async function Home({
                 placeholder={`Поиск в ${currentCity}`}
                 style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 15, width: '100%', color: '#1E293B' }}
               />
-              <button type="button" style={{ marginLeft: 8, flexShrink: 0, display: 'flex' }}>
-                <SlidersHorizontal size={20} strokeWidth={1.8} color="#475569" aria-label="Фильтры" />
-              </button>
             </form>
-            {/* Cart button */}
-            <Link href="/favorites" style={{ width: 48, height: 48, background: 'rgba(223,223,223,0.8)', backdropFilter: 'blur(8px)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>
-              <Heart size={22} strokeWidth={1.8} color="#F59E0B" fill="#F59E0B" aria-hidden />
-            </Link>
+            {/* Filters button */}
+            <button type="button" style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none' }}>
+              <SlidersHorizontal size={20} strokeWidth={1.8} color="#fff" aria-label="Фильтры" />
+            </button>
           </div>
 
           {/* Promo Strip */}
