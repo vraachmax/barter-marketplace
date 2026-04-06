@@ -406,7 +406,7 @@ export default async function Home({
               </div>
             </Link>
             {/* Search bar */}
-            <form action="/" method="GET" style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+            <form action="/" method="GET" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
               {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
               {geoHidden}
               {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
@@ -415,8 +415,8 @@ export default async function Home({
                 name="q"
                 defaultValue={currentQ}
                 type="text"
-                placeholder={`Поиск в ${currentCity}`}
-                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 15, width: '100%', color: '#1E293B' }}
+                placeholder="Поиск по объявлениям"
+                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 15, flex: 1, minWidth: 0, color: '#1E293B' }}
               />
             </form>
             {/* Filters button */}
@@ -425,15 +425,6 @@ export default async function Home({
             </button>
           </div>
 
-          {/* Promo Strip */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff' }}>
-              <span style={{ fontSize: 17, fontWeight: 700 }}>Размещение бесплатно</span>
-              <div style={{ background: '#fff', borderRadius: 50, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-              </div>
-            </div>
-          </div>
         </header>
 
         {/* Categories Section — Dark Cards */}
