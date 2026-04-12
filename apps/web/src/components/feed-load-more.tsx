@@ -135,17 +135,9 @@ export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: P
         <div ref={sentinelRef} className="col-span-full flex justify-center py-6">
           {isPending ? (
             <span
-              className="inline-block size-6 animate-spin rounded-full border-2 border-sky-500 border-t-transparent dark:border-cyan-400 dark:border-t-transparent"
-              aria-hidden
+              className="inline-block size-6 animate-spin rounded-full border-2 border-sky-500 border-t-transparent"
             />
-          ) : (
-            <button
-              onClick={loadMore}
-              className="rounded-2xl border border-zinc-200 bg-white px-6 py-2.5 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-            >
-              Показать ещё
-            </button>
-          )}
+          ) : null}
         </div>
       ) : null}
     </>

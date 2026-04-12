@@ -115,19 +115,8 @@ export default function FavoritesPage() {
                     >
                       {x.listing.title}
                     </Link>
-                    <div className="mt-1 text-sm font-bold text-sky-700 dark:text-sky-400">{formatRub(x.listing.priceRub)}</div>
-                    <div className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                      {x.listing.city} • {x.listing.category.title}
-                    </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void remove(x.listing.id)}
-                  className="mt-3 rounded-xl border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  Убрать из избранного
-                </button>
               </div>
             ))}
           </div>
@@ -136,3 +125,4 @@ export default function FavoritesPage() {
     </div>
   );
 }
+               

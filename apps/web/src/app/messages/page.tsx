@@ -711,58 +711,54 @@ export default function MessagesPage() {
                   </div>
                 ) : null}
                 <div className="mx-auto flex max-w-3xl items-end gap-2">
-                  <label className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-sky-600 dark:hover:bg-sky-950/50 dark:hover:text-sky-300">
-                    <Link2 size={20} strokeWidth={1.8} aria-hidden />
+                  <label className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-sky-600 dark:hover:bg-sky-950/50 dark:hover:text-sky-400">
+                    <Camera size={20} strokeWidth={1.8} aria-hidden />
                     <input
                       type="file"
-                      accept="image/*,video/*"
                       className="hidden"
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        const file = e.currentTarget.files?.[0];
+                        if (file) setSelectedFile(file);
+                      }}
+                      accept="image/*,video/*"
                     />
                   </label>
-                  <textarea
-                    ref={composerRef}
-                    rows={1}
-                    className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm leading-snug outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-500/15 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-sky-500 dark:focus:bg-zinc-900"
-                    placeholder={
-                      selectedFile ? `Подпись к файлу (${selectedFile.name})…` : 'Напишите сообщение…'
-                    }
+                  <input
+                    type="text"
+                    className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm placeholder-zinc-400 shadow-sm transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20 dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder-zinc-500 dark:text-zinc-100 dark:focus:border-sky-500 dark:focus:ring-sky-500/20"
+                    placeholder="Напишите сообщение..."
                     value={text}
                     onChange={(e) => {
                       setText(e.target.value);
-                      if (e.target.value.trim().length === 0) {
-                        emitTyping(false);
-                        if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
-                        return;
-                      }
-                      emitTyping(true);
-                      if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
-                      typingStopTimerRef.current = setTimeout(() => emitTyping(false), 1200);
+                      emitTyping(e.target.value.length > 0);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
-                        void (selectedFile ? sendAttachment() : sendMessage());
+                        if (selectedFile) {
+                          sendAttachment();
+                        } else {
+                          sendMessage();
+                        }
                       }
                     }}
+                    disabled={busy}
                   />
                   <button
                     type="button"
-                    className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-600/25 transition hover:from-sky-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-45"
+                    onClick={() => {
+                      if (selectedFile) {
+                        sendAttachment();
+                      } else {
+                        sendMessage();
+                      }
+                    }}
                     disabled={busy || (text.trim().length === 0 && !selectedFile)}
-                    onClick={() => void (selectedFile ? sendAttachment() : sendMessage())}
-                    aria-label={selectedFile ? 'Отправить файл' : 'Отправить'}
+                    className="shrink-0 rounded-xl bg-gradient-to-br from-sky-600 to-cyan-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:from-sky-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed dark:shadow-sky-950/30"
                   >
-                    {busy ? (
-                      <span className="inline-block size-5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
-                    ) : (
-                      <Mail size={20} strokeWidth={1.8} className="ml-0.5" aria-hidden />
-                    )}
+                    {busy ? '...' : 'Отправить'}
                   </button>
                 </div>
-                <p className="mx-auto mt-2 max-w-3xl text-center text-[11px] text-zinc-400 dark:text-zinc-500">
-                  Enter — отправить · Shift+Enter — новая строка
-                </p>
               </div>
             </>
           )}

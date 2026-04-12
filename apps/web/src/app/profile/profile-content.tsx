@@ -1159,25 +1159,16 @@ export function ProfileContent() {
 
             <button
               type="button"
-              disabled={!topUpAmount || topUpAmount <= 0}
               onClick={() => {
-                /* TODO: integrate payment API */
-                setShowTopUp(false);
-                setTopUpAmount(null);
+                if (topUpAmount && topUpAmount > 0) {
+                  // Handle top-up logic here
+                  setShowTopUp(false);
+                }
               }}
-              className="mt-5 w-full rounded-2xl bg-gradient-to-r from-[#0088FF] to-[#0066DD] py-3.5 text-sm font-bold text-white shadow-lg shadow-sky-600/25 transition hover:from-sky-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={!topUpAmount || topUpAmount <= 0}
+              className="mt-6 w-full rounded-lg bg-[#0088FF] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0077DD] disabled:bg-zinc-300 disabled:text-zinc-500 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-400"
             >
-              {topUpAmount && topUpAmount > 0
-                ? `Пополнить на ${topUpAmount.toLocaleString('ru-RU')} ₽`
-                : 'Выберите сумму'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => { setShowTopUp(false); setTopUpAmount(null); }}
-              className="mt-3 w-full rounded-xl py-2.5 text-sm font-semibold text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-            >
-              Отмена
+              Пополнить на {topUpAmount?.toLocaleString('ru-RU') ?? '—'} ₽
             </button>
           </div>
         </div>

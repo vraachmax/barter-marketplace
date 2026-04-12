@@ -972,13 +972,10 @@ export function ProfileSettingsContent() {
                             ) : (
                               <>
                                 <CheckCircle size={18} strokeWidth={stroke} aria-hidden />
-                                Сохранить изменения
+                                Сохранить
                               </>
                             )}
                           </button>
-                          <p className="text-center text-xs text-zinc-500 dark:text-zinc-400 sm:text-left">
-                            Некоторые параметры (тема) применяются сразу после сохранения в этом браузере.
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -986,8 +983,9 @@ export function ProfileSettingsContent() {
                 </div>
               </div>
             </div>
-          </>
-        ) : null}
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   );
