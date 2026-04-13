@@ -195,7 +195,10 @@ export default function MessagesPage() {
       text: text.trim(),
     });
     setBusy(false);
-    if (!res.ok) return;
+    if (!res.ok) {
+      window.alert(`Не удалось отправить файл: ${res.message ?? 'ошибка сети'}`);
+      return;
+    }
     setText('');
     setSelectedFile(null);
     await Promise.all([loadMessages(selectedChatId), loadChats()]);

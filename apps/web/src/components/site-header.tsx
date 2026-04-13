@@ -161,7 +161,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
               </div>
               <div className="py-1.5">
                 {[
-                  { href: '/profile', icon: <Tag size={18} strokeWidth={1.8} />, label: 'Мои объявления' },
+                  { href: '/listings', icon: <Tag size={18} strokeWidth={1.8} />, label: 'Мои объявления' },
                   { href: '/profile/orders', icon: <Package size={18} strokeWidth={1.8} />, label: 'Заказы' },
                   { href: '/profile/reviews', icon: <Star size={18} strokeWidth={1.8} fill="currentColor" />, label: 'Мои отзывы' },
                   { href: '/favorites', icon: <Heart size={18} strokeWidth={1.8} />, label: 'Избранное' },

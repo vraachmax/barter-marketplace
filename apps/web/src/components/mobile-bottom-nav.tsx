@@ -14,7 +14,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Главная', icon: HomeIcon, match: (p) => p === '/' },
   { href: '/favorites', label: 'Избранное', icon: Heart, match: (p) => p === '/favorites' },
-  { href: '/profile/listings', label: 'Объявления', icon: ListPlus, match: (p) => p === '/profile/listings' },
+  { href: '/listings', label: 'Объявления', icon: ListPlus, match: (p) => p === '/listings' },
   { href: '/messages', label: 'Сообщения', icon: MessageCircle, match: (p) => p.startsWith('/messages') },
   { href: '/profile', label: 'Профиль', icon: User, match: (p) => p === '/profile' || p === '/profile/settings' },
 ];

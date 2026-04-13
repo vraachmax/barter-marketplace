@@ -273,7 +273,7 @@ export function ProfileContent() {
       ? { key: 'listing', title: 'Первое объявление', hint: 'Разместите товар или услугу', href: '/new' }
       : null,
     listings.some((x) => !x.activePromotion)
-      ? { key: 'promo', title: 'Продвижение', hint: 'TOP / VIP / XL увеличивают охват', href: '/profile?tab=ACTIVE' }
+      ? { key: 'promo', title: 'Продвижение', hint: 'TOP / VIP / XL увеличивают охват', href: '/listings?tab=ACTIVE' }
       : null,
   ].filter(Boolean) as Array<{ key: string; title: string; hint: string; href: string }>;
 
@@ -537,7 +537,7 @@ export function ProfileContent() {
               {/* Menu Items */}
               <div className="mt-5 space-y-2">
                 <Link
-                  href="/profile/listings"
+                  href="/listings"
                   className="flex items-center gap-3 rounded-2xl bg-white p-4 transition hover:bg-slate-50 dark:bg-zinc-900/80 dark:hover:bg-zinc-800"
                 >
                   <Grid3x3 size={24} strokeWidth={1.5} className="text-[#0088FF]" aria-hidden />

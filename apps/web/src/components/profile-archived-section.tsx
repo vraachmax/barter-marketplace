@@ -41,7 +41,7 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
             в продажу.
           </p>
           <Link
-            href="/profile?tab=ACTIVE"
+            href="/listings?tab=ACTIVE"
             className="mt-6 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 hover:from-sky-700 hover:to-cyan-700"
           >
             Мои активные объявления

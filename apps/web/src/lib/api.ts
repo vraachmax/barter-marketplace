@@ -278,11 +278,15 @@ export async function apiUploadImage(
   try {
     const fd = new FormData();
     fd.append('image', file);
+    const token = getClientToken();
+    const authHeaders: Record<string, string> = {};
+    if (token) authHeaders['Authorization'] = `Bearer ${token}`;
     const res = await fetch(`${API_URL}${path}`, {
       method: 'POST',
       body: fd,
       credentials: 'include',
       headers: {
+        ...authHeaders,
         ...behaviorRequestHeaders(),
       },
     });
@@ -314,11 +318,15 @@ export async function apiUploadFile(
     for (const [k, v] of Object.entries(extraFields ?? {})) {
       fd.append(k, v);
     }
+    const token = getClientToken();
+    const authHeaders: Record<string, string> = {};
+    if (token) authHeaders['Authorization'] = `Bearer ${token}`;
     const res = await fetch(`${API_URL}${path}`, {
       method: 'POST',
       body: fd,
       credentials: 'include',
       headers: {
+        ...authHeaders,
         ...behaviorRequestHeaders(),
       },
     });

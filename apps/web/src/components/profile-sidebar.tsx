@@ -162,14 +162,14 @@ export default function ProfileSidebar({
           <NavHeading>Продажи</NavHeading>
           <div className="space-y-0.5">
             <NavItem
-              href="/profile"
+              href="/listings"
               icon={<Tag size={20} strokeWidth={navStroke} className={iconMuted} />}
               label="Объявления"
               right={activeCount}
               isActive={active === 'profile'}
             />
             <NavItem
-              href="/profile?tab=ARCHIVED"
+              href="/listings?tab=ARCHIVED"
               icon={<Archive size={20} strokeWidth={navStroke} className={iconMuted} />}
               label="Архив"
               right={archivedCount > 0 ? archivedCount : undefined}
