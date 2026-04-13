@@ -188,7 +188,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
         ) : null}
 
         {/* Mobile header — inline styles */}
-        <div className="md:hidden" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', minHeight: 56 }}>
+        <div className="flex md:hidden" style={{ alignItems: 'center', gap: 8, padding: '8px 16px', minHeight: 56 }}>
           <div style={{ flexShrink: 0 }}>
             <BarterHomeLogo />
           </div>
