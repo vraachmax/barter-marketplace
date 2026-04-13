@@ -987,6 +987,5 @@ export function ProfileSettingsContent() {
           ) : null}
         </div>
       </div>
-    </div>
   );
 }
