@@ -571,23 +571,62 @@ export default async function Home({
                 <p style={{ fontSize: 14, fontWeight: 500, color: '#1c1b1b' }}>Ничего не нашлось</p>
                 <p style={{ fontSize: 12, color: '#6d797e', marginTop: 4 }}>Попробуйте снять категорию или изменить город</p>
               </div>
-            ) : (
-              <>
-                {listings.items.map((x) => (
-                  <TrackedListingLink key={x.id} href={`/listing/${x.id}`} listingId={x.id} style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}>
-                    <FeedListingHoverThumb images={x.images} title={x.title} apiBase={API_URL} thumbClassName="listing-thumb-wrap relative overflow-hidden" imageClassName="listing-thumb-img w-full" thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }} imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} placeholder={<div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>} badges={null} />
-                    <div style={{ padding: 12 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
-                      <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
-                      <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>{x.city} · {x.category.title}</div>
+            ) : null}
+            {listings.items.map((x) => (
+              <TrackedListingLink
+                key={x.id}
+                href={`/listing/${x.id}`}
+                listingId={x.id}
+                style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}
+              >
+                <FeedListingHoverThumb
+                  images={x.images}
+                  title={x.title}
+                  apiBase={API_URL}
+                  thumbClassName="listing-thumb-wrap relative overflow-hidden"
+                  imageClassName="listing-thumb-img w-full"
+                  thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }}
+                  imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  placeholder={
+                    <div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
+                      </svg>
                     </div>
-                  </TrackedListingLink>
-                ))}
-              </>
-            )}
+                  }
+                  badges={
+                    <>
+                      {x.isBoosted ? (
+                        <span style={{ position: 'absolute', top: 8, left: 8, zIndex: 1, borderRadius: 6, background: '#FF6F00', padding: '2px 8px', fontSize: 11, fontWeight: 600, color: '#fff' }}>Поднято</span>
+                      ) : null}
+                      <div style={{ position: 'absolute', top: 8, right: 8, padding: 6, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', borderRadius: '50%', color: '#fff', display: 'flex' }}>
+                        <Heart size={14} strokeWidth={1.8} aria-hidden />
+                      </div>
+                    </>
+                  }
+                />
+                <div style={{ padding: 12 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
+                  <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
+                  <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>
+                    {x.city}{typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
+                  </div>
+                </div>
+              </TrackedListingLink>
+            ))}
+
+            {!effectiveRecoMode && listings.total > listings.items.length ? (
+              <FeedLoadMore initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
+            ) : null}
           </div>
         </section>
       </main>
+
+      {/* Bottom nav moved to layout.tsx — MobileBottomNav component */}
+
+      <div className="hidden pb-0 md:block">
+        <SiteFooter />
+      </div>
     </div>
   );
 }
