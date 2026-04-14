@@ -334,14 +334,14 @@ export default async function Home({
 
   const CATS_TOP: Array<{ name: string; slug: string; emoji: string; accent: string }> = [
     { name: 'Авто', slug: 'auto', emoji: '🚗', accent: '#4A90D9' },
-    { name: 'Недвижи-\nмость', slug: 'realty', emoji: '🏢', accent: '#E8A87C' },
+    { name: 'Недвижимость', slug: 'realty', emoji: '🏢', accent: '#E8A87C' },
     { name: 'Работа', slug: 'job', emoji: '💼', accent: '#c4a484' },
   ];
   const CATS_SCROLL: Array<{ name: string; slug: string; emoji: string; accent: string }> = [
     { name: 'Услуги', slug: 'services', emoji: '🔧', accent: '#3B82F6' },
-    { name: 'Электро-\nника', slug: 'electronics', emoji: '📱', accent: '#8B5CF6' },
-    { name: 'Жильё для\nпутешествий', slug: 'home', emoji: '🏡', accent: '#F59E0B' },
-    { name: 'Для дома\nи дачи', slug: 'home', emoji: '🛋️', accent: '#10B981' },
+    { name: 'Техника', slug: 'electronics', emoji: '📱', accent: '#8B5CF6' },
+    { name: 'Посуточно', slug: 'home', emoji: '🏡', accent: '#F59E0B' },
+    { name: 'Дом и дача', slug: 'home', emoji: '🛋️', accent: '#10B981' },
     { name: 'Одежда', slug: 'clothes', emoji: '👗', accent: '#EC4899' },
     { name: 'Детям', slug: 'kids', emoji: '🧸', accent: '#F97316' },
     { name: 'Хобби', slug: 'hobby', emoji: '⚽', accent: '#EF4444' },
@@ -357,15 +357,22 @@ export default async function Home({
     }
   }
 
+  /* Merge VIP + recommended + regular into one unified feed */
+  const vipItems = listings.vipStrip ?? [];
+  const feedSeenIds = new Set(vipItems.map((x) => x.id));
+  const recoForFeed = (!hasSearchQuery ? recommended.items : []).filter((x) => { if (feedSeenIds.has(x.id)) return false; feedSeenIds.add(x.id); return true; });
+  const regularForFeed = listings.items.filter((x) => !feedSeenIds.has(x.id));
+  const mergedFeed = [...vipItems, ...recoForFeed, ...regularForFeed];
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F2F3F5', fontFamily: 'Inter, sans-serif', WebkitFontSmoothing: 'antialiased', paddingBottom: 96 }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#F4F4F4', fontFamily: 'Inter, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
       {apiBackendDown ? (
         <div role="alert" style={{ borderBottom: '1px solid #FCD34D', background: '#FFFBEB', padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#78350F' }}>
           <strong>Не удаётся связаться с API</strong> ({API_URL || 'сервер'}). Запустите бэкенд.
         </div>
       ) : null}
 
-      {/* Desktop header — hidden on mobile */}
+      {/* ===== DESKTOP HEADER ===== */}
       <div className="hidden md:block">
         <SiteHeader>
           <form action="/" method="GET" className="hidden min-w-0 flex-1 items-center md:flex">
@@ -382,111 +389,166 @@ export default async function Home({
                 placeholder="Поиск по объявлениям"
               />
             </div>
-            <button type="submit" className="h-10 shrink-0 rounded-r-lg bg-[#00B4D8] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#0097A7]">
+            <button type="submit" className="h-10 shrink-0 rounded-r-lg bg-[#00AAFF] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#00AAFF]">
               Найти
             </button>
           </form>
         </SiteHeader>
       </div>
 
-      {/* ===== DARK GRADIENT TOP AREA (mobile-first, visible on all) ===== */}
-      <div style={{ background: 'linear-gradient(to bottom, #00B4D8, #0097A7)', paddingBottom: 24 }} className="md:hidden">
-        {/* Mobile Header */}
-        <header className="mobile-header" style={{ position: 'sticky', top: 0, width: '100%', zIndex: 50, padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Logo — 3 bubbles + text */}
-            <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <div style={{ position: 'relative', width: 28, height: 28 }}>
-                  <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#4FC3F7', top: 0, left: 0 }}/>
-                  <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#FFD54F', top: 4, left: 6 }}/>
-                  <div style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#66BB6A', top: 8, left: 2 }}/>
-                </div>
-                <span style={{ fontSize: 17, fontWeight: 700, color: '#fff' }}>Бартер</span>
-              </div>
-            </Link>
-            {/* Search bar */}
-            <form action="/" method="GET" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '10px 12px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-              {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
-              {geoHidden}
-              {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
-              <Search size={18} strokeWidth={1.8} color="#94A3B8" style={{ marginRight: 8, flexShrink: 0 }} aria-hidden />
-              <input
-                name="q"
-                defaultValue={currentQ}
-                type="text"
-                placeholder="Поиск по объявлениям"
-                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 15, flex: 1, minWidth: 0, color: '#1E293B' }}
-              />
-            </form>
-            {/* Filters button */}
-            <button type="button" style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none' }}>
-              <SlidersHorizontal size={20} strokeWidth={1.8} color="#fff" aria-label="Фильтры" />
-            </button>
-          </div>
+      {/* ===== DESKTOP CATEGORIES BAR — Avito-style horizontal icons ===== */}
+      <div className="hidden md:block" style={{ background: '#fff', borderBottom: '1px solid #EBEBEB' }}>
+        <div className="desktop-cat-bar" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'stretch', gap: 0, overflowX: 'auto' }}>
+          {ALL_CATS.map((cat) => {
+            const catId = catIdMap[cat.slug] || '';
+            const isActive = urlCategoryId === catId && catId !== '';
+            return (
+              <Link
+                key={cat.slug + cat.name}
+                href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                className="desktop-cat-item"
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  padding: '14px 18px 12px', textDecoration: 'none', flexShrink: 0, position: 'relative',
+                  borderBottom: isActive ? '2px solid #007AFF' : '2px solid transparent',
+                }}
+              >
+                <span style={{ fontSize: 26, lineHeight: 1 }}>{cat.emoji}</span>
+                <span style={{ fontSize: 12, fontWeight: isActive ? 600 : 500, color: isActive ? '#007AFF' : '#555', whiteSpace: 'nowrap' }}>{cat.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
+      {/* ===== MOBILE STICKY HEADER ===== */}
+      <div className="mobile-sticky-header md:hidden" style={{ marginBottom: -4 }}>
+        <header style={{ width: '100%', padding: '12px 12px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <img src="/brand/logo_icon.svg" alt="Бартер" width={30} height={30} style={{ flexShrink: 0 }} />
+          </Link>
+          <form action="/" method="GET" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 10, padding: '8px 10px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+            {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
+            {geoHidden}
+            {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
+            <Search size={16} strokeWidth={1.8} color="#94A3B8" style={{ marginRight: 6, flexShrink: 0 }} aria-hidden />
+            <input name="q" defaultValue={currentQ} type="text" placeholder="Поиск объявлений" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, flex: 1, minWidth: 0, color: '#1E293B' }} />
+          </form>
+          <button type="button" style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none' }}>
+            <SlidersHorizontal size={18} strokeWidth={1.8} color="#fff" aria-label="Фильтры" />
+          </button>
         </header>
+      </div>
 
-        {/* Categories Section — Dark Cards */}
-        <section style={{ marginTop: 24, padding: '0 16px' }}>
+      {/* ===== MOBILE CATEGORIES — dark glass cards ===== */}
+      <div style={{ background: '#00AAFF', paddingBottom: 36, marginTop: 0 }} className="md:hidden">
+        <section style={{ marginTop: 4, padding: '0 12px' }}>
           {/* Top row: 3 big cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {CATS_TOP.map((cat) => {
               const catId = catIdMap[cat.slug] || '';
               return (
-                <Link
-                  key={cat.slug}
-                  href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                  style={{ background: `${cat.accent}18`, borderRadius: 16, padding: 12, height: 112, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', border: `1px solid ${cat.accent}30` }}
-                >
-                  <span style={{ color: '#1c1b1b', fontSize: 13, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
-                  <div style={{ position: 'absolute', bottom: -4, right: -4, width: 64, height: 64, background: cat.accent, borderRadius: 12, transform: 'rotate(12deg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+                <Link key={cat.slug} href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                  style={{ background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 88, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <span style={{ color: '#fff', fontSize: 12, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, display: 'block' }}>{cat.name}</span>
+                  <div style={{ position: 'absolute', bottom: -4, right: -4, width: 56, height: 56, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
                     {cat.emoji}
                   </div>
                 </Link>
               );
             })}
           </div>
-
-          {/* Second row: horizontal scroll */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8, overflowX: 'auto', scrollbarWidth: 'none' }} className="hide-scrollbar">
-            {CATS_SCROLL.map((cat) => {
-              const catId = catIdMap[cat.slug] || '';
-              return (
-                <Link
-                  key={cat.slug + cat.name}
-                  href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                  style={{ minWidth: 110, background: `${cat.accent}18`, borderRadius: 16, padding: 12, height: 96, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0, border: `1px solid ${cat.accent}30` }}
-                >
-                  <span style={{ color: '#1c1b1b', fontSize: 13, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, whiteSpace: 'pre-line' }}>{cat.name}</span>
-                  <div style={{ position: 'absolute', bottom: -8, right: -8, width: 48, height: 48, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
-                    {cat.emoji}
-                  </div>
-                </Link>
-              );
-            })}
+          {/* Scrollable row */}
+          <div style={{ position: 'relative', marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingRight: 32 }} className="hide-scrollbar">
+              {CATS_SCROLL.map((cat) => {
+                const catId = catIdMap[cat.slug] || '';
+                return (
+                  <Link key={cat.slug + cat.name} href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                    style={{ minWidth: 96, background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 76, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0, border: '1px solid rgba(255,255,255,0.12)' }}>
+                    <span style={{ color: '#fff', fontSize: 12, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, display: 'block' }}>{cat.name}</span>
+                    <div style={{ position: 'absolute', bottom: -6, right: -6, width: 44, height: 44, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                      {cat.emoji}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, transparent, #00AAFF)', pointerEvents: 'none', zIndex: 5 }} />
           </div>
         </section>
       </div>
 
-      {/* ===== MAIN CONTENT — Light Surface with rounded top ===== */}
-      <main style={{ background: '#FCF9F8', borderRadius: '32px 32px 0 0', marginTop: -16, position: 'relative', zIndex: 20, padding: '24px 12px 32px' }} className="md:rounded-none md:mt-0">
-        <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
+      {/* ===== MAIN CONTENT ===== */}
+      <main style={{ borderRadius: '24px 24px 0 0', marginTop: -20, position: 'relative', zIndex: 20, background: '#F4F4F4' }} className="md:rounded-none md:mt-0">
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 8px 100px' }} className="md:px-6 md:py-8">
+          <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
-        {/* Recommendations section */}
-        {!hasSearchQuery && recommended.items.length > 0 ? (
-          <section style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: 12 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1c1b1b' }}>Рекомендации для вас</h2>
-              <Link href="/" style={{ fontSize: 13, fontWeight: 500, color: '#00B4D8', textDecoration: 'none' }}>Смотреть все →</Link>
+          {effectiveRecoMode ? (
+            <div style={{ borderRadius: 12, background: '#E8F2FF', padding: 14, marginBottom: 16 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, fontSize: 14 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 6, background: '#00AAFF', padding: '2px 8px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>
+                  <Sparkles size={14} strokeWidth={1.8} aria-hidden />
+                  Режим подбора
+                </span>
+                <span style={{ color: '#333' }}>Показываем ленту по вашим недавним просмотрам.</span>
+              </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-              {recommended.items.slice(0, 4).map((x) => (
+          ) : null}
+
+          {/* ===== LISTINGS SECTION ===== */}
+          <section>
+            {mergedFeed.length > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 16px', flexWrap: 'wrap', gap: 12 }}>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1c1b1b', margin: 0 }}>
+                  {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
+                </h2>
+                {/* Desktop sort pills */}
+                <div className="hidden md:flex" style={{ alignItems: 'center', gap: 6 }}>
+                  <form action="/" method="GET" style={{ display: 'contents' }}>
+                    {currentQ ? <input type="hidden" name="q" value={currentQ} /> : null}
+                    {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
+                    {urlCategoryId ? <input type="hidden" name="categoryId" value={urlCategoryId} /> : null}
+                    {geoHidden}
+                    {sortOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="submit"
+                        name="sort"
+                        value={opt.value}
+                        style={{
+                          padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500,
+                          border: currentSort === opt.value ? '1px solid #007AFF' : '1px solid #E0E0E0',
+                          cursor: 'pointer',
+                          background: currentSort === opt.value ? '#007AFF' : '#fff',
+                          color: currentSort === opt.value ? '#fff' : '#555',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </form>
+                </div>
+              </div>
+            ) : null}
+
+            {/* ===== RESPONSIVE CARD GRID ===== */}
+            <div className="listing-grid grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4 lg:gap-4">
+              {mergedFeed.length === 0 ? (
+                <div style={{ gridColumn: '1 / -1', borderRadius: 16, background: '#fff', padding: 48, textAlign: 'center' }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: '#1c1b1b' }}>Ничего не нашлось</p>
+                  <p style={{ fontSize: 14, color: '#6d797e', marginTop: 6 }}>Попробуйте снять категорию или изменить город</p>
+                </div>
+              ) : null}
+              {mergedFeed.map((x) => (
                 <TrackedListingLink
                   key={x.id}
                   href={`/listing/${x.id}`}
                   listingId={x.id}
-                  style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}
+                  className="listing-card"
+                  style={{ display: 'block', borderRadius: 12, background: '#fff', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}
                 >
                   <FeedListingHoverThumb
                     images={x.images}
@@ -494,136 +556,45 @@ export default async function Home({
                     apiBase={API_URL}
                     thumbClassName="listing-thumb-wrap relative overflow-hidden"
                     imageClassName="listing-thumb-img w-full"
-                    thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }}
+                    thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#F0F0F0' }}
                     imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     placeholder={
-                      <div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div className="listing-thumb-placeholder" style={{ height: '100%', background: '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
                         </svg>
                       </div>
                     }
                     badges={
-                      <div style={{ position: 'absolute', top: 8, right: 8, padding: 6, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', borderRadius: '50%', color: '#fff', display: 'flex' }}>
-                        <Heart size={14} strokeWidth={1.8} aria-hidden />
-                      </div>
+                      <>
+                        {x.isBoosted ? (
+                          <span style={{ position: 'absolute', top: 8, left: 8, zIndex: 1, borderRadius: 6, background: '#FF6F00', padding: '2px 8px', fontSize: 11, fontWeight: 600, color: '#fff' }}>Поднято</span>
+                        ) : null}
+                        <div style={{ position: 'absolute', top: 8, right: 8, padding: 6, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', borderRadius: '50%', color: '#94A3B8', display: 'flex', cursor: 'pointer', transition: 'color 0.15s' }}>
+                          <Heart size={14} strokeWidth={1.8} aria-hidden />
+                        </div>
+                      </>
                     }
                   />
-                  <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
-                    <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
-                    <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>{x.city}</div>
-                  </div>
-                </TrackedListingLink>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {effectiveRecoMode ? (
-          <div style={{ borderRadius: 8, background: '#E8F2FF', padding: 14, marginBottom: 16 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, fontSize: 14 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 6, background: '#00B4D8', padding: '2px 8px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>
-                <Sparkles size={14} strokeWidth={1.8} aria-hidden />
-                Режим подбора
-              </span>
-              <span style={{ color: '#333' }}>Показываем ленту по вашим недавним просмотрам.</span>
-            </div>
-          </div>
-        ) : null}
-
-        {/* VIP strip */}
-        {(listings.vipStrip ?? []).length > 0 ? (
-          <section aria-label="VIP объявления" style={{ borderRadius: 14, background: '#fff', padding: 16, marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 6, background: '#FF6F00', padding: '4px 10px', fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>VIP</span>
-              <span style={{ fontSize: 14, color: '#6d797e' }}>Закреплённые объявления</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-              {(listings.vipStrip ?? []).map((x) => (
-                <TrackedListingLink key={x.id} href={`/listing/${x.id}`} listingId={x.id} style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}>
-                  <FeedListingHoverThumb images={x.images} title={x.title} apiBase={API_URL} thumbClassName="listing-thumb-wrap relative overflow-hidden" imageClassName="listing-thumb-img w-full" thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }} imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }} placeholder={<div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>} badges={null} />
-                  <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
-                    <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
-                    <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>{x.city} · {x.category.title}</div>
-                  </div>
-                </TrackedListingLink>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {/* All listings section */}
-        <section>
-          {listings.items.length > 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 4px 12px' }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#1c1b1b' }}>
-                {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
-              </h2>
-              <Link href="/" style={{ fontSize: 13, fontWeight: 500, color: '#00B4D8', textDecoration: 'none' }}>Смотреть все →</Link>
-            </div>
-          ) : null}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            {listings.items.length === 0 ? (
-              <div style={{ gridColumn: '1 / -1', borderRadius: 12, background: '#fff', padding: 32, textAlign: 'center' }}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#1c1b1b' }}>Ничего не нашлось</p>
-                <p style={{ fontSize: 12, color: '#6d797e', marginTop: 4 }}>Попробуйте снять категорию или изменить город</p>
-              </div>
-            ) : null}
-            {listings.items.map((x) => (
-              <TrackedListingLink
-                key={x.id}
-                href={`/listing/${x.id}`}
-                listingId={x.id}
-                style={{ display: 'block', borderRadius: 12, background: '#fff', boxShadow: '0 1px 6px rgba(0,103,125,0.10)', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}
-              >
-                <FeedListingHoverThumb
-                  images={x.images}
-                  title={x.title}
-                  apiBase={API_URL}
-                  thumbClassName="listing-thumb-wrap relative overflow-hidden"
-                  imageClassName="listing-thumb-img w-full"
-                  thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#EBEBEB' }}
-                  imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  placeholder={
-                    <div style={{ height: 140, background: '#F6F3F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
-                      </svg>
+                  <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', minHeight: 80 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b', lineHeight: 1.2 }}>{formatRub(x.priceRub, x.priceType)}</div>
+                    <div style={{ marginTop: 4, fontSize: 13, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
+                    <div style={{ marginTop: 'auto', paddingTop: 8, fontSize: 12, color: '#94A3B8' }}>
+                      {x.city}{typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
                     </div>
-                  }
-                  badges={
-                    <>
-                      {x.isBoosted ? (
-                        <span style={{ position: 'absolute', top: 8, left: 8, zIndex: 1, borderRadius: 6, background: '#FF6F00', padding: '2px 8px', fontSize: 11, fontWeight: 600, color: '#fff' }}>Поднято</span>
-                      ) : null}
-                      <div style={{ position: 'absolute', top: 8, right: 8, padding: 6, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', borderRadius: '50%', color: '#fff', display: 'flex' }}>
-                        <Heart size={14} strokeWidth={1.8} aria-hidden />
-                      </div>
-                    </>
-                  }
-                />
-                <div style={{ padding: 12 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b' }}>{formatRub(x.priceRub, x.priceType)}</div>
-                  <div style={{ marginTop: 2, fontSize: 12.5, color: '#3d494d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
-                  <div style={{ marginTop: 8, fontSize: 11.5, color: '#94A3B8' }}>
-                    {x.city}{typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
                   </div>
-                </div>
-              </TrackedListingLink>
-            ))}
+                </TrackedListingLink>
+              ))}
 
-            {!effectiveRecoMode && listings.total > listings.items.length ? (
-              <FeedLoadMore initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
-            ) : null}
-          </div>
-        </section>
+              {!effectiveRecoMode && listings.total > listings.items.length ? (
+                <FeedLoadMore initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
+              ) : null}
+            </div>
+          </section>
+        </div>
       </main>
 
-      {/* Bottom nav moved to layout.tsx — MobileBottomNav component */}
-
+      {/* ===== FOOTER — desktop only ===== */}
       <div className="hidden pb-0 md:block">
         <SiteFooter />
       </div>
