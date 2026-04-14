@@ -422,7 +422,7 @@ export default async function Home({
       </div>
 
       {/* ===== MOBILE STICKY HEADER ===== */}
-      <div className="mobile-sticky-header md:hidden" style={{ marginBottom: -4 }}>
+      <div className="mobile-sticky-header md:hidden" style={{ marginBottom: -4, background: '#00AAFF', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <header style={{ width: '100%', padding: '12px 12px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <img src="/brand/logo_icon.svg" alt="Бартер" width={30} height={30} style={{ flexShrink: 0 }} />

@@ -55,5 +55,22 @@
 **Решение:** Применили `apps/web/src/app/page.tsx` из WIP-стэша `c310af4` (только этот файл — не весь стэш, чтобы не перезаписать фиксы /listings и messages).
 **Файлы:**
 - `apps/web/src/app/page.tsx` (632 → 603 строк, новый дизайн)
+**Коммит:** `a7ab3c3` fix: restore mobile homepage from WIP stash c310af4
+**Откат:** `git revert a7ab3c3`
+
+---
+
+## 2026-04-14
+
+### 7. Логотип не грузился + белая полоса статус-бара сверху на мобильной главной
+**Проблема:** После коммита `a7ab3c3` главная тянула `/brand/logo_icon.svg`, но файла не было в `public/brand/` (есть только `logo_light.svg` и `logo_dark.svg` — это wordmark'и с текстом). Также блок `.mobile-sticky-header` не имел фона — сверху была белая полоса до синих категорий.
+**Решение:**
+1. Создан `apps/web/public/brand/logo_icon.svg` — только иконка (3 цветных blob'а), без текста.
+2. В `page.tsx` добавлен `background: '#00AAFF'` и `paddingTop: env(safe-area-inset-top)` для `.mobile-sticky-header`.
+3. В `layout.tsx` изменён `themeColor` с `#0097A7` на `#00AAFF` для совпадения статус-бара мобильного браузера.
+**Файлы:**
+- `apps/web/public/brand/logo_icon.svg` (новый)
+- `apps/web/src/app/page.tsx` (строка 425)
+- `apps/web/src/app/layout.tsx` (строка 44)
 **Коммит:** TODO (запушить)
-**Откат:** `git checkout 776b4d9 -- apps/web/src/app/page.tsx`
+**Откат:** `git revert <hash>` или вернуть `themeColor: '#0097A7'` и убрать background в sticky header
