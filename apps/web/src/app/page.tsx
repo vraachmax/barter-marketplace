@@ -9,7 +9,8 @@ import { SearchInputWithSuggestions } from '@/components/search-input-with-sugge
 import { FeedLoadMore } from '@/components/feed-load-more';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
-import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { MobileModeToggle } from '@/components/mobile-mode-toggle';
+import { Bell, ChevronDown, ChevronRight, Heart, MapPin, Search, SlidersHorizontal, Sparkles, ArrowLeftRight } from 'lucide-react';
 
 type ListingsResponse = {
   page: number;
@@ -144,6 +145,17 @@ function safeDecode(value?: string) {
   } catch {
     return value;
   }
+}
+
+/** Plural-форма для русского: 1 объявление · 2 объявления · 5 объявлений */
+function pluralRu(n: number, forms: [string, string, string]): string {
+  const abs = Math.abs(n);
+  const mod10 = abs % 10;
+  const mod100 = abs % 100;
+  if (mod100 >= 11 && mod100 <= 14) return forms[2];
+  if (mod10 === 1) return forms[0];
+  if (mod10 >= 2 && mod10 <= 4) return forms[1];
+  return forms[2];
 }
 
 export const dynamic = 'force-dynamic';
@@ -429,21 +441,39 @@ async function renderHome(sp: HomeSearchParams) {
 
       {/* ===== MOBILE STICKY HEADER ===== */}
       <div className="mobile-sticky-header md:hidden" style={{ marginBottom: -4, background: '#00AAFF', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <header style={{ width: '100%', padding: '12px 12px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <header style={{ width: '100%', padding: '10px 12px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <img src="/brand/logo_icon.svg" alt="Бартер" width={30} height={30} style={{ flexShrink: 0 }} />
           </Link>
-          <form action="/" method="GET" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 10, padding: '8px 10px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+          <form action="/" method="GET" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '8px 10px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
             {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
             {geoHidden}
             {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
             <Search size={16} strokeWidth={1.8} color="#94A3B8" style={{ marginRight: 6, flexShrink: 0 }} aria-hidden />
-            <input name="q" defaultValue={currentQ} type="text" placeholder="Поиск объявлений" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, flex: 1, minWidth: 0, color: '#1E293B' }} />
+            <input name="q" defaultValue={currentQ} type="text" placeholder="Что обмениваем?" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, flex: 1, minWidth: 0, color: '#1E293B' }} />
+            <SlidersHorizontal size={16} strokeWidth={1.8} color="#94A3B8" aria-label="Фильтры" />
           </form>
-          <button type="button" style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none' }}>
-            <SlidersHorizontal size={18} strokeWidth={1.8} color="#fff" aria-label="Фильтры" />
+          <button
+            type="button"
+            aria-label="Уведомления"
+            style={{ position: 'relative', width: 38, height: 38, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none' }}
+          >
+            <Bell size={18} strokeWidth={1.8} color="#fff" aria-hidden />
+            <span style={{ position: 'absolute', top: 7, right: 8, width: 8, height: 8, background: '#FF6D00', borderRadius: '50%', border: '2px solid #00AAFF' }} />
           </button>
+          <Link
+            href="/favorites"
+            aria-label="Избранное"
+            style={{ position: 'relative', width: 38, height: 38, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}
+          >
+            <Heart size={18} strokeWidth={1.8} color="#fff" aria-hidden />
+          </Link>
         </header>
+        <div style={{ padding: '0 14px 10px', display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.92)', fontSize: 13, fontWeight: 500 }}>
+          <MapPin size={14} strokeWidth={2} aria-hidden />
+          <span>{currentCity}</span>
+          <ChevronDown size={14} strokeWidth={2} aria-hidden style={{ opacity: 0.85 }} />
+        </div>
       </div>
 
       {/* ===== MOBILE CATEGORIES — dark glass cards ===== */}
@@ -490,6 +520,34 @@ async function renderHome(sp: HomeSearchParams) {
         <div className="mx-auto max-w-7xl px-2 pt-5 pb-24 md:px-6 md:py-8">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
+          {/* ===== MOBILE: режим Бартер/Маркет (UI-стаб до Phase 13) ===== */}
+          <div className="mb-3 flex justify-center md:hidden">
+            <MobileModeToggle />
+          </div>
+
+          {/* ===== MOBILE: hero «Обмен без денег» — анонс Phase 13 ===== */}
+          <Link
+            href="/listings?mode=barter"
+            className="mb-4 flex items-center gap-3 rounded-2xl px-4 py-3.5 md:hidden"
+            style={{ background: 'linear-gradient(135deg, #FFEFE6 0%, #FFE0CC 100%)', textDecoration: 'none', color: 'inherit' }}
+          >
+            <span
+              aria-hidden
+              style={{ width: 44, height: 44, background: '#FF6D00', borderRadius: 12, display: 'grid', placeItems: 'center', color: '#fff', flexShrink: 0 }}
+            >
+              <ArrowLeftRight size={22} strokeWidth={2} />
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em', color: '#1A1A1A' }}>
+                Обмен без денег
+              </span>
+              <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: '#6B6B6B', lineHeight: 1.35 }}>
+                Меняйте вещи напрямую с&nbsp;людьми рядом · скоро
+              </span>
+            </span>
+            <ChevronRight size={18} strokeWidth={2} color="#6B6B6B" aria-hidden />
+          </Link>
+
           {effectiveRecoMode ? (
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-primary/10 p-3.5 text-sm">
               <span className="inline-flex items-center gap-1.5 rounded bg-primary px-2 py-0.5 text-xs font-bold tracking-wider uppercase text-primary-foreground">
@@ -504,8 +562,19 @@ async function renderHome(sp: HomeSearchParams) {
 
           {/* ===== LISTINGS SECTION ===== */}
           <section>
+            {/* MOBILE-only: design-style section header — «Свежие предложения · 234 за сегодня · рядом» */}
+            {mergedFeed.length > 0 && !currentQ ? (
+              <div className="px-2 pt-1 pb-3 md:hidden">
+                <h2 className="m-0 text-[20px] font-bold tracking-tight text-foreground">Свежие предложения</h2>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">
+                  {listings.total > 0 ? `${listings.total} ${pluralRu(listings.total, ['объявление', 'объявления', 'объявлений'])}` : 'обновлено только что'}
+                  {currentCity ? ` · ${currentCity}` : ''}
+                </p>
+              </div>
+            ) : null}
+
             {mergedFeed.length > 0 ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 px-1 pt-1 pb-4">
+              <div className="hidden flex-wrap items-center justify-between gap-3 px-1 pt-1 pb-4 md:flex">
                 <h2 className="m-0 text-xl font-bold text-foreground">
                   {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
                 </h2>
@@ -538,7 +607,7 @@ async function renderHome(sp: HomeSearchParams) {
             ) : null}
 
             {/* ===== RESPONSIVE CARD GRID ===== */}
-            <div className="listing-grid grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4 lg:gap-4">
+            <div className="listing-grid grid grid-cols-2 gap-3 px-2 md:grid-cols-3 md:gap-3 md:px-0 lg:grid-cols-4 lg:gap-4">
               {mergedFeed.length === 0 ? (
                 <div className="col-span-full rounded-2xl bg-card p-12 text-center text-card-foreground ring-1 ring-foreground/10">
                   <div className="mb-4 text-5xl">🔍</div>

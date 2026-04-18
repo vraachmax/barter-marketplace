@@ -41,7 +41,10 @@ function promoRing(promo: ListingCardData['promoType']): string {
 type Props = {
   data: ListingCardData;
   apiBase: string;
-  /** Зафиксированная высота превью; по умолчанию 140 (мобайл) → авто-адаптив через CSS */
+  /**
+   * Зафиксированная высота превью в px. Если передан — используется fixed-height.
+   * Если не передан — применяется aspect-square (1:1) как в Claude Design home.html.
+   */
   thumbHeight?: number;
   className?: string;
 };
@@ -59,9 +62,14 @@ type Props = {
  *  │  12/400  город · км  │
  *  └──────────────────────┘
  */
-export function ListingCardComponent({ data, apiBase, thumbHeight = 140, className }: Props) {
+export function ListingCardComponent({ data, apiBase, thumbHeight, className }: Props) {
   const promoRingClass = promoRing(data.promoType);
   const photoCount = data.images?.length ?? 0;
+  const useSquareThumb = thumbHeight === undefined;
+  const thumbStyleProp = useSquareThumb ? undefined : { height: thumbHeight };
+  const thumbClassName = useSquareThumb
+    ? 'relative w-full aspect-square overflow-hidden bg-muted'
+    : 'relative w-full overflow-hidden bg-muted';
 
   return (
     <TrackedListingLink
@@ -81,9 +89,9 @@ export function ListingCardComponent({ data, apiBase, thumbHeight = 140, classNa
           images={data.images}
           title={data.title}
           apiBase={apiBase}
-          thumbClassName="relative w-full overflow-hidden bg-muted"
+          thumbClassName={thumbClassName}
           imageClassName="w-full h-full object-cover"
-          thumbStyle={{ height: thumbHeight }}
+          thumbStyle={thumbStyleProp}
           imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
           placeholder={
             <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground/60">
