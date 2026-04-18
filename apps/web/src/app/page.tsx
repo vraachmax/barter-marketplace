@@ -55,6 +55,8 @@ type HomeSearchParams = {
   reco?: '1';
   /** Диагностический режим — минимальный SSR без дочерних компонентов. */
   safe?: '1';
+  /** Полный рендер через renderHome() — только когда включён. */
+  full?: '1';
 };
 
 function applyClientFiltersAndSort(
@@ -151,46 +153,76 @@ export const dynamic = 'force-dynamic';
  * приехал ли новый деплой на Vercel. Если в HTML виден старый тег — значит,
  * деплой ещё не прошёл или CDN закеширован.
  */
-const BUILD_TAG = 'hotfix-diag-3 · 2026-04-18';
+const BUILD_TAG = 'hotfix-diag-5 · 2026-04-18';
 
+/**
+ * Nuclear-диагностика: главная временно рендерит только plain-JSX без API-вызовов
+ * и без тяжёлых дочерних компонентов (SiteHeader, ListingCard, FeedLoadMore,
+ * SiteFooter), пока не найдём виновника. Полный рендер доступен через ?full=1
+ * — отвалится он там же, где и раньше, но теперь мы точно будем знать, что
+ * корневой тест жив, и проблема именно в feed-дереве или виджетах layout.
+ *
+ * Логика:
+ *  - /            → plain JSX + BUILD_TAG          (должно работать всегда)
+ *  - /?full=1     → renderHome() — полный feed     (падает, хотим починить)
+ *  - /?safe=1     → alias для default             (обратная совместимость)
+ */
 export default async function Home({
   searchParams,
 }: {
   searchParams: Promise<HomeSearchParams>;
 }) {
   const sp = await searchParams;
+  const wantFull = sp.full === '1';
 
-  // DIAGNOSTIC: если передан ?safe=1 — рендерим минимальную версию без сложных
-  // серверных детей, чтобы доказать что деплой приехал и SSR самой страницы ok.
-  // Это бинарный тест: если ?safe=1 работает, а обычная главная падает — значит,
-  // проблема не в /app/page.tsx, а в цепочке дочерних компонентов.
-  if (sp.safe === '1') {
+  if (!wantFull) {
     return (
-      <div className="min-h-screen bg-muted px-4 py-10">
-        <div className="mx-auto max-w-xl space-y-4 text-center">
-          <h1 className="text-2xl font-black text-foreground">Бартер · safe mode</h1>
-          <p className="text-sm text-muted-foreground">
-            Если ты видишь этот текст, новый деплой приехал, SSR главной страницы сам по себе жив.
-            Значит, ошибка — в одном из дочерних серверных компонентов.
-          </p>
-          <div className="rounded-xl bg-card p-4 text-left text-xs text-foreground">
-            <div><strong>build:</strong> {BUILD_TAG}</div>
-            <div><strong>api_url:</strong> {API_URL || '(same-origin)'}</div>
-            <div><strong>render:</strong> server component + force-dynamic</div>
-          </div>
-          <div className="flex justify-center gap-2">
-            <a
-              href="/?full=1"
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
+      <div style={{ minHeight: '100vh', background: '#f5f7fa', padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', margin: 0 }}>Бартер</h1>
+            <p style={{ marginTop: 8, fontSize: 14, color: '#475569' }}>
+              Если ты видишь этот текст — значит Vercel-деплой приехал и SSR главной страницы сам по себе жив.
+              Полная лента временно отключена для диагностики. Работаем над восстановлением.
+            </p>
+            <div
+              style={{
+                marginTop: 16,
+                padding: 12,
+                borderRadius: 10,
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                fontFamily: 'ui-monospace, Menlo, monospace',
+                fontSize: 12,
+                color: '#334155',
+                whiteSpace: 'pre-wrap',
+              }}
             >
-              Показать обычную главную
-            </a>
-            <a
-              href="/listings"
-              className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground"
-            >
-              Открыть /listings
-            </a>
+              {`build  : ${BUILD_TAG}
+api_url: ${API_URL || '(same-origin)'}
+render : server component · force-dynamic
+sp     : ${JSON.stringify(sp)}`}
+            </div>
+            <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <a
+                href="/listings"
+                style={{ padding: '10px 16px', background: '#00AAFF', color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+              >
+                Открыть ленту
+              </a>
+              <a
+                href="/?full=1"
+                style={{ padding: '10px 16px', background: '#fff', color: '#0f172a', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', border: '1px solid #e2e8f0' }}
+              >
+                Попробовать полную версию
+              </a>
+              <a
+                href="/build-check"
+                style={{ padding: '10px 16px', background: '#fff', color: '#0f172a', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', border: '1px solid #e2e8f0' }}
+              >
+                /build-check
+              </a>
+            </div>
           </div>
         </div>
       </div>

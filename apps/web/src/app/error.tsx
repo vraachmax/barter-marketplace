@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 
+/**
+ * BUILD_TAG — всегда виден в error-боундари. Позволяет однозначно определить,
+ * какая именно сборка сейчас в браузере, даже если главная падает.
+ * Меняется с каждым hotfix-коммитом.
+ */
+const ERROR_BOUNDARY_BUILD_TAG = 'hotfix-diag-5 · 2026-04-18';
+
 export default function GlobalError({
   error,
   reset,
@@ -27,6 +34,10 @@ export default function GlobalError({
           <h1 className="text-2xl font-black tracking-tight text-foreground">
             Что-то пошло не так
           </h1>
+          <p className="mt-1 text-[11px] font-mono text-muted-foreground/70">
+            build: {ERROR_BOUNDARY_BUILD_TAG}
+            {error?.digest ? ` · digest: ${error.digest}` : ''}
+          </p>
           <p className="mt-2 text-sm text-muted-foreground">
             Произошла ошибка при загрузке страницы. Попробуйте обновить или вернитесь на главную.
           </p>
