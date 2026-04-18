@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
       { source: "/presence/:path*", destination: `${apiUrl}/presence/:path*` },
       { source: "/search/:path*", destination: `${apiUrl}/search/:path*` },
       { source: "/socket.io/:path*", destination: `${apiUrl}/socket.io/:path*` },
+      { source: "/support/:path*", destination: `${apiUrl}/support/:path*` },
     ];
   },
 };

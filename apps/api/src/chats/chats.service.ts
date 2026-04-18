@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { PLATFORM_ASSISTANT_EMAIL, PLATFORM_ASSISTANT_NAME } from '../platform.constants';
 import { PrismaService } from '../prisma/prisma.service';
+import { SupportService } from '../support/support.service';
 
 const ASSISTANT_DEAL_FLOW_TEXTS = [
   'Здравствуйте! Я виртуальный помощник площадки.\n\nКак у вас прошла сделка по этому объявлению? Состоялась ли она? Напишите «да», «нет» или пару слов — так проще ориентироваться другим пользователям.',
@@ -19,6 +20,7 @@ export class ChatsService {
   constructor(
     private prisma: PrismaService,
     private analytics: AnalyticsService,
+    private support: SupportService,
   ) {}
 
   private async recordSendMessageListingEvent(
@@ -197,6 +199,7 @@ export class ChatsService {
             title: true,
             priceRub: true,
             city: true,
+            ownerId: true,
             images: {
               orderBy: { sortOrder: 'asc' },
               take: 1,
@@ -252,6 +255,11 @@ export class ChatsService {
 
     return chats.map((c) => {
       const peer = c.users.find((u) => u.user.id !== userId)?.user ?? null;
+      const myRole: 'buyer' | 'seller' | 'neutral' = c.listing
+        ? c.listing.ownerId === userId
+          ? 'seller'
+          : 'buyer'
+        : 'neutral';
       return {
         id: c.id,
         updatedAt: c.updatedAt,
@@ -262,6 +270,7 @@ export class ChatsService {
             }
           : null,
         peer,
+        myRole,
         lastMessage: c.messages[0] ?? null,
         unreadCount: unreadByChatId.get(c.id) ?? 0,
       };
@@ -347,6 +356,66 @@ export class ChatsService {
 
     void this.recordSendMessageListingEvent(chatId, userId, ctx);
     return message;
+  }
+
+  /**
+   * Если это первое сообщение покупателя в чате и у продавца включён автоответ —
+   * один раз постит автоответ от имени продавца. Возвращает массив сообщений (0 или 1).
+   */
+  async maybePostSellerAutoReply(chatId: string, senderUserId: string) {
+    const chat = await this.prisma.chat.findUnique({
+      where: { id: chatId },
+      select: {
+        id: true,
+        listingId: true,
+        listing: { select: { ownerId: true } },
+      },
+    });
+    if (!chat?.listing) return [];
+    const sellerId = chat.listing.ownerId;
+    if (sellerId === senderUserId) return []; // продавец сам себе не отвечает
+
+    // Только если это первое сообщение от данного покупателя
+    const fromBuyer = await this.prisma.message.count({
+      where: { chatId, senderId: senderUserId },
+    });
+    if (fromBuyer !== 1) return [];
+
+    // Не дублируем, если продавец уже что-то писал
+    const fromSeller = await this.prisma.message.count({
+      where: { chatId, senderId: sellerId },
+    });
+    if (fromSeller > 0) return [];
+
+    let replyText: string | null = null;
+    try {
+      replyText = await this.support.resolveSellerAutoReplyText(sellerId);
+    } catch {
+      replyText = null;
+    }
+    if (!replyText) return [];
+
+    const select = {
+      id: true,
+      text: true,
+      mediaUrl: true,
+      mediaType: true,
+      createdAt: true,
+      senderId: true,
+      sender: { select: { id: true, name: true } },
+    } as const;
+
+    const m = await this.prisma.message.create({
+      data: {
+        chatId,
+        senderId: sellerId,
+        text: replyText,
+        mediaUrl: null,
+        mediaType: null,
+      },
+      select,
+    });
+    return [{ ...m, isAssistant: false, isAutoReply: true }];
   }
 
   async sendMediaMessage(

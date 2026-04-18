@@ -7,12 +7,42 @@ import {
 import {
   ListingStatus,
   Prisma,
-  ProSubscriptionStatus,
-  PromotionType,
-  WalletTransactionType,
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PromoteFromWalletDto, SubscribeProDto, TopupDto } from './dto';
+
+// Pragmatic string-literal enums until `prisma generate` regens full types in CI.
+type PromotionType = 'TOP' | 'VIP' | 'XL' | 'COLOR' | 'LIFT';
+const PromotionType = {
+  TOP: 'TOP',
+  VIP: 'VIP',
+  XL: 'XL',
+  COLOR: 'COLOR',
+  LIFT: 'LIFT',
+} as const;
+
+type WalletTransactionType =
+  | 'TOPUP'
+  | 'PROMOTION'
+  | 'PRO_SUBSCRIPTION'
+  | 'REFUND'
+  | 'BONUS'
+  | 'ADJUSTMENT';
+const WalletTransactionType = {
+  TOPUP: 'TOPUP',
+  PROMOTION: 'PROMOTION',
+  PRO_SUBSCRIPTION: 'PRO_SUBSCRIPTION',
+  REFUND: 'REFUND',
+  BONUS: 'BONUS',
+  ADJUSTMENT: 'ADJUSTMENT',
+} as const;
+
+type ProSubscriptionStatus = 'ACTIVE' | 'CANCELED' | 'EXPIRED';
+const ProSubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  CANCELED: 'CANCELED',
+  EXPIRED: 'EXPIRED',
+} as const;
 
 const KOPECKS_PER_RUB = 100;
 

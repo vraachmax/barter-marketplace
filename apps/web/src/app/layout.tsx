@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeSync } from "@/components/theme-sync";
 import { GlobalChatWidget } from "@/components/global-chat-widget";
+import { SupportWidget } from "@/components/support-widget";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { PresenceProvider } from "@/components/presence-provider";
 import { AuthProvider } from "@/components/auth-provider";
@@ -80,6 +81,7 @@ export default function RootLayout({
         <AuthProvider>
           <PresenceProvider>
             <GlobalChatWidget />
+            <SupportWidget />
             {children}
             <MobileBottomNav />
           </PresenceProvider>

@@ -6,6 +6,7 @@ import {
   Camera,
   CheckCircle,
   ChevronLeft,
+  Lightbulb,
   Link2,
   Mail,
   MessageCircle,
@@ -13,14 +14,18 @@ import {
   SlidersHorizontal,
   Sparkles,
   Store,
+  Wand2,
+  X,
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import {
   API_URL,
   apiFetchJson,
   apiUploadFile,
+  type AdviseResponse,
   type ChatMessage,
   type ChatSummary,
+  type SupportTemplate,
   SOCKET_URL,
 } from '@/lib/api';
 
@@ -67,6 +72,11 @@ export default function MessagesPage() {
   const [peerTyping, setPeerTyping] = useState(false);
   const [listQuery, setListQuery] = useState('');
   const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
+  const [quickRepliesBuyer, setQuickRepliesBuyer] = useState<SupportTemplate[]>([]);
+  const [quickRepliesSeller, setQuickRepliesSeller] = useState<SupportTemplate[]>([]);
+  const [advise, setAdvise] = useState<AdviseResponse | null>(null);
+  const [adviseBusy, setAdviseBusy] = useState(false);
+  const [adviseDismissed, setAdviseDismissed] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const selectedChatIdRef = useRef<string>('');
@@ -74,7 +84,7 @@ export default function MessagesPage() {
   const typingStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const peerTypingResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const composerRef = useRef<HTMLTextAreaElement | null>(null);
+  const composerRef = useRef<HTMLInputElement | null>(null);
 
   function joinLoadedChats(list: ChatSummary[]) {
     const socket = socketRef.current;
@@ -88,6 +98,9 @@ export default function MessagesPage() {
     () => chats.find((c) => c.id === selectedChatId) ?? null,
     [chats, selectedChatId],
   );
+
+  const myRole: 'buyer' | 'seller' | 'neutral' = selectedChat?.myRole ?? 'neutral';
+  const quickReplies = myRole === 'seller' ? quickRepliesSeller : quickRepliesBuyer;
 
   const filteredChats = useMemo(() => {
     const q = listQuery.trim().toLowerCase();
@@ -315,6 +328,82 @@ export default function MessagesPage() {
       if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
     };
   }, [selectedChatId]);
+
+  // Загрузка шаблонов быстрых ответов (одноразово — они редко меняются)
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const [buyerRes, sellerRes] = await Promise.all([
+        apiFetchJson<SupportTemplate[]>('/support/templates?category=QUICK_REPLY_BUYER'),
+        apiFetchJson<SupportTemplate[]>('/support/templates?category=QUICK_REPLY_SELLER'),
+      ]);
+      if (!alive) return;
+      if (buyerRes.ok) setQuickRepliesBuyer(buyerRes.data);
+      if (sellerRes.ok) setQuickRepliesSeller(sellerRes.data);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // AI-ассистент: при смене чата запрашиваем подсказку
+  useEffect(() => {
+    if (!selectedChatId || !selectedChat) {
+      setAdvise(null);
+      return;
+    }
+    setAdviseDismissed(false);
+    let alive = true;
+    (async () => {
+      setAdviseBusy(true);
+      const res = await apiFetchJson<AdviseResponse>('/support/advise', {
+        method: 'POST',
+        body: JSON.stringify({
+          role: myRole,
+          listingId: selectedChat.listing?.id ?? undefined,
+          chatId: selectedChatId,
+        }),
+      });
+      if (!alive) return;
+      setAdviseBusy(false);
+      if (res.ok) setAdvise(res.data);
+      else setAdvise(null);
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChatId, myRole]);
+
+  function insertQuickReply(template: SupportTemplate) {
+    const current = text.trim();
+    const next = current ? `${current} ${template.text}` : template.text;
+    setText(next);
+    emitTyping(true);
+    // focus composer on next tick
+    setTimeout(() => {
+      composerRef.current?.focus();
+    }, 0);
+  }
+
+  async function refreshAdvise(prompt?: string) {
+    if (!selectedChatId || !selectedChat) return;
+    setAdviseBusy(true);
+    const res = await apiFetchJson<AdviseResponse>('/support/advise', {
+      method: 'POST',
+      body: JSON.stringify({
+        role: myRole,
+        listingId: selectedChat.listing?.id ?? undefined,
+        chatId: selectedChatId,
+        prompt,
+      }),
+    });
+    setAdviseBusy(false);
+    if (res.ok) {
+      setAdvise(res.data);
+      setAdviseDismissed(false);
+    }
+  }
 
   if (status === 'need_auth') {
     return (
@@ -698,8 +787,87 @@ export default function MessagesPage() {
                 </div>
               </div>
 
+              {/* AI подсказка */}
+              {advise && !adviseDismissed && (advise.tip || advise.suggestions.length > 0) ? (
+                <div className="shrink-0 border-t border-border bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 px-3 py-2.5 md:px-5">
+                  <div className="mx-auto flex max-w-3xl items-start gap-2.5">
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent">
+                      <Lightbulb size={16} strokeWidth={1.8} aria-hidden />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-[11px] font-bold uppercase tracking-wide text-accent">
+                          AI-подсказка {myRole === 'seller' ? 'для продавца' : myRole === 'buyer' ? 'для покупателя' : ''}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAdviseDismissed(true)}
+                          aria-label="Скрыть подсказку"
+                          className="shrink-0 rounded-lg p-0.5 text-muted-foreground transition hover:bg-card hover:text-foreground"
+                        >
+                          <X size={14} strokeWidth={1.8} aria-hidden />
+                        </button>
+                      </div>
+                      {advise.tip ? (
+                        <p className="mt-1 text-xs leading-relaxed text-foreground/90">{advise.tip}</p>
+                      ) : null}
+                      {advise.suggestions.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {advise.suggestions.slice(0, 4).map((s) => (
+                            <button
+                              key={s.code}
+                              type="button"
+                              onClick={() => {
+                                setText((prev) => (prev.trim() ? `${prev.trim()} ${s.text}` : s.text));
+                                setTimeout(() => composerRef.current?.focus(), 0);
+                              }}
+                              className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-card px-2.5 py-1 text-[11px] font-medium text-accent shadow-sm transition hover:bg-accent/10"
+                              title={s.text}
+                            >
+                              <Wand2 size={11} strokeWidth={1.8} aria-hidden />
+                              {s.title}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    {adviseBusy ? (
+                      <span className="mt-1 inline-block size-3.5 animate-spin rounded-full border-2 border-accent/40 border-t-transparent" aria-hidden />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void refreshAdvise()}
+                        className="shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold text-accent hover:bg-accent/10"
+                      >
+                        Ещё
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
               {/* Composer */}
               <div className="shrink-0 border-t border-border bg-card p-3 md:p-4">
+                {/* Quick replies chips */}
+                {quickReplies.length > 0 ? (
+                  <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Быстро:
+                    </span>
+                    {quickReplies.map((t) => (
+                      <button
+                        key={t.code}
+                        type="button"
+                        onClick={() => insertQuickReply(t)}
+                        className="shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                        title={t.text}
+                      >
+                        {t.title}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
                 {selectedFile ? (
                   <div className="mb-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs">
                     <Camera size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
@@ -727,6 +895,7 @@ export default function MessagesPage() {
                     />
                   </label>
                   <input
+                    ref={composerRef}
                     type="text"
                     className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground shadow-sm transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     placeholder="Напишите сообщение..."

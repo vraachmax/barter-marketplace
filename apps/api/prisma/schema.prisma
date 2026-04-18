@@ -33,6 +33,11 @@ model User {
   /// Доля ответов в чатах / скорость реакции продавца, 0–1 (для ранжирования)
   responseRate         Float    @default(0.75)
 
+  /// Включён ли автоответ продавца на первое сообщение в чате
+  sellerAutoReplyEnabled Boolean @default(false)
+  /// Текст автоответа (если null/пустой и enabled — берётся дефолт)
+  sellerAutoReplyText    String?
+
   listings        Listing[]
   favorites       Favorite[]
   chatUsers       ChatUser[]
@@ -44,6 +49,7 @@ model User {
   wallet          Wallet?
   walletTransactions WalletTransaction[]
   proSubscription UserProSubscription?
+  supportTickets  SupportTicket[]
 
   @@index([createdAt])
 }
@@ -442,6 +448,81 @@ enum AppTheme {
   SYSTEM
   LIGHT
   DARK
+}
+
+/// Шаблон сообщения для бота поддержки / быстрых ответов / автоответа продавца / FAQ.
+model SupportTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Стабильный код (buyer_greeting, buyer_price_question, faq_delivery, support_widget_hello и т.д.)
+  code String @unique
+
+  /// Категория использования
+  category SupportTemplateCategory
+
+  /// Заголовок (короткий, для chip / FAQ-аккордеона)
+  title String
+
+  /// Текст шаблона (готовый ответ; в FAQ — длинный)
+  text String
+
+  /// Порядок сортировки
+  sortOrder Int @default(0)
+
+  /// Можно отключить, не удаляя
+  isActive Boolean @default(true)
+
+  @@index([category, isActive])
+  @@index([sortOrder])
+}
+
+enum SupportTemplateCategory {
+  /// Быстрый ответ покупателя в чате ("Здравствуйте!", "Можно ли торговаться?")
+  QUICK_REPLY_BUYER
+  /// Быстрый ответ продавца в чате ("На связи", "Когда удобно подъехать?")
+  QUICK_REPLY_SELLER
+  /// FAQ — статья в виджете поддержки
+  FAQ
+  /// Готовый ответ виджета поддержки на распространённый вопрос
+  SUPPORT_REPLY
+  /// Дефолтный текст автоответа продавца
+  AUTO_REPLY_SELLER
+}
+
+/// Обращение в поддержку из виджета.
+model SupportTicket {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Авторизованный пользователь (если есть)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Контакт для связи (email/телефон), если гость
+  contact String?
+
+  /// Тема (выбрана из списка или произвольная)
+  topic String
+
+  /// Сообщение пользователя
+  message String
+
+  status SupportTicketStatus @default(OPEN)
+
+  /// Текст ответа админа
+  adminReply String?
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
 }
 
 enum MessageMediaType {

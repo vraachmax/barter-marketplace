@@ -44,7 +44,7 @@ const DUPLICATE_LISTING_SIMILARITY = 0.9;
 const REPORT_COUNT_TO_BLOCK = 3;
 
 /** TOP/XL — boost (поднятие в скоринге); VIP — отдельная полоса сверху, без boost_weight. */
-const promotionWeightByType: Record<PromotionType, number> = {
+const promotionWeightByType: Record<string, number> = {
   TOP: 200,
   VIP: 120,
   XL: 80,

@@ -191,6 +191,10 @@ export function ProfileSettingsContent() {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [autoReply, setAutoReply] = useState<{ enabled: boolean; text: string }>({
+    enabled: false,
+    text: '',
+  });
 
   function goToSection(s: Section) {
     setSection(s);
@@ -247,6 +251,16 @@ export function ProfileSettingsContent() {
       showEmailPublic: res.data.showEmailPublic ?? false,
       showPhonePublic: res.data.showPhonePublic ?? false,
     });
+    // Загрузка авто-ответа продавца (отдельный эндпоинт)
+    const arRes = await apiFetchJson<{ enabled: boolean; text: string }>(
+      '/support/seller/auto-reply',
+    );
+    if (arRes.ok) {
+      setAutoReply({
+        enabled: Boolean(arRes.data.enabled),
+        text: arRes.data.text ?? '',
+      });
+    }
     setStatus('ready');
   }
 
@@ -254,10 +268,19 @@ export function ProfileSettingsContent() {
     setSaved(false);
     setError('');
     setBusy(true);
-    const res = await apiFetchJson<AuthMe>('/auth/me', {
-      method: 'PATCH',
-      body: JSON.stringify(form),
-    });
+    const [res, arRes] = await Promise.all([
+      apiFetchJson<AuthMe>('/auth/me', {
+        method: 'PATCH',
+        body: JSON.stringify(form),
+      }),
+      apiFetchJson<{ enabled: boolean; text: string }>('/support/seller/auto-reply', {
+        method: 'PUT',
+        body: JSON.stringify({
+          enabled: autoReply.enabled,
+          text: autoReply.text,
+        }),
+      }),
+    ]);
     setBusy(false);
     if (!res.ok) {
       setError(res.message);
@@ -265,6 +288,12 @@ export function ProfileSettingsContent() {
     }
     setMe(res.data);
     applyThemePreference(form.appTheme);
+    if (arRes.ok) {
+      setAutoReply({
+        enabled: Boolean(arRes.data.enabled),
+        text: arRes.data.text ?? autoReply.text,
+      });
+    }
     setSaved(true);
     window.setTimeout(() => setSaved(false), 4000);
   }
@@ -815,6 +844,58 @@ export function ProfileSettingsContent() {
                                   className="min-h-[120px] w-full rounded-xl border border-border bg-card px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-accent/30 focus:ring-2 focus:ring-accent/20"
                                   placeholder="Вид деятельности, юридический адрес, ИНН/ОГРН (если хотите указать публично), режим работы, сайт компании…"
                                 />
+                              </label>
+                            </div>
+
+                            <div className="relative">
+                              <div className="absolute inset-x-0 top-1/2 h-px bg-muted" aria-hidden />
+                              <p className="relative mx-auto w-fit bg-card px-3 text-center text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                                Автоматический ответ
+                              </p>
+                            </div>
+
+                            <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
+                              <div className="mb-3 flex items-start gap-2">
+                                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent">
+                                  <MessageSquare size={18} strokeWidth={stroke} aria-hidden />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-foreground">Автоответ на первое сообщение</p>
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
+                                    Когда покупатель пишет вам впервые — площадка автоматически отправит этот текст
+                                    от вашего имени, чтобы человек не ушёл, пока вы оффлайн.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <SettingsToggleRow
+                                checked={autoReply.enabled}
+                                onChange={(v) => setAutoReply((p) => ({ ...p, enabled: v }))}
+                                title="Включить автоответ"
+                                description="Срабатывает один раз на чат — когда покупатель отправляет первое сообщение, а вы ещё не ответили"
+                              />
+
+                              <label className="mt-4 block">
+                                <span className="mb-1.5 flex items-center justify-between gap-2 text-sm font-medium text-foreground">
+                                  <span>Текст автоответа</span>
+                                  <span className="text-xs font-normal text-muted-foreground">
+                                    {autoReply.text.length} / 1000
+                                  </span>
+                                </span>
+                                <textarea
+                                  value={autoReply.text}
+                                  onChange={(e) =>
+                                    setAutoReply((p) => ({ ...p, text: e.target.value.slice(0, 1000) }))
+                                  }
+                                  rows={4}
+                                  disabled={!autoReply.enabled}
+                                  placeholder="Спасибо за сообщение! Я обычно отвечаю в течение часа. Если вопрос срочный — напишите подробнее, и я вернусь как только смогу."
+                                  className="min-h-[100px] w-full rounded-xl border border-border bg-card px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-accent/30 focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+                                />
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Совет: укажите ваше обычное время ответа, способ связи (звонок/WhatsApp) или
+                                  основные условия — самовывоз, доставка, торг.
+                                </p>
                               </label>
                             </div>
                           </div>

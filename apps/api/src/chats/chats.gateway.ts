@@ -75,6 +75,21 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  /** Если у продавца включён автоответ — постит его на первое сообщение покупателя. */
+  async broadcastSellerAutoReply(chatId: string, senderUserId: string) {
+    try {
+      const msgs = await this.chats.maybePostSellerAutoReply(chatId, senderUserId);
+      for (const m of msgs) {
+        this.server.to(`chat:${chatId}`).emit('message-created', {
+          chatId,
+          ...m,
+        });
+      }
+    } catch (e) {
+      console.error('[ChatsGateway] seller auto-reply failed', e);
+    }
+  }
+
   handleDisconnect(client: AuthedSocket) {
     const userId = client.data.userId;
     if (!userId) return;
@@ -108,6 +123,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       chatId: body.chatId,
       ...message,
     });
+    await this.broadcastSellerAutoReply(body.chatId, userId);
     await this.broadcastDealAssistantMessages(body.chatId);
     return { ok: true };
   }

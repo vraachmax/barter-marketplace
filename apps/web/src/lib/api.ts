@@ -89,6 +89,7 @@ export type ChatSummary = {
     title: string;
     priceRub: number | null;
     city: string;
+    ownerId?: string;
     previewImageUrl?: string | null;
   } | null;
   peer: {
@@ -97,12 +98,35 @@ export type ChatSummary = {
     email: string | null;
     phone: string | null;
   } | null;
+  /** Роль текущего пользователя в чате относительно объявления */
+  myRole?: 'buyer' | 'seller' | 'neutral';
   lastMessage: {
     id: string;
     text: string;
     createdAt: string;
     senderId: string;
   } | null;
+};
+
+export type SupportTemplate = {
+  id: string;
+  code: string;
+  category: 'QUICK_REPLY_BUYER' | 'QUICK_REPLY_SELLER' | 'FAQ' | 'SUPPORT_REPLY' | 'AUTO_REPLY_SELLER';
+  title: string;
+  text: string;
+  sortOrder: number;
+};
+
+export type AdviseSuggestion = {
+  code: string;
+  title: string;
+  text: string;
+};
+
+export type AdviseResponse = {
+  role: 'buyer' | 'seller' | 'neutral';
+  tip: string;
+  suggestions: AdviseSuggestion[];
 };
 
 export type ChatMessage = {

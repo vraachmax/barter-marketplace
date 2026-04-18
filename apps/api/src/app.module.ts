@@ -10,6 +10,7 @@ import { ListingsModule } from './listings/listings.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SearchModule } from './search/search.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SupportModule } from './support/support.module';
 import { UsersModule } from './users/users.module';
 import { WalletModule } from './wallet/wallet.module';
 
@@ -24,6 +25,7 @@ import { WalletModule } from './wallet/wallet.module';
     FavoritesModule,
     ChatsModule,
     ReviewsModule,
+    SupportModule,
     UsersModule,
     WalletModule,
   ],

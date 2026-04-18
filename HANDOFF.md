@@ -1,7 +1,31 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 2 ✅ ЗАВЕРШЕНО (2026-04-18)
-## Следующая задача: Phase 3.1 — каталог категорий Avito-уровня (3000+ узлов, attribute schemas)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ ЗАВЕРШЕНО (2026-04-18)
+## Следующая задача: Phase 4 — улучшения формы размещения (категорийные attribute schemas, валидация, подсказки)
+
+## 2026-04-18 — Phase 3 завершён: бот поддержки + AI-ассистент + автоответы продавца
+
+Полностью закрыли Phase 3 (3.1 → 3.5). Поддержка на сайте, быстрые ответы в чате, AI-подсказки по роли (продавец/покупатель), авто-ответ продавца на первое сообщение — всё на своих endpoint'ах без внешних LLM (rule-based для alpha).
+
+**Сделано по задачам:**
+- **3.1 Prisma + API** — миграция `20260418210000_support_templates_tickets/migration.sql`: enums `SupportTemplateCategory` (QUICK_REPLY_BUYER/SELLER, FAQ, SUPPORT_REPLY, AUTO_REPLY_SELLER) и `SupportTicketStatus`, модели `SupportTemplate` и `SupportTicket`, поля `User.sellerAutoReplyEnabled`/`sellerAutoReplyText`. Модуль `apps/api/src/support/` (`support.service.ts` ~340 строк, `support.controller.ts`, `dto.ts`, `support.module.ts`, shim `prisma-support.d.ts`). Seed 22 шаблона (6 покупательских quick-reply, 6 продавцовых, 7 FAQ, 2 SUPPORT_REPLY, 1 AUTO_REPLY_SELLER default) — idempotent upsert по `code` в `OnModuleInit`. Эндпоинты: `GET /support/templates?category=`, `GET /support/faq`, `GET /support/templates/:code`, `POST /support/tickets` (можно гостем), `GET /support/tickets/mine`, `POST /support/advise`, `GET /support/seller/auto-reply`, `PUT /support/seller/auto-reply`.
+- **3.2 Web: quick-reply chips в чате** — в `apps/web/src/app/messages/page.tsx` добавлен горизонтальный ряд чипов над композером. Роль (buyer/seller) определяется через `ChatSummary.myRole` (добавлено в `chats.service.ts` по сравнению `listing.ownerId === userId`). Шаблоны грузятся один раз на монтирование. Клик — вставка текста в input + focus.
+- **3.3 AI-ассистент** — `POST /support/advise`: rule-based keyword matching (торг/доставка/фото/когда/актуал/whatsapp+telegram) + роль-специфичные советы. В `/messages` показывается подсказка (плашка с лампочкой и кнопками-саджестами) при смене чата, + кнопка «Ещё» и «×» (скрыть). Ассистент активен только в выбранном чате, `setAdvise(null)` при смене.
+- **3.4 Виджет поддержки** — `apps/web/src/components/support-widget.tsx` (floating FAB bottom-left). Вкладки: «Частые вопросы» (GET /support/faq, аккордеон) и «Написать нам» (форма POST /support/tickets с темой/сообщением/контактом, гостевой режим поддерживается). Смонтирован в `app/layout.tsx`, скрыт на `/messages` и `/auth`.
+- **3.5 Автоответы продавца** — в `profile/settings/settings-content.tsx` внутри секции «Витрина продавца» новый блок: toggle «Включить автоответ» + textarea (до 1000 символов). GET/PUT `/support/seller/auto-reply`. Интеграция с чатом: `ChatsService.maybePostSellerAutoReply()` + `ChatsGateway.broadcastSellerAutoReply()` — срабатывает ровно один раз, когда buyer отправил 1-е сообщение, а seller ещё не отвечал. Сообщение помечается `isAutoReply: true` и рассылается в socket + REST.
+
+**Архитектурные решения:**
+- AI-ассистент — rule-based (KEYWORD_TO_CODES regex). Реальный LLM подключим в Phase 11 когда подключим биллинг/лимиты.
+- Tickets поддерживают гостей (`userId` nullable) — виджет работает даже без логина.
+- Seller auto-reply хранится в `User`, а не в отдельной таблице — чтобы проще отдавать через `/auth/me` в будущем.
+- Добавлен next.js rewrite `/support/:path*` → `${apiUrl}/support/:path*` (раньше только для основных модулей).
+
+**Верификация:**
+- `apps/web`: `npx tsc --noEmit` — clean (исключая предсуществующую `next.config.ts(11,3)` про `eslint`).
+- `apps/api`: `npx tsc --noEmit` — полностью clean.
+
+**Следующий шаг:**
+Phase 4 — attribute schemas для категорий (JSON-конфиг атрибутов + форма на web), улучшенная валидация формы размещения, подсказки по типовым полям.
 
 ## 2026-04-18 — Phase 2 завершён: монетизация (Wallet · Promotions · Barter Pro)
 

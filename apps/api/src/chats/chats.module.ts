@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { PresenceModule } from '../presence/presence.module';
+import { SupportModule } from '../support/support.module';
 import { ChatsController } from './chats.controller';
 import { ChatsGateway } from './chats.gateway';
 import { ChatsService } from './chats.service';
@@ -10,6 +11,7 @@ import { ChatsService } from './chats.service';
   imports: [
     AnalyticsModule,
     PresenceModule,
+    SupportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
     }),

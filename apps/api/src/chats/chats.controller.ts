@@ -49,6 +49,7 @@ export class ChatsController {
       chatId,
       ...message,
     });
+    await this.gateway.broadcastSellerAutoReply(chatId, req.user.id);
     await this.gateway.broadcastDealAssistantMessages(chatId);
     return message;
   }
@@ -93,6 +94,7 @@ export class ChatsController {
       chatId,
       ...message,
     });
+    await this.gateway.broadcastSellerAutoReply(chatId, req.user.id);
     await this.gateway.broadcastDealAssistantMessages(chatId);
     return message;
   }
