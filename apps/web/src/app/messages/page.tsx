@@ -318,12 +318,12 @@ export default function MessagesPage() {
 
   if (status === 'need_auth') {
     return (
-      <div className="min-h-screen bg-zinc-100 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
-        <div className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950/95">
+      <div className="min-h-screen bg-muted text-foreground antialiased">
+        <div className="border-b border-border bg-card">
           <div className="mx-auto max-w-lg px-4 py-8">
             <Link
               href="/"
-              className="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-sky-700 dark:text-zinc-400 dark:hover:text-sky-400"
+              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary"
             >
               <ChevronLeft size={20} strokeWidth={1.8} aria-hidden />
               На главную
@@ -331,18 +331,18 @@ export default function MessagesPage() {
           </div>
         </div>
         <div className="mx-auto max-w-lg px-4 py-10">
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:shadow-black/30">
-            <div className="border-b border-zinc-100 bg-gradient-to-r from-sky-50 to-cyan-50 px-6 py-8 text-center dark:border-zinc-800 dark:from-sky-950/50 dark:to-cyan-950/40">
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white shadow-md ring-1 ring-sky-100 dark:bg-zinc-900 dark:ring-sky-900/50">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="border-b border-border bg-primary px-6 py-8 text-center">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-card shadow-md ring-1 ring-primary/30">
                 <MessageCircle size={36} strokeWidth={1.8} aria-hidden />
               </div>
-              <h1 className="mt-4 text-xl font-bold text-zinc-900 dark:text-zinc-100">Сообщения</h1>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Войдите, чтобы переписываться с продавцами и покупателями.</p>
+              <h1 className="mt-4 text-xl font-bold text-foreground">Сообщения</h1>
+              <p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы переписываться с продавцами и покупателями.</p>
             </div>
             <div className="p-6">
               <Link
                 href="/auth"
-                className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 text-sm font-semibold text-white shadow-lg shadow-sky-600/20 hover:from-sky-700 hover:to-cyan-700"
+                className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white shadow-lg shadow-primary/20"
               >
                 Войти или зарегистрироваться
               </Link>
@@ -357,25 +357,25 @@ export default function MessagesPage() {
   const previewSrc = resolveAssetUrl(selectedChat?.listing?.previewImageUrl ?? null);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-zinc-200/80 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased">
       {/* Top bar — desktop */}
-      <header className="hidden shrink-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950/95 md:block">
+      <header className="hidden shrink-0 border-b border-border bg-card md:block">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 lg:px-6">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-sm">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-white shadow-sm">
               <MessageCircle size={20} strokeWidth={1.8} aria-hidden />
             </div>
             <div>
-              <h1 className="text-sm font-bold leading-tight text-zinc-900 dark:text-zinc-100">Сообщения</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Чаты по объявлениям</p>
+              <h1 className="text-sm font-bold leading-tight text-foreground">Сообщения</h1>
+              <p className="text-xs text-muted-foreground">Чаты по объявлениям</p>
             </div>
             {totalUnread > 0 ? (
-              <span className="rounded-full bg-rose-500 px-2 py-0.5 text-xs font-bold text-white dark:bg-rose-600">{totalUnread}</span>
+              <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-white">{totalUnread}</span>
             ) : null}
           </div>
           <Link
             href="/"
-            className="text-sm font-medium text-zinc-500 transition hover:text-sky-700 dark:text-zinc-400 dark:hover:text-sky-400"
+            className="text-sm font-medium text-muted-foreground transition hover:text-primary"
           >
             На главную
           </Link>
@@ -383,27 +383,27 @@ export default function MessagesPage() {
       </header>
 
       {/* Main split */}
-      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col md:my-4 md:min-h-[calc(100dvh-4.5rem)] md:max-h-[calc(100dvh-4.5rem)] md:flex-row md:gap-0 md:overflow-hidden md:rounded-2xl md:border md:border-zinc-200 md:bg-white md:shadow-xl dark:md:border-zinc-800 dark:md:bg-zinc-900/90 dark:md:shadow-black/40">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col md:my-4 md:min-h-[calc(100dvh-4.5rem)] md:max-h-[calc(100dvh-4.5rem)] md:flex-row md:gap-0 md:overflow-hidden md:rounded-2xl md:border md:border-border md:bg-card md:shadow-xl">
         {/* Sidebar — chat list */}
         <aside
-          className={`flex min-h-0 w-full flex-col border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 md:w-[min(100%,380px)] md:shrink-0 md:border-r ${
-            mobileThreadOpen ? 'hidden md:flex' : 'flex flex-1 md:flex-none'
-          }`}
+          className={`flex min-h-0 w-full flex-col border-border bg-card md:w-[min(100%,380px)] md:shrink-0 md:border-r ${
+ mobileThreadOpen ? 'hidden md:flex' : 'flex flex-1 md:flex-none'
+ }`}
         >
-          <div className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-100 px-4 dark:border-zinc-800 md:hidden">
-            <div className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-zinc-100">
+          <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 md:hidden">
+            <div className="flex items-center gap-2 font-semibold text-foreground">
               <MessageCircle size={22} strokeWidth={1.8} aria-hidden />
               Чаты
               {totalUnread > 0 ? (
-                <span className="rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white dark:bg-rose-600">{totalUnread}</span>
+                <span className="rounded-full bg-accent px-1.5 text-[11px] font-bold text-white">{totalUnread}</span>
               ) : null}
             </div>
-            <Link href="/" className="text-xs font-medium text-sky-700 dark:text-sky-400">
+            <Link href="/" className="text-xs font-medium text-primary">
               Главная
             </Link>
           </div>
 
-          <div className="border-b border-zinc-100 p-3 dark:border-zinc-800">
+          <div className="border-b border-border p-3">
             <div className="relative">
               <span className="pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2">
                 <Search size={16} strokeWidth={1.8} className="opacity-60" aria-hidden />
@@ -413,20 +413,20 @@ export default function MessagesPage() {
                 value={listQuery}
                 onChange={(e) => setListQuery(e.target.value)}
                 placeholder="Поиск по чатам…"
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-9 pr-3 text-sm outline-none transition focus:border-sky-400 focus:bg-white focus:ring-2 focus:ring-sky-500/15 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-sky-500 dark:focus:bg-zinc-900"
+                className="h-10 w-full rounded-xl border border-border bg-muted/50 pl-9 pr-3 text-sm outline-none transition focus:border-primary/30 focus:bg-card focus:ring-2 focus:ring-primary/30"
               />
             </div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             {status === 'loading' ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-16 text-sm text-zinc-500 dark:text-zinc-400">
-                <span className="inline-block size-8 animate-spin rounded-full border-2 border-sky-500 border-t-transparent dark:border-cyan-400 dark:border-t-transparent" aria-hidden />
+              <div className="flex flex-col items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+                <span className="inline-block size-8 animate-spin rounded-full border-2 border-primary/30 border-t-transparent" aria-hidden />
                 Загрузка диалогов…
               </div>
             ) : null}
             {status === 'error' ? (
-              <div className="p-4 text-center text-sm text-red-600 dark:text-rose-400">Не удалось загрузить чаты</div>
+              <div className="p-4 text-center text-sm text-destructive">Не удалось загрузить чаты</div>
             ) : null}
 
             <ul className="p-2">
@@ -441,24 +441,24 @@ export default function MessagesPage() {
                       type="button"
                       onClick={() => selectChat(c.id)}
                       className={`flex w-full gap-3 rounded-xl p-2.5 text-left transition ${
-                        active
-                          ? 'bg-sky-50 ring-1 ring-sky-200/80 dark:bg-sky-950/40 dark:ring-sky-800/60'
-                          : 'hover:bg-zinc-50 dark:hover:bg-zinc-900'
-                      }`}
+ active
+ ? 'bg-primary/10 ring-1 ring-primary/30'
+ : 'hover:bg-muted/50'
+ }`}
                     >
                       <div className="relative shrink-0">
-                        <div className="listing-thumb-wrap h-14 w-14 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                        <div className="listing-thumb-wrap h-14 w-14 overflow-hidden rounded-xl border border-border">
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={img} alt="" className="listing-thumb-img h-full w-full object-cover" />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
+                            <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
                               <Store size={24} strokeWidth={1.8} aria-hidden />
                             </div>
                           )}
                         </div>
                         {unread ? (
-                          <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full bg-sky-600 px-1 text-center text-[10px] font-bold leading-4 text-white">
+                          <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-bold leading-4 text-white">
                             {c.unreadCount > 9 ? '9+' : c.unreadCount}
                           </span>
                         ) : null}
@@ -467,24 +467,24 @@ export default function MessagesPage() {
                         <div className="flex items-start justify-between gap-2">
                           <span
                             className={`line-clamp-1 text-sm ${
-                              unread
-                                ? 'font-bold text-zinc-900 dark:text-zinc-100'
-                                : 'font-semibold text-zinc-800 dark:text-zinc-200'
-                            }`}
+ unread
+ ? 'font-bold text-foreground'
+ : 'font-semibold text-foreground'
+ }`}
                           >
                             {c.listing?.title ?? 'Без объявления'}
                           </span>
-                          <span className="shrink-0 text-[11px] text-zinc-400 dark:text-zinc-500">
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
                             {formatListTime(c.lastMessage?.createdAt ?? c.updatedAt)}
                           </span>
                         </div>
-                        <div className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
                           {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
                         </div>
                         <div
                           className={`mt-0.5 line-clamp-2 text-xs ${
-                            unread ? 'font-medium text-zinc-700 dark:text-zinc-300' : 'text-zinc-500 dark:text-zinc-400'
-                          }`}
+ unread ? 'font-medium text-foreground' : 'text-muted-foreground'
+ }`}
                         >
                           {c.lastMessage?.text?.trim() ? c.lastMessage.text : 'Нет сообщений'}
                         </div>
@@ -496,15 +496,15 @@ export default function MessagesPage() {
             </ul>
 
             {chats.length === 0 && status === 'ready' ? (
-              <div className="mx-4 mt-6 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/80 p-6 text-center dark:border-zinc-700 dark:bg-zinc-900/50">
+              <div className="mx-4 mt-6 rounded-2xl border border-dashed border-border bg-muted/50 p-6 text-center">
                 <MessageCircle size={44} strokeWidth={1.8} className="mx-auto opacity-35" aria-hidden />
-                <p className="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">Пока нет диалогов</p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="mt-3 text-sm font-medium text-foreground">Пока нет диалогов</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   Откройте объявление и нажмите «Написать в чат», чтобы начать переписку.
                 </p>
                 <Link
                   href="/"
-                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-sky-600/25 hover:from-sky-700 hover:to-cyan-700"
+                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary/20"
                 >
                   К объявлениям
                 </Link>
@@ -512,72 +512,72 @@ export default function MessagesPage() {
             ) : null}
 
             {filteredChats.length === 0 && chats.length > 0 && status === 'ready' ? (
-              <div className="p-6 text-center text-sm text-zinc-500 dark:text-zinc-400">Ничего не найдено</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Ничего не найдено</div>
             ) : null}
           </div>
         </aside>
 
         {/* Thread */}
         <section
-          className={`flex min-h-0 min-w-0 flex-1 flex-col bg-zinc-100 md:bg-gradient-to-b md:from-zinc-50 md:to-sky-50/30 dark:bg-zinc-950 dark:md:from-zinc-950 dark:md:to-sky-950/20 ${
-            mobileThreadOpen ? 'flex flex-1' : 'hidden md:flex'
-          }`}
+          className={`flex min-h-0 min-w-0 flex-1 flex-col bg-muted ${
+ mobileThreadOpen ? 'flex flex-1' : 'hidden md:flex'
+ }`}
         >
           {!selectedChat ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-              <div className="grid h-20 w-20 place-items-center rounded-3xl bg-white shadow-md ring-1 ring-zinc-100 dark:bg-zinc-900 dark:ring-zinc-800">
+              <div className="grid h-20 w-20 place-items-center rounded-3xl bg-card shadow-md ring-1 ring-border">
                 <MessageCircle size={44} strokeWidth={1.8} className="opacity-50" aria-hidden />
               </div>
-              <p className="max-w-xs text-sm font-medium text-zinc-600 dark:text-zinc-300">Выберите диалог в списке слева</p>
-              <p className="max-w-xs text-xs text-zinc-400 dark:text-zinc-500">Или откройте чат из карточки объявления</p>
+              <p className="max-w-xs text-sm font-medium text-muted-foreground">Выберите диалог в списке слева</p>
+              <p className="max-w-xs text-xs text-muted-foreground">Или откройте чат из карточки объявления</p>
             </div>
           ) : (
             <>
               {/* Thread header */}
-              <div className="flex shrink-0 items-center gap-3 border-b border-zinc-200/80 bg-white/90 px-3 py-2.5 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/90 md:px-4">
+              <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card/90 px-3 py-2.5 backdrop-blur-md md:px-4">
                 <button
                   type="button"
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 md:hidden"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground md:hidden"
                   onClick={() => setMobileThreadOpen(false)}
                   aria-label="Назад к списку"
                 >
                   <ChevronLeft size={22} strokeWidth={1.8} aria-hidden />
                 </button>
-                <div className="listing-thumb-wrap h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                <div className="listing-thumb-wrap h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-border">
                   {previewSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={previewSrc} alt="" className="listing-thumb-img h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
+                    <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
                       <Store size={22} strokeWidth={1.8} aria-hidden />
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                  <div className="truncate text-sm font-bold text-foreground">
                     {selectedChat.listing?.title ?? 'Диалог'}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <span
                         className={`inline-block h-2 w-2 rounded-full ${
-                          peerTyping
-                            ? 'animate-pulse bg-sky-500'
-                            : selectedChat.peer?.id && onlineByUserId[selectedChat.peer.id]
-                              ? 'bg-emerald-500'
-                              : 'bg-zinc-300 dark:bg-zinc-600'
-                        }`}
+ peerTyping
+ ? 'animate-pulse bg-primary'
+ : selectedChat.peer?.id && onlineByUserId[selectedChat.peer.id]
+ ? 'bg-secondary/10'
+ : 'bg-muted-foreground/30'
+ }`}
                       />
                       {selectedChat.peer?.name ?? selectedChat.peer?.email ?? 'Собеседник'}
                     </span>
-                    <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                    <span className={peerTyping ? 'font-medium text-sky-600 dark:text-sky-400' : ''}>{peerStatus}</span>
+                    <span className="text-foreground">·</span>
+                    <span className={peerTyping ? 'font-medium text-primary' : ''}>{peerStatus}</span>
                   </div>
                 </div>
                 {listingHref ? (
                   <Link
                     href={listingHref}
-                    className="hidden shrink-0 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-sky-700 shadow-sm transition hover:bg-sky-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-sky-400 dark:hover:bg-sky-950/50 sm:inline-flex"
+                    className="hidden shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-primary shadow-sm transition hover:bg-primary/10 sm:inline-flex"
                   >
                     <Link2 size={16} strokeWidth={1.8} aria-hidden />
                     Объявление
@@ -585,7 +585,7 @@ export default function MessagesPage() {
                 ) : null}
                 <button
                   type="button"
-                  className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 md:grid"
+                  className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground md:grid"
                   aria-label="Меню"
                 >
                   <SlidersHorizontal size={20} strokeWidth={1.8} aria-hidden />
@@ -595,7 +595,7 @@ export default function MessagesPage() {
               {listingHref ? (
                 <Link
                   href={listingHref}
-                  className="flex shrink-0 items-center justify-center gap-2 border-b border-zinc-100 bg-white py-2 text-xs font-semibold text-sky-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-sky-400 sm:hidden"
+                  className="flex shrink-0 items-center justify-center gap-2 border-b border-border bg-card py-2 text-xs font-semibold text-primary sm:hidden"
                 >
                   <Link2 size={14} strokeWidth={1.8} aria-hidden />
                   Открыть объявление
@@ -606,7 +606,7 @@ export default function MessagesPage() {
               <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-5">
                 <div className="mx-auto max-w-3xl space-y-3">
                   {messages.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-zinc-200 bg-white/60 py-12 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
+                    <div className="rounded-2xl border border-dashed border-border bg-card/60 py-12 text-center text-sm text-muted-foreground">
                       Напишите первое сообщение — обычно отвечают быстрее, если указать удобное время связи.
                     </div>
                   ) : null}
@@ -614,19 +614,19 @@ export default function MessagesPage() {
                     if (m.isAssistant) {
                       return (
                         <div key={m.id} className="flex justify-center px-1">
-                          <div className="max-w-[min(100%,560px)] rounded-2xl border border-violet-200/90 bg-gradient-to-br from-violet-50/95 to-sky-50/90 px-4 py-3 text-sm text-violet-950 shadow-sm dark:border-violet-900/50 dark:from-violet-950/50 dark:to-sky-950/40 dark:text-violet-100">
-                            <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-violet-700 dark:text-violet-300">
-                              <span className="grid h-7 w-7 place-items-center rounded-lg bg-violet-600 text-white shadow-sm">
+                          <div className="max-w-[min(100%,560px)] rounded-2xl border border-accent/30 bg-primary px-4 py-3 text-sm text-accent shadow-sm">
+                            <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-accent">
+                              <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent/10 text-white shadow-sm">
                                 <Sparkles size={16} strokeWidth={1.8} aria-hidden />
                               </span>
                               Помощник площадки
                             </div>
                             {m.text ? (
-                              <div className="whitespace-pre-wrap leading-relaxed text-violet-900/95 dark:text-violet-100/95">
+                              <div className="whitespace-pre-wrap leading-relaxed text-accent/95">
                                 {m.text}
                               </div>
                             ) : null}
-                            <div className="mt-2 text-right text-[10px] text-violet-600/80 dark:text-violet-400/80">
+                            <div className="mt-2 text-right text-[10px] text-accent/80">
                               {new Date(m.createdAt).toLocaleTimeString('ru-RU', {
                                 hour: '2-digit',
                                 minute: '2-digit',
@@ -644,7 +644,7 @@ export default function MessagesPage() {
                           className={`flex max-w-[min(100%,520px)] gap-2 ${isPeer ? 'flex-row' : 'flex-row-reverse'}`}
                         >
                           {isPeer ? (
-                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-zinc-200 to-zinc-300 text-[11px] font-bold text-zinc-700 dark:from-zinc-700 dark:to-zinc-600 dark:text-zinc-100">
+                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-foreground">
                               {peerInitials(selectedChat.peer)}
                             </div>
                           ) : (
@@ -652,14 +652,14 @@ export default function MessagesPage() {
                           )}
                           <div
                             className={`min-w-0 rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
-                              isPeer
-                                ? 'rounded-tl-md border border-zinc-100 bg-white text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
-                                : 'rounded-tr-md bg-gradient-to-br from-sky-600 to-cyan-600 text-white'
-                            }`}
+ isPeer
+ ? 'rounded-tl-md border border-border bg-card text-foreground'
+ : 'rounded-tr-md bg-primary text-white'
+ }`}
                           >
                             {mediaFull ? (
                               <div
-                                className={`mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-zinc-100' : 'border border-white/20'}`}
+                                className={`mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-border' : 'border border-white/20'}`}
                               >
                                 {m.mediaType === 'VIDEO' ? (
                                   <video src={mediaFull} controls className="max-h-64 w-full object-contain" />
@@ -672,8 +672,8 @@ export default function MessagesPage() {
                             {m.text ? <div className="break-words whitespace-pre-wrap leading-relaxed">{m.text}</div> : null}
                             <div
                               className={`mt-1.5 flex items-center gap-2 text-[10px] ${
-                                isPeer ? 'justify-end text-zinc-400 dark:text-zinc-500' : 'justify-end text-white/80'
-                              }`}
+ isPeer ? 'justify-end text-muted-foreground' : 'justify-end text-white/80'
+ }`}
                             >
                               <span>
                                 {new Date(m.createdAt).toLocaleTimeString('ru-RU', {
@@ -683,7 +683,7 @@ export default function MessagesPage() {
                               </span>
                               {!isPeer ? (
                                 m.isReadByPeer ? (
-                                  <CheckCircle size={14} strokeWidth={1.8} className="text-sky-100" aria-hidden />
+                                  <CheckCircle size={14} strokeWidth={1.8} className="text-primary" aria-hidden />
                                 ) : (
                                   <CheckCircle size={14} strokeWidth={1.8} className="opacity-70" aria-hidden />
                                 )
@@ -699,14 +699,14 @@ export default function MessagesPage() {
               </div>
 
               {/* Composer */}
-              <div className="shrink-0 border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950 md:p-4">
+              <div className="shrink-0 border-t border-border bg-card p-3 md:p-4">
                 {selectedFile ? (
-                  <div className="mb-2 flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs dark:border-sky-800 dark:bg-sky-950/40">
+                  <div className="mb-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs">
                     <Camera size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate font-medium text-sky-900 dark:text-sky-100">{selectedFile.name}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium text-primary">{selectedFile.name}</span>
                     <button
                       type="button"
-                      className="shrink-0 rounded-lg px-2 py-1 font-semibold text-sky-800 hover:bg-sky-100 dark:text-sky-200 dark:hover:bg-sky-900/50"
+                      className="shrink-0 rounded-lg px-2 py-1 font-semibold text-primary hover:bg-primary"
                       onClick={() => setSelectedFile(null)}
                     >
                       Убрать
@@ -714,7 +714,7 @@ export default function MessagesPage() {
                   </div>
                 ) : null}
                 <div className="mx-auto flex max-w-3xl items-end gap-2">
-                  <label className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-sky-600 dark:hover:bg-sky-950/50 dark:hover:text-sky-400">
+                  <label className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-border bg-muted/50 text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary">
                     <Camera size={20} strokeWidth={1.8} aria-hidden />
                     <input
                       type="file"
@@ -728,7 +728,7 @@ export default function MessagesPage() {
                   </label>
                   <input
                     type="text"
-                    className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm placeholder-zinc-400 shadow-sm transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20 dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder-zinc-500 dark:text-zinc-100 dark:focus:border-sky-500 dark:focus:ring-sky-500/20"
+                    className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground shadow-sm transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     placeholder="Напишите сообщение..."
                     value={text}
                     onChange={(e) => {
@@ -757,7 +757,7 @@ export default function MessagesPage() {
                       }
                     }}
                     disabled={busy || (text.trim().length === 0 && !selectedFile)}
-                    className="shrink-0 rounded-xl bg-gradient-to-br from-sky-600 to-cyan-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-sky-600/20 transition hover:from-sky-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed dark:shadow-sky-950/30"
+                    className="shrink-0 rounded-xl bg-primary px-4 py-2.5 font-semibold text-white shadow-lg shadow-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {busy ? '...' : 'Отправить'}
                   </button>

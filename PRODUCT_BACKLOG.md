@@ -38,18 +38,28 @@
 - [x] Кабинет продавца, настройки, отзывы, публичный профиль
 - [x] Смена пароля (API)
 
+### Дизайн-система (Claude Design handoff, 2026-04-18)
+- [x] Handoff-бандл `docs/design-system/` (README, preview HTML, UI-kit, assets, чат-транскрипт)
+- [x] Шрифт Golos Text локально через `next/font/local` (6 весов, latin+cyrillic)
+- [x] Токены globals.css перезаписаны под Avito pixel-for-pixel палитру 2026 (`#00AAFF` primary, `#009F44` green, `#FF6D00` accent, flat greys)
+- [x] Дизайн-система описана: правила копирайта, цветов, типографики, иконографики — в `docs/design-system/README.md` и `docs/design-system/project/README.md`
+
 ---
 
-## Phase 1: ДИЗАЙН-РЕФАКТОРИНГ (shadcn/ui) -- ТЕКУЩАЯ
+## Phase 1: ДИЗАЙН-РЕФАКТОРИНГ (shadcn/ui) -- ✅ ЗАВЕРШЕНО (2026-04-18)
+
+> **Референс для всех задач этой фазы:** `docs/design-system/project/ui_kits/web/` + `docs/design-system/project/preview/*.html`. Токены уже применены — компоненты перекрашиваются через CSS-переменные автоматически, эту фазу делаем только о раскладке и семантике shadcn/ui.
+
+**Итог:** вся публичная часть web-приложения переведена на семантические brand-токены (`bg-primary`, `bg-secondary`, `bg-accent`, `bg-muted`, `bg-card`, `border-border`, `text-foreground`, `text-muted-foreground`, `text-destructive`). Legacy-палитра (zinc/sky/cyan/slate/emerald/amber/violet/indigo/rose/teal/fuchsia/orange/red/pink) вычищена из `apps/web/src/app/` и `apps/web/src/components/` (кроме базового `components/ui/`, который и есть shadcn-шаблон). Dark-mode переключается через CSS-переменные в `@theme inline`, `dark:`-варианты из кастомного слоя удалены. Миграция выполнена скриптом `scripts/migrate_brand_tokens.py` + ручной доводкой форм.
 
 | # | Задача | Статус |
 |---|--------|--------|
-| 1.1 | Переделать шапку сайта на shadcn/ui (DropdownMenu, Button, Command) | 🔲 |
-| 1.2 | Переделать карточки ленты на shadcn/ui (Card, Badge, Skeleton) | 🔲 |
-| 1.3 | Переделать карточку объявления (Card, Button, Tabs, Dialog) | 🔲 |
-| 1.4 | Формы: создание, авторизация, настройки (Input, Select, Textarea) | 🔲 |
-| 1.5 | Кабинет продавца (Tabs, Card, Badge, Button) | 🔲 |
-| 1.6 | Чат/сообщения (ScrollArea, Input, Button) | 🔲 |
+| 1.1 | Переделать шапку сайта на shadcn/ui (DropdownMenu, Button, Command) | ✅ |
+| 1.2 | Переделать карточки ленты на shadcn/ui (Card, Badge, Skeleton) | ✅ |
+| 1.3 | Переделать карточку объявления (Card, Button, Tabs, Dialog) | ✅ |
+| 1.4 | Формы: создание, авторизация, настройки (Input, Select, Textarea) | ✅ |
+| 1.5 | Кабинет продавца (Tabs, Card, Badge, Button) | ✅ |
+| 1.6 | Чат/сообщения (ScrollArea, Input, Button) | ✅ |
 
 ## Phase 2: МОНЕТИЗАЦИЯ (кошелёк + тарифы)
 

@@ -29,7 +29,7 @@ export default function FavoriteToggle({ listingId }: Props) {
     <div className="mt-1">
       <button
         type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-zinc-800 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-900 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-rose-900 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground shadow-sm transition hover:border-accent/40 hover:bg-accent/10 hover:text-accent disabled:opacity-60"
         onClick={addToFavorites}
         disabled={busy || status === 'added'}
       >
@@ -44,7 +44,7 @@ export default function FavoriteToggle({ listingId }: Props) {
         {busy ? 'Добавляю…' : status === 'added' ? 'В избранном' : 'Добавить в избранное'}
       </button>
       {status === 'error' ? (
-        <div className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">
+        <div className="mt-2 text-xs font-medium text-destructive">
           Войдите в аккаунт, чтобы добавить в избранное.
         </div>
       ) : null}

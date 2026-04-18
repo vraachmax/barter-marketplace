@@ -104,14 +104,14 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
   if (!enabled || dismissed || !visible || filteredSimilar.length === 0) return null;
 
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-sky-200/90 bg-gradient-to-br from-sky-50/90 to-cyan-50/60 p-4 text-sm shadow-sm dark:border-sky-900/50 dark:from-sky-950/40 dark:to-cyan-950/20">
+    <div className="mt-4 overflow-hidden rounded-2xl border border-primary/30 bg-primary p-4 text-sm shadow-sm">
       <div className="mb-2 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-sm">
+        <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-white shadow-sm">
           <Sparkles size={18} strokeWidth={1.8} className="text-white" aria-hidden />
         </span>
-        <div className="font-bold text-sky-950 dark:text-sky-100">Бот-помощник</div>
+        <div className="font-bold text-primary">Бот-помощник</div>
       </div>
-      <p className="text-sky-900/90 dark:text-sky-200/90">
+      <p className="text-primary">
         Нашёл похожие варианты по цене и параметрам — возможно, подойдут и вам:
       </p>
 
@@ -119,18 +119,18 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
         {filteredSimilar.slice(0, shownCount).map((x) => (
           <div
             key={x.id}
-            className="rounded-xl border border-sky-200/70 bg-white/90 p-3 shadow-sm dark:border-sky-900/40 dark:bg-zinc-900/70"
+            className="rounded-xl border border-primary/30 bg-card/90 p-3 shadow-sm"
           >
             <Link
               href={`/listing/${x.id}`}
-              className="block truncate font-bold text-sky-800 hover:underline dark:text-sky-300"
+              className="block truncate font-bold text-primary hover:underline"
             >
               {x.title}
             </Link>
-            <div className="text-xs text-zinc-600 dark:text-zinc-400">
+            <div className="text-xs text-muted-foreground">
               {x.city} • {x.category.title}
             </div>
-            <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{formatRub(x.priceRub)}</div>
+            <div className="text-xs font-bold text-foreground">{formatRub(x.priceRub)}</div>
           </div>
         ))}
       </div>
@@ -140,14 +140,14 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
           <button
             type="button"
             onClick={() => setShownCount((p) => Math.min(filteredSimilar.length, p + 5))}
-            className="text-sky-700 underline decoration-sky-600/30 underline-offset-2 hover:text-sky-900 dark:text-sky-400 dark:hover:text-sky-300"
+            className="text-primary underline underline-offset-2 hover:text-primary"
           >
             Показать ещё 5 похожих
           </button>
         ) : (
           <Link
             href="/"
-            className="text-sky-700 underline decoration-sky-600/30 underline-offset-2 dark:text-sky-400"
+            className="text-primary underline underline-offset-2"
           >
             Больше вариантов в ленте
           </Link>
@@ -155,7 +155,7 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
         <button
           type="button"
           onClick={hideForThisListing}
-          className="font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+          className="font-medium text-muted-foreground hover:text-foreground"
         >
           Не показывать для этого объявления
         </button>

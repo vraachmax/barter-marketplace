@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')  format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Medium.ttf')   format('truetype'); font-weight: 500; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, sans-serif; color: #000; background: #F5F4F2; -webkit-font-smoothing: antialiased; }
+  body { padding: 24px; }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  .hdr { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #757575; margin-bottom: 14px; }
+  .section-title { font-size: 13px; font-weight: 600; color: #000; margin: 22px 0 10px; }
+
+  /* Горизонтальный ряд: широкие ландшафтные тайлы */
+  .row-h {
+    display: grid;
+    grid-template-columns: 1.6fr 1.2fr 1fr 1fr;
+    gap: 12px;
+    height: 180px;
+  }
+  .row-h.alt {
+    grid-template-columns: 1fr 1fr 1.2fr 1.6fr;
+  }
+  .tile {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 150ms ease;
+  }
+  .tile:hover { transform: translateY(-2px); }
+  .tile .label {
+    position: absolute;
+    left: 18px; top: 16px; right: 18px;
+    font-size: 17px; font-weight: 600;
+    color: #0A0A0A;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    z-index: 2;
+  }
+  .tile .sub {
+    position: absolute;
+    left: 18px; top: 38px;
+    font-size: 12px; color: #4D4D4D;
+    z-index: 2;
+  }
+  .tile .art {
+    position: absolute; right: 0; bottom: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .tile .art svg { display: block; }
+
+  /* Фоны */
+  .bg-auto    { background: linear-gradient(135deg, #FFE0C2 0%, #FFC99B 100%); }
+  .bg-realty  { background: linear-gradient(135deg, #CCE4FF 0%, #A8CEFF 100%); }
+  .bg-jobs    { background: linear-gradient(135deg, #DBF0D0 0%, #B5E2A0 100%); }
+  .bg-services{ background: linear-gradient(135deg, #FFEDA8 0%, #FFD966 100%); }
+  .bg-personal{ background: linear-gradient(140deg, #FFD0E0 0%, #FFAEC8 100%); }
+  .bg-electro { background: linear-gradient(140deg, #CEF0EE 0%, #9DDEDB 100%); }
+  .bg-home    { background: linear-gradient(140deg, #E2D5FF 0%, #BFA3F0 100%); }
+  .bg-hobby   { background: linear-gradient(140deg, #FFD8BF 0%, #FFB592 100%); }
+  .bg-animals { background: linear-gradient(140deg, #E6F0D2 0%, #C8DEA2 100%); }
+  .bg-biz     { background: linear-gradient(140deg, #DCE3EE 0%, #B8C5DC 100%); }
+  .bg-free    { background: linear-gradient(140deg, #FFDFC2 0%, #FFC099 100%); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hdr">Avito 2026 · горизонтальные плитки категорий · реалистичные иллюстрации</div>
+
+    <div class="section-title">Ряд 1</div>
+    <div class="row-h">
+      <!-- Транспорт — широкая, реалистичный седан сбоку -->
+      <div class="tile bg-auto">
+        <div class="label">Транспорт</div>
+        <div class="sub">Авто с пробегом · Мото · Водный</div>
+        <div class="art">
+          <svg width="320" height="150" viewBox="0 0 320 150" fill="none">
+            <ellipse cx="170" cy="140" rx="140" ry="5" fill="#000" opacity=".12"/>
+            <!-- Кузов — более правильная геометрия седана -->
+            <path d="M30 115 L35 98 Q36 92 42 90 L72 82 Q78 65 95 60 L145 54 Q175 52 195 62 L225 80 L275 88 Q285 90 286 100 L290 118 L288 128 Q288 132 284 132 L34 132 Q30 132 30 128 Z" fill="#B84518"/>
+            <!-- Стекло -->
+            <path d="M82 80 Q90 62 104 60 L148 56 Q172 55 188 64 L218 80 Z" fill="#3A5878" opacity=".85"/>
+            <path d="M140 56 L140 80" stroke="#2A4058" stroke-width="1"/>
+            <!-- Блик -->
+            <path d="M95 68 L120 60 L125 62 L100 72 Z" fill="#FFF" opacity=".3"/>
+            <!-- Нижняя полоса -->
+            <rect x="36" y="115" width="250" height="6" fill="#7A2A0A" opacity=".5"/>
+            <!-- Ручки -->
+            <rect x="100" y="95" width="20" height="3" rx="1.5" fill="#4A1A05" opacity=".6"/>
+            <rect x="175" y="95" width="20" height="3" rx="1.5" fill="#4A1A05" opacity=".6"/>
+            <!-- Фары -->
+            <ellipse cx="282" cy="100" rx="6" ry="4" fill="#FFF5D4"/>
+            <rect x="30" y="98" width="6" height="5" rx="1" fill="#FF5A3A"/>
+            <!-- Колёса -->
+            <circle cx="85" cy="128" r="20" fill="#0A0A0A"/>
+            <circle cx="85" cy="128" r="13" fill="#3A3A3A"/>
+            <circle cx="85" cy="128" r="8" fill="#1A1A1A"/>
+            <circle cx="85" cy="128" r="3" fill="#5A5A5A"/>
+            <circle cx="235" cy="128" r="20" fill="#0A0A0A"/>
+            <circle cx="235" cy="128" r="13" fill="#3A3A3A"/>
+            <circle cx="235" cy="128" r="8" fill="#1A1A1A"/>
+            <circle cx="235" cy="128" r="3" fill="#5A5A5A"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Недвижимость — силуэт жилого дома -->
+      <div class="tile bg-realty">
+        <div class="label">Недвижимость</div>
+        <div class="sub">Квартиры · Дома · Аренда</div>
+        <div class="art">
+          <svg width="240" height="160" viewBox="0 0 240 160" fill="none">
+            <!-- Башни на фоне -->
+            <rect x="15" y="55" width="48" height="105" fill="#5A8FD8"/>
+            <rect x="160" y="40" width="55" height="120" fill="#6899DE"/>
+            <!-- Основная башня -->
+            <rect x="68" y="20" width="88" height="140" fill="#3D72BC"/>
+            <rect x="70" y="22" width="84" height="4" fill="#2A5899"/>
+            <!-- Окна регулярной сеткой -->
+            <g fill="#FFEFB5">
+              <rect x="76" y="32" width="9" height="11"/><rect x="89" y="32" width="9" height="11"/><rect x="102" y="32" width="9" height="11"/><rect x="115" y="32" width="9" height="11"/><rect x="128" y="32" width="9" height="11"/><rect x="141" y="32" width="9" height="11"/>
+              <rect x="76" y="49" width="9" height="11"/><rect x="102" y="49" width="9" height="11"/><rect x="128" y="49" width="9" height="11"/><rect x="141" y="49" width="9" height="11"/>
+              <rect x="76" y="66" width="9" height="11"/><rect x="89" y="66" width="9" height="11"/><rect x="115" y="66" width="9" height="11"/><rect x="141" y="66" width="9" height="11"/>
+              <rect x="89" y="83" width="9" height="11"/><rect x="102" y="83" width="9" height="11"/><rect x="128" y="83" width="9" height="11"/><rect x="141" y="83" width="9" height="11"/>
+              <rect x="76" y="100" width="9" height="11"/><rect x="102" y="100" width="9" height="11"/><rect x="115" y="100" width="9" height="11"/><rect x="141" y="100" width="9" height="11"/>
+              <rect x="76" y="117" width="9" height="11"/><rect x="89" y="117" width="9" height="11"/><rect x="128" y="117" width="9" height="11"/>
+              <rect x="76" y="134" width="9" height="11"/><rect x="102" y="134" width="9" height="11"/><rect x="141" y="134" width="9" height="11"/>
+            </g>
+            <g fill="#B8D4F5" opacity=".7">
+              <rect x="22" y="65" width="9" height="11"/><rect x="35" y="65" width="9" height="11"/><rect x="48" y="65" width="9" height="11"/>
+              <rect x="22" y="82" width="9" height="11"/><rect x="48" y="82" width="9" height="11"/>
+              <rect x="35" y="99" width="9" height="11"/><rect x="48" y="99" width="9" height="11"/>
+              <rect x="22" y="116" width="9" height="11"/><rect x="35" y="116" width="9" height="11"/>
+              <rect x="166" y="50" width="10" height="12"/><rect x="181" y="50" width="10" height="12"/><rect x="196" y="50" width="10" height="12"/>
+              <rect x="166" y="68" width="10" height="12"/><rect x="196" y="68" width="10" height="12"/>
+              <rect x="181" y="86" width="10" height="12"/><rect x="196" y="86" width="10" height="12"/>
+              <rect x="166" y="104" width="10" height="12"/><rect x="181" y="104" width="10" height="12"/>
+              <rect x="196" y="122" width="10" height="12"/>
+            </g>
+            <!-- Вход -->
+            <rect x="108" y="140" width="12" height="20" fill="#1E4478"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Работа — ноутбук с вакансией -->
+      <div class="tile bg-jobs">
+        <div class="label">Работа</div>
+        <div class="sub">892 405 вакансий</div>
+        <div class="art">
+          <svg width="180" height="140" viewBox="0 0 180 140" fill="none">
+            <!-- Ноутбук -->
+            <path d="M40 45 L40 105 L140 105 L140 45 Q140 42 137 42 L43 42 Q40 42 40 45 Z" fill="#1F1F1F"/>
+            <rect x="46" y="48" width="88" height="54" fill="#FFF"/>
+            <!-- Контент на экране -->
+            <rect x="52" y="54" width="30" height="4" rx="1" fill="#2E7A2E"/>
+            <rect x="52" y="62" width="76" height="2" fill="#D0D0D0"/>
+            <rect x="52" y="67" width="60" height="2" fill="#D0D0D0"/>
+            <rect x="52" y="74" width="22" height="8" rx="2" fill="#2E7A2E"/>
+            <rect x="78" y="74" width="22" height="8" rx="2" fill="#E0E0E0"/>
+            <rect x="52" y="88" width="76" height="2" fill="#E0E0E0"/>
+            <rect x="52" y="93" width="50" height="2" fill="#E0E0E0"/>
+            <!-- Подставка -->
+            <path d="M28 105 L152 105 L148 115 L32 115 Z" fill="#3A3A3A"/>
+            <rect x="78" y="105" width="24" height="2" fill="#0E0E0E"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Услуги — гаечный ключ + отвёртка -->
+      <div class="tile bg-services">
+        <div class="label">Услуги</div>
+        <div class="art">
+          <svg width="160" height="140" viewBox="0 0 160 140" fill="none">
+            <!-- Отвёртка -->
+            <g transform="rotate(-30 80 80)">
+              <rect x="58" y="20" width="18" height="45" rx="4" fill="#C44520"/>
+              <rect x="60" y="30" width="14" height="2" fill="#8A2A10" opacity=".5"/>
+              <rect x="60" y="40" width="14" height="2" fill="#8A2A10" opacity=".5"/>
+              <rect x="60" y="50" width="14" height="2" fill="#8A2A10" opacity=".5"/>
+              <rect x="65" y="65" width="4" height="40" fill="#9A9A9A"/>
+              <rect x="62" y="102" width="10" height="6" fill="#7A7A7A"/>
+            </g>
+            <!-- Гаечный ключ -->
+            <g transform="rotate(20 95 90)">
+              <path d="M60 95 L105 95 Q110 95 110 90 L110 80 L125 80 Q130 80 132 85 L135 95 Q137 100 132 103 L120 108 L110 108 L110 98 Q110 93 105 93 L60 93 Q56 93 56 95 Q56 97 60 97 Z" fill="#8A8A8A"/>
+              <circle cx="122" cy="95" r="6" fill="#FFD966"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Ряд 2</div>
+    <div class="row-h alt">
+      <!-- Электроника — смартфон в профиль -->
+      <div class="tile bg-electro">
+        <div class="label">Электроника</div>
+        <div class="art">
+          <svg width="140" height="150" viewBox="0 0 140 150" fill="none">
+            <rect x="44" y="18" width="62" height="115" rx="12" fill="#1A1A1A"/>
+            <rect x="48" y="22" width="54" height="107" rx="8" fill="#0E8583"/>
+            <rect x="48" y="22" width="54" height="32" fill="#0A5E5C"/>
+            <circle cx="75" cy="26" r="1.5" fill="#3A3A3A"/>
+            <rect x="64" y="125" width="22" height="3" rx="1.5" fill="#3A3A3A"/>
+            <!-- Иконки на экране -->
+            <rect x="54" y="62" width="12" height="12" rx="3" fill="#FFF" opacity=".9"/>
+            <rect x="70" y="62" width="12" height="12" rx="3" fill="#FFF" opacity=".9"/>
+            <rect x="86" y="62" width="12" height="12" rx="3" fill="#FFF" opacity=".9"/>
+            <rect x="54" y="78" width="12" height="12" rx="3" fill="#FFF" opacity=".9"/>
+            <rect x="70" y="78" width="12" height="12" rx="3" fill="#FFF" opacity=".9"/>
+            <rect x="86" y="78" width="12" height="12" rx="3" fill="#FFF" opacity=".9"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Хобби — гитара реалистичнее -->
+      <div class="tile bg-hobby">
+        <div class="label">Хобби и отдых</div>
+        <div class="art">
+          <svg width="140" height="160" viewBox="0 0 140 160" fill="none">
+            <!-- Корпус акустики -->
+            <ellipse cx="78" cy="118" rx="38" ry="42" fill="#B8521E"/>
+            <ellipse cx="78" cy="118" rx="32" ry="36" fill="#C45822"/>
+            <circle cx="78" cy="118" r="14" fill="#2A1505"/>
+            <circle cx="78" cy="118" r="11" fill="#1A0A02"/>
+            <!-- Подставка/струны -->
+            <rect x="73" y="140" width="10" height="5" fill="#2A1505"/>
+            <rect x="76" y="80" width="4" height="60" fill="#E8C88A"/>
+            <!-- Гриф -->
+            <rect x="72" y="30" width="12" height="55" fill="#6A3010"/>
+            <rect x="74" y="32" width="8" height="51" fill="#8A4018"/>
+            <!-- Лады -->
+            <rect x="72" y="40" width="12" height="1" fill="#C4A060"/>
+            <rect x="72" y="50" width="12" height="1" fill="#C4A060"/>
+            <rect x="72" y="60" width="12" height="1" fill="#C4A060"/>
+            <rect x="72" y="70" width="12" height="1" fill="#C4A060"/>
+            <!-- Головка -->
+            <path d="M68 10 L88 10 L90 30 L66 30 Z" fill="#2A1505"/>
+            <circle cx="72" cy="18" r="2" fill="#C4A060"/>
+            <circle cx="84" cy="18" r="2" fill="#C4A060"/>
+            <circle cx="72" cy="25" r="2" fill="#C4A060"/>
+            <circle cx="84" cy="25" r="2" fill="#C4A060"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Личные вещи — сумка + кроссовок -->
+      <div class="tile bg-personal">
+        <div class="label">Личные вещи</div>
+        <div class="sub">Одежда · Обувь · Сумки</div>
+        <div class="art">
+          <svg width="200" height="150" viewBox="0 0 200 150" fill="none">
+            <!-- Сумка -->
+            <path d="M30 55 Q30 40 45 40 L95 40 Q110 40 110 55 L115 125 Q115 135 105 135 L35 135 Q25 135 25 125 Z" fill="#C8285A"/>
+            <path d="M50 40 Q50 20 70 20 Q90 20 90 40" stroke="#A01040" stroke-width="4" fill="none"/>
+            <circle cx="70" cy="88" r="6" fill="#FFD966"/>
+            <rect x="67" y="88" width="6" height="20" rx="2" fill="#FFD966"/>
+            <!-- Кроссовок -->
+            <g transform="translate(100 75)">
+              <path d="M0 40 L0 25 Q2 18 10 15 L35 6 Q42 4 48 8 L58 15 L80 15 Q95 15 98 28 Q100 40 92 48 Q88 52 82 52 L8 52 Q0 52 0 45 Z" fill="#FFF"/>
+              <path d="M0 40 L98 40 L98 48 Q98 52 94 52 L4 52 Q0 52 0 48 Z" fill="#C8285A"/>
+              <path d="M15 22 L18 35 M26 18 L30 33 M38 15 L42 30" stroke="#C8285A" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="70" cy="30" r="1.5" fill="#C8285A"/>
+              <circle cx="78" cy="32" r="1.5" fill="#C8285A"/>
+              <path d="M55 22 Q65 18 78 22" stroke="#E0E0E0" stroke-width="1.5" fill="none"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Для дома и дачи — диван реалистичнее -->
+      <div class="tile bg-home">
+        <div class="label">Для дома и дачи</div>
+        <div class="sub">Мебель · Техника · Декор</div>
+        <div class="art">
+          <svg width="300" height="150" viewBox="0 0 300 150" fill="none">
+            <ellipse cx="150" cy="140" rx="130" ry="4" fill="#000" opacity=".1"/>
+            <!-- Боковые валики -->
+            <path d="M18 65 Q18 55 28 55 L50 55 Q60 55 60 65 L60 118 L18 118 Z" fill="#5A30B0"/>
+            <path d="M240 65 Q240 55 250 55 L272 55 Q282 55 282 65 L282 118 L240 118 Z" fill="#5A30B0"/>
+            <!-- Спинка -->
+            <path d="M60 48 Q60 40 70 40 L230 40 Q240 40 240 48 L240 85 L60 85 Z" fill="#7246C9"/>
+            <!-- Сиденье -->
+            <path d="M55 80 L245 80 L245 118 L55 118 Z" fill="#8A60DB"/>
+            <!-- Подушки -->
+            <rect x="70" y="50" width="50" height="38" rx="6" fill="#A88AE8"/>
+            <rect x="125" y="50" width="50" height="38" rx="6" fill="#A88AE8"/>
+            <rect x="180" y="50" width="50" height="38" rx="6" fill="#A88AE8"/>
+            <!-- Ножки -->
+            <rect x="30" y="118" width="8" height="18" fill="#3A1D70"/>
+            <rect x="262" y="118" width="8" height="18" fill="#3A1D70"/>
+            <!-- Декоративная подушка -->
+            <rect x="76" y="58" width="22" height="22" rx="3" fill="#FFE4A8" transform="rotate(-8 87 69)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Ряд 3</div>
+    <div class="row-h">
+      <!-- Животные — кот реалистичный -->
+      <div class="tile bg-animals">
+        <div class="label">Животные</div>
+        <div class="art">
+          <svg width="180" height="160" viewBox="0 0 180 160" fill="none">
+            <!-- Тело -->
+            <ellipse cx="95" cy="130" rx="55" ry="22" fill="#E8A858"/>
+            <!-- Хвост -->
+            <path d="M140 125 Q165 110 160 85 Q155 75 148 82 Q152 95 145 108" fill="#E8A858"/>
+            <!-- Голова -->
+            <ellipse cx="70" cy="85" rx="38" ry="34" fill="#F0B868"/>
+            <!-- Уши -->
+            <path d="M45 68 L38 42 L58 58 Z" fill="#E8A858"/>
+            <path d="M95 68 L102 42 L82 58 Z" fill="#E8A858"/>
+            <path d="M47 62 L44 50 L54 58 Z" fill="#F8D4A0"/>
+            <path d="M93 62 L96 50 L86 58 Z" fill="#F8D4A0"/>
+            <!-- Глаза -->
+            <ellipse cx="58" cy="82" rx="6" ry="8" fill="#FFF"/>
+            <ellipse cx="82" cy="82" rx="6" ry="8" fill="#FFF"/>
+            <ellipse cx="58" cy="84" rx="2.5" ry="6" fill="#1A3A1A"/>
+            <ellipse cx="82" cy="84" rx="2.5" ry="6" fill="#1A3A1A"/>
+            <circle cx="58" cy="82" r="1" fill="#000"/>
+            <circle cx="82" cy="82" r="1" fill="#000"/>
+            <!-- Нос + рот -->
+            <path d="M67 98 L73 98 L70 102 Z" fill="#C88060"/>
+            <path d="M70 102 Q65 108 62 105 M70 102 Q75 108 78 105" stroke="#5A3020" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- Усы -->
+            <path d="M40 98 L58 100 M40 103 L58 104 M82 100 L100 98 M82 104 L100 103" stroke="#5A3020" stroke-width="0.8"/>
+            <!-- Полоски -->
+            <path d="M50 55 Q55 50 60 54 M70 48 Q75 45 80 49 M90 55 Q95 50 100 54" stroke="#C88038" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Готовый бизнес — витрина/здание -->
+      <div class="tile bg-biz">
+        <div class="label">Готовый бизнес</div>
+        <div class="sub">и оборудование</div>
+        <div class="art">
+          <svg width="220" height="160" viewBox="0 0 220 160" fill="none">
+            <!-- Здание магазина -->
+            <rect x="30" y="50" width="170" height="105" fill="#3F5878"/>
+            <!-- Крыша-вывеска -->
+            <rect x="24" y="40" width="182" height="20" fill="#2A3F55"/>
+            <rect x="40" y="45" width="50" height="10" rx="1" fill="#FFD966"/>
+            <rect x="95" y="45" width="30" height="10" rx="1" fill="#FFD966" opacity=".6"/>
+            <!-- Витрина -->
+            <rect x="42" y="72" width="60" height="55" fill="#8DC8E8"/>
+            <rect x="42" y="72" width="60" height="8" fill="#5A8AA8"/>
+            <line x1="72" y1="72" x2="72" y2="127" stroke="#2A3F55" stroke-width="1"/>
+            <!-- Товары в витрине -->
+            <rect x="48" y="90" width="10" height="30" fill="#C88038"/>
+            <rect x="62" y="95" width="8" height="25" fill="#7A3A18"/>
+            <rect x="76" y="85" width="12" height="35" fill="#D94A2A"/>
+            <rect x="92" y="92" width="8" height="28" fill="#F0A848"/>
+            <!-- Дверь -->
+            <rect x="112" y="85" width="38" height="70" fill="#1F3048"/>
+            <circle cx="142" cy="120" r="1.5" fill="#FFD966"/>
+            <!-- Вторая витрина -->
+            <rect x="158" y="72" width="34" height="55" fill="#8DC8E8"/>
+            <rect x="158" y="72" width="34" height="8" fill="#5A8AA8"/>
+            <rect x="164" y="95" width="22" height="25" fill="#3A5878"/>
+            <!-- Тент -->
+            <path d="M30 62 L105 62 L100 72 L35 72 Z" fill="#C44520"/>
+            <path d="M40 62 L40 72 M55 62 L55 72 M70 62 L70 72 M85 62 L85 72" stroke="#8A2A10" stroke-width="0.8"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Отдам даром — коробка с лентой -->
+      <div class="tile bg-free">
+        <div class="label">Отдам даром</div>
+        <div class="sub">Бесплатно</div>
+        <div class="art">
+          <svg width="180" height="160" viewBox="0 0 180 160" fill="none">
+            <ellipse cx="95" cy="148" rx="75" ry="4" fill="#000" opacity=".1"/>
+            <!-- Крышка -->
+            <path d="M30 75 L95 62 L160 75 L160 88 L95 100 L30 88 Z" fill="#C44520"/>
+            <path d="M30 75 L95 88 L160 75" stroke="#8A2A10" stroke-width="1" fill="none"/>
+            <!-- Низ коробки -->
+            <path d="M36 90 L95 102 L154 90 L154 142 L95 155 L36 142 Z" fill="#D85A28"/>
+            <path d="M95 102 L95 155" stroke="#8A2A10" stroke-width="1"/>
+            <!-- Лента крест-накрест -->
+            <path d="M88 62 L88 100 L85 102 L85 155 L95 158 L105 155 L105 102 L102 100 L102 62" fill="#FFD966"/>
+            <!-- Бантик -->
+            <ellipse cx="82" cy="58" rx="15" ry="9" fill="#FFD966"/>
+            <ellipse cx="108" cy="58" rx="15" ry="9" fill="#FFD966"/>
+            <ellipse cx="82" cy="58" rx="7" ry="5" fill="#F0B820"/>
+            <ellipse cx="108" cy="58" rx="7" ry="5" fill="#F0B820"/>
+            <rect x="88" y="52" width="14" height="14" rx="2" fill="#E0A810"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Запчасти -->
+      <div class="tile bg-auto">
+        <div class="label">Запчасти</div>
+        <div class="sub">Автотовары</div>
+        <div class="art">
+          <svg width="160" height="150" viewBox="0 0 160 150" fill="none">
+            <!-- Шестерня -->
+            <g transform="translate(80 85)">
+              <g fill="#4A4A4A">
+                <rect x="-6" y="-55" width="12" height="15"/>
+                <rect x="-6" y="40" width="12" height="15"/>
+                <rect x="-55" y="-6" width="15" height="12"/>
+                <rect x="40" y="-6" width="15" height="12"/>
+                <rect x="-6" y="-55" width="12" height="15" transform="rotate(45)"/>
+                <rect x="-6" y="40" width="12" height="15" transform="rotate(45)"/>
+                <rect x="-55" y="-6" width="15" height="12" transform="rotate(45)"/>
+                <rect x="40" y="-6" width="15" height="12" transform="rotate(45)"/>
+              </g>
+              <circle r="42" fill="#6A6A6A"/>
+              <circle r="36" fill="#4A4A4A"/>
+              <circle r="16" fill="#2A2A2A"/>
+              <circle r="8" fill="#8A8A8A"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

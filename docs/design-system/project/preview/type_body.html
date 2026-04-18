@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')   format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Medium.ttf')    format('truetype'); font-weight: 500; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf')  format('truetype'); font-weight: 600; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Bold.ttf')      format('truetype'); font-weight: 700; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-ExtraBold.ttf') format('truetype'); font-weight: 800; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Black.ttf')     format('truetype'); font-weight: 900; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif; color: #2B1F19; background: #FAF6F1; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFFFFF; border-radius: 16px; padding: 28px; }
+  .fam { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid #F0E7DC; margin-bottom: 18px; }
+  .fam-name { font-size: 20px; font-weight: 600; color: #2B1F19; letter-spacing: -0.01em; }
+  .fam-tag { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: #B5A695; letter-spacing: 0.04em; text-transform: uppercase; }
+  .row { margin-bottom: 16px; }
+  .row:last-child { margin-bottom: 0; }
+  .spec { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: #B5A695; margin-top: 3px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="fam">
+      <div class="fam-name">Golos Text</div>
+      <div class="fam-tag">Body scale</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 18px; font-weight: 700; color: #1A1A1A; letter-spacing: -0.01em;">82 000 ₽</div>
+      <div class="spec">Price · 18 · Bold 700 · #1A1A1A</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 15px; font-weight: 500; color: #2B1F19;">iPhone 14 Pro 256 ГБ Deep Purple</div>
+      <div class="spec">Card title · 15 · Medium 500</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 14px; font-weight: 400; color: #2B1F19; line-height: 1.5;">Отличное состояние, в комплекте коробка и зарядка. Покупался в официальном магазине, все документы сохранены.</div>
+      <div class="spec">Body · 14 / 21 · Regular 400</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 13px; color: #8C7A6A;">Сегодня, 14:30 · Москва, Басманный · 23 просмотра</div>
+      <div class="spec">Meta · 13 · Regular · #8C7A6A</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9C8A7A;">Покупателям</div>
+      <div class="spec">Eyebrow · 11 · Bold · UPPERCASE · tracking .06em</div>
+    </div>
+  </div>
+</body>
+</html>

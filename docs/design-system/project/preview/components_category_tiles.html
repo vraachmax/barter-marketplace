@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')  format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Medium.ttf')   format('truetype'); font-weight: 500; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, sans-serif; color: #000; background: #F5F4F2; -webkit-font-smoothing: antialiased; }
+  body { padding: 24px; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  .hdr { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #757575; margin-bottom: 10px; }
+  .note { font-size: 12px; color: #6F6F6F; line-height: 1.5; margin-bottom: 20px; background: #fff; padding: 12px 16px; border-radius: 10px; border: 1px solid #E8E8E8; }
+  .note b { color: #000; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: 132px;
+    gap: 10px;
+  }
+
+  .tile {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    min-width: 0;
+    padding: 14px 16px;
+  }
+  .tile:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.08); }
+
+  .s3 { grid-column: span 3; }
+  .s2 { grid-column: span 2; }
+  .s1 { grid-column: span 1; }
+
+  .label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0A0A0A;
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+    max-width: 70%;
+    position: relative;
+    z-index: 2;
+  }
+  .tile.s3 .label { font-size: 17px; }
+  .tile.s1 .label { font-size: 13px; max-width: 80%; }
+
+  .sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: rgba(0,0,0,0.55);
+    line-height: 1.3;
+    max-width: 55%;
+    position: relative;
+    z-index: 2;
+  }
+  .tile.s1 .sub { font-size: 11px; max-width: 90%; }
+
+  /* Icon slot — small, anchored bottom-right */
+  .icon {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    width: 64px;
+    height: 64px;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .tile.s3 .icon { width: 80px; height: 80px; right: 14px; bottom: 10px; }
+  .tile.s1 .icon { width: 48px; height: 48px; right: 8px; bottom: 6px; }
+
+  .bg-auto    { background: #FFEEDA; }
+  .bg-realty  { background: #DFECFE; }
+  .bg-jobs    { background: #E4F1D8; }
+  .bg-services{ background: #FFF4C6; }
+  .bg-personal{ background: #FFE0EA; }
+  .bg-electro { background: #D9EFEC; }
+  .bg-home    { background: #EADFFC; }
+  .bg-hobby   { background: #FFE1CC; }
+  .bg-animals { background: #EEF5DC; }
+  .bg-free    { background: #FFDDBA; }
+  .bg-parts   { background: #EAEAEA; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hdr">Avito 2026 · плитки категорий</div>
+    <div class="note">
+      Переменные размеры. Иллюстрация — <b>небольшая иконка в правом нижнем углу</b>, не покрывает всю плитку. Текст слева сверху, свободного пространства достаточно.
+    </div>
+
+    <div class="grid">
+
+      <!-- Транспорт (3) -->
+      <div class="tile s3 bg-auto">
+        <div class="label">Транспорт</div>
+        <div class="sub">Авто, мото, спецтехника</div>
+        <svg class="icon" viewBox="0 0 80 80">
+          <defs>
+            <linearGradient id="c1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F07A3A"/><stop offset="1" stop-color="#A03A10"/></linearGradient>
+            <linearGradient id="c2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A6B8A"/><stop offset="1" stop-color="#1E3A5A"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="70" rx="32" ry="3" fill="#000" opacity=".15"/>
+          <path d="M6 54 Q6 42 18 38 L28 34 Q34 24 46 22 L60 22 Q70 24 74 34 L76 52 Q76 60 70 60 L10 60 Q6 60 6 54 Z" fill="url(#c1)"/>
+          <path d="M28 34 Q34 26 46 24 L60 24 Q68 26 72 34 L72 40 L28 40 Z" fill="url(#c2)"/>
+          <path d="M32 32 L48 28 L52 28 L36 34 Z" fill="#FFF" opacity=".35"/>
+          <rect x="50" y="28" width="1.5" height="12" fill="#0A1A30"/>
+          <circle cx="22" cy="60" r="10" fill="#0A0A0A"/>
+          <circle cx="22" cy="60" r="5" fill="#6A6A6A"/>
+          <circle cx="60" cy="60" r="10" fill="#0A0A0A"/>
+          <circle cx="60" cy="60" r="5" fill="#6A6A6A"/>
+          <circle cx="12" cy="46" r="3" fill="#FFE590"/>
+        </svg>
+      </div>
+
+      <!-- Недвижимость (3) -->
+      <div class="tile s3 bg-realty">
+        <div class="label">Недвижимость</div>
+        <div class="sub">Квартиры, дома, аренда</div>
+        <svg class="icon" viewBox="0 0 80 80">
+          <defs>
+            <linearGradient id="r1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5588C8"/><stop offset="1" stop-color="#2A5090"/></linearGradient>
+            <linearGradient id="r2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C44520"/><stop offset="1" stop-color="#7A2410"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="72" rx="34" ry="2.5" fill="#000" opacity=".15"/>
+          <rect x="44" y="32" width="26" height="40" fill="url(#r1)"/>
+          <path d="M44 32 L57 22 L70 32 Z" fill="url(#r2)"/>
+          <g fill="#FFE590" opacity=".85">
+            <rect x="48" y="38" width="5" height="6"/><rect x="56" y="38" width="5" height="6"/><rect x="63" y="38" width="5" height="6"/>
+            <rect x="48" y="48" width="5" height="6"/><rect x="63" y="48" width="5" height="6"/>
+            <rect x="48" y="58" width="5" height="6"/><rect x="56" y="58" width="5" height="6"/>
+          </g>
+          <rect x="10" y="20" width="30" height="52" fill="url(#r1)" opacity=".85"/>
+          <path d="M10 20 L25 10 L40 20 Z" fill="url(#r2)" opacity=".85"/>
+          <g fill="#FFE590">
+            <rect x="14" y="28" width="6" height="7"/><rect x="24" y="28" width="6" height="7"/><rect x="33" y="28" width="5" height="7"/>
+            <rect x="14" y="40" width="6" height="7"/><rect x="33" y="40" width="5" height="7"/>
+          </g>
+          <rect x="22" y="56" width="10" height="16" fill="#3A1810"/>
+          <circle cx="30" cy="64" r="1" fill="#FFD966"/>
+        </svg>
+      </div>
+
+      <!-- Работа (2) -->
+      <div class="tile s2 bg-jobs">
+        <div class="label">Работа</div>
+        <div class="sub">892 405 вакансий</div>
+        <svg class="icon" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="j1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DADADA"/></linearGradient>
+          </defs>
+          <path d="M8 18 L22 8 M56 18 L42 8" stroke="#2A6A2A" stroke-width="3" fill="none"/>
+          <rect x="20" y="4" width="24" height="10" rx="2" fill="#1E5E1E"/>
+          <rect x="28" y="2" width="8" height="4" rx="1" fill="#888"/>
+          <rect x="8" y="18" width="48" height="42" rx="4" fill="url(#j1)" stroke="#B8B8B8" stroke-width="1"/>
+          <rect x="8" y="18" width="48" height="10" rx="4" fill="#2E7A2E"/>
+          <rect x="8" y="24" width="48" height="4" fill="#2E7A2E"/>
+          <circle cx="20" cy="40" r="5" fill="#5A8A5A"/>
+          <path d="M13 52 Q20 46 27 52 L27 54 L13 54 Z" fill="#5A8A5A"/>
+          <rect x="30" y="36" width="20" height="2.5" rx="1" fill="#3A3A3A"/>
+          <rect x="30" y="42" width="15" height="2" rx="1" fill="#9A9A9A"/>
+          <rect x="30" y="47" width="18" height="2" rx="1" fill="#9A9A9A"/>
+          <rect x="30" y="52" width="12" height="2" rx="1" fill="#9A9A9A"/>
+        </svg>
+      </div>
+
+      <!-- Услуги (2) -->
+      <div class="tile s2 bg-services">
+        <div class="label">Услуги</div>
+        <div class="sub">Ремонт, уборка</div>
+        <svg class="icon" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="u1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D0D0D0"/><stop offset="1" stop-color="#5A5A5A"/></linearGradient>
+            <linearGradient id="u2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F07A3A"/><stop offset="1" stop-color="#9A3010"/></linearGradient>
+          </defs>
+          <g transform="rotate(-30 32 32)">
+            <rect x="20" y="4" width="12" height="22" rx="3" fill="url(#u2)"/>
+            <rect x="22" y="26" width="8" height="26" fill="#C0C0C0"/>
+            <path d="M22 52 L30 52 L28 58 L24 58 Z" fill="#7A7A7A"/>
+          </g>
+          <g transform="rotate(40 32 32)">
+            <path d="M6 32 Q6 24 14 24 L36 24 Q44 24 44 30 Q50 30 54 34 Q60 38 60 44 Q54 48 48 46 Q44 46 42 42 L14 42 Q6 42 6 34 Z" fill="url(#u1)"/>
+            <rect x="44" y="30" width="14" height="14" fill="#3A3A3A"/>
+            <circle cx="42" cy="33" r="1.5" fill="#FFD966"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Хобби (2) -->
+      <div class="tile s2 bg-hobby">
+        <div class="label">Хобби и отдых</div>
+        <div class="sub">Книги, спорт</div>
+        <svg class="icon" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="h1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D46828"/><stop offset="1" stop-color="#5A1808"/></linearGradient>
+            <linearGradient id="h2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A4A22"/><stop offset="1" stop-color="#5A2810"/></linearGradient>
+          </defs>
+          <g transform="rotate(-15 32 32)">
+            <rect x="26" y="2" width="12" height="10" rx="2" fill="#3A1808"/>
+            <circle cx="30" cy="6" r="1.2" fill="#D8C690"/><circle cx="34" cy="6" r="1.2" fill="#D8C690"/><circle cx="30" cy="10" r="1.2" fill="#D8C690"/><circle cx="34" cy="10" r="1.2" fill="#D8C690"/>
+            <rect x="28" y="12" width="8" height="28" fill="url(#h2)"/>
+            <line x1="28" y1="20" x2="36" y2="20" stroke="#D8C690" stroke-width="0.6"/><line x1="28" y1="26" x2="36" y2="26" stroke="#D8C690" stroke-width="0.6"/><line x1="28" y1="32" x2="36" y2="32" stroke="#D8C690" stroke-width="0.6"/>
+            <ellipse cx="32" cy="50" rx="18" ry="14" fill="url(#h1)"/>
+            <circle cx="32" cy="50" r="5" fill="#1A0400"/>
+            <g stroke="#E0D4A8" stroke-width="0.5">
+              <line x1="30" y1="14" x2="30" y2="62"/><line x1="32" y1="14" x2="32" y2="62"/><line x1="34" y1="14" x2="34" y2="62"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- ROW 2 -->
+
+      <!-- Электроника (3) -->
+      <div class="tile s3 bg-electro">
+        <div class="label">Электроника</div>
+        <div class="sub">Смартфоны, ноутбуки, аудио</div>
+        <svg class="icon" viewBox="0 0 80 80">
+          <defs>
+            <linearGradient id="e1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D0D0D0"/><stop offset="1" stop-color="#8A8A8A"/></linearGradient>
+            <linearGradient id="e2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A6B8A"/><stop offset="1" stop-color="#18304A"/></linearGradient>
+            <linearGradient id="e3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A4A"/><stop offset="1" stop-color="#A83A18"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="72" rx="34" ry="2.5" fill="#000" opacity=".15"/>
+          <rect x="14" y="18" width="52" height="36" rx="2" fill="#0E0E0E"/>
+          <rect x="16" y="20" width="48" height="32" fill="url(#e2)"/>
+          <rect x="20" y="24" width="22" height="16" rx="1.5" fill="#FFF" opacity=".9"/>
+          <rect x="46" y="24" width="14" height="10" rx="1.5" fill="#7AA8D0"/>
+          <path d="M20 50 L60 50" stroke="#FFF" stroke-width="0.8" opacity=".4"/>
+          <path d="M6 54 L74 54 L70 64 L10 64 Z" fill="url(#e1)"/>
+          <rect x="34" y="56" width="12" height="1.5" rx="0.75" fill="#5A5A5A"/>
+          <g transform="translate(2 28) rotate(-10)">
+            <rect x="0" y="0" width="20" height="38" rx="3" fill="#1A1A1A"/>
+            <rect x="1.5" y="1.5" width="17" height="35" rx="2" fill="url(#e3)"/>
+            <circle cx="10" cy="34" r="1.2" fill="#FFF" opacity=".7"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Отдам даром (2) -->
+      <div class="tile s2 bg-free">
+        <div class="label">Отдам даром</div>
+        <div class="sub">Бесплатно</div>
+        <svg class="icon" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="f1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F08448"/><stop offset="1" stop-color="#A24018"/></linearGradient>
+            <linearGradient id="f2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE080"/><stop offset="1" stop-color="#C08820"/></linearGradient>
+          </defs>
+          <ellipse cx="32" cy="60" rx="26" ry="2" fill="#000" opacity=".15"/>
+          <path d="M6 24 L32 18 L58 24 L58 30 L32 36 L6 30 Z" fill="url(#f1)"/>
+          <path d="M10 30 L32 36 L54 30 L54 56 L32 62 L10 56 Z" fill="#B04820"/>
+          <path d="M32 36 L32 62" stroke="#000" stroke-width="0.8" opacity=".25"/>
+          <rect x="28" y="18" width="8" height="44" fill="url(#f2)"/>
+          <path d="M28 18 Q18 10 16 18 Q16 24 32 20 Z" fill="url(#f2)"/>
+          <path d="M36 18 Q46 10 48 18 Q48 24 32 20 Z" fill="url(#f2)"/>
+          <rect x="26" y="16" width="12" height="6" rx="1.5" fill="#E0A810"/>
+        </svg>
+      </div>
+
+      <!-- Личные вещи (2) -->
+      <div class="tile s2 bg-personal">
+        <div class="label">Личные вещи</div>
+        <div class="sub">Одежда, обувь</div>
+        <svg class="icon" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D8D8D8"/></linearGradient>
+            <linearGradient id="p2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E24A82"/><stop offset="1" stop-color="#8A1442"/></linearGradient>
+          </defs>
+          <ellipse cx="32" cy="58" rx="26" ry="2" fill="#000" opacity=".15"/>
+          <path d="M4 46 L4 52 Q4 58 10 58 L56 58 Q60 58 60 54 L60 48 Q60 44 56 44 L6 42 Z" fill="url(#p2)"/>
+          <path d="M4 44 Q4 26 18 20 L30 14 Q38 12 44 18 L52 26 L58 28 Q60 36 58 44 L4 44 Z" fill="url(#p1)"/>
+          <path d="M20 30 Q36 16 52 26" stroke="#E24A82" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <g stroke="#B0B0B0" stroke-width="1.2" stroke-linecap="round">
+            <line x1="26" y1="24" x2="38" y2="26"/><line x1="28" y1="30" x2="40" y2="32"/><line x1="30" y1="36" x2="42" y2="38"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Для дома (2) -->
+      <div class="tile s2 bg-home">
+        <div class="label">Для дома</div>
+        <div class="sub">Мебель, декор</div>
+        <svg class="icon" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="d1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9060E0"/><stop offset="1" stop-color="#4A2090"/></linearGradient>
+            <linearGradient id="d2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BA94F4"/><stop offset="1" stop-color="#7A4CD0"/></linearGradient>
+          </defs>
+          <ellipse cx="32" cy="58" rx="26" ry="2" fill="#000" opacity=".15"/>
+          <path d="M8 22 L56 22 Q60 22 60 26 L60 40 L8 40 Z" fill="url(#d1)"/>
+          <path d="M52 16 L60 16 Q62 16 62 18 L62 50 L52 50 Z" fill="url(#d1)"/>
+          <path d="M8 34 L56 34 L56 52 L8 52 Z" fill="url(#d2)"/>
+          <rect x="12" y="24" width="14" height="14" rx="2" fill="#B58CF0"/>
+          <rect x="30" y="24" width="14" height="14" rx="2" fill="#B58CF0"/>
+          <rect x="48" y="52" width="4" height="6" fill="#2A1060"/>
+          <rect x="54" y="52" width="4" height="6" fill="#2A1060"/>
+          <rect x="10" y="52" width="4" height="6" fill="#2A1060"/>
+        </svg>
+      </div>
+
+      <!-- Животные (2) -->
+      <div class="tile s2 bg-animals">
+        <div class="label">Животные</div>
+        <div class="sub">Собаки, кошки</div>
+        <svg class="icon" viewBox="0 0 64 64">
+          <defs>
+            <radialGradient id="a1" cx=".3" cy=".3"><stop offset="0" stop-color="#F4C878"/><stop offset="1" stop-color="#9A5A18"/></radialGradient>
+          </defs>
+          <ellipse cx="32" cy="60" rx="22" ry="2" fill="#000" opacity=".15"/>
+          <ellipse cx="42" cy="52" rx="18" ry="9" fill="url(#a1)"/>
+          <ellipse cx="32" cy="32" rx="22" ry="20" fill="url(#a1)"/>
+          <path d="M16 14 L12 2 L26 12 Z" fill="#9A5A18"/>
+          <path d="M48 14 L52 2 L38 12 Z" fill="#9A5A18"/>
+          <ellipse cx="24" cy="30" rx="3.5" ry="5" fill="#FFF"/>
+          <ellipse cx="40" cy="30" rx="3.5" ry="5" fill="#FFF"/>
+          <ellipse cx="24" cy="31" rx="1.8" ry="4" fill="#1A5530"/>
+          <ellipse cx="40" cy="31" rx="1.8" ry="4" fill="#1A5530"/>
+          <path d="M29 40 L35 40 L32 43 Z" fill="#C88060"/>
+          <path d="M32 43 Q28 48 24 46 M32 43 Q36 48 40 46" stroke="#5A3020" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+          <g stroke="#5A3020" stroke-width="0.5" stroke-linecap="round">
+            <line x1="14" y1="42" x2="28" y2="43"/><line x1="36" y1="43" x2="50" y2="42"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Запчасти (1) -->
+      <div class="tile s1 bg-parts">
+        <div class="label">Запчасти</div>
+        <svg class="icon" viewBox="0 0 48 48">
+          <defs>
+            <radialGradient id="pt1" cx=".3" cy=".3"><stop offset="0" stop-color="#C8C8C8"/><stop offset="1" stop-color="#2A2A2A"/></radialGradient>
+          </defs>
+          <g transform="translate(24 26)">
+            <g fill="#3A3A3A">
+              <rect x="-2.5" y="-22" width="5" height="6"/><rect x="-2.5" y="16" width="5" height="6"/><rect x="-22" y="-2.5" width="6" height="5"/><rect x="16" y="-2.5" width="6" height="5"/>
+              <g transform="rotate(45)"><rect x="-2.5" y="-22" width="5" height="6"/><rect x="-2.5" y="16" width="5" height="6"/><rect x="-22" y="-2.5" width="6" height="5"/><rect x="16" y="-2.5" width="6" height="5"/></g>
+            </g>
+            <circle r="18" fill="url(#pt1)"/>
+            <circle r="12" fill="#2A2A2A"/>
+            <circle r="5" fill="#9A9A9A"/>
+          </g>
+        </svg>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

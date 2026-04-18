@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Inter', sans-serif; color: #2B1F19; background: #FAF6F1; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFFFFF; border-radius: 16px; padding: 28px; }
+  .row { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; }
+  .row:last-child { margin-bottom: 0; }
+  .demo { display: flex; align-items: center; gap: 10px; }
+  .spec { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #9C8A7A; margin-left: auto; }
+  .box { width: 56px; height: 56px; background: #fff; border: 1px solid #EADFD1; display: grid; place-items: center; color: #B5A695; font-size: 10px; flex-shrink: 0; }
+  .r-xs { border-radius: 6px; }
+  .r-sm { border-radius: 8px; }
+  .r-md { border-radius: 10px; }
+  .r-lg { border-radius: 12px; }
+  .r-xl { border-radius: 16px; }
+  .r-pill { border-radius: 9999px; width: 100px; height: 32px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="row"><div class="box r-xs">6</div><div>Badges, chips</div><div class="spec">--radius-xs · 6px</div></div>
+    <div class="row"><div class="box r-sm">8</div><div>Buttons, inputs</div><div class="spec">--radius-sm · 8px</div></div>
+    <div class="row"><div class="box r-md">10</div><div>Category tiles</div><div class="spec">--radius-md · 10px</div></div>
+    <div class="row"><div class="box r-lg">12</div><div>Listing cards</div><div class="spec">--radius-lg · 12px</div></div>
+    <div class="row"><div class="box r-xl">16</div><div>Section surfaces</div><div class="spec">--radius-xl · 16px</div></div>
+    <div class="row"><div class="box r-pill">pill</div><div>Badges, mobile search</div><div class="spec">--radius-pill · 9999px</div></div>
+  </div>
+</body>
+</html>

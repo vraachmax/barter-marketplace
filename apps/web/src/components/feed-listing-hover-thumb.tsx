@@ -127,8 +127,8 @@ export default function FeedListingHoverThumb({
               <div
                 key={i}
                 className={`h-0.5 min-w-[6px] flex-1 rounded-full transition-colors ${
-                  i === hoverIdx ? 'bg-white shadow-sm' : 'bg-white/45'
-                }`}
+ i === hoverIdx ? 'bg-card shadow-sm' : 'bg-card/45'
+ }`}
               />
             ))}
           </div>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeSync } from "@/components/theme-sync";
 import { GlobalChatWidget } from "@/components/global-chat-widget";
@@ -7,9 +7,21 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { PresenceProvider } from "@/components/presence-provider";
 import { AuthProvider } from "@/components/auth-provider";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "cyrillic"],
+// Golos Text — brand font (Paratype). Cyrillic-first grotesque used across the product.
+// Source: docs/design-system/project/fonts/
+const golosText = localFont({
+  variable: "--font-sans",
+  display: "swap",
+  preload: true,
+  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+  src: [
+    { path: "../fonts/golos/GolosText-Regular.ttf",    weight: "400", style: "normal" },
+    { path: "../fonts/golos/GolosText-Medium.ttf",     weight: "500", style: "normal" },
+    { path: "../fonts/golos/GolosText-SemiBold.ttf",   weight: "600", style: "normal" },
+    { path: "../fonts/golos/GolosText-Bold.ttf",       weight: "700", style: "normal" },
+    { path: "../fonts/golos/GolosText-ExtraBold.ttf",  weight: "800", style: "normal" },
+    { path: "../fonts/golos/GolosText-Black.ttf",      weight: "900", style: "normal" },
+  ],
 });
 
 const SITE_NAME = 'Barter — маркетплейс объявлений';
@@ -62,7 +74,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} antialiased`}
+        className={`${golosText.variable} antialiased`}
       >
         <ThemeSync />
         <AuthProvider>

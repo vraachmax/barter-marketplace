@@ -90,9 +90,9 @@ export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: P
         <Link
           key={x.id}
           href={`/listing/${x.id}`}
-          className="group flex gap-2.5 rounded-2xl border border-zinc-200/90 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)] dark:border-zinc-800/90 dark:bg-zinc-950 dark:shadow-[0_1px_2px_rgba(0,0,0,0.35)] dark:hover:border-zinc-600 md:gap-3 md:p-3.5"
+          className="group flex gap-2.5 rounded-2xl border border-border bg-card p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)](0,0,0,0.35)] md:gap-3 md:p-3.5"
         >
-          <div className="listing-thumb-wrap relative h-[5.5rem] w-28 flex-none overflow-hidden rounded-xl border border-zinc-200/90 dark:border-zinc-700 md:h-24 md:w-32">
+          <div className="listing-thumb-wrap relative h-[5.5rem] w-28 flex-none overflow-hidden rounded-xl border border-border md:h-24 md:w-32">
             {x.images && x.images.length > 0 ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -115,18 +115,18 @@ export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: P
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="line-clamp-2 text-[14px] font-semibold leading-snug tracking-tight text-zinc-900 group-hover:text-sky-700 group-hover:underline dark:text-zinc-100 dark:group-hover:text-sky-400 md:text-[15px]">
+            <div className="line-clamp-2 text-[14px] font-semibold leading-snug tracking-tight text-foreground group-hover:text-primary group-hover:underline md:text-[15px]">
               {x.title}
             </div>
-            <div className="mt-1.5 text-base font-bold tabular-nums tracking-tight text-zinc-900 dark:text-zinc-50 md:text-lg">
+            <div className="mt-1.5 text-base font-bold tabular-nums tracking-tight text-foreground md:text-lg">
               {formatPrice(x.priceRub, x.priceType)}
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
               <span>{x.city}</span>
-              <span className="text-zinc-300 dark:text-zinc-600">·</span>
+              <span className="text-foreground">·</span>
               <span>{x.category.title}</span>
-              <span className="text-zinc-300 dark:text-zinc-600">·</span>
-              <span className="text-zinc-400 dark:text-zinc-500">{timeAgo(x.createdAt)}</span>
+              <span className="text-foreground">·</span>
+              <span className="text-muted-foreground">{timeAgo(x.createdAt)}</span>
             </div>
           </div>
         </Link>
@@ -135,7 +135,7 @@ export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: P
         <div ref={sentinelRef} className="col-span-full flex justify-center py-6">
           {isPending ? (
             <span
-              className="inline-block size-6 animate-spin rounded-full border-2 border-sky-500 border-t-transparent"
+              className="inline-block size-6 animate-spin rounded-full border-2 border-primary/30 border-t-transparent"
             />
           ) : null}
         </div>

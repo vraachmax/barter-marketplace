@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')  format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, sans-serif; color: #000; background: #FFF; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFFFFF; border-radius: 16px; padding: 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; border: 1px solid #E6E6E6; }
+  .sw { height: 92px; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #E6E6E6; }
+  .name { font-size: 12px; font-weight: 600; }
+  .hex { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: #757575; }
+  .role { font-size: 10px; color: #757575; }
+  .dark { background:#000; color:#fff; border: none; }
+  .dark .hex, .dark .role { color:#A3A3A3; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="sw" style="background:#FFFFFF;">
+      <div><div class="name">Page</div><div class="role">body bg</div></div>
+      <div class="hex">#FFFFFF</div>
+    </div>
+    <div class="sw" style="background:#F7F7F7;">
+      <div><div class="name">Section</div><div class="role">soft wash</div></div>
+      <div class="hex">#F7F7F7</div>
+    </div>
+    <div class="sw" style="background:#F2F1F0;">
+      <div><div class="name">Muted</div><div class="role">tiles / input</div></div>
+      <div class="hex">#F2F1F0</div>
+    </div>
+    <div class="sw" style="background:#E6E6E6;">
+      <div><div class="name">Border</div><div class="role">default line</div></div>
+      <div class="hex">#E6E6E6</div>
+    </div>
+    <div class="sw" style="background:#D9D9D9;">
+      <div><div class="name">Border Input</div><div class="role">fields</div></div>
+      <div class="hex">#D9D9D9</div>
+    </div>
+    <div class="sw" style="background:#A3A3A3; color:#fff;">
+      <div><div class="name" style="color:#fff">Subtle</div><div class="role" style="color:#FFFE">placeholders</div></div>
+      <div class="hex" style="color:#FFFE">#A3A3A3</div>
+    </div>
+    <div class="sw" style="background:#757575; color:#fff;">
+      <div><div class="name" style="color:#fff">Muted fg</div><div class="role" style="color:#FFFE">meta / time</div></div>
+      <div class="hex" style="color:#FFFE">#757575</div>
+    </div>
+    <div class="sw dark">
+      <div><div class="name">Strong</div><div class="role">headings</div></div>
+      <div class="hex">#000000</div>
+    </div>
+  </div>
+</body>
+</html>

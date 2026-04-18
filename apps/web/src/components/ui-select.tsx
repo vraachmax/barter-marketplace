@@ -72,22 +72,22 @@ export function UiSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex w-full items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-3 text-left text-sm text-zinc-900 ${className} dark:border-zinc-600 dark:bg-slate-900/95 dark:text-zinc-100`}
+        className={`inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-card px-3 text-left text-sm text-foreground ${className}`}
       >
         <span className="truncate">{currentLabel || placeholder}</span>
-        <ChevronDown size={14} strokeWidth={1.8} className="shrink-0 text-zinc-500 opacity-70 dark:text-zinc-400" aria-hidden />
+        <ChevronDown size={14} strokeWidth={1.8} className="shrink-0 text-muted-foreground opacity-70" aria-hidden />
       </button>
       {open ? (
         <div
-          className={`absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-zinc-200 bg-white p-1 shadow-xl dark:border-zinc-600 dark:bg-zinc-950 dark:shadow-black/50 ${menuClassName}`}
+          className={`absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-border bg-card p-1 shadow-xl ${menuClassName}`}
         >
           {options.length > 12 ? (
-            <div className="mb-1 flex items-center gap-1 rounded-md border border-zinc-200 px-2 dark:border-zinc-600">
-              <Search size={16} strokeWidth={1.8} className="shrink-0 text-zinc-500 opacity-80 dark:text-zinc-400" aria-hidden />
+            <div className="mb-1 flex items-center gap-1 rounded-md border border-border px-2">
+              <Search size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground opacity-80" aria-hidden />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="h-7 w-full bg-transparent text-xs text-zinc-900 outline-none dark:text-zinc-100"
+                className="h-7 w-full bg-transparent text-xs text-foreground outline-none"
                 placeholder="Поиск..."
               />
             </div>
@@ -98,17 +98,17 @@ export function UiSelect({
                 key={`${o.value}-${o.label}`}
                 type="button"
                 onClick={() => selectValue(o.value)}
-                className={`block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                  o.value === currentValue
-                    ? 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-200'
-                    : 'text-zinc-700 dark:text-zinc-200'
-                }`}
+                className={`block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted ${
+ o.value === currentValue
+ ? 'bg-primary/10 text-primary'
+ : 'text-foreground'
+ }`}
               >
                 {o.label}
               </button>
             ))}
             {filtered.length === 0 ? (
-              <div className="px-2 py-2 text-xs text-zinc-500 dark:text-zinc-400">Ничего не найдено</div>
+              <div className="px-2 py-2 text-xs text-muted-foreground">Ничего не найдено</div>
             ) : null}
           </div>
         </div>

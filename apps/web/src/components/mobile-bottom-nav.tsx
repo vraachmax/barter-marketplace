@@ -24,7 +24,7 @@ export function MobileBottomNav() {
 
   return (
     <nav style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000 }} className="md:hidden">
-      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 16px 16px', background: '#fff', borderTop: '1px solid #E8E8E8', boxShadow: '0 -2px 12px rgba(0,0,0,0.04)' }} className="dark:!bg-zinc-950 dark:!border-zinc-800">
+      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 16px 16px', background: '#fff', borderTop: '1px solid #E8E8E8', boxShadow: '0 -2px 12px rgba(0,0,0,0.04)' }} className="dark:!bg-background dark:!border-border">
         {NAV_ITEMS.map((item) => {
           const isActive = item.match ? item.match(pathname) : pathname === item.href;
 

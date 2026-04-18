@@ -64,16 +64,16 @@ export default function ProfileSidebar({
       <Link
         href={href}
         className={`group flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm transition ${
-          isActive
-            ? 'bg-[#E8F2FF] font-medium text-[#007AFF]'
-            : 'text-[#1a1a1a] hover:bg-[#f0f9ff] dark:text-zinc-300 dark:hover:bg-zinc-800'
-        }`}
+ isActive
+ ? 'bg-[#E8F2FF] font-medium text-[#007AFF]'
+ : 'text-[#1a1a1a] hover:bg-[#f0f9ff]'
+ }`}
       >
         <span className="inline-flex min-w-0 items-center gap-2.5">
           <span
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-              isActive ? 'text-[#007AFF]' : 'text-[#6b7280] dark:text-zinc-400'
-            }`}
+ isActive ? 'text-[#007AFF]' : 'text-[#6b7280]'
+ }`}
           >
             {icon}
           </span>
@@ -83,10 +83,10 @@ export default function ProfileSidebar({
           {right != null && right !== '' ? (
             <span
               className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                isActive
-                  ? 'bg-[#007AFF]/15 text-[#007AFF]'
-                  : 'bg-[#f0f0f0] text-[#6b7280] dark:bg-zinc-700 dark:text-zinc-200'
-              }`}
+ isActive
+ ? 'bg-[#007AFF]/15 text-[#007AFF]'
+ : 'bg-[#f0f0f0] text-[#6b7280]'
+ }`}
             >
               {right}
             </span>
@@ -104,7 +104,7 @@ export default function ProfileSidebar({
 
   function NavHeading({ children }: { children: ReactNode }) {
     return (
-      <div className="mb-2 mt-4 px-1 text-[11px] font-bold uppercase tracking-wider text-[#6b7280] first:mt-0 dark:text-zinc-500">
+      <div className="mb-2 mt-4 px-1 text-[11px] font-bold uppercase tracking-wider text-[#6b7280] first:mt-0">
         {children}
       </div>
     );
@@ -114,24 +114,24 @@ export default function ProfileSidebar({
 
   return (
     <aside className="h-fit lg:sticky lg:top-6">
-      <div className="overflow-hidden rounded-lg bg-white dark:bg-zinc-900/80">
-        <div className="relative px-4 pb-4 pt-5 dark:from-zinc-900">
+      <div className="overflow-hidden rounded-lg bg-card">
+        <div className="relative px-4 pb-4 pt-5">
           <div className="flex items-start gap-3">
             {resolvedAvatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={resolvedAvatarUrl}
                 alt=""
-                className="h-14 w-14 shrink-0 rounded-lg object-cover dark:border-zinc-700"
+                className="h-14 w-14 shrink-0 rounded-lg object-cover"
               />
             ) : (
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-[#f0f0f0] text-[#6b7280] dark:bg-zinc-900 dark:text-zinc-500">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-[#f0f0f0] text-[#6b7280]">
                 <User size={28} strokeWidth={navStroke} aria-hidden />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">{profileName ?? 'Профиль'}</div>
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-[#6b7280] dark:text-zinc-400">
+              <div className="truncate text-sm font-bold text-[#1a1a1a]">{profileName ?? 'Профиль'}</div>
+              <div className="mt-0.5 flex items-center gap-1 text-xs text-[#6b7280]">
                 <Star size={14} strokeWidth={navStroke} className="shrink-0 text-[#FFD166]" fill="currentColor" aria-hidden />
                 <span className="font-semibold">{ratingAvg ? ratingAvg.toFixed(1) : '—'}</span>
                 <span>
@@ -217,7 +217,7 @@ export default function ProfileSidebar({
           <div className="space-y-0.5">
             <Link
               href="/new"
-              className="flex w-full items-center gap-2.5 rounded-lg bg-[#E8F2FF] px-3 py-2.5 text-sm font-semibold text-[#007AFF] transition hover:bg-[#D4E3FF] dark:bg-sky-950/30 dark:text-sky-200 dark:hover:bg-sky-950/50"
+              className="flex w-full items-center gap-2.5 rounded-lg bg-[#E8F2FF] px-3 py-2.5 text-sm font-semibold text-[#007AFF] transition hover:bg-[#D4E3FF]"
             >
               <span className="grid h-8 w-8 place-items-center rounded-md bg-[#007AFF]">
                 <Plus size={20} strokeWidth={navStroke} className="text-white" aria-hidden />
@@ -232,7 +232,7 @@ export default function ProfileSidebar({
             <button
               type="button"
               onClick={onLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] transition hover:bg-red-50 hover:text-red-700 dark:text-zinc-400 dark:hover:bg-red-950/40 dark:hover:text-rose-400"
+              className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] transition hover:bg-destructive/10 hover:text-destructive"
             >
               <LogOut size={20} strokeWidth={navStroke} aria-hidden />
               Выйти из аккаунта
@@ -240,7 +240,7 @@ export default function ProfileSidebar({
           ) : (
             <Link
               href="/auth"
-              className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] hover:bg-[#f0f9ff] dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[#6b7280] hover:bg-[#f0f9ff]"
             >
               <LogOut size={20} strokeWidth={navStroke} aria-hidden />
               Выйти

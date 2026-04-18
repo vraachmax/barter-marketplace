@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Inter', sans-serif; color: #2B1F19; background: #FAF6F1; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFFFFF; border-radius: 16px; padding: 24px; display: flex; align-items: center; gap: 20px; }
+  .mark { width: 120px; height: 120px; flex-shrink: 0; }
+  .mark svg { width: 100%; height: 100%; }
+  .type { display: flex; flex-direction: column; gap: 6px; }
+  .name { font-size: 28px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+  .tag { font-size: 12px; color: #9C8A7A; }
+  .tag strong { color: #1a1a1a; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">
+      <svg viewBox="100 50 260 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#5f9cff"/><stop offset="100%" stop-color="#3a6bff"/></linearGradient>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#059669"/></linearGradient>
+          <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fbbf24"/><stop offset="100%" stop-color="#f59e0b"/></linearGradient>
+        </defs>
+        <path d="M150 200 C100 150, 120 80, 200 80 C260 80, 280 150, 240 200 C210 240, 170 240, 150 200 Z" fill="url(#g1)"/>
+        <path d="M220 210 C180 170, 200 120, 270 120 C330 120, 350 180, 310 220 C280 260, 240 250, 220 210 Z" fill="url(#g2)"/>
+        <path d="M190 140 C160 110, 190 60, 250 60 C300 60, 320 110, 290 140 C260 170, 220 170, 190 140 Z" fill="url(#g3)"/>
+      </svg>
+    </div>
+    <div class="type">
+      <div class="name">Бартер</div>
+      <div class="tag"><strong>Mark:</strong> three overlapping rounded blobs</div>
+      <div class="tag"><strong>Blue:</strong> #5F9CFF → #3A6BFF</div>
+      <div class="tag"><strong>Green:</strong> #34D399 → #059669</div>
+      <div class="tag"><strong>Amber:</strong> #FBBF24 → #F59E0B</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')   format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Medium.ttf')    format('truetype'); font-weight: 500; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf')  format('truetype'); font-weight: 600; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Bold.ttf')      format('truetype'); font-weight: 700; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-ExtraBold.ttf') format('truetype'); font-weight: 800; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Black.ttf')     format('truetype'); font-weight: 900; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, BlinkMacSystemFont, sans-serif; color: #2B1F19; background: #FAF6F1; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFFFFF; border-radius: 16px; padding: 28px; }
+  .fam { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid #F0E7DC; margin-bottom: 18px; }
+  .fam-name { font-size: 20px; font-weight: 600; color: #2B1F19; letter-spacing: -0.01em; }
+  .fam-tag { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: #B5A695; letter-spacing: 0.04em; text-transform: uppercase; }
+  .row { margin-bottom: 18px; }
+  .row:last-child { margin-bottom: 0; }
+  .spec { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: #B5A695; margin-top: 4px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="fam">
+      <div class="fam-name">Golos Text</div>
+      <div class="fam-tag">Brand · 400–900 · Cyrillic</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 32px; line-height: 1.2; font-weight: 700; color: #2B1F19; letter-spacing: -0.015em;">Разместить объявление</div>
+      <div class="spec">H1 · 32 / 38 · Bold 700 · tracking −0.015em</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 24px; line-height: 1.3; font-weight: 700; color: #2B1F19; letter-spacing: -0.01em;">Объявления рядом</div>
+      <div class="spec">H2 · 24 / 31 · Bold 700 · tracking −0.01em</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 20px; line-height: 1.35; font-weight: 600; color: #2B1F19;">Характеристики товара</div>
+      <div class="spec">H3 · 20 / 27 · Semibold 600</div>
+    </div>
+    <div class="row">
+      <div style="font-size: 16px; line-height: 1.35; font-weight: 600; color: #2B1F19;">Продавец · Алексей</div>
+      <div class="spec">H4 · 16 / 22 · Semibold 600</div>
+    </div>
+  </div>
+</body>
+</html>

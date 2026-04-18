@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')  format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Medium.ttf')   format('truetype'); font-weight: 500; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Bold.ttf')     format('truetype'); font-weight: 700; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, sans-serif; color: #000; background: #FFF; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFF; border: 1px solid #E6E6E6; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    font-family: inherit; font-size: 15px; font-weight: 500;
+    height: 44px; padding: 0 22px; border: none; border-radius: 8px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    transition: background 150ms cubic-bezier(.2,.8,.2,1), transform 120ms ease, box-shadow 150ms ease;
+    color: #fff;
+  }
+  .btn:active { transform: translateY(1px); }
+
+  /* Primary blue — Avito 'Найти' */
+  .btn-primary { background: #00AAFF; }
+  .btn-primary:hover { background: #0095E0; }
+  .btn-primary:active { background: #007FC2; }
+
+  /* Green action — 'Показать телефон' — muted Avito green, white text */
+  .btn-green { background: #009F44; color: #fff; font-weight: 500; }
+  .btn-green:hover { background: #008437; }
+  .btn-green:active { background: #006E2D; }
+
+  /* Secondary grey */
+  .btn-secondary { background: #F2F1F0; color: #000; }
+  .btn-secondary:hover { background: #E6E5E4; }
+  .btn-secondary:active { background: #D9D7D5; }
+
+  /* Outline */
+  .btn-outline { background: #fff; color: #000; border: 1px solid #D9D9D9; }
+  .btn-outline:hover { border-color: #A3A3A3; background: #FAFAFA; }
+
+  /* Ghost link-button */
+  .btn-ghost { background: transparent; color: #00AAFF; font-weight: 500; }
+  .btn-ghost:hover { color: #0095E0; background: #E6F7FF; }
+
+  .btn-pill { background: #00AAFF; border-radius: 9999px; padding: 0 20px; }
+  .btn-pill:hover { background: #0095E0; }
+
+  .btn-sm { height: 36px; font-size: 14px; padding: 0 16px; }
+
+  .lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #A3A3A3; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="lbl">Primary · blue</div>
+    <div class="row">
+      <button class="btn btn-primary">Найти</button>
+      <button class="btn btn-pill">Все категории</button>
+      <button class="btn btn-primary btn-sm">Написать</button>
+    </div>
+    <div class="lbl">Action · Avito-green</div>
+    <div class="row">
+      <button class="btn btn-green">Показать телефон</button>
+      <button class="btn btn-green btn-sm">Купить сейчас</button>
+    </div>
+    <div class="lbl">Secondary · Outline · Ghost</div>
+    <div class="row">
+      <button class="btn btn-secondary">Отмена</button>
+      <button class="btn btn-outline">Фильтры</button>
+      <button class="btn btn-ghost">Подписаться</button>
+    </div>
+  </div>
+</body>
+</html>

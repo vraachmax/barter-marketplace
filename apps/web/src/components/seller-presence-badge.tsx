@@ -78,11 +78,11 @@ export function SellerPresenceBadge({ sellerId, className = '', compact }: Props
   if (online) {
     return (
       <span
-        className={`inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 ${className}`.trim()}
+        className={`inline-flex items-center gap-1.5 text-xs font-semibold text-secondary ${className}`.trim()}
       >
         <span className="relative flex h-2 w-2 shrink-0">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30 dark:bg-emerald-400 dark:ring-emerald-400/40" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary/10 opacity-40" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary/10 ring-2 ring-secondary/30" />
         </span>
         {compact ? 'В сети' : 'Сейчас в сети'}
       </span>
@@ -91,12 +91,12 @@ export function SellerPresenceBadge({ sellerId, className = '', compact }: Props
 
   if (lastLabel) {
     return (
-      <span className={`text-xs font-medium text-zinc-500 dark:text-zinc-400 ${className}`.trim()}>{lastLabel}</span>
+      <span className={`text-xs font-medium text-muted-foreground ${className}`.trim()}>{lastLabel}</span>
     );
   }
 
   return (
-    <span className={`text-xs font-medium text-zinc-400 dark:text-zinc-500 ${className}`.trim()}>
+    <span className={`text-xs font-medium text-muted-foreground ${className}`.trim()}>
       Нет данных о визите
     </span>
   );

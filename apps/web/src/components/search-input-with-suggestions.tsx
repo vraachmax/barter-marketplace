@@ -162,14 +162,14 @@ export function SearchInputWithSuggestions({
         aria-autocomplete="list"
       />
       {showDropdown ? (
-        <div className="absolute left-0 right-0 top-full z-[60] mt-1.5 overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-xl shadow-zinc-200/50 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-black/40">
+        <div className="absolute left-0 right-0 top-full z-[60] mt-1.5 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
           {hasHistory ? (
-            <div className="flex items-center justify-between border-b border-zinc-100 px-3 py-1.5 dark:border-zinc-800">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400">Недавние</span>
+            <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Недавние</span>
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); clearHistory(); setItems([]); }}
-                className="text-[10px] font-semibold text-zinc-400 hover:text-red-500"
+                className="text-[10px] font-semibold text-muted-foreground hover:text-destructive"
               >
                 Очистить
               </button>
@@ -181,23 +181,23 @@ export function SearchInputWithSuggestions({
                 <button
                   type="button"
                   className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition ${
-                    i === activeIdx
-                      ? 'bg-sky-50 text-sky-900 dark:bg-sky-950/50 dark:text-sky-100'
-                      : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800'
-                  }`}
+ i === activeIdx
+ ? 'bg-primary/10 text-primary'
+ : 'text-foreground hover:bg-muted/50'
+ }`}
                   onMouseDown={(e) => { e.preventDefault(); select(item.text); }}
                   onMouseEnter={() => setActiveIdx(i)}
                 >
                   {item.type === 'history' ? (
-                    <Clock size={16} strokeWidth={1.8} className="shrink-0 text-zinc-500 opacity-80 dark:text-zinc-400" aria-hidden />
+                    <Clock size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground opacity-80" aria-hidden />
                   ) : item.type === 'category' ? (
-                    <LayoutGrid size={16} strokeWidth={1.8} className="shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
+                    <LayoutGrid size={16} strokeWidth={1.8} className="shrink-0 text-primary" aria-hidden />
                   ) : (
-                    <Search size={16} strokeWidth={1.8} className="shrink-0 text-zinc-500 opacity-80 dark:text-zinc-400" aria-hidden />
+                    <Search size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground opacity-80" aria-hidden />
                   )}
                   <span className="min-w-0 flex-1 truncate">{item.text}</span>
                   {item.type === 'category' ? (
-                    <span className="shrink-0 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
+                    <span className="shrink-0 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary">
                       категория
                     </span>
                   ) : null}

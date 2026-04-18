@@ -1,44 +1,15 @@
 import Link from 'next/link';
-import { TrackedListingLink } from '@/components/tracked-listing-link';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { API_URL, apiGetJson, type Category, type ListingCard } from '@/lib/api';
 import { HomePreferenceCookieSync } from '@/components/home-preference-cookie-sync';
-import ListingPlaceholder from '@/components/listing-placeholder';
-import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
-import {
-  feedListingCardClass,
-  feedListingPriceClass,
-  listingThumbPromoExtraClass,
-  recommendedListingCardClass,
-  recommendedListingPriceClass,
-} from '@/lib/listing-card-visuals';
+import { ListingCardComponent } from '@/components/listing-card';
 import { SiteHeader } from '@/components/site-header';
-import { UiSelect } from '@/components/ui-select';
 import { SearchInputWithSuggestions } from '@/components/search-input-with-suggestions';
 import { FeedLoadMore } from '@/components/feed-load-more';
 import { SiteFooter } from '@/components/site-footer';
-import {
-  Baby,
-  Briefcase,
-  Car,
-  Dog,
-  Heart,
-  Home as HomeIcon,
-  Laptop,
-  MapPin,
-  MessageCircle,
-  Plus,
-  Search,
-  Shirt,
-  SlidersHorizontal,
-  Sofa,
-  Sparkles,
-  Trophy,
-  User,
-  Building2,
-  Wrench,
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   page: number;
@@ -70,22 +41,6 @@ const getRussianCities = cache(async () => {
   }
   return ['Москва', 'Санкт-Петербург', 'Казань'];
 });
-
-const PRICE_TYPE_SUFFIX: Record<string, string> = {
-  per_day: 'за сутки',
-  per_hour: 'в час',
-  per_service: 'за услугу',
-  per_sqm: 'за м²',
-  per_month: 'в месяц',
-  per_shift: 'за смену',
-};
-
-function formatRub(v: number | null, priceType?: string | null) {
-  if (v == null) return 'Цена не указана';
-  const base = `${v.toLocaleString('ru-RU')} ₽`;
-  const suffix = priceType ? PRICE_TYPE_SUFFIX[priceType] : undefined;
-  return suffix ? `${base} ${suffix}` : base;
-}
 
 type HomeSearchParams = {
   q?: string;
@@ -365,9 +320,9 @@ export default async function Home({
   const mergedFeed = [...vipItems, ...recoForFeed, ...regularForFeed];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F4F4F4', fontFamily: 'Inter, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
+    <div className="min-h-screen bg-muted antialiased">
       {apiBackendDown ? (
-        <div role="alert" style={{ borderBottom: '1px solid #FCD34D', background: '#FFFBEB', padding: '12px 16px', textAlign: 'center', fontSize: 14, color: '#78350F' }}>
+        <div role="alert" className="border-b border-accent/30 bg-accent/10 px-4 py-3 text-center text-sm text-accent">
           <strong>Не удаётся связаться с API</strong> ({API_URL || 'сервер'}). Запустите бэкенд.
         </div>
       ) : null}
@@ -379,17 +334,20 @@ export default async function Home({
             {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
             {geoHidden}
             {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
-            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-l-lg border border-r-0 border-[#D1D5DB] bg-white px-3.5 dark:border-zinc-700 dark:bg-zinc-900">
-              <Search size={16} strokeWidth={1.8} className="shrink-0 text-[#999]" aria-hidden />
+            <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-l-lg border-2 border-r-0 border-primary bg-background px-4">
+              <Search size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground" aria-hidden />
               <SearchInputWithSuggestions
                 formKey={currentQ}
                 defaultValue={currentQ}
                 categories={categories}
-                className="h-10 w-full border-none bg-transparent text-sm text-[#111] outline-none placeholder:text-[#999] dark:text-zinc-100"
+                className="h-11 w-full border-none bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
                 placeholder="Поиск по объявлениям"
               />
             </div>
-            <button type="submit" className="h-10 shrink-0 rounded-r-lg bg-[#00AAFF] px-6 text-sm font-semibold text-white whitespace-nowrap transition hover:bg-[#00AAFF]">
+            <button
+              type="submit"
+              className="h-11 shrink-0 rounded-r-lg bg-primary px-7 text-[15px] font-semibold whitespace-nowrap text-primary-foreground transition hover:bg-primary/90"
+            >
               Найти
             </button>
           </form>
@@ -397,8 +355,8 @@ export default async function Home({
       </div>
 
       {/* ===== DESKTOP CATEGORIES BAR — Avito-style horizontal icons ===== */}
-      <div className="hidden md:block" style={{ background: '#fff', borderBottom: '1px solid #EBEBEB' }}>
-        <div className="desktop-cat-bar" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'stretch', gap: 0, overflowX: 'auto' }}>
+      <div className="hidden border-b border-border bg-background md:block">
+        <div className="mx-auto flex max-w-7xl items-stretch gap-0 overflow-x-auto px-6">
           {ALL_CATS.map((cat) => {
             const catId = catIdMap[cat.slug] || '';
             const isActive = urlCategoryId === catId && catId !== '';
@@ -406,15 +364,18 @@ export default async function Home({
               <Link
                 key={cat.slug + cat.name}
                 href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                className="desktop-cat-item"
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-                  padding: '14px 18px 12px', textDecoration: 'none', flexShrink: 0, position: 'relative',
-                  borderBottom: isActive ? '2px solid #007AFF' : '2px solid transparent',
-                }}
+                className={`relative flex shrink-0 flex-col items-center justify-center gap-1 px-4 pt-3.5 pb-3 transition-colors ${
+ isActive
+ ? 'border-b-2 border-primary text-primary'
+ : 'border-b-2 border-transparent text-foreground/70 hover:text-foreground'
+ }`}
               >
-                <span style={{ fontSize: 26, lineHeight: 1 }}>{cat.emoji}</span>
-                <span style={{ fontSize: 12, fontWeight: isActive ? 600 : 500, color: isActive ? '#007AFF' : '#555', whiteSpace: 'nowrap' }}>{cat.name}</span>
+                <span className="text-[26px] leading-none" aria-hidden>
+                  {cat.emoji}
+                </span>
+                <span className={`text-xs whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                  {cat.name}
+                </span>
               </Link>
             );
           })}
@@ -480,54 +441,52 @@ export default async function Home({
       </div>
 
       {/* ===== MAIN CONTENT ===== */}
-      <main style={{ borderRadius: '24px 24px 0 0', marginTop: -20, position: 'relative', zIndex: 20, background: '#F4F4F4' }} className="md:rounded-none md:mt-0">
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '20px 8px 100px' }} className="md:px-6 md:py-8">
+      <main className="relative z-20 -mt-5 rounded-t-3xl bg-muted md:mt-0 md:rounded-none">
+        <div className="mx-auto max-w-7xl px-2 pt-5 pb-24 md:px-6 md:py-8">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
           {effectiveRecoMode ? (
-            <div style={{ borderRadius: 12, background: '#E8F2FF', padding: 14, marginBottom: 16 }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, fontSize: 14 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 6, background: '#00AAFF', padding: '2px 8px', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>
-                  <Sparkles size={14} strokeWidth={1.8} aria-hidden />
-                  Режим подбора
-                </span>
-                <span style={{ color: '#333' }}>Показываем ленту по вашим недавним просмотрам.</span>
-              </div>
+            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-primary/10 p-3.5 text-sm">
+              <span className="inline-flex items-center gap-1.5 rounded bg-primary px-2 py-0.5 text-xs font-bold tracking-wider uppercase text-primary-foreground">
+                <Sparkles size={14} strokeWidth={1.8} aria-hidden />
+                Режим подбора
+              </span>
+              <span className="text-foreground/80">
+                Показываем ленту по вашим недавним просмотрам.
+              </span>
             </div>
           ) : null}
 
           {/* ===== LISTINGS SECTION ===== */}
           <section>
             {mergedFeed.length > 0 ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 4px 16px', flexWrap: 'wrap', gap: 12 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1c1b1b', margin: 0 }}>
+              <div className="flex flex-wrap items-center justify-between gap-3 px-1 pt-1 pb-4">
+                <h2 className="m-0 text-xl font-bold text-foreground">
                   {currentQ ? `Результаты: «${currentQ}»` : 'Все объявления'}
                 </h2>
                 {/* Desktop sort pills */}
-                <div className="hidden md:flex" style={{ alignItems: 'center', gap: 6 }}>
+                <div className="hidden items-center gap-1.5 md:flex">
                   <form action="/" method="GET" style={{ display: 'contents' }}>
                     {currentQ ? <input type="hidden" name="q" value={currentQ} /> : null}
                     {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
                     {urlCategoryId ? <input type="hidden" name="categoryId" value={urlCategoryId} /> : null}
                     {geoHidden}
-                    {sortOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="submit"
-                        name="sort"
-                        value={opt.value}
-                        style={{
-                          padding: '6px 16px', borderRadius: 20, fontSize: 13, fontWeight: 500,
-                          border: currentSort === opt.value ? '1px solid #007AFF' : '1px solid #E0E0E0',
-                          cursor: 'pointer',
-                          background: currentSort === opt.value ? '#007AFF' : '#fff',
-                          color: currentSort === opt.value ? '#fff' : '#555',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                    {sortOptions.map((opt) => {
+                      const active = currentSort === opt.value;
+                      return (
+                        <Button
+                          key={opt.value}
+                          type="submit"
+                          name="sort"
+                          value={opt.value}
+                          variant={active ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-8 rounded-full px-4 text-[13px] font-medium"
+                        >
+                          {opt.label}
+                        </Button>
+                      );
+                    })}
                   </form>
                 </div>
               </div>
@@ -536,54 +495,16 @@ export default async function Home({
             {/* ===== RESPONSIVE CARD GRID ===== */}
             <div className="listing-grid grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4 lg:gap-4">
               {mergedFeed.length === 0 ? (
-                <div style={{ gridColumn: '1 / -1', borderRadius: 16, background: '#fff', padding: 48, textAlign: 'center' }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: '#1c1b1b' }}>Ничего не нашлось</p>
-                  <p style={{ fontSize: 14, color: '#6d797e', marginTop: 6 }}>Попробуйте снять категорию или изменить город</p>
+                <div className="col-span-full rounded-2xl bg-card p-12 text-center text-card-foreground ring-1 ring-foreground/10">
+                  <div className="mb-4 text-5xl">🔍</div>
+                  <p className="text-base font-semibold text-foreground">Ничего не нашлось</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Попробуйте снять категорию или изменить город
+                  </p>
                 </div>
               ) : null}
               {mergedFeed.map((x) => (
-                <TrackedListingLink
-                  key={x.id}
-                  href={`/listing/${x.id}`}
-                  listingId={x.id}
-                  className="listing-card"
-                  style={{ display: 'block', borderRadius: 12, background: '#fff', overflow: 'hidden', textDecoration: 'none', color: 'inherit' }}
-                >
-                  <FeedListingHoverThumb
-                    images={x.images}
-                    title={x.title}
-                    apiBase={API_URL}
-                    thumbClassName="listing-thumb-wrap relative overflow-hidden"
-                    imageClassName="listing-thumb-img w-full"
-                    thumbStyle={{ position: 'relative', overflow: 'hidden', height: 140, minHeight: 140, maxHeight: 140, background: '#F0F0F0' }}
-                    imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    placeholder={
-                      <div className="listing-thumb-placeholder" style={{ height: '100%', background: '#F0F0F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>
-                        </svg>
-                      </div>
-                    }
-                    badges={
-                      <>
-                        {x.isBoosted ? (
-                          <span style={{ position: 'absolute', top: 8, left: 8, zIndex: 1, borderRadius: 6, background: '#FF6F00', padding: '2px 8px', fontSize: 11, fontWeight: 600, color: '#fff' }}>Поднято</span>
-                        ) : null}
-                        <div style={{ position: 'absolute', top: 8, right: 8, padding: 6, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)', borderRadius: '50%', color: '#94A3B8', display: 'flex', cursor: 'pointer', transition: 'color 0.15s' }}>
-                          <Heart size={14} strokeWidth={1.8} aria-hidden />
-                        </div>
-                      </>
-                    }
-                  />
-                  <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', minHeight: 80 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1c1b1b', lineHeight: 1.2 }}>{formatRub(x.priceRub, x.priceType)}</div>
-                    <div style={{ marginTop: 4, fontSize: 13, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.title}</div>
-                    <div style={{ marginTop: 'auto', paddingTop: 8, fontSize: 12, color: '#94A3B8' }}>
-                      {x.city}{typeof x.distanceKm === 'number' ? ` · ${x.distanceKm} км` : ''}
-                    </div>
-                  </div>
-                </TrackedListingLink>
+                <ListingCardComponent key={x.id} data={x} apiBase={API_URL} />
               ))}
 
               {!effectiveRecoMode && listings.total > listings.items.length ? (

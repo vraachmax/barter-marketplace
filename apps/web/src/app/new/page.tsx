@@ -28,6 +28,10 @@ import {
   getListingAttrSectionsForCategorySlug,
   serializeListingAttributes,
 } from '@/lib/listing-attributes-config';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 type CreateListingPayload = {
   title: string;
@@ -260,50 +264,57 @@ export default function NewListingPage() {
   const showPostPublishPhotos = status.kind === 'ok';
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
-      <div className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950/95">
+    <div className="min-h-screen bg-muted text-foreground antialiased">
+      <div className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:py-6 lg:px-8">
           <div>
             <Link
               href="/"
-              className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-zinc-500 transition hover:text-sky-700 dark:text-zinc-400 dark:hover:text-sky-400"
+              className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
             >
               <ChevronLeft size={20} strokeWidth={1.8} aria-hidden />
               На главную
             </Link>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 md:text-3xl">Новое объявление</h1>
-            <p className="mt-1 max-w-xl text-sm text-zinc-600 dark:text-zinc-400">
-              Как на крупных площадках: сначала фото и описание, затем публикация. Фото можно добавить до или сразу после
-              размещения.
+            <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              Новое объявление
+            </h1>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              Как на крупных площадках: сначала фото и описание, затем публикация. Фото можно
+              добавить до или сразу после размещения.
             </p>
           </div>
 
           {/* Steps indicator */}
-          <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+          <Card className="flex shrink-0 flex-row items-center gap-2 rounded-2xl px-4 py-3 text-sm">
             <div className="flex items-center gap-2">
               {step1Done ? (
-                <CheckCircle size={24} strokeWidth={1.8} aria-hidden />
+                <CheckCircle size={24} strokeWidth={1.8} className="text-secondary" aria-hidden />
               ) : (
-                <Circle size={22} strokeWidth={1.8} aria-hidden />
+                <Circle size={22} strokeWidth={1.8} className="text-primary" aria-hidden />
               )}
               <div>
-                <div className="font-semibold text-zinc-900 dark:text-zinc-100">1. Детали</div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400">Текст и параметры</div>
+                <div className="font-semibold text-foreground">1. Детали</div>
+                <div className="text-xs text-muted-foreground">Текст и параметры</div>
               </div>
             </div>
-            <div className="mx-2 hidden h-8 w-px bg-zinc-200 dark:bg-zinc-700 sm:block" aria-hidden />
+            <div className="mx-2 hidden h-8 w-px bg-border sm:block" aria-hidden />
             <div className="flex items-center gap-2">
               {uploadedImages.length > 0 || pendingPhotos.length > 0 ? (
-                <CheckCircle size={24} strokeWidth={1.8} aria-hidden />
+                <CheckCircle size={24} strokeWidth={1.8} className="text-secondary" aria-hidden />
               ) : (
-                <Circle size={22} strokeWidth={1.8} className="opacity-40" aria-hidden />
+                <Circle
+                  size={22}
+                  strokeWidth={1.8}
+                  className="text-muted-foreground/50"
+                  aria-hidden
+                />
               )}
               <div>
-                <div className="font-semibold text-zinc-900 dark:text-zinc-100">2. Фото</div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400">До публикации или после</div>
+                <div className="font-semibold text-foreground">2. Фото</div>
+                <div className="text-xs text-muted-foreground">До публикации или после</div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
 
@@ -311,15 +322,15 @@ export default function NewListingPage() {
         {/* Main column */}
         <div className="min-w-0 flex-1 space-y-6">
           {/* Photos */}
-          <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:shadow-black/30">
-            <div className="flex items-start justify-between gap-3 border-b border-zinc-100 bg-gradient-to-r from-sky-50/80 to-cyan-50/50 px-5 py-4 dark:border-zinc-800 dark:from-sky-950/40 dark:to-cyan-950/30">
+          <Card className="gap-0 overflow-hidden p-0">
+            <div className="flex items-start justify-between gap-3 border-b border-border bg-primary/10 px-5 py-4">
               <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-white shadow-sm ring-1 ring-sky-100 dark:bg-zinc-900 dark:ring-sky-900/40">
+                <span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground">
                   <Camera size={22} strokeWidth={1.8} aria-hidden />
-                </div>
+                </span>
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Фотографии</h2>
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  <h2 className="text-base font-semibold text-foreground">Фотографии</h2>
+                  <p className="text-xs text-muted-foreground">
                     Первое фото — обложка в ленте. Перетащите файлы или нажмите «Добавить».
                   </p>
                 </div>
@@ -346,11 +357,11 @@ export default function NewListingPage() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
                     }}
-                    className={`relative flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-10 transition ${
-                      dragOver
-                        ? 'border-sky-500 bg-sky-50/80 dark:border-sky-500 dark:bg-sky-950/40'
-                        : 'border-zinc-200 bg-zinc-50/50 hover:border-sky-300 hover:bg-sky-50/40 dark:border-zinc-700 dark:bg-zinc-900/40 dark:hover:border-sky-600 dark:hover:bg-sky-950/30'
-                    }`}
+                    className={`relative flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-10 transition-colors ${
+ dragOver
+ ? 'border-primary bg-primary/10'
+ : 'border-border bg-muted/40 hover:border-primary/50 hover:bg-primary/5'
+ }`}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <input
@@ -364,12 +375,19 @@ export default function NewListingPage() {
                         e.target.value = '';
                       }}
                     />
-                    <PlusCircle size={44} strokeWidth={1.8} aria-hidden />
-                    <p className="mt-3 text-center text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    <PlusCircle
+                      size={44}
+                      strokeWidth={1.8}
+                      className="text-primary/70"
+                      aria-hidden
+                    />
+                    <p className="mt-3 text-center text-sm font-medium text-foreground">
                       Перетащите сюда изображения
                     </p>
-                    <p className="mt-1 text-center text-xs text-zinc-500 dark:text-zinc-400">JPG, PNG, WEBP · несколько файлов</p>
-                    <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-600/25 hover:from-sky-700 hover:to-cyan-700">
+                    <p className="mt-1 text-center text-xs text-muted-foreground">
+                      JPG, PNG, WEBP · несколько файлов
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
                       <PlusCircle size={16} strokeWidth={1.8} aria-hidden />
                       Выбрать файлы
                     </span>
@@ -377,14 +395,21 @@ export default function NewListingPage() {
 
                   {pendingPhotos.length > 0 ? (
                     <div className="mt-4">
-                      <div className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Готово к загрузке ({pendingPhotos.length})
                       </div>
                       <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
                         {pendingPhotos.map((p) => (
-                          <li key={p.id} className="listing-thumb-wrap group relative aspect-square overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                          <li
+                            key={p.id}
+                            className="listing-thumb-wrap group relative aspect-square overflow-hidden rounded-xl border border-border"
+                          >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={p.url} alt="" className="listing-thumb-img h-full w-full object-cover" />
+                            <img
+                              src={p.url}
+                              alt=""
+                              className="listing-thumb-img h-full w-full object-cover"
+                            />
                             <button
                               type="button"
                               onClick={(e) => {
@@ -404,10 +429,10 @@ export default function NewListingPage() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="text-sm text-muted-foreground">
                     Объявление опубликовано. Ниже можно добавить ещё фото или перейти к карточке.
                   </p>
-                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-8 hover:border-sky-300 dark:border-zinc-700 dark:bg-zinc-900/40 dark:hover:border-sky-600">
+                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/40 px-4 py-8 transition-colors hover:border-primary/50 hover:bg-primary/5">
                     <input
                       type="file"
                       accept="image/*"
@@ -415,9 +440,16 @@ export default function NewListingPage() {
                       className="sr-only"
                       onChange={(e) => void uploadMoreFiles(e.target.files)}
                     />
-                    <PlusCircle size={36} strokeWidth={1.8} aria-hidden />
-                    <span className="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">Добавить ещё фото</span>
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <PlusCircle
+                      size={36}
+                      strokeWidth={1.8}
+                      className="text-primary/70"
+                      aria-hidden
+                    />
+                    <span className="mt-2 text-sm font-medium text-foreground">
+                      Добавить ещё фото
+                    </span>
+                    <span className="text-xs text-muted-foreground">
                       {uploading ? 'Загрузка…' : 'Нажмите, чтобы выбрать файлы'}
                     </span>
                   </label>
@@ -426,7 +458,7 @@ export default function NewListingPage() {
                       {uploadedImages.map((img) => (
                         <li
                           key={img.id}
-                          className="listing-thumb-wrap aspect-square overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700"
+                          className="listing-thumb-wrap aspect-square overflow-hidden rounded-xl border border-border"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -439,237 +471,292 @@ export default function NewListingPage() {
                     </ul>
                   ) : null}
                   <div className="flex flex-wrap gap-2">
-                    <Link
-                      href={`/listing/${status.id}`}
-                      className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-sky-600/25 hover:from-sky-700 hover:to-cyan-700"
+                    <Button
+                      render={<Link href={`/listing/${status.id}`} />}
+                      className="rounded-xl"
                     >
                       Открыть объявление
-                    </Link>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={resetCreateFlow}
-                      className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                      className="rounded-xl"
                     >
                       Создать ещё одно
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
             </div>
-          </section>
+          </Card>
 
           {/* Title & description */}
           {!showPostPublishPhotos ? (
             <div className="space-y-6">
-              <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:shadow-black/30 sm:p-6">
-                <div className="mb-5 flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 dark:bg-zinc-800">
+              <Card className="gap-5 p-5 sm:p-6">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-xl bg-muted text-foreground">
                     <FileText size={22} strokeWidth={1.8} aria-hidden />
-                  </div>
+                  </span>
                   <div>
-                    <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Описание</h2>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Чем подробнее — тем быстрее найдётся покупатель</p>
+                    <h2 className="text-base font-semibold text-foreground">Описание</h2>
+                    <p className="text-xs text-muted-foreground">
+                      Чем подробнее — тем быстрее найдётся покупатель
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-5">
                   <label className="block">
                     <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Название</span>
-                      <span className={`text-xs ${titleLen < 3 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500'}`}>
+                      <span className="text-sm font-medium text-foreground">Название</span>
+                      <span
+                        className={`text-xs ${
+ titleLen < 3 ? 'text-accent' : 'text-muted-foreground'
+ }`}
+                      >
                         {titleLen} симв. · мин. 3
                       </span>
                     </div>
-                    <input
-                      className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-sky-500 dark:focus:bg-zinc-900"
+                    <Input
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Например: iPhone 14 Pro Max 256 ГБ"
+                      className="h-12 rounded-xl px-4 text-base"
                     />
                   </label>
 
                   <label className="block">
                     <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Описание</span>
-                      <span className={`text-xs ${descLen < 10 ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-400 dark:text-zinc-500'}`}>
+                      <span className="text-sm font-medium text-foreground">Описание</span>
+                      <span
+                        className={`text-xs ${
+ descLen < 10 ? 'text-accent' : 'text-muted-foreground'
+ }`}
+                      >
                         {descLen} симв. · мин. 10
                       </span>
                     </div>
-                    <textarea
-                      className="min-h-40 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-sky-500 dark:focus:bg-zinc-900"
+                    <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Состояние, комплект, дефекты, история покупки, способ передачи…"
+                      className="min-h-40 rounded-xl px-4 py-3 text-base leading-relaxed"
                     />
                   </label>
 
-                  <div className="rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3 text-xs text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-100">
+                  <div className="rounded-xl bg-primary/10 px-4 py-3 text-xs text-foreground">
                     <span className="font-semibold">Совет: </span>
-                    укажите реальное состояние и комплектацию — так меньше вопросов в чате и выше доверие.
+                    укажите реальное состояние и комплектацию — так меньше вопросов в чате и выше
+                    доверие.
                   </div>
                 </div>
-              </section>
+              </Card>
 
-              <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:shadow-black/30 sm:p-6">
-                <div className="mb-5 flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-violet-100 dark:bg-violet-950/50">
+              <Card className="gap-5 p-5 sm:p-6">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
                     <LayoutGrid size={22} strokeWidth={1.8} aria-hidden />
-                  </div>
+                  </span>
                   <div>
-                    <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Характеристики по категории</h2>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      Разделы меняются при смене категории — помогает быстрее найти нужное объявление.
+                    <h2 className="text-base font-semibold text-foreground">
+                      Характеристики по категории
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      Разделы меняются при смене категории — помогает быстрее найти нужное
+                      объявление.
                     </p>
                   </div>
                 </div>
                 <ListingCategoryAttributesForm
                   sections={attrSections}
                   values={attrValues}
-                  onFieldChange={(key, v) => setAttrValues((prev) => ({ ...prev, [key]: v }))}
+                  onFieldChange={(key, v) =>
+                    setAttrValues((prev) => ({ ...prev, [key]: v }))
+                  }
                 />
-              </section>
+              </Card>
             </div>
           ) : (
-            <section className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-sm dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:shadow-black/30 sm:p-6">
+            <Card className="gap-3 border-secondary/30 bg-secondary/10 p-5 sm:p-6">
               <div className="flex items-start gap-3">
-                <CheckCircle size={30} strokeWidth={1.8} className="shrink-0" aria-hidden />
+                <CheckCircle
+                  size={30}
+                  strokeWidth={1.8}
+                  className="shrink-0 text-secondary"
+                  aria-hidden
+                />
                 <div>
-                  <h2 className="text-base font-semibold text-emerald-950 dark:text-emerald-100">Объявление опубликовано</h2>
-                  <p className="mt-1 text-sm text-emerald-900/90 dark:text-emerald-200/90">
+                  <h2 className="text-base font-semibold text-foreground">
+                    Объявление опубликовано
+                  </h2>
+                  <p className="mt-1 text-sm text-foreground/80">
                     Добавьте ещё снимки выше при необходимости — карточка уже видна в поиске.
                   </p>
                   <Link
                     href={`/listing/${status.id}`}
-                    className="mt-3 inline-flex text-sm font-semibold text-emerald-800 underline hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-100"
+                    className="mt-3 inline-flex text-sm font-semibold text-secondary underline transition-colors hover:text-secondary/80"
                   >
                     Перейти к объявлению →
                   </Link>
                 </div>
               </div>
-            </section>
+            </Card>
           )}
         </div>
 
         {/* Sidebar */}
         <aside className="mt-6 space-y-6 lg:mt-0 lg:w-[380px] lg:shrink-0">
           {/* Auth */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:shadow-black/30">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <Card className="gap-3 p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <UserCircle size={22} strokeWidth={1.8} aria-hidden />
               Аккаунт
             </div>
             {me === 'loading' ? (
-              <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-                <span className="inline-block size-[18px] animate-spin rounded-full border-2 border-sky-500 border-t-transparent" aria-hidden />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span
+                  className="inline-block size-[18px] animate-spin rounded-full border-2 border-primary border-t-transparent"
+                  aria-hidden
+                />
                 Проверяем вход…
               </div>
             ) : me ? (
-              <div className="flex items-start gap-3 rounded-xl bg-emerald-50/80 px-3 py-3 ring-1 ring-emerald-100 dark:bg-emerald-950/40 dark:ring-emerald-900/50">
-                <CheckCircle size={22} strokeWidth={1.8} className="mt-0.5 shrink-0" aria-hidden />
+              <div className="flex items-start gap-3 rounded-xl bg-secondary/10 px-3 py-3 ring-1 ring-secondary/30">
+                <CheckCircle
+                  size={22}
+                  strokeWidth={1.8}
+                  className="mt-0.5 shrink-0 text-secondary"
+                  aria-hidden
+                />
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Вы вошли в аккаунт</div>
-                  <div className="truncate text-xs text-emerald-800/90 dark:text-emerald-300">
+                  <div className="text-sm font-medium text-foreground">Вы вошли в аккаунт</div>
+                  <div className="truncate text-xs text-muted-foreground">
                     {me.name || me.email || me.phone || 'Пользователь'}
                   </div>
-                  <Link href="/profile" className="mt-1 inline-block text-xs font-medium text-emerald-800 underline dark:text-emerald-300">
+                  <Link
+                    href="/profile"
+                    className="mt-1 inline-block text-xs font-semibold text-secondary underline transition-colors hover:text-secondary/80"
+                  >
                     Мой профиль
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 dark:border-amber-900/50 dark:bg-amber-950/30">
-                <p className="text-sm text-amber-950 dark:text-amber-100">Для публикации нужен вход.</p>
-                <Link
-                  href="/auth"
-                  className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-600/25 hover:from-sky-700 hover:to-cyan-700"
+              <div className="rounded-xl border border-accent/30 bg-accent/10 px-3 py-3">
+                <p className="text-sm text-foreground">Для публикации нужен вход.</p>
+                <Button
+                  render={<Link href="/auth" />}
+                  size="lg"
+                  className="mt-3 h-11 w-full rounded-xl text-sm font-semibold"
                 >
                   Войти или зарегистрироваться
-                </Link>
+                </Button>
               </div>
             )}
-          </div>
+          </Card>
 
           {!showPostPublishPhotos ? (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:shadow-black/30">
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <Card className="gap-4 p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <LayoutGrid size={22} strokeWidth={1.8} aria-hidden />
                 Цена и размещение
               </div>
 
               <div className="space-y-4">
                 <label className="block">
-                  <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    <Wallet size={16} strokeWidth={1.8} className="opacity-70" aria-hidden />
+                  <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <Wallet
+                      size={16}
+                      strokeWidth={1.8}
+                      className="text-muted-foreground"
+                      aria-hidden
+                    />
                     Цена (₽)
                   </div>
-                  <input
-                    className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-sky-500 dark:focus:bg-zinc-900"
+                  <Input
                     value={price}
                     onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ''))}
                     placeholder="Например: 122000"
                     inputMode="numeric"
+                    className="h-12 rounded-xl px-4 text-base"
                   />
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Оставьте пустым, если цена договорная</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Оставьте пустым, если цена договорная
+                  </p>
                 </label>
 
                 <label className="block">
-                  <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    <MapPin size={16} strokeWidth={1.8} className="opacity-70" aria-hidden />
+                  <div className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <MapPin
+                      size={16}
+                      strokeWidth={1.8}
+                      className="text-muted-foreground"
+                      aria-hidden
+                    />
                     Город
                   </div>
-                  <input
-                    className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 text-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-sky-500 dark:focus:bg-zinc-900"
+                  <Input
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder="Москва"
+                    className="h-12 rounded-xl px-4 text-base"
                   />
                 </label>
 
                 <label className="block">
-                  <div className="mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">Категория</div>
+                  <div className="mb-1.5 text-sm font-medium text-foreground">Категория</div>
                   <UiSelect
                     value={categoryId}
                     onChange={setCategoryId}
                     disabled={loadingCats}
                     options={cats.map((c) => ({ value: c.id, label: c.title }))}
-                    className="h-12 rounded-xl border-zinc-200 bg-zinc-50/50 px-3 focus:border-sky-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="h-12 rounded-xl border-input bg-background px-3 text-base"
                   />
                 </label>
               </div>
-            </div>
+            </Card>
           ) : null}
 
           {status.kind === 'error' ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">{status.msg}</div>
+            <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {status.msg}
+            </div>
           ) : null}
 
           {justPublished ? (
-            <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-100">
+            <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground">
               Готово! Объявление в ленте. Фото загружаются или уже на месте.
             </div>
           ) : null}
 
           {!showPostPublishPhotos ? (
-            <button
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 text-base font-semibold text-white shadow-lg shadow-sky-600/25 transition hover:from-sky-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-55"
+            <Button
+              type="button"
+              size="lg"
               onClick={() => void submit()}
               disabled={busy || uploading || me === 'loading'}
-              type="button"
+              className="h-14 w-full rounded-2xl text-base font-semibold"
             >
               {busy || uploading ? (
                 <>
-                  <span className="inline-block size-[22px] animate-spin rounded-full border-2 border-sky-500 border-t-transparent" aria-hidden />
+                  <span
+                    className="inline-block size-[22px] animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                    aria-hidden
+                  />
                   {busy ? 'Публикуем…' : 'Загружаем фото…'}
                 </>
               ) : (
                 'Опубликовать объявление'
               )}
-            </button>
+            </Button>
           ) : null}
 
           {!showPostPublishPhotos ? (
-            <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-              Нажимая кнопку, вы подтверждаете корректность данных. При необходимости объявление можно изменить в профиле.
+            <p className="text-center text-xs text-muted-foreground">
+              Нажимая кнопку, вы подтверждаете корректность данных. При необходимости объявление
+              можно изменить в профиле.
             </p>
           ) : null}
         </aside>

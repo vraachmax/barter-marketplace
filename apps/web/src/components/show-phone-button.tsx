@@ -59,7 +59,7 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
         {contactData.phone ? (
           <a
             href={`tel:${contactData.phone}`}
-            className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-800 ring-1 ring-emerald-200/80 transition hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-800/50 dark:hover:bg-emerald-950/60"
+            className="flex items-center gap-2 rounded-xl bg-secondary/10 px-4 py-2.5 text-sm font-bold text-secondary ring-1 ring-secondary/30 transition hover:bg-secondary/10"
           >
             <Phone size={18} strokeWidth={1.8} aria-hidden />
             {contactData.phone}
@@ -68,7 +68,7 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
         {contactData.email ? (
           <a
             href={`mailto:${contactData.email}`}
-            className="block truncate rounded-xl bg-zinc-50 px-4 py-2 text-xs text-zinc-600 ring-1 ring-zinc-200/80 dark:bg-zinc-800/50 dark:text-zinc-300 dark:ring-zinc-700"
+            className="block truncate rounded-xl bg-muted/50 px-4 py-2 text-xs text-muted-foreground ring-1 ring-border"
           >
             {contactData.email}
           </a>
@@ -81,12 +81,12 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
     <button
       type="button"
       onClick={reveal}
-      className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-200"
+      className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:border-secondary/30 hover:bg-secondary/10 hover:text-secondary"
     >
       <Phone size={18} strokeWidth={1.8} aria-hidden />
       <span>Показать контакт</span>
       {maskedDisplay ? (
-        <span className="ml-auto font-mono text-xs text-zinc-400 dark:text-zinc-500">{maskedDisplay}</span>
+        <span className="ml-auto font-mono text-xs text-muted-foreground">{maskedDisplay}</span>
       ) : null}
     </button>
   );

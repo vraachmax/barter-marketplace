@@ -141,13 +141,13 @@ export default function ListingsMap({ center = [55.7558, 37.6173], zoom = 11, ca
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
 
-      <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-white/95 px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur-sm">
+      <div className="absolute left-3 top-3 z-[1000] rounded-xl bg-card/95 px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur-sm">
         {loading ? 'Загрузка…' : `${pins.length} объявлений`}
       </div>
 
       {selected ? (
         <div className="absolute bottom-4 left-1/2 z-[1000] w-[calc(100%-32px)] max-w-sm -translate-x-1/2 animate-[slideUp_0.25s_ease-out]">
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
             {selected.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -156,17 +156,17 @@ export default function ListingsMap({ center = [55.7558, 37.6173], zoom = 11, ca
                 className="h-32 w-full object-cover"
               />
             ) : (
-              <div className="flex h-20 items-center justify-center bg-gradient-to-br from-sky-50 to-cyan-50 text-xs text-sky-600">
+              <div className="flex h-20 items-center justify-center bg-primary text-xs text-primary">
                 Нет фото
               </div>
             )}
             <div className="p-3.5">
-              <h3 className="line-clamp-2 text-sm font-bold leading-snug text-zinc-900">{selected.title}</h3>
-              <p className="mt-1 text-lg font-black text-sky-700">{fmtPrice(selected.priceRub, selected.priceType)}</p>
-              <p className="mt-0.5 text-xs text-zinc-500">{selected.city} · {selected.category}</p>
+              <h3 className="line-clamp-2 text-sm font-bold leading-snug text-foreground">{selected.title}</h3>
+              <p className="mt-1 text-lg font-black text-primary">{fmtPrice(selected.priceRub, selected.priceType)}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{selected.city} · {selected.category}</p>
               <a
                 href={`/listing/${selected.id}`}
-                className="mt-3 block rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2.5 text-center text-sm font-bold text-white shadow-md shadow-sky-600/25 transition hover:from-sky-700 hover:to-cyan-700"
+                className="mt-3 block rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-bold text-white shadow-md shadow-primary/20 transition"
               >
                 Подробнее
               </a>

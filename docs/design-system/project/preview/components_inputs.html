@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')  format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Medium.ttf')   format('truetype'); font-weight: 500; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf') font-weight: 600; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, sans-serif; color: #2B1F19; background: #FAF6F1; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFFFFF; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .input { height: 40px; border: 1px solid #D8C9B6; border-radius: 8px; padding: 0 12px; font-family: inherit; font-size: 14px; color: #2B1F19; outline: none; background: #fff; transition: all 150ms; }
+  .input:focus { border-color: #C8523A; box-shadow: 0 0 0 3px rgba(232,168,124,0.35); }
+  .input::placeholder { color: #B5A695; }
+  .search { display: flex; align-items: center; gap: 10px; background: #F6EFE7; border-radius: 22px; padding: 10px 16px; }
+  .search input { flex: 1; border: none; background: transparent; outline: none; font-family: inherit; font-size: 15px; }
+  .row { display: flex; gap: 10px; }
+  .row .input { flex: 1; }
+  .select { height: 40px; border: 1px solid #D8C9B6; border-radius: 8px; padding: 0 12px; font-family: inherit; font-size: 14px; color: #2B1F19; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .select.primary { border-color: #C8523A; box-shadow: 0 0 0 3px rgba(232,168,124,0.35); }
+  .select svg { width: 14px; height: 14px; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #8C7A6A; margin-top: 4px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B5A695" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Поиск по объявлениям" value="iPhone 14">
+    </div>
+    <div class="label">Категория</div>
+    <div class="select primary"><span>Электроника · Телефоны</span><svg viewBox="0 0 24 24" fill="none" stroke="#C8523A" stroke-width="1.8"><polyline points="6 9 12 15 18 9"/></svg></div>
+    <input class="input" placeholder="Название объявления">
+    <div class="row">
+      <input class="input" placeholder="Цена от">
+      <input class="input" placeholder="Цена до">
+    </div>
+  </div>
+</body>
+</html>

@@ -108,7 +108,7 @@ export default function ListingGallery({
 
   return (
     <div className="space-y-3">
-      <div className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-muted">
         <div
           role="presentation"
           onPointerDown={onPointerDown}
@@ -116,8 +116,8 @@ export default function ListingGallery({
           onPointerUp={endDrag}
           onPointerCancel={onPointerCancel}
           className={`relative aspect-[4/3] w-full touch-none select-none sm:aspect-[16/10] ${
-            n > 1 ? 'cursor-grab active:cursor-grabbing' : ''
-          }`}
+ n > 1 ? 'cursor-grab active:cursor-grabbing' : ''
+ }`}
           style={{ touchAction: n > 1 ? 'none' : undefined }}
           aria-label={n > 1 ? 'Потяните фото влево или вправо, чтобы перелистать' : undefined}
         >
@@ -171,7 +171,7 @@ export default function ListingGallery({
                   key={im.id}
                   type="button"
                   onClick={() => setIdx(i)}
-                  className={`h-1.5 rounded-full transition ${i === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/70'}`}
+                  className={`h-1.5 rounded-full transition ${i === idx ? 'w-5 bg-card' : 'w-1.5 bg-card/50 hover:bg-card/70'}`}
                   aria-label={`Фото ${i + 1}`}
                 />
               ))}
@@ -188,8 +188,8 @@ export default function ListingGallery({
               type="button"
               onClick={() => setIdx(i)}
               className={`shrink-0 overflow-hidden rounded-xl border-2 transition ${
-                i === idx ? 'border-sky-500 ring-2 ring-sky-500/30' : 'border-zinc-200 opacity-80 hover:opacity-100 dark:border-zinc-600'
-              }`}
+ i === idx ? 'border-primary/30 ring-2 ring-primary/30' : 'border-border opacity-80 hover:opacity-100'
+ }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`${apiBase}${im.url}`} alt="" className="h-16 w-16 object-cover sm:h-20 sm:w-20" loading="lazy" />
@@ -269,7 +269,7 @@ function FullscreenGallery({
         </span>
         <button
           onClick={onClose}
-          className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+          className="grid h-10 w-10 place-items-center rounded-full bg-card/10 text-white transition hover:bg-card/20"
           aria-label="Закрыть"
         >
           <X size={24} strokeWidth={1.8} className="text-white" aria-hidden />
@@ -294,7 +294,7 @@ function FullscreenGallery({
             <button
               type="button"
               onClick={prev}
-              className="absolute left-2 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/25 md:left-4"
+              className="absolute left-2 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-card/10 text-white transition hover:bg-card/25 md:left-4"
               aria-label="Предыдущее"
             >
               <ChevronLeft size={28} strokeWidth={1.8} className="text-white" aria-hidden />
@@ -302,7 +302,7 @@ function FullscreenGallery({
             <button
               type="button"
               onClick={next}
-              className="absolute right-2 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/25 md:right-4"
+              className="absolute right-2 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-card/10 text-white transition hover:bg-card/25 md:right-4"
               aria-label="Следующее"
             >
               <ChevronRight size={28} strokeWidth={1.8} className="text-white" aria-hidden />
@@ -318,8 +318,8 @@ function FullscreenGallery({
             type="button"
             onClick={(e) => { e.stopPropagation(); setIdx(i); }}
             className={`shrink-0 overflow-hidden rounded-lg border-2 transition ${
-              i === idx ? 'border-white ring-1 ring-white/40' : 'border-transparent opacity-50 hover:opacity-80'
-            }`}
+ i === idx ? 'border-white ring-1 ring-white/40' : 'border-transparent opacity-50 hover:opacity-80'
+ }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`${apiBase}${im.url}`} alt="" className="h-14 w-14 object-cover sm:h-16 sm:w-16" loading="lazy" />

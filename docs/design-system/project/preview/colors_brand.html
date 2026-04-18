@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Regular.ttf')  format('truetype'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Bold.ttf')     format('truetype'); font-weight: 700; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, sans-serif; color: #000; background: #FFF; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFFFFF; border-radius: 16px; padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; border: 1px solid #E6E6E6; }
+  .sw { height: 108px; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; }
+  .name { font-size: 13px; font-weight: 600; }
+  .hex { font-family: ui-monospace, Menlo, monospace; font-size: 11px; opacity: 0.85; }
+  .role { font-size: 11px; opacity: 0.85; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="sw" style="background:#00AAFF; color:#fff;">
+      <div><div class="name">Primary</div><div class="role">CTA / links / pills</div></div>
+      <div class="hex">#00AAFF</div>
+    </div>
+    <div class="sw" style="background:#0095E0; color:#fff;">
+      <div><div class="name">Primary Hover</div><div class="role">Pressed / hover</div></div>
+      <div class="hex">#0095E0</div>
+    </div>
+    <div class="sw" style="background:#E6F7FF; color:#005C8A;">
+      <div><div class="name">Primary Soft</div><div class="role">Selected row tint</div></div>
+      <div class="hex">#E6F7FF</div>
+    </div>
+    <div class="sw" style="background:#04E061; color:#003D1A;">
+      <div><div class="name">Action Green</div><div class="role">«Показать телефон»</div></div>
+      <div class="hex">#04E061</div>
+    </div>
+    <div class="sw" style="background:#03C453; color:#fff;">
+      <div><div class="name">Green Hover</div><div class="role">Pressed</div></div>
+      <div class="hex">#03C453</div>
+    </div>
+    <div class="sw" style="background:#FF6D00; color:#fff;">
+      <div><div class="name">Accent Orange</div><div class="role">ТОП · промо</div></div>
+      <div class="hex">#FF6D00</div>
+    </div>
+  </div>
+</body>
+</html>

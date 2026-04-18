@@ -211,7 +211,7 @@ export function MegaMenu({ open, onClose }: Props) {
       >
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
           <div
-            className="flex overflow-hidden bg-white dark:bg-zinc-950"
+            className="flex overflow-hidden bg-card"
             style={{
               borderRadius: '0 0 16px 16px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
@@ -220,7 +220,7 @@ export function MegaMenu({ open, onClose }: Props) {
           >
             {/* Left column — category list */}
             <div
-              className="shrink-0 overflow-y-auto border-r border-[#f0f0f0] py-2 dark:border-zinc-800"
+              className="shrink-0 overflow-y-auto border-r border-[#f0f0f0] py-2"
               style={{ width: 220, background: '#f7f7f7' }}
             >
               {MEGA_CATEGORIES.map((cat, i) => (
@@ -232,10 +232,10 @@ export function MegaMenu({ open, onClose }: Props) {
                     onClose();
                   }}
                   className={`group flex w-full items-center gap-3 px-4 py-[11px] text-left text-sm transition-colors ${
-                    i === hoveredIdx
-                      ? 'bg-[#E8F2FF] text-[#007AFF]'
-                      : 'text-[#111] hover:bg-[#E8F2FF]'
-                  }`}
+ i === hoveredIdx
+ ? 'bg-[#E8F2FF] text-[#007AFF]'
+ : 'text-[#111] hover:bg-[#E8F2FF]'
+ }`}
                 >
                   <CategoryGradientSquare
                     preset={cat.preset}
@@ -250,8 +250,8 @@ export function MegaMenu({ open, onClose }: Props) {
                     size={14}
                     strokeWidth={1.8}
                     className={`shrink-0 transition-colors ${
-                      i === hoveredIdx ? 'text-[#007AFF]' : 'text-[#c0c0c0]'
-                    }`}
+ i === hoveredIdx ? 'text-[#007AFF]' : 'text-[#c0c0c0]'
+ }`}
                     aria-hidden
                   />
                 </button>
@@ -260,7 +260,7 @@ export function MegaMenu({ open, onClose }: Props) {
 
             {/* Right area — subcategories */}
             <div className="flex-1 overflow-y-auto p-5 px-7">
-              <h3 className="mb-4 border-b border-[#f0f0f0] pb-3 text-lg font-bold text-[#111] dark:border-zinc-800 dark:text-zinc-100">
+              <h3 className="mb-4 border-b border-[#f0f0f0] pb-3 text-lg font-bold text-[#111]">
                 {active.title}
               </h3>
               <div className="grid grid-cols-3 gap-x-8 gap-y-1">
@@ -269,7 +269,7 @@ export function MegaMenu({ open, onClose }: Props) {
                     key={sub}
                     href={`/?categoryId=${active.slug}&sub=${encodeURIComponent(sub)}`}
                     onClick={onClose}
-                    className="rounded-md py-[7px] text-sm text-[#111] transition-colors hover:text-[#007AFF] dark:text-zinc-300 dark:hover:text-[#007AFF]"
+                    className="rounded-md py-[7px] text-sm text-[#111] transition-colors hover:text-[#007AFF]"
                   >
                     {sub}
                   </Link>
@@ -291,10 +291,10 @@ export function MegaMenu({ open, onClose }: Props) {
       </div>
 
       {/* Mobile Panel — full-screen accordion */}
-      <div className="fixed inset-0 z-[201] flex flex-col bg-white dark:bg-zinc-950 md:hidden" style={{ animation: 'megaSlideIn 150ms ease-out' }}>
-        <div className="flex items-center justify-between border-b border-[#E8E8E8] px-4 py-3 dark:border-zinc-800">
-          <h2 className="text-base font-bold text-[#111] dark:text-zinc-100">Все категории</h2>
-          <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-[#707070] hover:bg-[#F0F0F0] dark:text-zinc-400 dark:hover:bg-zinc-800">
+      <div className="fixed inset-0 z-[201] flex flex-col bg-card md:hidden" style={{ animation: 'megaSlideIn 150ms ease-out' }}>
+        <div className="flex items-center justify-between border-b border-[#E8E8E8] px-4 py-3">
+          <h2 className="text-base font-bold text-[#111]">Все категории</h2>
+          <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg text-[#707070] hover:bg-[#F0F0F0]">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
         </div>
@@ -304,12 +304,12 @@ export function MegaMenu({ open, onClose }: Props) {
               <button
                 type="button"
                 onClick={() => setMobileExpandedIdx(mobileExpandedIdx === i ? null : i)}
-                className={`flex w-full items-center gap-3 border-b border-[#F0F0F0] px-4 py-3 text-left dark:border-zinc-800 ${
-                  mobileExpandedIdx === i ? 'bg-[#E8F2FF] dark:bg-sky-950/30' : ''
-                }`}
+                className={`flex w-full items-center gap-3 border-b border-[#F0F0F0] px-4 py-3 text-left ${
+ mobileExpandedIdx === i ? 'bg-[#E8F2FF]' : ''
+ }`}
               >
                 <CategoryGradientSquare preset={cat.preset} boxSize={36} iconSize={20} radius={10} />
-                <span className={`flex-1 text-sm ${mobileExpandedIdx === i ? 'font-bold text-[#007AFF]' : 'font-medium text-[#111] dark:text-zinc-100'}`}>
+                <span className={`flex-1 text-sm ${mobileExpandedIdx === i ? 'font-bold text-[#007AFF]' : 'font-medium text-[#111]'}`}>
                   {cat.title}
                 </span>
                 <ChevronRight
@@ -320,13 +320,13 @@ export function MegaMenu({ open, onClose }: Props) {
                 />
               </button>
               {mobileExpandedIdx === i ? (
-                <div className="border-b border-[#F0F0F0] bg-[#FAFAFA] px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="border-b border-[#F0F0F0] bg-[#FAFAFA] px-4 py-2">
                   {cat.subcategories.map((sub) => (
                     <Link
                       key={sub}
                       href={`/?categoryId=${cat.slug}&sub=${encodeURIComponent(sub)}`}
                       onClick={onClose}
-                      className="block py-2 pl-12 text-sm text-[#111] transition-colors hover:text-[#007AFF] dark:text-zinc-300"
+                      className="block py-2 pl-12 text-sm text-[#111] transition-colors hover:text-[#007AFF]"
                     >
                       {sub}
                     </Link>

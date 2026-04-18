@@ -42,21 +42,21 @@ const PROMO_TIERS: Array<{
     title: 'Топ',
     blurb: 'Выше в общей ленте',
     icon: Star,
-    shell: 'bg-white hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] dark:bg-zinc-900',
+    shell: 'bg-card hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]',
   },
   {
     type: 'VIP',
     title: 'VIP',
     blurb: 'Больше показов и доверия',
     icon: Sparkles,
-    shell: 'bg-white hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] dark:bg-zinc-900',
+    shell: 'bg-card hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]',
   },
   {
     type: 'XL',
     title: 'XL',
     blurb: 'Крупное фото в рекомендациях',
     icon: Camera,
-    shell: 'bg-white hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] dark:bg-zinc-900',
+    shell: 'bg-card hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]',
   },
 ];
 
@@ -196,33 +196,33 @@ function ListingsContent() {
   });
 
   function statusLabel(st: MyListing['status']) {
-    if (st === 'ACTIVE') return { text: 'Активно', className: 'bg-emerald-50 text-emerald-800 ring-emerald-200' };
+    if (st === 'ACTIVE') return { text: 'Активно', className: 'bg-secondary/10 text-secondary ring-secondary/30' };
     if (st === 'PENDING')
-      return { text: 'Модерация', className: 'bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-100 dark:ring-amber-800' };
+      return { text: 'Модерация', className: 'bg-accent/10 text-accent ring-border' };
     if (st === 'BLOCKED')
-      return { text: 'Скрыто', className: 'bg-red-50 text-red-800 ring-red-200 dark:bg-red-950/40 dark:text-red-200 dark:ring-red-900' };
-    if (st === 'SOLD') return { text: 'Продано', className: 'bg-sky-50 text-sky-800 ring-sky-200' };
-    return { text: 'Архив', className: 'bg-violet-50 text-violet-800 ring-violet-200' };
+      return { text: 'Скрыто', className: 'bg-destructive/10 text-destructive ring-border' };
+    if (st === 'SOLD') return { text: 'Продано', className: 'bg-primary/10 text-primary ring-primary/30' };
+    return { text: 'Архив', className: 'bg-accent/10 text-accent ring-accent/30' };
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] text-[#1a1a1a] antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div className="min-h-screen bg-[#f4f4f4] text-[#1a1a1a] antialiased">
       {/* Mobile header */}
-      <header className="sticky top-0 z-20 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md dark:bg-zinc-950/95 md:hidden">
+      <header className="sticky top-0 z-20 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4] dark:hover:bg-zinc-900"
+            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4]"
           >
-            <ArrowLeft size={24} strokeWidth={s} className="text-[#1a1a1a] dark:text-zinc-100" aria-hidden />
+            <ArrowLeft size={24} strokeWidth={s} className="text-[#1a1a1a]" aria-hidden />
           </button>
-          <h1 className="text-base font-bold text-[#1a1a1a] dark:text-zinc-100">Мои объявления</h1>
+          <h1 className="text-base font-bold text-[#1a1a1a]">Мои объявления</h1>
           <button
             type="button"
             onClick={() => router.push('/search')}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4] dark:hover:bg-zinc-900"
+            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4]"
           >
-            <Search size={24} strokeWidth={s} className="text-[#1a1a1a] dark:text-zinc-100" aria-hidden />
+            <Search size={24} strokeWidth={s} className="text-[#1a1a1a]" aria-hidden />
           </button>
         </div>
       </header>
@@ -230,20 +230,20 @@ function ListingsContent() {
       <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
-            <span className="inline-block size-10 animate-spin rounded-full border-2 border-sky-500 border-t-transparent dark:border-cyan-400 dark:border-t-transparent" aria-hidden />
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Загружаем объявления…</p>
+            <span className="inline-block size-10 animate-spin rounded-full border-2 border-primary/30 border-t-transparent" aria-hidden />
+            <p className="text-sm text-muted-foreground">Загружаем объявления…</p>
           </div>
         ) : null}
 
         {status === 'need_auth' ? (
           <div className="mx-auto max-w-md py-10">
-            <div className="overflow-hidden rounded-lg bg-white dark:bg-zinc-900/80">
-              <div className="bg-[#E8F2FF] px-6 py-10 text-center dark:bg-sky-950/40">
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg bg-white dark:bg-zinc-900">
+            <div className="overflow-hidden rounded-lg bg-card">
+              <div className="bg-[#E8F2FF] px-6 py-10 text-center">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg bg-card">
                   <Sparkles size={32} strokeWidth={s} className="text-[#007AFF]" aria-hidden />
                 </div>
-                <h1 className="mt-4 text-xl font-bold text-[#1a1a1a] dark:text-zinc-100">Мои объявления</h1>
-                <p className="mt-2 text-sm text-[#6b7280] dark:text-zinc-400">Войдите, чтобы управлять объявлениями.</p>
+                <h1 className="mt-4 text-xl font-bold text-[#1a1a1a]">Мои объявления</h1>
+                <p className="mt-2 text-sm text-[#6b7280]">Войдите, чтобы управлять объявлениями.</p>
               </div>
               <div className="p-6">
                 <Link
@@ -258,7 +258,7 @@ function ListingsContent() {
         ) : null}
 
         {status === 'error' ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-5 py-4 text-sm text-destructive">
             Не удалось загрузить данные. Попробуйте обновить страницу.
           </div>
         ) : null}
@@ -268,7 +268,7 @@ function ListingsContent() {
             {/* ===== MOBILE VIEW ===== */}
             <div className="md:hidden pb-28">
               {/* Tabs */}
-              <div className="flex items-baseline gap-4 border-b border-[#E8E8E8] bg-white px-4 pt-3 dark:border-zinc-800 dark:bg-zinc-900/80">
+              <div className="flex items-baseline gap-4 border-b border-[#E8E8E8] bg-card px-4 pt-3">
                 {([
                   { tab: 'ACTIVE' as ListingTab, label: 'Активные', count: activeCount },
                   { tab: 'SOLD' as ListingTab, label: 'Продано', count: soldCount },
@@ -279,25 +279,25 @@ function ListingsContent() {
                     type="button"
                     onClick={() => setListingTab(t.tab)}
                     className={`relative pb-3 text-base transition ${
-                      activeTab === t.tab
-                        ? 'font-bold text-[#1a1a1a] dark:text-zinc-100'
-                        : 'font-medium text-zinc-400 dark:text-zinc-500'
-                    }`}
+ activeTab === t.tab
+ ? 'font-bold text-[#1a1a1a]'
+ : 'font-medium text-muted-foreground'
+ }`}
                   >
                     {t.label}
                     {t.count > 0 ? <sup className="ml-0.5 text-[11px] font-semibold">{t.count}</sup> : null}
                     {activeTab === t.tab ? (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#1a1a1a] dark:bg-zinc-100" />
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#1a1a1a]" />
                     ) : null}
                   </button>
                 ))}
               </div>
 
               {/* Listings list */}
-              <div className="bg-white dark:bg-zinc-900/80">
+              <div className="bg-card">
                 {visibleListings.length === 0 ? (
                   <div className="px-4 py-16 text-center">
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <p className="text-sm text-muted-foreground">
                       {activeTab === 'ACTIVE' ? 'Нет активных объявлений' : activeTab === 'SOLD' ? 'Нет проданных' : 'Архив пуст'}
                     </p>
                   </div>
@@ -308,9 +308,9 @@ function ListingsContent() {
                       ? thumbImg.url.startsWith('http') ? thumbImg.url : `${API_URL}${thumbImg.url}`
                       : null;
                     return (
-                      <div key={x.id} className="flex gap-3 border-b border-[#F0F0F0] px-4 py-3 dark:border-zinc-800">
+                      <div key={x.id} className="flex gap-3 border-b border-[#F0F0F0] px-4 py-3">
                         <Link href={`/listing/${x.id}`} className="flex-shrink-0">
-                          <div className="h-[80px] w-[80px] overflow-hidden rounded-lg bg-[#f4f4f4] dark:bg-zinc-800">
+                          <div className="h-[80px] w-[80px] overflow-hidden rounded-lg bg-[#f4f4f4]">
                             {thumbUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={thumbUrl} alt={x.title} className="h-full w-full object-cover" />
@@ -321,14 +321,14 @@ function ListingsContent() {
                         </Link>
                         <div className="flex min-w-0 flex-1 flex-col justify-between">
                           <div>
-                            <Link href={`/listing/${x.id}`} className="text-sm font-medium text-[#1a1a1a] dark:text-zinc-100 line-clamp-2 hover:underline">
+                            <Link href={`/listing/${x.id}`} className="text-sm font-medium text-[#1a1a1a] line-clamp-2 hover:underline">
                               {x.title}
                             </Link>
-                            <div className="mt-0.5 text-sm font-bold text-[#1a1a1a] dark:text-zinc-100">
+                            <div className="mt-0.5 text-sm font-bold text-[#1a1a1a]">
                               {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} \u20BD` : 'Цена не указана'}
                             </div>
                           </div>
-                          <div className="mt-1 flex items-center gap-3 text-[11px] text-zinc-400 dark:text-zinc-500">
+                          <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
                             <span>{x.city}</span>
                             <span>{statusLabel(x.status).text}</span>
                           </div>
@@ -341,7 +341,7 @@ function ListingsContent() {
                         <button
                           type="button"
                           onClick={() => startEdit(x)}
-                          className="flex-shrink-0 self-start p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                          className="flex-shrink-0 self-start p-1 text-muted-foreground hover:text-muted-foreground"
                         >
                           <FileText size={18} strokeWidth={1.5} aria-hidden />
                         </button>
@@ -352,7 +352,7 @@ function ListingsContent() {
               </div>
 
               {/* Sticky bottom button */}
-              <div className="fixed bottom-[72px] left-0 right-0 z-50 border-t border-[#E8E8E8] bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="fixed bottom-[72px] left-0 right-0 z-50 border-t border-[#E8E8E8] bg-card px-4 py-3">
                 <Link
                   href="/new"
                   className="flex h-12 w-full items-center justify-center rounded-xl bg-[#00AAFF] text-sm font-bold text-white transition hover:bg-[#0099EE]"
@@ -366,7 +366,7 @@ function ListingsContent() {
             <div className="hidden md:block">
               {/* Desktop title */}
               <div className="mb-6 flex items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 lg:text-3xl">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
                   Мои объявления
                 </h1>
                 <Link
@@ -378,16 +378,16 @@ function ListingsContent() {
               </div>
 
               {/* Listings management */}
-              <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-5">
+              <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Управление объявлениями</h2>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Всего в кабинете: {listings.length}</p>
+                    <h2 className="text-lg font-bold text-foreground">Управление объявлениями</h2>
+                    <p className="text-xs text-muted-foreground">Всего в кабинете: {listings.length}</p>
                   </div>
                 </div>
 
                 {/* Segmented tabs */}
-                <div className="mb-5 flex flex-wrap gap-2 rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800">
+                <div className="mb-5 flex flex-wrap gap-2 rounded-xl bg-muted p-1">
                   {(
                     [
                       ['ACTIVE', 'Активные', activeCount],
@@ -401,12 +401,12 @@ function ListingsContent() {
                       type="button"
                       onClick={() => setListingTab(tab)}
                       className={`flex-1 min-w-[100px] rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
-                        activeTab === tab
-                          ? tab === 'ARCHIVED'
-                            ? 'bg-violet-900 text-white shadow-sm'
-                            : 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100'
-                          : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
-                      }`}
+ activeTab === tab
+ ? tab === 'ARCHIVED'
+ ? 'bg-accent/10 text-white shadow-sm'
+ : 'bg-card text-foreground shadow-sm'
+ : 'text-muted-foreground hover:text-foreground'
+ }`}
                     >
                       {label}
                       <span className="ml-1 opacity-70">({count})</span>
@@ -423,11 +423,11 @@ function ListingsContent() {
                 ) : (
                   <>
                     {visibleListings.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 py-12 text-center dark:border-zinc-600 dark:bg-zinc-800">
-                        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">В этом разделе пока пусто</p>
+                      <div className="rounded-xl border border-dashed border-border bg-muted/50 py-12 text-center">
+                        <p className="text-sm font-medium text-muted-foreground">В этом разделе пока пусто</p>
                         <Link
                           href="/new"
-                          className="mt-3 inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+                          className="mt-3 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary"
                         >
                           Создать объявление
                         </Link>
@@ -440,11 +440,11 @@ function ListingsContent() {
                         return (
                           <li
                             key={x.id}
-                            className="rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-zinc-800/90 dark:bg-zinc-950"
+                            className="rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
                           >
                             <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-stretch">
                               <div
-                                className={`listing-thumb-wrap relative h-28 w-full shrink-0 overflow-hidden rounded-xl border border-zinc-200/90 dark:border-zinc-700 sm:h-32 lg:h-[100px] lg:w-[140px] ${listingThumbPromoExtraClass(x.activePromotion?.type ?? null)}`.trim()}
+                                className={`listing-thumb-wrap relative h-28 w-full shrink-0 overflow-hidden rounded-xl border border-border sm:h-32 lg:h-[100px] lg:w-[140px] ${listingThumbPromoExtraClass(x.activePromotion?.type ?? null)}`.trim()}
                               >
                                 {x.images?.[0]?.url ? (
                                   // eslint-disable-next-line @next/next/no-img-element
@@ -466,7 +466,7 @@ function ListingsContent() {
                                 <div className="flex flex-wrap items-start justify-between gap-2">
                                   <Link
                                     href={`/listing/${x.id}`}
-                                    className="line-clamp-2 text-base font-bold text-zinc-900 hover:text-sky-700 hover:underline dark:text-zinc-100"
+                                    className="line-clamp-2 text-base font-bold text-foreground hover:text-primary hover:underline"
                                   >
                                     {x.title}
                                   </Link>
@@ -476,22 +476,22 @@ function ListingsContent() {
                                     {st.text}
                                   </span>
                                 </div>
-                                <div className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                                <div className="mt-1 text-xl font-bold text-foreground">
                                   {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена не указана'}
                                 </div>
-                                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                <div className="mt-1 text-xs text-muted-foreground">
                                   {x.city} · {x.category.title} ·{' '}
                                   {new Date(x.createdAt).toLocaleDateString('ru-RU')}
                                 </div>
                                 {x.activePromotion ? (
-                                  <p className="mt-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                                  <p className="mt-2 text-[11px] font-medium text-muted-foreground">
                                     Продвижение активно до {formatPromoEndsAt(x.activePromotion.endsAt)}
                                   </p>
                                 ) : null}
                               </div>
 
                               <div className="flex flex-col gap-2 lg:w-56 lg:shrink-0">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                                   Продвижение · 3 дня
                                 </p>
                                 <div className="flex flex-col gap-2">
@@ -507,10 +507,10 @@ function ListingsContent() {
                                         >
                                           <TierIcon size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
                                           <span className="min-w-0">
-                                            <span className="block text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                                            <span className="block text-xs font-bold tracking-tight text-foreground">
                                               {tier.title}
                                             </span>
-                                            <span className="mt-0.5 block text-[10px] leading-snug text-zinc-600 dark:text-zinc-400">
+                                            <span className="mt-0.5 block text-[10px] leading-snug text-muted-foreground">
                                               {tier.blurb}
                                             </span>
                                           </span>
@@ -518,7 +518,7 @@ function ListingsContent() {
                                       );
                                     })
                                   ) : (
-                                    <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400">
+                                    <p className="rounded-xl border border-border bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
                                       {x.status === 'PENDING'
                                         ? 'Продвижение доступно после публикации в ленте.'
                                         : x.status === 'BLOCKED'
@@ -531,7 +531,7 @@ function ListingsContent() {
                                   <button
                                     type="button"
                                     onClick={() => void publishAfterImageReview(x.id)}
-                                    className="w-full rounded-xl border border-emerald-200 bg-emerald-50 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100"
+                                    className="w-full rounded-xl border border-secondary/30 bg-secondary/10 py-2 text-xs font-bold text-secondary hover:bg-secondary/10"
                                   >
                                     Подтвердить публикацию в ленте
                                   </button>
@@ -539,7 +539,7 @@ function ListingsContent() {
                                 <button
                                   type="button"
                                   onClick={() => startEdit(x)}
-                                  className="w-full rounded-xl border border-zinc-200 bg-white py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                  className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
                                 >
                                   Редактировать
                                 </button>
@@ -547,7 +547,7 @@ function ListingsContent() {
                                   type="button"
                                   disabled={x.status === 'BLOCKED'}
                                   onClick={() => void setListingStatus(x.id, x.status === 'SOLD' ? 'ACTIVE' : 'SOLD')}
-                                  className="w-full rounded-xl border border-zinc-200 bg-white py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                  className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {x.status === 'SOLD' ? 'Вернуть в активные' : 'Отметить проданным'}
                                 </button>
@@ -557,14 +557,14 @@ function ListingsContent() {
                                   onClick={() =>
                                     void setListingStatus(x.id, x.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED')
                                   }
-                                  className="w-full rounded-xl border border-zinc-200 bg-white py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                  className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {x.status === 'ARCHIVED' ? 'Из архива' : 'В архив'}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => void removeListing(x.id)}
-                                  className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-red-200 bg-red-50/50 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
+                                  className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
                                 >
                                   <Trash2 size={16} strokeWidth={1.8} aria-hidden />
                                   Удалить
@@ -573,32 +573,32 @@ function ListingsContent() {
                             </div>
 
                             {editingId === x.id ? (
-                              <div className="border-t border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-950">
+                              <div className="border-t border-border bg-card p-4">
                                 <div className="mx-auto max-w-3xl space-y-3">
                                   <input
                                     value={editForm.title}
                                     onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                                    className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/15 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                    className="h-11 w-full rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
                                     placeholder="Название"
                                   />
                                   <textarea
                                     value={editForm.description}
                                     onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                                    className="min-h-24 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/15 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                    className="min-h-24 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
                                     placeholder="Описание (необязательно, от 10 символов)"
                                   />
                                   <div className="grid gap-2 sm:grid-cols-3">
                                     <input
                                       value={editForm.city}
                                       onChange={(e) => setEditForm((p) => ({ ...p, city: e.target.value }))}
-                                      className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-sky-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30"
                                       placeholder="Город"
                                     />
                                     <UiSelect
                                       value={editForm.categoryId}
                                       onChange={(v) => setEditForm((p) => ({ ...p, categoryId: v }))}
                                       options={categories.map((c) => ({ value: c.id, label: c.title }))}
-                                      className="h-11 rounded-xl border-zinc-200 bg-zinc-50 px-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                      className="h-11 rounded-xl border-border bg-muted/50 px-2 text-sm"
                                       menuClassName="text-sm"
                                     />
                                     <input
@@ -606,7 +606,7 @@ function ListingsContent() {
                                       onChange={(e) =>
                                         setEditForm((p) => ({ ...p, priceRub: e.target.value.replace(/[^\d]/g, '') }))
                                       }
-                                      className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-sky-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30"
                                       placeholder="Цена ₽"
                                     />
                                   </div>
@@ -614,14 +614,14 @@ function ListingsContent() {
                                     <button
                                       type="button"
                                       onClick={() => void saveEdit(x.id)}
-                                      className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+                                      className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary"
                                     >
                                       Сохранить
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => setEditingId(null)}
-                                      className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                      className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/50"
                                     >
                                       Отмена
                                     </button>
@@ -648,13 +648,13 @@ export default function ListingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 bg-zinc-100 dark:bg-zinc-950">
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 bg-muted">
           <div
-            className="h-10 w-10 animate-spin rounded-full border-2 border-sky-600 border-t-transparent dark:border-sky-400"
+            className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-transparent"
             role="status"
             aria-label="Загрузка"
           />
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Загрузка объявлений…</p>
+          <p className="text-sm text-muted-foreground">Загрузка объявлений…</p>
         </div>
       }
     >

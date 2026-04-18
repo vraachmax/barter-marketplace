@@ -73,8 +73,8 @@ export function HomeNearbyControls({ radiusKm, geoActive }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-[#f0f0f0] p-3 dark:bg-zinc-900 md:flex-row md:items-center md:justify-between md:gap-4 md:p-3.5">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-[#1a1a1a] dark:text-zinc-100">
+    <div className="flex flex-col gap-2 rounded-lg bg-[#f0f0f0] p-3 md:flex-row md:items-center md:justify-between md:gap-4 md:p-3.5">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-[#1a1a1a]">
         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#007AFF] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
           <MapPin size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
           Рядом
@@ -87,7 +87,7 @@ export function HomeNearbyControls({ radiusKm, geoActive }: Props) {
           <select
             value={RADIUS_OPTIONS.some((o) => o.value === radiusKm) ? radiusKm : '25'}
             onChange={(e) => onRadiusChange(e.target.value)}
-            className="h-9 rounded-lg bg-[#f7f7f7] px-2 text-sm font-medium text-[#1a1a1a] dark:bg-zinc-950 dark:text-zinc-100"
+            className="h-9 rounded-lg bg-[#f7f7f7] px-2 text-sm font-medium text-[#1a1a1a]"
           >
             {RADIUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -105,7 +105,7 @@ export function HomeNearbyControls({ radiusKm, geoActive }: Props) {
           {busy ? 'Определяем…' : 'Моё местоположение'}
         </button>
       </div>
-      {err ? <p className="text-xs text-red-600 dark:text-red-400 md:w-full">{err}</p> : null}
+      {err ? <p className="text-xs text-destructive md:w-full">{err}</p> : null}
       {!geoActive && searchParams.get('sort') === 'nearby' ? (
         <p className="text-xs text-[#6b7280] md:w-full">
           Выберите «Моё местоположение» или укажите lat/lon в ссылке — иначе лента показывается без геосортировки.

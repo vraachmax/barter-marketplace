@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-Bold.ttf')     format('truetype'); font-weight: 700; font-display: swap; }
+  @font-face { font-family: 'Golos Text'; src: url('../fonts/GolosText-ExtraBold.ttf') format('truetype'); font-weight: 800; font-display: swap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'Golos Text', -apple-system, sans-serif; color: #000; background: #FFF; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .card { width: 660px; background: #FFF; border: 1px solid #E6E6E6; border-radius: 16px; padding: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tile { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; border-radius: 12px; background: #F7F7F7; }
+  .bubble { width: 44px; height: 44px; border-radius: 50%; background: #04E061; position: relative; display: grid; place-items: center; }
+  .bubble::after { content: ''; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #00AAFF; bottom: 4px; right: -2px; }
+  .bubble::before { content: ''; position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #FF6D00; top: 6px; right: -2px; }
+  .lockup { display: flex; align-items: center; gap: 10px; }
+  .word { font-size: 30px; font-weight: 800; color: #000; letter-spacing: -0.03em; }
+  .caption { font-size: 11px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: #757575; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="tile">
+      <div class="lockup">
+        <div class="bubble"></div>
+        <div class="word">Бартер</div>
+      </div>
+      <div class="caption">Primary lockup · header</div>
+    </div>
+    <div class="tile" style="background:#000;">
+      <div class="lockup">
+        <div class="bubble"></div>
+        <div class="word" style="color:#fff;">Бартер</div>
+      </div>
+      <div class="caption" style="color:#A3A3A3">On-dark variant</div>
+    </div>
+    <div class="tile" style="grid-column: span 2; flex-direction: row; justify-content: space-between;">
+      <div class="lockup"><div class="bubble" style="width:28px;height:28px;"></div><div class="word" style="font-size:22px">Бартер</div></div>
+      <div class="caption">Compact / mobile header</div>
+    </div>
+  </div>
+</body>
+</html>

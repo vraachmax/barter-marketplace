@@ -1,7 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { AlertTriangle, Calendar, ChevronLeft, MapPin, Store } from 'lucide-react';
+import {
+  AlertTriangle,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  MapPin,
+  Store,
+} from 'lucide-react';
 import { apiGetJson, type ListingCard, API_URL } from '@/lib/api';
 import FavoriteToggle from '@/components/favorite-toggle';
 import SellerReviewForm from '@/components/seller-review-form';
@@ -15,6 +23,10 @@ import { ListingShareButton, ListingReportButton } from '@/components/listing-ac
 import { ListingMiniMap } from '@/components/listing-mini-map';
 import { ShowPhoneButton } from '@/components/show-phone-button';
 import { SiteFooter } from '@/components/site-footer';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -23,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!listing) return { title: 'Объявление не найдено' };
     const price = listing.priceRub != null ? `${listing.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена договорная';
     const title = `${listing.title} — ${price}`;
-    const desc = `${listing.title} в ${listing.city}. ${price}. Купить на Barter.`;
+    const desc = `${listing.title} в ${listing.city}. ${price}. Купить на Бартер.`;
     const img = listing.images?.[0]?.url ? `${API_URL}${listing.images[0].url}` : undefined;
     return {
       title,
@@ -63,6 +75,18 @@ function formatListedAt(iso: string) {
   }
 }
 
+function statusLabel(status: Listing['status'], duplicateImageFlag?: boolean) {
+  if (status === 'SOLD') return 'Продано';
+  if (status === 'ARCHIVED') return 'В архиве';
+  if (status === 'PENDING') {
+    return duplicateImageFlag
+      ? 'На модерации: те же фото, что у другого объявления. В кабинете продавца можно подтвердить публикацию.'
+      : 'На модерации.';
+  }
+  if (status === 'BLOCKED') return 'Скрыто из-за жалоб пользователей.';
+  return 'Недоступно';
+}
+
 export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const cookieStore = await cookies();
@@ -79,16 +103,13 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-zinc-100 px-4 py-10 dark:bg-zinc-950">
-        <div className="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-zinc-200/90 bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Объявление не найдено</div>
-          <Link
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-sky-600/25"
-            href="/"
-          >
+      <div className="min-h-screen bg-muted px-4 py-10">
+        <Card className="mx-auto max-w-3xl p-8">
+          <div className="text-lg font-bold text-foreground">Объявление не найдено</div>
+          <Button render={<Link href="/" />} className="mt-4">
             На главную
-          </Link>
-        </div>
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -98,127 +119,120 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     <ListingPlaceholder
       title={listing.title}
       categoryTitle={listing.category.title}
-      className="aspect-[4/3] w-full rounded-2xl border border-zinc-200/80 sm:aspect-[16/10] dark:border-zinc-700"
+      className="aspect-[4/3] w-full rounded-2xl border border-border sm:aspect-[16/10]"
     />
   );
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="sticky top-0 z-50 border-b border-zinc-200/90 bg-white/95 shadow-sm backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95">
+    <div className="min-h-screen bg-muted text-foreground antialiased">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200/90 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 shadow-sm transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-sky-600 dark:hover:bg-sky-950/40"
-          >
-            <ChevronLeft size={20} strokeWidth={1.8} className="shrink-0" aria-hidden />
+          <Button render={<Link href="/" />} variant="ghost" size="sm" className="h-9 gap-1.5 px-3 text-sm">
+            <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
             Назад в ленту
-          </Link>
+          </Button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 pb-28 pt-5 lg:pb-12">
+      <main className="mx-auto max-w-7xl px-4 pt-5 pb-28 lg:pb-12">
         <ListingViewTracker listingId={listing.id} />
 
-        {/* Breadcrumbs — как у Авито */}
-        <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-sky-700 dark:hover:text-sky-400">Главная</Link>
-          <span className="text-zinc-300 dark:text-zinc-600">/</span>
+        {/* Breadcrumbs — Avito-style */}
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
+        >
+          <Link href="/" className="transition-colors hover:text-primary">
+            Главная
+          </Link>
+          <ChevronRight size={12} className="text-foreground/30" aria-hidden />
           <Link
             href={`/?categoryId=${listing.category.id}`}
-            className="hover:text-sky-700 dark:hover:text-sky-400"
+            className="transition-colors hover:text-primary"
           >
             {listing.category.title}
           </Link>
-          <span className="text-zinc-300 dark:text-zinc-600">/</span>
+          <ChevronRight size={12} className="text-foreground/30" aria-hidden />
           <Link
             href={`/?city=${encodeURIComponent(listing.city)}`}
-            className="hover:text-sky-700 dark:hover:text-sky-400"
+            className="transition-colors hover:text-primary"
           >
             {listing.city}
           </Link>
-          <span className="text-zinc-300 dark:text-zinc-600">/</span>
-          <span className="truncate font-medium text-zinc-700 dark:text-zinc-300">{listing.title}</span>
+          <ChevronRight size={12} className="text-foreground/30" aria-hidden />
+          <span className="truncate font-medium text-foreground/80">{listing.title}</span>
         </nav>
 
-        <div className="listing-detail-grid grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
-          <div className="listing-detail-main min-w-0 space-y-5">
-            <ListingGallery images={images} title={listing.title} apiBase={API_URL} placeholder={galleryPlaceholder} />
-
-            <div className="overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-md shadow-zinc-200/30 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/30">
-              <div className="border-b border-zinc-100 px-4 py-4 dark:border-zinc-800 sm:px-6 sm:py-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <h1 className="min-w-0 break-words text-xl font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-2xl lg:text-3xl">
-                    {listing.title}
-                  </h1>
-                  <div className="shrink-0 text-left sm:text-right">
-                    <div className="truncate text-2xl font-black tabular-nums text-sky-700 dark:text-sky-400 sm:text-3xl">
-                      {formatRub(listing.priceRub)}
-                    </div>
-                    <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Включая торг — уточняйте в чате</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin size={18} strokeWidth={1.8} className="text-zinc-400" aria-hidden />
-                    {listing.city}
-                  </span>
-                  {listing.latitude != null && listing.longitude != null ? (
-                    <>
-                      <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                      <span className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500" title="WGS-84">
-                        {listing.latitude.toFixed(4)}, {listing.longitude.toFixed(4)}
-                      </span>
-                    </>
-                  ) : null}
-                  <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                  <span>{listing.category.title}</span>
-                  <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar size={16} strokeWidth={1.8} className="opacity-70" aria-hidden />
-                    {formatListedAt(listing.createdAt)}
-                  </span>
-                </div>
-                {listing.status !== 'ACTIVE' ? (
-                  <p className="mt-2 rounded-lg bg-zinc-100 px-2 py-1.5 text-xs font-semibold leading-snug text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                    {listing.status === 'SOLD'
-                      ? 'Продано'
-                      : listing.status === 'ARCHIVED'
-                        ? 'В архиве'
-                        : listing.status === 'PENDING'
-                          ? listing.duplicateImageFlag
-                            ? 'На модерации: те ϶е фото, что у другого объявления. В кабинете продавца можно подтвердить публикацию.'
-                            : 'На модерации.'
-                          : listing.status === 'BLOCKED'
-                            ? 'Скрыто из-за жалоб пользователей.'
-                            : 'Недоступно'}
-                  </p>
-                ) : null}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-4">
+          <div className="min-w-0 space-y-3">
+            {/* Header card: title + meta */}
+            <Card className="gap-2 px-5 py-4">
+              <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-[28px]">
+                {listing.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span className="tabular-nums">№ {listing.id.slice(0, 9)}</span>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1">
+                  <Calendar size={12} strokeWidth={1.8} aria-hidden />
+                  {formatListedAt(listing.createdAt)}
+                </span>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1">
+                  <Eye size={12} strokeWidth={1.8} aria-hidden />
+                  {listing.viewsCount ?? 0} просмотров
+                </span>
               </div>
-
-              <div className="px-4 py-5 sm:px-6">
-                <h2 className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Описание</h2>
-                <div className="mt-2 overflow-hidden break-words whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                  {listing.description}
+              {listing.status !== 'ACTIVE' ? (
+                <div className="mt-2 rounded-md bg-muted px-3 py-2 text-xs font-semibold text-foreground/70">
+                  {statusLabel(listing.status, listing.duplicateImageFlag)}
                 </div>
-                <ListingAttributesDisplay attributes={listing.attributes} />
-              </div>
-            </div>
+              ) : null}
+            </Card>
 
+            {/* Gallery */}
+            <Card className="overflow-hidden p-0">
+              <ListingGallery
+                images={images}
+                title={listing.title}
+                apiBase={API_URL}
+                placeholder={galleryPlaceholder}
+              />
+            </Card>
+
+            {/* Description + attributes */}
+            <Card className="gap-3 px-5 py-5">
+              <h2 className="text-lg font-semibold text-foreground">Описание</h2>
+              <div className="overflow-hidden break-words text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+                {listing.description}
+              </div>
+              <ListingAttributesDisplay attributes={listing.attributes} />
+            </Card>
+
+            {/* Actions row */}
             <div className="flex flex-wrap items-center gap-2 px-1">
               <ListingShareButton title={listing.title} />
               <ListingReportButton listingId={listing.id} title={listing.title} />
-              <span className="ml-auto text-xs tabular-nums text-zinc-400 dark:text-zinc-500">
-                {listing.viewsCount ?? 0} просмотров
+              <span className="ml-auto inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                <MapPin size={12} strokeWidth={1.8} aria-hidden />
+                {listing.city}
               </span>
             </div>
 
-            <div className="flex gap-3 rounded-2xl border border-amber-200/90 bg-amber-50/80 p-4 text-sm text-amber-950 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/25 dark:text-amber-100">
-              <AlertTriangle size={22} strokeWidth={1.8} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden />
+            {/* Safety notice */}
+            <div className="flex gap-3 rounded-2xl border border-accent/30 bg-accent/10 p-4 text-sm text-accent">
+              <AlertTriangle
+                size={20}
+                strokeWidth={1.8}
+                className="mt-0.5 shrink-0 text-accent"
+                aria-hidden
+              />
               <div>
                 <p className="font-bold">Безопасная сделка</p>
                 <p className="mt-1 text-xs leading-relaxed opacity-95">
-                  Не переходите в WhatsApp, Telegram и другие мессенджеры по просьбе продавцов и покупателей — так
-                  действуют мошенники. Договаривайтесь и переписывайтесь здесь, как рекомендуют крупные маркетплейсы.
+                  Не переходите в WhatsApp, Telegram и другие мессенджеры по просьбе продавцов и
+                  покупателей — так действуют мошенники. Договаривайтесь и переписывайтесь здесь, как
+                  рекомендуют крупные маркетплейсы.
                 </p>
               </div>
             </div>
@@ -235,46 +249,71 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             />
           </div>
 
-          {/* Боковая панель — блок покупки справа */}
-          <aside className="listing-detail-aside space-y-4 lg:sticky lg:top-20">
-            <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-lg shadow-zinc-200/40 dark:border-zinc-800 dark:bg-zinc-950 dark:shadow-black/40">
-              <div className="flex items-start gap-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-100 to-cyan-100 dark:from-sky-950 dark:to-cyan-950">
-                  <Store size={24} strokeWidth={1.8} className="text-sky-700 dark:text-sky-400" aria-hidden />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Продавец</p>
-                  <p className="truncate text-base font-bold text-zinc-900 dark:text-zinc-50">
-                    {listing.owner.name ?? 'Продавец'}
-                  </p>
-                  <div className="mt-1">
-                    <SellerPresenceBadge sellerId={listing.owner.id} compact />
-                  </div>
-                  <Link
-                    href={`/seller/${listing.owner.id}`}
-                    className="mt-1 inline-flex text-xs font-semibold text-sky-700 underline decoration-sky-600/30 underline-offset-2 hover:text-sky-900 dark:text-sky-400"
-                  >
-                    Все объявления продавца
-                  </Link>
-                </div>
+          {/* Sticky right rail — buy panel */}
+          <aside className="space-y-3 lg:sticky lg:top-20">
+            {/* Price + CTA */}
+            <Card className="gap-3 px-5 py-5">
+              <div className="text-[28px] leading-tight font-bold tracking-tight text-foreground tabular-nums">
+                {formatRub(listing.priceRub)}
               </div>
-              <div className="mt-3">
+              <p className="text-xs text-muted-foreground">Включая торг — уточняйте в чате</p>
+
+              <div className="mt-1 space-y-2">
+                <Button
+                  render={<Link href={`/messages?listingId=${listing.id}`} />}
+                  size="lg"
+                  className="h-11 w-full rounded-xl text-[15px] font-semibold"
+                >
+                  Написать сообщение
+                </Button>
                 <ShowPhoneButton
                   phone={listing.owner.phone}
                   email={listing.owner.email}
                   sellerId={listing.owner.id}
                 />
               </div>
-              <Link
-                className="mt-4 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-sky-600/25 transition hover:from-sky-700 hover:to-cyan-700"
-                href={`/messages?listingId=${listing.id}`}
-              >
-                Написать в чат
-              </Link>
-              <div className="mt-3">
-                <FavoriteToggle listingId={listing.id} />
+              <p className="text-center text-xs text-muted-foreground">Отвечает за несколько часов</p>
+
+              <Separator />
+
+              <FavoriteToggle listingId={listing.id} />
+            </Card>
+
+            {/* Seller card */}
+            <Card className="gap-3 px-5 py-5">
+              <div className="flex items-start gap-3">
+                <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-base font-bold text-primary-foreground">
+                  {(listing.owner.name ?? 'П').slice(0, 1).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold tracking-wide text-muted-foreground uppercase">
+                    Продавец
+                  </p>
+                  <Link
+                    href={`/seller/${listing.owner.id}`}
+                    className="block truncate text-base font-bold text-foreground transition-colors hover:text-primary"
+                  >
+                    {listing.owner.name ?? 'Продавец'}
+                  </Link>
+                  <div className="mt-0.5">
+                    <SellerPresenceBadge sellerId={listing.owner.id} compact />
+                  </div>
+                </div>
               </div>
-            </div>
+              <Badge
+                variant="outline"
+                className="w-fit gap-1.5 border-primary/20 bg-primary/10 text-primary"
+              >
+                <Store size={12} strokeWidth={1.8} aria-hidden />
+                Документы проверены
+              </Badge>
+              <Link
+                href={`/seller/${listing.owner.id}`}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Все объявления продавца →
+              </Link>
+            </Card>
 
             <SellerReviewForm sellerId={listing.owner.id} listingId={listing.id} />
 
@@ -293,7 +332,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         <SiteFooter />
       </div>
 
-      {/* Bottom nav is in layout.tsx — MobileBottomNav component */}
+      {/* Bottom nav lives in layout.tsx — MobileBottomNav */}
     </div>
   );
 }

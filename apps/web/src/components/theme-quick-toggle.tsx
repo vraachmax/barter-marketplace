@@ -49,18 +49,18 @@ export function ThemeQuickToggle() {
       onClick={() => void toggleTheme()}
       disabled={busy}
       className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-colors disabled:opacity-60 ${
-        displayDark
-          ? 'border-sky-600 bg-sky-600'
-          : 'border-zinc-300 bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800'
-      }`}
+ displayDark
+ ? 'border-primary/30 bg-primary'
+ : 'border-border bg-muted'
+ }`}
       title="Сменить тему"
       aria-label={displayDark ? 'Включена тёмная тема' : 'Включена светлая тема'}
       aria-pressed={displayDark}
     >
       <span
-        className={`absolute inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-zinc-700 shadow-sm transition-transform dark:bg-zinc-100 ${
-          displayDark ? 'translate-x-6' : 'translate-x-1'
-        }`}
+        className={`absolute inline-flex h-5 w-5 items-center justify-center rounded-full bg-card text-foreground shadow-sm transition-transform ${
+ displayDark ? 'translate-x-6' : 'translate-x-1'
+ }`}
       >
         {displayDark ? <Moon size={14} strokeWidth={1.8} aria-hidden /> : <Sun size={14} strokeWidth={1.8} aria-hidden />}
       </span>
