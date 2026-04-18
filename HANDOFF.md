@@ -1,7 +1,34 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ ЗАВЕРШЕНО (2026-04-18)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ ЗАВЕРШЕНО (2026-04-18) · Hotfix #6 ✅ ГЛАВНАЯ ПОЧИНЕНА (2026-04-18)
 ## Следующая задача: Phase 4 — улучшения формы размещения (категорийные attribute schemas, валидация, подсказки)
+
+## 2026-04-18 — Hotfix #6: SSR-крэш главной (digest 1434632452) найден и починен
+
+После Phase 3-деплоя главная на Vercel падала в error boundary «Что-то пошло не так» (`digest: 1434632452`). Пять предыдущих хотфиксов (defensive data fetching, `Promise.allSettled`, `force-dynamic`, нуклеарная главная, etc.) не помогали — данные грузились корректно, падал сам рендер.
+
+**Путь диагностики:**
+- `/build-check` → деплой доходит до Vercel.
+- Nuclear `/` (полностью пустая главная) → рендерится чисто → layout/providers невиновны.
+- Бисекция v1 (data-only панель) → `mergedFeed: 20`, API отвечает 24 объявления → пайплайн данных работает.
+- Бисекция v2 (`?full=1&with=footer|header|cards|loadmore|all`) → cards/loadmore/all падают.
+- Бисекция v3 (`?full=1&with=card-raw|card-card|card-tracked|card-hover|card-one`) → `card-one` (полный `ListingCardComponent`) падает, всё остальное рендерится.
+
+**Корневая причина:**
+`apps/web/src/components/listing-card.tsx` был server component и передавал `badges={<>…<button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />…</>}` в client-компонент `FeedListingHoverThumb`. React 19 / Next 16 запрещают передавать функции через server→client границу — отсюда digest `1434632452`.
+
+**Три фикса:**
+1. `apps/web/src/components/listing-card.tsx` — добавлен `'use client';` в самый верх файла (commit `f07332d`).
+2. `apps/web/src/components/feed-load-more.tsx` — сломанный Tailwind класс `hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)](0,0,0,0.35)]` → `hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)]` (commit `7b4a569`).
+3. Вычищена вся диагностика из `apps/web/src/app/page.tsx` (нуклеарные ветки, `BUILD_TAG`, бисекционные панели v1/v2/v3) и из `apps/web/src/app/error.tsx` (детали, digest, showDetails стейт). Cleanup-коммит в этом патче.
+
+**Урок на будущее:**
+Любой компонент, который рендерит `onClick`/`onChange`/`onSubmit`/`onKeyDown`/любой event-handler inline, обязан быть `'use client'`. Server component не имеет права передавать JSX с функцией в пропсах — даже если handler «невидимый» (вложен в `badges={<></>}`). Тихие крэши SSR с digest без текста — красный флаг именно на это.
+
+**Верификация:**
+- `npx tsc --noEmit` — clean.
+- Пользователь подтвердил скриншотом `?full=1&with=all` — главная рендерится полностью.
+- Осталось подтвердить: `https://web-one-blond-66.vercel.app/` без query-параметров.
 
 ## 2026-04-18 — Phase 3 завершён: бот поддержки + AI-ассистент + автоответы продавца
 
