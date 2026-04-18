@@ -17,6 +17,7 @@ import {
   Settings,
   ShoppingCart,
   SlidersHorizontal,
+  Sparkles,
   Star,
   Tag,
   Wallet,
@@ -145,6 +146,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
                           { href: '/profile/reviews', icon: Star, label: 'Мои отзывы' },
                           { href: '/favorites', icon: Heart, label: 'Избранное' },
                           { href: '/wallet', icon: Wallet, label: 'Кошелёк' },
+                          { href: '/pricing', icon: Sparkles, label: 'Тарифы и Pro' },
                         ].map(({ href, icon: Icon, label }) => (
                           <DropdownMenuItem
                             key={href}

@@ -41,6 +41,9 @@ model User {
   reviewsReceived SellerReview[] @relation("SellerReviewSeller")
   behaviorEvents  UserBehaviorEvent[]
   listingReports  ListingReport[]
+  wallet          Wallet?
+  walletTransactions WalletTransaction[]
+  proSubscription UserProSubscription?
 
   @@index([createdAt])
 }
@@ -164,10 +167,169 @@ model ListingPromotion {
   type      PromotionType
   weight    Int
 
+  /// Пакет продвижения, через который запущена эта промо-акция (если платная)
+  packageId String?
+  package   PromotionPackage? @relation(fields: [packageId], references: [id])
+
+  /// Цена на момент покупки, в копейках (pricing.mdc)
+  priceKopecks Int?
+
   listingId String
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
+  walletTransaction WalletTransaction?
+
   @@index([listingId])
+  @@index([endsAt])
+  @@index([packageId])
+}
+
+/// Кошелёк пользователя. Баланс хранится в копейках (integer, без FP-неточностей).
+model Wallet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Текущий баланс в копейках
+  balanceKopecks Int @default(0)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  transactions WalletTransaction[]
+}
+
+/// Операции по кошельку. Движение денег фиксируем как изменение баланса + ссылку на источник.
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  /// Положительное — пополнение, отрицательное — списание (промо, подписка)
+  amountKopecks Int
+
+  /// Баланс после операции (snapshot для истории)
+  balanceAfterKopecks Int
+
+  type   WalletTransactionType
+  status WalletTransactionStatus @default(SUCCESS)
+
+  /// Короткое описание для UI истории
+  description String
+
+  /// Внешний id платёжной системы (мок в alpha)
+  externalId String?
+
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Если операция связана с промо-активацией
+  listingPromotionId String? @unique
+  listingPromotion   ListingPromotion? @relation(fields: [listingPromotionId], references: [id], onDelete: SetNull)
+
+  /// Если операция связана с подпиской Pro
+  proSubscriptionId String?
+  proSubscription   UserProSubscription? @relation(fields: [proSubscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([walletId, createdAt])
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+/// Каталог тарифов продвижения из `.cursor/rules/pricing.mdc`.
+/// Цены в копейках, срок в секундах (упрощает арифметику endsAt).
+model PromotionPackage {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Стабильный строковый код (persons_lift_x2, business_vip, turbo и т.д.)
+  code String @unique
+
+  /// Название для UI ("Поднятие x2", "VIP", "Турбо")
+  title String
+
+  /// Короткое описание для карточки
+  description String?
+
+  /// Аудитория пакета: PERSONAL | BUSINESS
+  audience PromotionAudience @default(PERSONAL)
+
+  /// Тип промо, запускаемой пакетом (влияет на бейдж и weight в ранжировании)
+  promotionType PromotionType
+
+  /// Множитель веса в ранжировании (для «Поднятие x2/x5/x10» — 2/5/10)
+  weightMultiplier Int @default(1)
+
+  /// Длительность действия пакета в секундах (из pricing.mdc — 1 день или 7 дней)
+  durationSec Int
+
+  /// Цена в копейках (например 1900 = 19 р.)
+  priceKopecks Int
+
+  /// Пакет является «турбо»-комбо (x10 + XL + VIP сразу) — UI метка
+  isBundle Boolean @default(false)
+
+  /// Флаг отключения (не показывать в каталоге, но сохранить ссылки)
+  isActive Boolean @default(true)
+
+  /// Порядок сортировки в каталоге (меньше = выше)
+  sortOrder Int @default(0)
+
+  listingPromotions ListingPromotion[]
+
+  @@index([audience, isActive])
+  @@index([sortOrder])
+}
+
+/// Тарифы подписки Barter Pro (Старт / Профи / Бизнес).
+model ProPlan {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  code  String @unique // start | pro | business
+  title String
+
+  /// Максимум активных объявлений; null = безлимит
+  listingsLimit Int?
+
+  /// Цена за месяц в копейках
+  priceKopecksPerMonth Int
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  subscriptions UserProSubscription[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model UserProSubscription {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  startsAt DateTime
+  endsAt   DateTime
+
+  status ProSubscriptionStatus @default(ACTIVE)
+
+  /// Автопродление включено
+  autoRenew Boolean @default(true)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   ProPlan @relation(fields: [planId], references: [id])
+
+  transactions WalletTransaction[]
+
+  @@index([status])
   @@index([endsAt])
 }
 
@@ -245,6 +407,35 @@ enum PromotionType {
   TOP
   VIP
   XL
+  COLOR
+  LIFT
+}
+
+enum PromotionAudience {
+  PERSONAL
+  BUSINESS
+}
+
+enum WalletTransactionType {
+  TOPUP
+  PROMOTION
+  PRO_SUBSCRIPTION
+  REFUND
+  BONUS
+  ADJUSTMENT
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum ProSubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
 }
 
 enum AppTheme {

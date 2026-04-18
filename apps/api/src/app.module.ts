@@ -11,6 +11,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { SearchModule } from './search/search.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { UsersModule } from './users/users.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module';
     ChatsModule,
     ReviewsModule,
     UsersModule,
+    WalletModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,7 +1,34 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 1 ✅ ЗАВЕРШЕНО (2026-04-18)
-## Следующая задача: Phase 2.1 — Prisma: модели `Wallet`, `Transaction`, `PromotionPackage` (монетизация)
+## Статус: ALPHA | Текущая фаза: Phase 2 ✅ ЗАВЕРШЕНО (2026-04-18)
+## Следующая задача: Phase 3.1 — каталог категорий Avito-уровня (3000+ узлов, attribute schemas)
+
+## 2026-04-18 — Phase 2 завершён: монетизация (Wallet · Promotions · Barter Pro)
+
+Полностью закрыли Phase 2 (2.1 → 2.7). Рубль-копейка модель денег, кошелёк, 14 пакетов продвижения (PERSONAL+BUSINESS), 3 плана Barter Pro (Старт/Профи/Бизнес), мгновенное списание/начисление и страница `/pricing` с интерактивной активацией.
+
+**Сделано по задачам:**
+- **2.1 Prisma** — `Wallet`, `WalletTransaction`, `PromotionPackage`, `ProPlan`, `UserProSubscription`; enum `PromotionType` расширен на `COLOR`, `LIFT`; новые enum `PromotionAudience`, `WalletTransactionType`, `WalletTransactionStatus`, `ProSubscriptionStatus`. SQL-миграция `20260418170000_wallet_promotions_pro/migration.sql` (написана вручную — Prisma engine недоступен в sandbox, на проде сгенерируется).
+- **2.2 API wallet module** — `apps/api/src/wallet/` (`wallet.service.ts`, `wallet.controller.ts`, `dto.ts`, `wallet.module.ts`). Эндпоинты: `GET /wallet/balance`, `GET /wallet/transactions`, `POST /wallet/topup`, `POST /wallet/promote`, `POST /wallet/pro/subscribe`, `GET /wallet/pro/subscription`, `GET /wallet/packages?audience=`, `GET /wallet/pro-plans`. Все списания обёрнуты в `prisma.$transaction` для атомарности.
+- **2.3 Seed** — `WalletService.ensureSeed()` по `OnModuleInit` upsert-ит 14 пакетов (7 PERSONAL + 7 BUSINESS) и 3 плана. Цены — ровно ½ от Avito (как обещано в README).
+- **2.4 Web /wallet** — баланс, история операций (TOPUP/PROMOTION/PRO_SUBSCRIPTION/REFUND/BONUS/ADJUSTMENT), пресеты пополнения 100/300/500/1000/2000/5000 ₽, кастомная сумма, статус подписки.
+- **2.5 Web «Продвинуть»** — `components/promote-dialog.tsx`. В кабинете (`profile-content.tsx`) одна кнопка вместо 3 inline-плиток. Диалог: выбор пакета (с метаданными типа/мульти/срок), баланс, ссылка на пополнение если не хватает, мгновенная активация и обновление списка.
+- **2.6 Web /pricing** — `app/pricing/page.tsx`. Hero, табы PERSONAL/BUSINESS для пакетов, 3 плана Barter Pro карточками с «Рекомендуем»-бейджем, лоадинг-скелетоны, авто-определение текущей подписки и кнопка «Подключить»/«Продлить».
+- **2.7 Barter Pro лимиты** — `assertActiveListingsLimit(ownerId)` в `listings.service.ts`. Без подписки — 5 активных объявлений; на тарифе — `plan.listingsLimit` (или `null` = без лимита). Ошибка `listing_active_limit` маппится на UX-сообщение в `app/new/page.tsx` со ссылкой на `/pricing`.
+
+**Архитектурные решения:**
+- Деньги хранятся как `Int` копейки (`balanceKopecks`, `priceKopecks`, `amountKopecks`). RUB вычисляется = kopecks/100. Никаких float.
+- Транзакция = одна запись в `WalletTransaction` (даже PROMOTION), `balanceAfterKopecks` фиксирует состояние после операции — для корректной истории и аудита.
+- `topup()` сейчас mock-instant credit (для разработки). Реальная интеграция с YooKassa/Stripe — отдельная задача Phase 12.
+- Subscriptions используют `subscribePro` с продлением (если активна — `endsAt` сдвигается на +30 дней; иначе — новая запись).
+- Shim-файл `apps/api/src/wallet/prisma-wallet.d.ts` дополняет `@prisma/client` новыми enum/делегатами для tsc — на проде после `prisma generate` он становится no-op merge.
+
+**Верификация:**
+- `apps/web`: `npx tsc --noEmit` — clean (только предсуществующая `next.config.ts(11,3)` про `eslint`).
+- `apps/api`: `npx tsc --noEmit` — полностью clean.
+
+**Следующий шаг:**
+Phase 3 — каталог категорий по образцу Авито (~3000 узлов с attribute schemas), Phase 4 — улучшения формы размещения (атрибутные формы, валидация), Phase 5 — фильтры в поиске.
 
 ## 2026-04-18 — Phase 1 завершён: дизайн-рефакторинг на shadcn/ui + brand-токены
 

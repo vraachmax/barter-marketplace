@@ -36,6 +36,8 @@ type GeoQuery = { lat: number; lon: number; radiusKm: number };
 
 /** Лимит публикаций с одного аккаунта за календарные сутки (UTC). */
 const MAX_LISTINGS_PER_DAY = 9;
+/** Лимит активных объявлений на бесплатном тарифе (без Barter Pro). */
+const FREE_ACTIVE_LISTINGS_LIMIT = 5;
 /** Порог схожести title+description с существующим объявлением (отклонить). */
 const DUPLICATE_LISTING_SIMILARITY = 0.9;
 /** После этой числа жалоб объявление скрывается (строго больше 3 → с 4-й). */
@@ -46,6 +48,8 @@ const promotionWeightByType: Record<PromotionType, number> = {
   TOP: 200,
   VIP: 120,
   XL: 80,
+  COLOR: 40,
+  LIFT: 60,
 };
 
 const querySynonyms: Record<string, string[]> = {
@@ -82,6 +86,38 @@ export class ListingsService {
       throw new BadRequestException({
         message: 'listing_daily_limit',
         maxPerDay: MAX_LISTINGS_PER_DAY,
+      });
+    }
+  }
+
+  /**
+   * Лимит активных объявлений зависит от тарифа Barter Pro:
+   * - без подписки: FREE_ACTIVE_LISTINGS_LIMIT (5)
+   * - подписка с listingsLimit=null: без лимита
+   * - подписка с listingsLimit=N: до N активных
+   */
+  private async assertActiveListingsLimit(ownerId: string) {
+    const now = new Date();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sub: any = await (this.prisma as any).userProSubscription.findUnique({
+      where: { userId: ownerId },
+      include: { plan: true },
+    });
+    const isActive =
+      sub && sub.status === 'ACTIVE' && new Date(sub.endsAt).getTime() > now.getTime();
+    const limit: number | null = isActive
+      ? (sub.plan?.listingsLimit ?? null)
+      : FREE_ACTIVE_LISTINGS_LIMIT;
+    if (limit == null) return; // без лимита
+
+    const activeCount = await this.prisma.listing.count({
+      where: { ownerId, status: ListingStatus.ACTIVE },
+    });
+    if (activeCount >= limit) {
+      throw new BadRequestException({
+        message: 'listing_active_limit',
+        activeLimit: limit,
+        proPlan: isActive ? sub.plan?.code ?? null : null,
       });
     }
   }
@@ -438,6 +474,7 @@ export class ListingsService {
 
   async create(userId: string, dto: CreateListingDto) {
     await this.assertListingDailyLimit(userId);
+    await this.assertActiveListingsLimit(userId);
     await this.assertNotDuplicateListingText(dto.title, dto.description);
 
     const row = await this.prisma.listing.create({
@@ -1162,7 +1199,8 @@ export class ListingsService {
     const promotion = await this.prisma.listingPromotion.create({
       data: {
         listingId,
-        type: dto.type,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type: dto.type as any,
         startsAt,
         endsAt,
         weight: promotionWeightByType[dto.type],

@@ -3,11 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   Calendar,
-  Camera,
   CheckCircle,
   ChevronDown,
   ChevronRight,
@@ -44,41 +42,9 @@ import { ProfileArchivedSection } from '@/components/profile-archived-section';
 import ProfileSidebar from '@/components/profile-sidebar';
 import { UiSelect } from '@/components/ui-select';
 import { listingThumbPromoExtraClass } from '@/lib/listing-card-visuals';
+import { PromoteDialog } from '@/components/promote-dialog';
 
 type ListingTab = 'ALL' | 'ACTIVE' | 'ARCHIVED' | 'SOLD';
-
-const PROMO_TIERS: Array<{
-  type: 'TOP' | 'VIP' | 'XL';
-  title: string;
-  blurb: string;
-  icon: LucideIcon;
-  shell: string;
-}> = [
-  {
-    type: 'TOP',
-    title: 'Топ',
-    blurb: 'Выше в общей ленте',
-    icon: Star,
-    shell:
-      'bg-card hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]',
-  },
-  {
-    type: 'VIP',
-    title: 'VIP',
-    blurb: 'Больше показов и доверия',
-    icon: Sparkles,
-    shell:
-      'bg-card hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]',
-  },
-  {
-    type: 'XL',
-    title: 'XL',
-    blurb: 'Крупное фото в рекомендациях',
-    icon: Camera,
-    shell:
-      'bg-card hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)]',
-  },
-];
 
 function formatPromoEndsAt(iso: string) {
   try {
@@ -119,6 +85,7 @@ export function ProfileContent() {
   });
   const [showTopUp, setShowTopUp] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number | null>(null);
+  const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
 
   function setListingTab(tab: ListingTab) {
     setActiveTab(tab);
@@ -152,14 +119,6 @@ export function ProfileContent() {
     if (chats.ok) setChatCount(chats.data.length);
     setPublicProfile(profile);
     setStatus('ready');
-  }
-
-  async function promote(id: string, type: 'TOP' | 'VIP' | 'XL') {
-    const res = await apiFetchJson<{ ok: true }>(`/listings/${id}/promote`, {
-      method: 'POST',
-      body: JSON.stringify({ type, days: 3 }),
-    });
-    if (res.ok) await loadMe();
   }
 
   async function setListingStatus(id: string, nextStatus: 'ACTIVE' | 'SOLD' | 'ARCHIVED') {
@@ -969,31 +928,18 @@ export function ProfileContent() {
 
                                   <div className="flex flex-col gap-2 lg:w-56 lg:shrink-0">
                                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                                      Продвижение · 3 дня
+                                      Продвижение
                                     </p>
                                     <div className="flex flex-col gap-2">
                                       {x.status === 'ACTIVE' ? (
-                                        PROMO_TIERS.map((tier) => {
-                                          const TierIcon = tier.icon;
-                                          return (
-                                          <button
-                                            key={tier.type}
-                                            type="button"
-                                            onClick={() => void promote(x.id, tier.type)}
-                                            className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition ${tier.shell}`}
-                                          >
-                                            <TierIcon size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
-                                            <span className="min-w-0">
-                                              <span className="block text-xs font-bold tracking-tight text-foreground">
-                                                {tier.title}
-                                              </span>
-                                              <span className="mt-0.5 block text-[10px] leading-snug text-muted-foreground">
-                                                {tier.blurb}
-                                              </span>
-                                            </span>
-                                          </button>
-                                        );
-                                        })
+                                        <button
+                                          type="button"
+                                          onClick={() => setPromoteTarget({ id: x.id, title: x.title })}
+                                          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
+                                        >
+                                          <Sparkles size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
+                                          <span>{x.activePromotion ? 'Продлить продвижение' : 'Продвинуть'}</span>
+                                        </button>
                                       ) : (
                                         <p className="rounded-xl border border-border bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
                                           {x.status === 'PENDING'
@@ -1003,6 +949,12 @@ export function ProfileContent() {
                                               : 'Продвижение только для активных лотов.'}
                                         </p>
                                       )}
+                                      <Link
+                                        href="/pricing"
+                                        className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-card px-3 py-2 text-[11px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+                                      >
+                                        Все пакеты и подписка
+                                      </Link>
                                     </div>
                                     {x.status === 'PENDING' ? (
                                       <button
@@ -1172,6 +1124,19 @@ export function ProfileContent() {
             </button>
           </div>
         </div>
+      ) : null}
+
+      {promoteTarget ? (
+        <PromoteDialog
+          open={!!promoteTarget}
+          onOpenChange={(o) => {
+            if (!o) setPromoteTarget(null);
+          }}
+          listingId={promoteTarget.id}
+          listingTitle={promoteTarget.title}
+          audience="PERSONAL"
+          onSuccess={() => void loadMe()}
+        />
       ) : null}
     </div>
   );

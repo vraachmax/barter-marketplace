@@ -216,9 +216,11 @@ export default function NewListingPage() {
         const friendly =
           code === 'listing_daily_limit'
             ? 'С аккаунта уже создано 9 объявлений за сегодня (лимит). Попробуйте завтра или удалите черновик.'
-            : code === 'listing_duplicate_similarity'
-              ? 'Текст почти совпадает с уже размещённым объявлением (≥90%). Измените заголовок или описание.'
-              : res.message;
+            : code === 'listing_active_limit'
+              ? 'Достигнут лимит активных объявлений. Архивируйте старое или подключите Бартер Pro: /pricing'
+              : code === 'listing_duplicate_similarity'
+                ? 'Текст почти совпадает с уже размещённым объявлением (≥90%). Измените заголовок или описание.'
+                : res.message;
         setStatus({ kind: 'error', msg: friendly });
       }
       return;

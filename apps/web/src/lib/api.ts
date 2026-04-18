@@ -204,6 +204,83 @@ export type MyReviewsResponse = {
   }>;
 };
 
+// ==================== Wallet / Pricing types ====================
+export type PromotionAudience = 'PERSONAL' | 'BUSINESS';
+export type PromotionTypeCode = 'TOP' | 'VIP' | 'XL' | 'COLOR' | 'LIFT';
+export type WalletTxnType =
+  | 'TOPUP'
+  | 'PROMOTION'
+  | 'PRO_SUBSCRIPTION'
+  | 'REFUND'
+  | 'BONUS'
+  | 'ADJUSTMENT';
+
+export type WalletBalance = {
+  balanceRub: number;
+  balanceKopecks: number;
+  updatedAt: string;
+};
+
+export type WalletTransaction = {
+  id: string;
+  createdAt: string;
+  amountRub: number;
+  amountKopecks: number;
+  balanceAfterRub: number;
+  type: WalletTxnType;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  description: string;
+  promotion: {
+    id: string;
+    type: PromotionTypeCode;
+    endsAt: string;
+    listing: { id: string; title: string };
+  } | null;
+  proSubscription: {
+    id: string;
+    endsAt: string;
+    plan: { code: string; title: string };
+  } | null;
+};
+
+export type PromotionPackage = {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  audience: PromotionAudience;
+  promotionType: PromotionTypeCode;
+  weightMultiplier: number;
+  durationSec: number;
+  priceRub: number;
+  priceKopecks: number;
+  isBundle: boolean;
+  sortOrder: number;
+};
+
+export type ProPlan = {
+  id: string;
+  code: string;
+  title: string;
+  listingsLimit: number | null;
+  priceRubPerMonth: number;
+  priceKopecksPerMonth: number;
+};
+
+export type ProSubscription = {
+  id: string;
+  status: 'ACTIVE' | 'CANCELED' | 'EXPIRED';
+  autoRenew: boolean;
+  startsAt: string;
+  endsAt: string;
+  plan: {
+    code: string;
+    title: string;
+    listingsLimit: number | null;
+    priceRubPerMonth: number;
+  };
+};
+
 export async function apiGetJson<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_URL}${path}`;
   let res: Response;

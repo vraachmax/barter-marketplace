@@ -61,17 +61,19 @@
 | 1.5 | Кабинет продавца (Tabs, Card, Badge, Button) | ✅ |
 | 1.6 | Чат/сообщения (ScrollArea, Input, Button) | ✅ |
 
-## Phase 2: МОНЕТИЗАЦИЯ (кошелёк + тарифы)
+## Phase 2: МОНЕТИЗАЦИЯ (кошелёк + тарифы) -- ✅ ЗАВЕРШЕНО (2026-04-18)
+
+**Итог:** введена монетка (модель «копейка»), кошелёк с историей операций, 14 пакетов продвижения (PERSONAL/BUSINESS), 3 плана Barter Pro (Старт/Профи/Бизнес). Цены = ½ от Avito. Размещение остаётся бесплатным; Pro-лимит на активные объявления (5 для бесплатных, по тарифу для подписчиков). API эндпоинты: `/wallet/balance|transactions|topup|promote|pro/subscribe|pro/subscription|packages|pro-plans`. Web: `/wallet`, `/pricing`, диалог «Продвинуть» в кабинете.
 
 | # | Задача | Статус |
 |---|--------|--------|
-| 2.1 | Prisma: Wallet, Transaction, PromotionPackage модели | 🔲 |
-| 2.2 | API: wallet module (topup, history, promote-paid) | 🔲 |
-| 2.3 | Seed пакетов промо с ценами из FULL_AVITO_SPEC | 🔲 |
-| 2.4 | Web: страница /wallet (баланс, пополнение, история) | 🔲 |
-| 2.5 | Web: кнопка "Продвинуть" в кабинете с выбором пакета | 🔲 |
-| 2.6 | Web: страница тарифов /pricing (визуальное сравнение) | 🔲 |
-| 2.7 | Подписка Barter Pro (Старт/Профи/Бизнес) | 🔲 |
+| 2.1 | Prisma: Wallet, Transaction, PromotionPackage, ProPlan, UserProSubscription | ✅ |
+| 2.2 | API: wallet module (topup, history, promote-paid, subscribe-pro) | ✅ |
+| 2.3 | Seed 14 пакетов промо + 3 ProPlan | ✅ |
+| 2.4 | Web: страница /wallet (баланс, пополнение, история) | ✅ |
+| 2.5 | Web: кнопка "Продвинуть" в кабинете с выбором пакета (PromoteDialog) | ✅ |
+| 2.6 | Web: страница тарифов /pricing (визуальное сравнение + табы PERSONAL/BUSINESS) | ✅ |
+| 2.7 | Подписка Barter Pro (Старт/Профи/Бизнес) + assertActiveListingsLimit | ✅ |
 
 ## Phase 3: БОТ ПОДДЕРЖКИ + БЫСТРЫЕ ОТВЕТЫ
 
