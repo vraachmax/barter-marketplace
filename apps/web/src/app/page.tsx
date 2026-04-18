@@ -149,7 +149,63 @@ export default async function Home({
 }: {
   searchParams: Promise<HomeSearchParams>;
 }) {
-  const sp = await searchParams;
+  try {
+    return await renderHome(await searchParams);
+  } catch (err) {
+    // Не даём упасть в Next.js error boundary с redacted сообщением.
+    // Показываем минимальный fallback с подробной ошибкой прямо в SSR — так пользователь и я
+    // сразу видим причину, а не «specific message is omitted in production builds».
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack ?? '' : '';
+    console.error('[home] SSR crashed:', err);
+    return (
+      <div className="min-h-screen bg-muted px-4 py-10">
+        <div className="mx-auto max-w-2xl space-y-4">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6">
+            <h1 className="text-xl font-bold text-destructive">SSR главной страницы упал</h1>
+            <p className="mt-1 text-sm text-foreground/70">
+              Технический fallback. Не удаётся отрисовать главную ленту.
+            </p>
+            <div className="mt-4">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/60">
+                Сообщение
+              </div>
+              <pre className="mt-1 break-words whitespace-pre-wrap rounded-lg bg-card p-3 text-xs text-foreground">
+                {msg || '(без сообщения)'}
+              </pre>
+            </div>
+            {stack ? (
+              <div className="mt-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/60">
+                  Stack
+                </div>
+                <pre className="mt-1 max-h-72 overflow-auto rounded-lg bg-card p-3 text-[10px] leading-snug text-foreground/80">
+                  {stack}
+                </pre>
+              </div>
+            ) : null}
+          </div>
+          <div className="flex justify-center gap-2">
+            <Link
+              href="/listings"
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
+            >
+              Открыть ленту /listings
+            </Link>
+            <Link
+              href="/profile"
+              className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground"
+            >
+              Профиль
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+async function renderHome(sp: HomeSearchParams) {
   const cookieStore = await cookies();
   const prefCity = safeDecode(cookieStore.get('barter_pref_city')?.value);
   const viewedCookie = safeDecode(cookieStore.get('barter_viewed_listing_ids')?.value);
@@ -333,9 +389,12 @@ export default async function Home({
 
   const catIdMap: Record<string, string> = {};
   for (const c of categories) {
+    const cTitle = typeof c?.title === 'string' ? c.title : '';
+    const cId = typeof c?.id === 'string' ? c.id : '';
+    if (!cTitle || !cId) continue;
     for (const cat of ALL_CATS) {
       const cleanName = cat.name.replace(/[\n-]/g, '');
-      if (c.title.includes(cleanName) || cleanName.includes(c.title.split(' ')[0])) catIdMap[cat.slug] = c.id;
+      if (cTitle.includes(cleanName) || cleanName.includes(cTitle.split(' ')[0])) catIdMap[cat.slug] = cId;
     }
   }
 
