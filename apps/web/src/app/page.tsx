@@ -9,6 +9,9 @@ import { SearchInputWithSuggestions } from '@/components/search-input-with-sugge
 import { FeedLoadMore } from '@/components/feed-load-more';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { TrackedListingLink } from '@/components/tracked-listing-link';
+import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
@@ -493,10 +496,88 @@ async function renderHome(sp: HomeSearchParams) {
   const regularForFeed = listingsItemsSafe.filter((x) => x?.id && !feedSeenIds.has(x.id));
   const mergedFeed = [...vipItems.filter((x) => x?.id), ...recoForFeed, ...regularForFeed];
 
-  // === БИСЕКЦИЯ v2: пробуем компоненты по одному через ?with=... ===
-  // Если конкретный with-вариант падает — мы нашли виновника.
-  // Доступные: footer, header, cards, loadmore, all, none(дефолт)
+  // === БИСЕКЦИЯ v3: разбираем cards и loadmore на суб-варианты ===
   const withWhat = (sp as { with?: string }).with;
+  const sample = mergedFeed[0];
+  if (withWhat && sample) {
+    // Более тонкие варианты для обнаружения виновника в карточке.
+    if (withWhat === 'card-raw') {
+      return (
+        <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+          <div style={{ fontSize: 11, fontFamily: 'ui-monospace', marginBottom: 12 }}>card-raw · build={BUILD_TAG}</div>
+          <div>{sample.title}</div>
+        </div>
+      );
+    }
+    if (withWhat === 'card-card') {
+      return (
+        <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+          <div style={{ fontSize: 11, fontFamily: 'ui-monospace', marginBottom: 12 }}>card-card · build={BUILD_TAG}</div>
+          <Card size="sm" className="gap-0 rounded-xl py-0 shadow-none">
+            <div className="p-3">{sample.title}</div>
+          </Card>
+        </div>
+      );
+    }
+    if (withWhat === 'card-tracked') {
+      return (
+        <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+          <div style={{ fontSize: 11, fontFamily: 'ui-monospace', marginBottom: 12 }}>card-tracked · build={BUILD_TAG}</div>
+          <TrackedListingLink href={`/listing/${sample.id}`} listingId={sample.id} className="underline">
+            {sample.title}
+          </TrackedListingLink>
+        </div>
+      );
+    }
+    if (withWhat === 'card-hover') {
+      return (
+        <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+          <div style={{ fontSize: 11, fontFamily: 'ui-monospace', marginBottom: 12 }}>card-hover · build={BUILD_TAG}</div>
+          <div style={{ width: 260 }}>
+            <FeedListingHoverThumb
+              images={sample.images}
+              title={sample.title}
+              apiBase={API_URL}
+              thumbClassName="relative w-full overflow-hidden bg-muted"
+              imageClassName="w-full h-full object-cover"
+              thumbStyle={{ height: 140 }}
+              imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              placeholder={<div>no photo</div>}
+            />
+          </div>
+        </div>
+      );
+    }
+    if (withWhat === 'card-one') {
+      // Полный ListingCardComponent, но только один — если упадёт, дело в самом компоненте.
+      return (
+        <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+          <div style={{ fontSize: 11, fontFamily: 'ui-monospace', marginBottom: 12 }}>card-one · build={BUILD_TAG} · id={sample.id}</div>
+          <div style={{ maxWidth: 260 }}>
+            <ListingCardComponent data={sample} apiBase={API_URL} />
+          </div>
+        </div>
+      );
+    }
+    if (withWhat === 'lm-stub') {
+      return (
+        <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+          <div style={{ fontSize: 11, fontFamily: 'ui-monospace', marginBottom: 12 }}>lm-stub · build={BUILD_TAG} · total={listings.total}</div>
+          <div>[stub вместо FeedLoadMore]</div>
+        </div>
+      );
+    }
+    if (withWhat === 'lm-real') {
+      return (
+        <div style={{ padding: 16, fontFamily: 'system-ui' }}>
+          <div style={{ fontSize: 11, fontFamily: 'ui-monospace', marginBottom: 12 }}>
+            lm-real · build={BUILD_TAG} · total={listings.total} · path={feedApiPath}
+          </div>
+          <FeedLoadMore initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
+        </div>
+      );
+    }
+  }
   if (withWhat) {
     const safeFooter = withWhat === 'footer' || withWhat === 'all';
     const safeHeader = withWhat === 'header' || withWhat === 'all';
@@ -538,7 +619,7 @@ async function renderHome(sp: HomeSearchParams) {
         {safeFooter ? <SiteFooter /> : null}
         <div style={{ padding: 16, background: '#fff', borderTop: '1px solid #e2e8f0', fontFamily: 'ui-monospace', fontSize: 11 }}>
           Тестовые ссылки:&nbsp;
-          {['none', 'footer', 'header', 'cards', 'loadmore', 'all'].map((w) => (
+          {['none', 'footer', 'header', 'cards', 'loadmore', 'all', 'card-raw', 'card-card', 'card-tracked', 'card-hover', 'card-one', 'lm-stub', 'lm-real'].map((w) => (
             <a key={w} href={w === 'none' ? '/?full=1' : `/?full=1&with=${w}`} style={{ marginRight: 12, color: '#0ea5e9', textDecoration: 'underline' }}>
               {w}
             </a>
@@ -555,7 +636,7 @@ async function renderHome(sp: HomeSearchParams) {
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>renderHome · data OK</h1>
         <p style={{ marginTop: 6, fontSize: 13, color: '#475569' }}>
           API ok. Теперь вкл. JSX-компоненты по одному:&nbsp;
-          {['footer', 'header', 'cards', 'loadmore', 'all'].map((w) => (
+          {['footer', 'header', 'cards', 'loadmore', 'all', 'card-raw', 'card-card', 'card-tracked', 'card-hover', 'card-one', 'lm-stub', 'lm-real'].map((w) => (
             <a key={w} href={`/?full=1&with=${w}`} style={{ marginRight: 8, color: '#0ea5e9', fontWeight: 600 }}>
               with={w}
             </a>

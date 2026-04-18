@@ -90,7 +90,7 @@ export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: P
         <Link
           key={x.id}
           href={`/listing/${x.id}`}
-          className="group flex gap-2.5 rounded-2xl border border-border bg-card p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)](0,0,0,0.35)] md:gap-3 md:p-3.5"
+          className="group flex gap-2.5 rounded-2xl border border-border bg-card p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)] md:gap-3 md:p-3.5"
         >
           <div className="listing-thumb-wrap relative h-[5.5rem] w-28 flex-none overflow-hidden rounded-xl border border-border md:h-24 md:w-32">
             {x.images && x.images.length > 0 ? (
