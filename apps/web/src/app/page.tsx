@@ -53,6 +53,8 @@ type HomeSearchParams = {
   lon?: string;
   radiusKm?: string;
   reco?: '1';
+  /** Диагностический режим — минимальный SSR без дочерних компонентов. */
+  safe?: '1';
 };
 
 function applyClientFiltersAndSort(
@@ -144,13 +146,59 @@ function safeDecode(value?: string) {
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * BUILD_TAG — обновляется с каждым коммитом-хотфиксом. Позволяет быстро понять,
+ * приехал ли новый деплой на Vercel. Если в HTML виден старый тег — значит,
+ * деплой ещё не прошёл или CDN закеширован.
+ */
+const BUILD_TAG = 'hotfix-diag-3 · 2026-04-18';
+
 export default async function Home({
   searchParams,
 }: {
   searchParams: Promise<HomeSearchParams>;
 }) {
+  const sp = await searchParams;
+
+  // DIAGNOSTIC: если передан ?safe=1 — рендерим минимальную версию без сложных
+  // серверных детей, чтобы доказать что деплой приехал и SSR самой страницы ok.
+  // Это бинарный тест: если ?safe=1 работает, а обычная главная падает — значит,
+  // проблема не в /app/page.tsx, а в цепочке дочерних компонентов.
+  if (sp.safe === '1') {
+    return (
+      <div className="min-h-screen bg-muted px-4 py-10">
+        <div className="mx-auto max-w-xl space-y-4 text-center">
+          <h1 className="text-2xl font-black text-foreground">Бартер · safe mode</h1>
+          <p className="text-sm text-muted-foreground">
+            Если ты видишь этот текст, новый деплой приехал, SSR главной страницы сам по себе жив.
+            Значит, ошибка — в одном из дочерних серверных компонентов.
+          </p>
+          <div className="rounded-xl bg-card p-4 text-left text-xs text-foreground">
+            <div><strong>build:</strong> {BUILD_TAG}</div>
+            <div><strong>api_url:</strong> {API_URL || '(same-origin)'}</div>
+            <div><strong>render:</strong> server component + force-dynamic</div>
+          </div>
+          <div className="flex justify-center gap-2">
+            <a
+              href="/?full=1"
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white"
+            >
+              Показать обычную главную
+            </a>
+            <a
+              href="/listings"
+              className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground"
+            >
+              Открыть /listings
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   try {
-    return await renderHome(await searchParams);
+    return await renderHome(sp);
   } catch (err) {
     // Не даём упасть в Next.js error boundary с redacted сообщением.
     // Показываем минимальный fallback с подробной ошибкой прямо в SSR — так пользователь и я
@@ -166,6 +214,7 @@ export default async function Home({
             <p className="mt-1 text-sm text-foreground/70">
               Технический fallback. Не удаётся отрисовать главную ленту.
             </p>
+            <p className="mt-1 text-[11px] text-foreground/60">build: {BUILD_TAG}</p>
             <div className="mt-4">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-foreground/60">
                 Сообщение
