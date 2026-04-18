@@ -493,6 +493,43 @@ async function renderHome(sp: HomeSearchParams) {
   const regularForFeed = listingsItemsSafe.filter((x) => x?.id && !feedSeenIds.has(x.id));
   const mergedFeed = [...vipItems.filter((x) => x?.id), ...recoForFeed, ...regularForFeed];
 
+  // === БИСЕКЦИЯ v1: возвращаем только данные, без JSX-компонентов. ===
+  // Если это сработает, а оригинальный return (закомментирован ниже) — нет,
+  // значит проблема именно в одном из дочерних компонентов (SiteHeader,
+  // SearchInputWithSuggestions, ListingCardComponent, FeedLoadMore, SiteFooter),
+  // а не в data-fetching или в логике merge.
+  return (
+    <div style={{ padding: 24, fontFamily: 'system-ui', color: '#0f172a', background: '#f5f7fa', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', background: '#fff', padding: 20, borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>renderHome · data OK</h1>
+        <p style={{ marginTop: 6, fontSize: 13, color: '#475569' }}>
+          Если ты видишь этот текст — значит data-pipeline (API-fetches + merge) ok.
+          Падение было на JSX-компонентах. Возвращаем их по одному.
+        </p>
+        <pre style={{ marginTop: 12, padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', fontFamily: 'ui-monospace', fontSize: 12, whiteSpace: 'pre-wrap' }}>
+{`build        : ${BUILD_TAG}
+api_url      : ${API_URL || '(same-origin)'}
+apiBackendDown: ${apiBackendDown}
+categories   : ${categories.length}
+listings.tot : ${listings.total}
+listings.items: ${listings.items.length}
+vipStrip     : ${(listings.vipStrip ?? []).length}
+recommended  : ${recommended.items.length}
+cities       : ${russianCities.length}
+mergedFeed   : ${mergedFeed.length}
+currentCity  : ${currentCity}
+currentQ     : ${currentQ}`}
+        </pre>
+        <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
+          <a href="/" style={{ padding: '10px 16px', background: '#00AAFF', color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>На главную (nuclear)</a>
+          <a href="/listings" style={{ padding: '10px 16px', background: '#fff', color: '#0f172a', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', border: '1px solid #e2e8f0' }}>Лента /listings</a>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ===== ОРИГИНАЛЬНЫЙ РЕНДЕР НИЖЕ — ВРЕМЕННО ОТКЛЮЧЁН ДЛЯ БИСЕКЦИИ =====
+  // eslint-disable-next-line no-unreachable
   return (
     <div className="min-h-screen bg-muted antialiased">
       {apiBackendDown ? (
