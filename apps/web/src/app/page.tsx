@@ -246,11 +246,38 @@ export default async function Home({
     citiesPromise,
   ]);
 
-  const categories = catRes.status === 'fulfilled' ? catRes.value : [];
-  const listings = listRes.status === 'fulfilled' ? listRes.value : emptyListings;
-  const recommended = recRes.status === 'fulfilled' ? recRes.value : emptyRecommended;
-  const russianCitiesRaw =
-    citiesRes.status === 'fulfilled' ? citiesRes.value : defaultCities;
+  // Defensive: API may return partial/malformed payloads. Coerce to expected shapes
+  // so downstream `.map()` / `.filter()` never crash the SSR pass and trigger error.tsx.
+  const categories = Array.isArray(catRes.status === 'fulfilled' ? catRes.value : null)
+    ? (catRes as PromiseFulfilledResult<Category[]>).value
+    : [];
+  const rawListings = listRes.status === 'fulfilled' ? listRes.value : emptyListings;
+  const listings: ListingsResponse = {
+    page: rawListings?.page ?? 1,
+    limit: rawListings?.limit ?? 20,
+    total: typeof rawListings?.total === 'number' ? rawListings.total : 0,
+    vipStrip: Array.isArray(rawListings?.vipStrip) ? rawListings.vipStrip : [],
+    items: Array.isArray(rawListings?.items) ? rawListings.items : [],
+  };
+  const rawRecommended = recRes.status === 'fulfilled' ? recRes.value : emptyRecommended;
+  const recommended: ListingsResponse = {
+    page: rawRecommended?.page ?? 1,
+    limit: rawRecommended?.limit ?? 8,
+    total: typeof rawRecommended?.total === 'number' ? rawRecommended.total : 0,
+    vipStrip: Array.isArray(rawRecommended?.vipStrip) ? rawRecommended.vipStrip : [],
+    items: Array.isArray(rawRecommended?.items) ? rawRecommended.items : [],
+  };
+  const russianCitiesRaw = Array.isArray(
+    citiesRes.status === 'fulfilled' ? citiesRes.value : null,
+  )
+    ? (citiesRes as PromiseFulfilledResult<string[]>).value
+    : defaultCities;
+
+  // SSR error visibility — logs surface in Vercel function logs.
+  if (catRes.status === 'rejected') console.error('[home] categories fetch rejected:', catRes.reason);
+  if (listRes.status === 'rejected') console.error('[home] listings fetch rejected:', listRes.reason);
+  if (recRes.status === 'rejected') console.error('[home] recommended fetch rejected:', recRes.reason);
+  if (citiesRes.status === 'rejected') console.error('[home] cities fetch rejected:', citiesRes.reason);
 
   const apiBackendDown =
     catRes.status === 'rejected' && listRes.status === 'rejected';
@@ -313,11 +340,18 @@ export default async function Home({
   }
 
   /* Merge VIP + recommended + regular into one unified feed */
-  const vipItems = listings.vipStrip ?? [];
-  const feedSeenIds = new Set(vipItems.map((x) => x.id));
-  const recoForFeed = (!hasSearchQuery ? recommended.items : []).filter((x) => { if (feedSeenIds.has(x.id)) return false; feedSeenIds.add(x.id); return true; });
-  const regularForFeed = listings.items.filter((x) => !feedSeenIds.has(x.id));
-  const mergedFeed = [...vipItems, ...recoForFeed, ...regularForFeed];
+  const vipItems = Array.isArray(listings.vipStrip) ? listings.vipStrip : [];
+  const feedSeenIds = new Set(vipItems.map((x) => x?.id).filter(Boolean) as string[]);
+  const recoItemsSafe = Array.isArray(recommended.items) ? recommended.items : [];
+  const listingsItemsSafe = Array.isArray(listings.items) ? listings.items : [];
+  const recoForFeed = (!hasSearchQuery ? recoItemsSafe : []).filter((x) => {
+    if (!x?.id) return false;
+    if (feedSeenIds.has(x.id)) return false;
+    feedSeenIds.add(x.id);
+    return true;
+  });
+  const regularForFeed = listingsItemsSafe.filter((x) => x?.id && !feedSeenIds.has(x.id));
+  const mergedFeed = [...vipItems.filter((x) => x?.id), ...recoForFeed, ...regularForFeed];
 
   return (
     <div className="min-h-screen bg-muted antialiased">
