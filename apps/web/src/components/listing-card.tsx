@@ -1,3 +1,5 @@
+'use client';
+
 import { Camera, Heart } from 'lucide-react';
 import { TrackedListingLink } from '@/components/tracked-listing-link';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
