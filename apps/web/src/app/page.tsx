@@ -493,18 +493,73 @@ async function renderHome(sp: HomeSearchParams) {
   const regularForFeed = listingsItemsSafe.filter((x) => x?.id && !feedSeenIds.has(x.id));
   const mergedFeed = [...vipItems.filter((x) => x?.id), ...recoForFeed, ...regularForFeed];
 
-  // === БИСЕКЦИЯ v1: возвращаем только данные, без JSX-компонентов. ===
-  // Если это сработает, а оригинальный return (закомментирован ниже) — нет,
-  // значит проблема именно в одном из дочерних компонентов (SiteHeader,
-  // SearchInputWithSuggestions, ListingCardComponent, FeedLoadMore, SiteFooter),
-  // а не в data-fetching или в логике merge.
+  // === БИСЕКЦИЯ v2: пробуем компоненты по одному через ?with=... ===
+  // Если конкретный with-вариант падает — мы нашли виновника.
+  // Доступные: footer, header, cards, loadmore, all, none(дефолт)
+  const withWhat = (sp as { with?: string }).with;
+  if (withWhat) {
+    const safeFooter = withWhat === 'footer' || withWhat === 'all';
+    const safeHeader = withWhat === 'header' || withWhat === 'all';
+    const safeCards = withWhat === 'cards' || withWhat === 'all';
+    const safeLoadMore = withWhat === 'loadmore' || withWhat === 'all';
+    return (
+      <div className="min-h-screen bg-muted antialiased">
+        <div style={{ padding: 16, background: '#fef3c7', borderBottom: '1px solid #fbbf24', fontFamily: 'ui-monospace', fontSize: 12 }}>
+          BISECT v2 · with={withWhat} · build={BUILD_TAG} · feed={mergedFeed.length}
+        </div>
+        {safeHeader ? (
+          <div className="hidden md:block">
+            <SiteHeader>
+              <div className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-l-lg border-2 border-r-0 border-primary bg-background px-4">
+                <Search size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground" aria-hidden />
+                <span className="text-sm text-muted-foreground">Поиск (заглушка)</span>
+              </div>
+            </SiteHeader>
+          </div>
+        ) : null}
+        <main className="mx-auto max-w-7xl px-4 py-6">
+          {safeCards ? (
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+              {mergedFeed.slice(0, 8).map((x) => (
+                <ListingCardComponent key={x.id} data={x} apiBase={API_URL} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: 16, background: '#fff', borderRadius: 12, color: '#475569' }}>
+              cards: пропущены ({mergedFeed.length} в feed)
+            </div>
+          )}
+          {safeLoadMore ? (
+            <div className="mt-4">
+              <FeedLoadMore initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
+            </div>
+          ) : null}
+        </main>
+        {safeFooter ? <SiteFooter /> : null}
+        <div style={{ padding: 16, background: '#fff', borderTop: '1px solid #e2e8f0', fontFamily: 'ui-monospace', fontSize: 11 }}>
+          Тестовые ссылки:&nbsp;
+          {['none', 'footer', 'header', 'cards', 'loadmore', 'all'].map((w) => (
+            <a key={w} href={w === 'none' ? '/?full=1' : `/?full=1&with=${w}`} style={{ marginRight: 12, color: '#0ea5e9', textDecoration: 'underline' }}>
+              {w}
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // === Дефолтный рендер /?full=1 (без with) — data-only diag, как в bisection v1. ===
   return (
     <div style={{ padding: 24, fontFamily: 'system-ui', color: '#0f172a', background: '#f5f7fa', minHeight: '100vh' }}>
       <div style={{ maxWidth: 820, margin: '0 auto', background: '#fff', padding: 20, borderRadius: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>renderHome · data OK</h1>
         <p style={{ marginTop: 6, fontSize: 13, color: '#475569' }}>
-          Если ты видишь этот текст — значит data-pipeline (API-fetches + merge) ok.
-          Падение было на JSX-компонентах. Возвращаем их по одному.
+          API ok. Теперь вкл. JSX-компоненты по одному:&nbsp;
+          {['footer', 'header', 'cards', 'loadmore', 'all'].map((w) => (
+            <a key={w} href={`/?full=1&with=${w}`} style={{ marginRight: 8, color: '#0ea5e9', fontWeight: 600 }}>
+              with={w}
+            </a>
+          ))}
         </p>
         <pre style={{ marginTop: 12, padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', fontFamily: 'ui-monospace', fontSize: 12, whiteSpace: 'pre-wrap' }}>
 {`build        : ${BUILD_TAG}
@@ -517,8 +572,9 @@ vipStrip     : ${(listings.vipStrip ?? []).length}
 recommended  : ${recommended.items.length}
 cities       : ${russianCities.length}
 mergedFeed   : ${mergedFeed.length}
-currentCity  : ${currentCity}
-currentQ     : ${currentQ}`}
+currentCity  : "${currentCity}"
+currentQ     : "${currentQ}"
+sample item  : ${JSON.stringify(mergedFeed[0] ?? null)?.slice(0, 200)}`}
         </pre>
         <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
           <a href="/" style={{ padding: '10px 16px', background: '#00AAFF', color: '#fff', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>На главную (nuclear)</a>
