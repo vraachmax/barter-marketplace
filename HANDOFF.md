@@ -1,11 +1,71 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#12 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#13 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #12 (только что):** `/listings` → Avito-стиль (3 таба «Активные / Требуют действия / Завершённые», sticky bottom CTA на `--mode-cta`, palette migration, needsAction helper). ✅
-2. **Phase 1.x mobile sprint (#55→#53→#54→#48):** #55 ✅, #53 ✅, далее #54 — `/new` step-by-step wizard с автоподбором категории (local fuzzy match); #48 — `/search` mobile Avito clone.
+1. **Hotfix #13 (только что):** `/new` → Avito-style 5-step wizard с локальным fuzzy-match подбором категории (no AI, no network). ✅
+2. **Phase 1.x mobile sprint (#55→#53→#54→#48):** #55 ✅, #53 ✅, #54 ✅, далее #48 — `/search` mobile Avito clone.
 3. **Phase 1.x остальное:** `/messages` (#49, pinned support + автоответы).
 4. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+
+## 2026-04-19 (9) — Hotfix #13: /new → Avito-style 5-step wizard
+
+Задача #54 из директивы Максима: «Локально (fuzzy match по title/keywords) —
+мгновенно, без AI». До: `/new` была «всё-на-одной-странице» с фото, описанием,
+характеристиками и сайдбаром цены/города/категории — длинный скролл, пустой
+`<select>` категории пугал новичков.
+
+**Что сделано:** полный рефакторинг `apps/web/src/app/new/page.tsx`
+(768 → 1359 строк, 74% rewrite):
+
+- **5 шагов мастера** с прогресс-баром сверху и sticky bottom-bar:
+  1. **«Что продаёте?»** — один большой Input + live-подсказки категорий.
+     Алгоритм fuzzyMatchCategory(): score = 100 (title-substring) +
+     50 + 2*len(kw) на каждое keyword-совпадение, top-4 в подсказках.
+     Fallback `<details>` «Выбрать вручную» с полным списком (раскрывается
+     автоматически если текст ≥2 символа и подсказок нет).
+  2. **«Категория и описание»** — breadcrumb выбранной категории
+     (с кнопкой «Изменить» → возврат на step 1), цена, описание (10+),
+     характеристики (ListingCategoryAttributesForm) динамически по slug.
+  3. **«Фото»** — drag-n-drop с подсветкой mode-accent, лимит 10,
+     первое фото помечено бейджем «обложка», preview grid 3/4/5 col.
+  4. **«Где?»** — город + подсказка про приватность точного адреса.
+  5. **«Готово»** — auth-card (loading/ok/need-login), summary
+     (категория/город/фото-count/desc-len), кнопка «Опубликовать»
+     на `var(--mode-cta)`.
+
+- **Локальный fuzzy-match словарь** (~230 keywords across 9 categories):
+  - `auto`: bmw/audi/mercedes/lada/тойота/хендай/мотоцикл/газель/…
+  - `realty`: квартир/комнат/студи/дом/дач/гараж/аренда/однушк/…
+  - `job`: работа/вакансия/курьер/программист/водитель/…
+  - `services`: ремонт/сантехник/клининг/репетитор/маникюр/юрист/…
+  - `electronics`: айфон/galaxy/macbook/наушники/airpods/playstation/…
+  - `home`: диван/кровать/шкаф/стиральн/пылесос/дрель/…
+  - `clothes`: куртк/платье/джинс/кроссовк/nike/zara/…
+  - `kids`: коляск/игрушк/lego/самокат/подгузник/…
+  - `hobby`: велосипед/гитара/настольн/гантел/рыбал/палатк/…
+
+- **canGoNext(step)** + **nextStepHint(step)**: per-step валидация с inline
+  подсказкой («Выберите категорию из подсказок», «Описание: минимум 10
+  символов», «Войдите, чтобы опубликовать»). Кнопка «Далее» disabled +
+  серая до выполнения условия.
+
+- **PostPublishScreen** — отдельный компонент с success-card на
+  `--mode-accent-soft`, две CTA («Открыть объявление» / «Создать ещё»),
+  и опциональный upload-more блок.
+
+- **Палитра**: только `var(--mode-accent*)` и `var(--mode-cta)`. Никаких
+  `bg-primary` / `text-accent` / `text-secondary` / brand-токенов
+  (которые в Бартер-режиме даём оранжевые/синие пятна).
+
+- **Бизнес-логика сохранена 1-в-1**: `submit()`, `uploadPendingToListing()`,
+  `addFiles()`, `revokePending()`, error handling
+  (listing_daily_limit / listing_active_limit / listing_duplicate_similarity).
+
+**Верификация:** `npx tsc --noEmit` → exit 0. ESLint clean (после удаления
+unused `Camera` import). 
+
+**Commit:** `236a3f0` (master, pushed → Vercel auto-deploy).
+
 
 ## 2026-04-19 (8) — Hotfix #12: /listings → Avito-стиль (3 таба + mode-cta CTA)
 
