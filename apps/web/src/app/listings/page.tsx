@@ -1,13 +1,34 @@
 'use client';
 
+/**
+ * /listings — «Мои объявления» в Avito-стиле (Hotfix #12).
+ *
+ * Три таба:
+ *   1. «Активные» — опубликованные и полноценные (есть цена и фото).
+ *   2. «Требуют действия» — PENDING (модерация), BLOCKED (скрыто),
+ *      duplicateImageFlag, либо ACTIVE без цены или без фото.
+ *   3. «Завершённые» — SOLD + ARCHIVED.
+ *
+ * На мобильном — sticky bottom CTA «Разместить объявление» на `--mode-cta`
+ * (лаймовый = Маркет, оранжевый = Бартер). На desktop — та же CTA в шапке.
+ *
+ * Палитра унифицирована: все хардкод-хексы и brand-токены (`bg-primary`,
+ * `text-primary`, `bg-accent`, `text-accent`) заменены на CSS-vars
+ * `--mode-accent*` / `--mode-cta` или семантические токены (`success`,
+ * `destructive`, `muted`) — чтобы не было синих пятен в режиме Бартер
+ * и оранжевых в режиме Маркет.
+ */
+
 import Link from 'next/link';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import {
+  AlertTriangle,
   ArrowLeft,
   Camera,
   FileText,
+  PlusCircle,
   Search,
   Sparkles,
   Star,
@@ -28,7 +49,27 @@ import { ProfileArchivedSection } from '@/components/profile-archived-section';
 import { UiSelect } from '@/components/ui-select';
 import { listingThumbPromoExtraClass } from '@/lib/listing-card-visuals';
 
-type ListingTab = 'ALL' | 'ACTIVE' | 'ARCHIVED' | 'SOLD';
+type ListingTab = 'ACTIVE' | 'NEEDS_ACTION' | 'COMPLETED';
+
+/**
+ * Объявление «требует действия» если:
+ *  — статус PENDING (ждёт модерации, показать CTA «Подтвердить публикацию»)
+ *  — статус BLOCKED (скрыто модерацией, нужна правка)
+ *  — duplicateImageFlag (фото совпало с другим объявлением — нужно заменить)
+ *  — ACTIVE, но без цены (priceRub == null)
+ *  — ACTIVE, но без фото (images empty)
+ *
+ * Такие карточки по клику ведут сразу в редактирование и маркируются
+ * янтарным предупреждением с кратким объяснением.
+ */
+function needsAction(x: MyListing): { is: boolean; reason: string } {
+  if (x.status === 'PENDING') return { is: true, reason: 'Ожидает модерации — подтвердите публикацию' };
+  if (x.status === 'BLOCKED') return { is: true, reason: 'Объявление скрыто модерацией' };
+  if (x.duplicateImageFlag) return { is: true, reason: 'Фото совпало с другим объявлением — замените' };
+  if (x.status === 'ACTIVE' && x.priceRub == null) return { is: true, reason: 'Не указана цена' };
+  if (x.status === 'ACTIVE' && (!x.images || x.images.length === 0)) return { is: true, reason: 'Нет ни одного фото' };
+  return { is: false, reason: '' };
+}
 
 const PROMO_TIERS: Array<{
   type: 'TOP' | 'VIP' | 'XL';
@@ -175,8 +216,17 @@ function ListingsContent() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'ACTIVE' || tab === 'ARCHIVED' || tab === 'SOLD' || tab === 'ALL') {
+    if (tab === 'ACTIVE' || tab === 'NEEDS_ACTION' || tab === 'COMPLETED') {
       setActiveTab(tab);
+      return;
+    }
+    // Совместимость со старыми ссылками
+    if (tab === 'ALL') {
+      setActiveTab('ACTIVE');
+      return;
+    }
+    if (tab === 'ARCHIVED' || tab === 'SOLD') {
+      setActiveTab('COMPLETED');
       return;
     }
     setActiveTab('ACTIVE');
@@ -186,43 +236,75 @@ function ListingsContent() {
     void loadData();
   }, []);
 
-  const activeCount = listings.filter((x) => x.status === 'ACTIVE' || x.status === 'PENDING').length;
-  const archivedCount = listings.filter((x) => x.status === 'ARCHIVED').length;
-  const soldCount = listings.filter((x) => x.status === 'SOLD').length;
-  const visibleListings = listings.filter((x) => {
-    if (activeTab === 'ALL') return true;
-    if (activeTab === 'ACTIVE') return x.status === 'ACTIVE' || x.status === 'PENDING';
-    return x.status === activeTab;
-  });
+  const activeCount = useMemo(
+    () => listings.filter((x) => x.status === 'ACTIVE' && !needsAction(x).is).length,
+    [listings],
+  );
+  const needsActionCount = useMemo(
+    () => listings.filter((x) => needsAction(x).is).length,
+    [listings],
+  );
+  const completedCount = useMemo(
+    () => listings.filter((x) => x.status === 'SOLD' || x.status === 'ARCHIVED').length,
+    [listings],
+  );
 
+  const visibleListings = useMemo(
+    () =>
+      listings.filter((x) => {
+        if (activeTab === 'ACTIVE') return x.status === 'ACTIVE' && !needsAction(x).is;
+        if (activeTab === 'NEEDS_ACTION') return needsAction(x).is;
+        if (activeTab === 'COMPLETED') return x.status === 'SOLD' || x.status === 'ARCHIVED';
+        return false;
+      }),
+    [listings, activeTab],
+  );
+
+  /**
+   * Семантика статус-чипа (как в Hotfix #10 на /profile).
+   * ACTIVE → success (зелёный). PENDING/SOLD → mode-accent.
+   * BLOCKED → destructive. ARCHIVED → muted.
+   */
   function statusLabel(st: MyListing['status']) {
-    if (st === 'ACTIVE') return { text: 'Активно', className: 'bg-secondary/10 text-secondary ring-secondary/30' };
+    if (st === 'ACTIVE')
+      return { text: 'Активно', className: 'bg-success/10 text-success ring-success/30' };
     if (st === 'PENDING')
-      return { text: 'Модерация', className: 'bg-accent/10 text-accent ring-border' };
+      return {
+        text: 'Модерация',
+        className:
+          'ring-1 [background-color:var(--mode-accent-soft)] [color:var(--mode-accent)] [--tw-ring-color:var(--mode-accent-ring)]',
+      };
     if (st === 'BLOCKED')
-      return { text: 'Скрыто', className: 'bg-destructive/10 text-destructive ring-border' };
-    if (st === 'SOLD') return { text: 'Продано', className: 'bg-primary/10 text-primary ring-primary/30' };
-    return { text: 'Архив', className: 'bg-accent/10 text-accent ring-accent/30' };
+      return { text: 'Скрыто', className: 'bg-destructive/10 text-destructive ring-destructive/30' };
+    if (st === 'SOLD')
+      return {
+        text: 'Продано',
+        className:
+          'ring-1 [background-color:var(--mode-accent-soft)] [color:var(--mode-accent)] [--tw-ring-color:var(--mode-accent-ring)]',
+      };
+    return { text: 'Архив', className: 'bg-muted text-muted-foreground ring-border' };
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] text-[#1a1a1a] antialiased">
-      {/* Mobile header */}
+    <div className="min-h-screen bg-muted text-foreground antialiased">
+      {/* Mobile header — Avito-стиль: back / заголовок / поиск. */}
       <header className="sticky top-0 z-20 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <button
             onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4]"
+            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-muted"
+            aria-label="Назад"
           >
-            <ArrowLeft size={24} strokeWidth={s} className="text-[#1a1a1a]" aria-hidden />
+            <ArrowLeft size={24} strokeWidth={s} className="shrink-0 text-foreground" aria-hidden />
           </button>
-          <h1 className="text-base font-bold text-[#1a1a1a]">Мои объявления</h1>
+          <h1 className="text-base font-bold text-foreground">Мои объявления</h1>
           <button
             type="button"
             onClick={() => router.push('/search')}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4]"
+            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-muted"
+            aria-label="Поиск"
           >
-            <Search size={24} strokeWidth={s} className="text-[#1a1a1a]" aria-hidden />
+            <Search size={24} strokeWidth={s} className="shrink-0 text-foreground" aria-hidden />
           </button>
         </div>
       </header>
@@ -230,25 +312,39 @@ function ListingsContent() {
       <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
-            <span className="inline-block size-10 animate-spin rounded-full border-2 border-primary/30 border-t-transparent" aria-hidden />
+            <span
+              className="inline-block size-10 shrink-0 animate-spin rounded-full border-2 border-t-transparent"
+              style={{ borderColor: 'var(--mode-accent-ring)', borderTopColor: 'transparent' }}
+              aria-hidden
+            />
             <p className="text-sm text-muted-foreground">Загружаем объявления…</p>
           </div>
         ) : null}
 
         {status === 'need_auth' ? (
           <div className="mx-auto max-w-md py-10">
-            <div className="overflow-hidden rounded-lg bg-card">
-              <div className="bg-[#E8F2FF] px-6 py-10 text-center">
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg bg-card">
-                  <Sparkles size={32} strokeWidth={s} className="text-[#007AFF]" aria-hidden />
+            <div className="overflow-hidden rounded-2xl bg-card shadow-sm">
+              <div
+                className="px-6 py-10 text-center"
+                style={{ backgroundColor: 'var(--mode-accent-soft)' }}
+              >
+                <div className="mx-auto grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-card">
+                  <Sparkles
+                    size={32}
+                    strokeWidth={s}
+                    className="shrink-0"
+                    style={{ color: 'var(--mode-accent)' }}
+                    aria-hidden
+                  />
                 </div>
-                <h1 className="mt-4 text-xl font-bold text-[#1a1a1a]">Мои объявления</h1>
-                <p className="mt-2 text-sm text-[#6b7280]">Войдите, чтобы управлять объявлениями.</p>
+                <h1 className="mt-4 text-xl font-bold text-foreground">Мои объявления</h1>
+                <p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы управлять объявлениями.</p>
               </div>
               <div className="p-6">
                 <Link
                   href="/auth"
-                  className="flex h-12 w-full items-center justify-center rounded-lg bg-[#007AFF] text-sm font-semibold text-white transition hover:bg-[#0066DD]"
+                  className="flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition"
+                  style={{ backgroundColor: 'var(--mode-accent)' }}
                 >
                   Войти или зарегистрироваться
                 </Link>
@@ -267,30 +363,38 @@ function ListingsContent() {
           <>
             {/* ===== MOBILE VIEW ===== */}
             <div className="md:hidden pb-28">
-              {/* Tabs */}
-              <div className="flex items-baseline gap-4 border-b border-[#E8E8E8] bg-card px-4 pt-3">
-                {([
-                  { tab: 'ACTIVE' as ListingTab, label: 'Активные', count: activeCount },
-                  { tab: 'SOLD' as ListingTab, label: 'Продано', count: soldCount },
-                  { tab: 'ARCHIVED' as ListingTab, label: 'Архив', count: archivedCount },
-                ] as const).map((t) => (
-                  <button
-                    key={t.tab}
-                    type="button"
-                    onClick={() => setListingTab(t.tab)}
-                    className={`relative pb-3 text-base transition ${
- activeTab === t.tab
- ? 'font-bold text-[#1a1a1a]'
- : 'font-medium text-muted-foreground'
+              {/* Tabs — Avito-стиль: 3 пилюли, активная подчёркнута brand-цветом mode-accent. */}
+              <div className="flex items-baseline gap-5 border-b border-border bg-card px-4 pt-3">
+                {(
+                  [
+                    { tab: 'ACTIVE' as ListingTab, label: 'Активные', count: activeCount },
+                    { tab: 'NEEDS_ACTION' as ListingTab, label: 'Требуют действия', count: needsActionCount },
+                    { tab: 'COMPLETED' as ListingTab, label: 'Завершённые', count: completedCount },
+                  ] as const
+                ).map((t) => {
+                  const isActive = activeTab === t.tab;
+                  return (
+                    <button
+                      key={t.tab}
+                      type="button"
+                      onClick={() => setListingTab(t.tab)}
+                      className={`relative pb-3 text-[13px] transition ${
+ isActive ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'
  }`}
-                  >
-                    {t.label}
-                    {t.count > 0 ? <sup className="ml-0.5 text-[11px] font-semibold">{t.count}</sup> : null}
-                    {activeTab === t.tab ? (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#1a1a1a]" />
-                    ) : null}
-                  </button>
-                ))}
+                    >
+                      {t.label}
+                      {t.count > 0 ? (
+                        <sup className="ml-1 text-[11px] font-semibold">{t.count}</sup>
+                      ) : null}
+                      {isActive ? (
+                        <span
+                          className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full"
+                          style={{ background: 'var(--mode-accent)' }}
+                        />
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Listings list */}
@@ -298,22 +402,33 @@ function ListingsContent() {
                 {visibleListings.length === 0 ? (
                   <div className="px-4 py-16 text-center">
                     <p className="text-sm text-muted-foreground">
-                      {activeTab === 'ACTIVE' ? 'Нет активных объявлений' : activeTab === 'SOLD' ? 'Нет проданных' : 'Архив пуст'}
+                      {activeTab === 'ACTIVE'
+                        ? 'Нет активных объявлений'
+                        : activeTab === 'NEEDS_ACTION'
+                          ? 'Всё в порядке — ничего не требует действий'
+                          : 'Завершённых пока нет'}
                     </p>
                   </div>
                 ) : (
                   visibleListings.map((x) => {
                     const thumbImg = x.images?.[0];
                     const thumbUrl = thumbImg
-                      ? thumbImg.url.startsWith('http') ? thumbImg.url : `${API_URL}${thumbImg.url}`
+                      ? thumbImg.url.startsWith('http')
+                        ? thumbImg.url
+                        : `${API_URL}${thumbImg.url}`
                       : null;
+                    const action = needsAction(x);
                     return (
-                      <div key={x.id} className="flex gap-3 border-b border-[#F0F0F0] px-4 py-3">
-                        <Link href={`/listing/${x.id}`} className="flex-shrink-0">
-                          <div className="h-[80px] w-[80px] overflow-hidden rounded-lg bg-[#f4f4f4]">
+                      <div key={x.id} className="flex gap-3 border-b border-border px-4 py-3">
+                        <Link href={`/listing/${x.id}`} className="shrink-0">
+                          <div className="h-[80px] w-[80px] overflow-hidden rounded-lg bg-muted">
                             {thumbUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={thumbUrl} alt={x.title} className="h-full w-full object-cover" />
+                              <img
+                                src={thumbUrl}
+                                alt={x.title}
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
                               <ListingPlaceholder />
                             )}
@@ -321,19 +436,37 @@ function ListingsContent() {
                         </Link>
                         <div className="flex min-w-0 flex-1 flex-col justify-between">
                           <div>
-                            <Link href={`/listing/${x.id}`} className="text-sm font-medium text-[#1a1a1a] line-clamp-2 hover:underline">
+                            <Link
+                              href={`/listing/${x.id}`}
+                              className="line-clamp-2 text-sm font-medium text-foreground hover:underline"
+                            >
                               {x.title}
                             </Link>
-                            <div className="mt-0.5 text-sm font-bold text-[#1a1a1a]">
-                              {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} \u20BD` : 'Цена не указана'}
+                            <div className="mt-0.5 text-sm font-bold text-foreground">
+                              {x.priceRub != null
+                                ? `${x.priceRub.toLocaleString('ru-RU')} \u20BD`
+                                : 'Цена не указана'}
                             </div>
                           </div>
                           <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
                             <span>{x.city}</span>
                             <span>{statusLabel(x.status).text}</span>
                           </div>
+                          {action.is ? (
+                            <button
+                              type="button"
+                              onClick={() => startEdit(x)}
+                              className="mt-1 inline-flex items-center gap-1.5 self-start rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-200"
+                            >
+                              <AlertTriangle size={11} strokeWidth={2} className="shrink-0" aria-hidden />
+                              {action.reason}
+                            </button>
+                          ) : null}
                           {x.activePromotion ? (
-                            <div className="mt-1 text-[11px] font-medium text-[#007AFF]">
+                            <div
+                              className="mt-1 text-[11px] font-medium"
+                              style={{ color: 'var(--mode-accent)' }}
+                            >
                               {x.activePromotion.type} до {formatPromoEndsAt(x.activePromotion.endsAt)}
                             </div>
                           ) : null}
@@ -341,9 +474,10 @@ function ListingsContent() {
                         <button
                           type="button"
                           onClick={() => startEdit(x)}
-                          className="flex-shrink-0 self-start p-1 text-muted-foreground hover:text-muted-foreground"
+                          className="shrink-0 self-start p-1 text-muted-foreground hover:text-foreground"
+                          aria-label="Редактировать"
                         >
-                          <FileText size={18} strokeWidth={1.5} aria-hidden />
+                          <FileText size={18} strokeWidth={1.5} className="shrink-0" aria-hidden />
                         </button>
                       </div>
                     );
@@ -351,12 +485,18 @@ function ListingsContent() {
                 )}
               </div>
 
-              {/* Sticky bottom button */}
-              <div className="fixed bottom-[72px] left-0 right-0 z-50 border-t border-[#E8E8E8] bg-card px-4 py-3">
+              {/* Sticky bottom CTA — Avito-стиль: лаймовый mode-cta (Маркет) /
+                  оранжевый (Бартер). Над bottom-nav (h=56) — оставляем зазор 72px. */}
+              <div className="fixed bottom-[72px] left-0 right-0 z-50 border-t border-border bg-card px-4 py-3">
                 <Link
                   href="/new"
-                  className="flex h-12 w-full items-center justify-center rounded-xl bg-[#00AAFF] text-sm font-bold text-white transition hover:bg-[#0099EE]"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition active:scale-[0.99]"
+                  style={{
+                    backgroundColor: 'var(--mode-cta)',
+                    boxShadow: '0 4px 14px var(--mode-accent-ring)',
+                  }}
                 >
+                  <PlusCircle size={18} strokeWidth={2} className="shrink-0" aria-hidden />
                   Разместить объявление
                 </Link>
               </div>
@@ -364,15 +504,20 @@ function ListingsContent() {
 
             {/* ===== DESKTOP VIEW ===== */}
             <div className="hidden md:block">
-              {/* Desktop title */}
+              {/* Desktop title + CTA */}
               <div className="mb-6 flex items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
                   Мои объявления
                 </h1>
                 <Link
                   href="/new"
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0066DD]"
+                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-[0.99]"
+                  style={{
+                    backgroundColor: 'var(--mode-cta)',
+                    boxShadow: '0 4px 14px var(--mode-accent-ring)',
+                  }}
                 >
+                  <PlusCircle size={16} strokeWidth={2} className="shrink-0" aria-hidden />
                   Разместить объявление
                 </Link>
               </div>
@@ -386,35 +531,38 @@ function ListingsContent() {
                   </div>
                 </div>
 
-                {/* Segmented tabs */}
+                {/* Segmented tabs — Avito-стиль: 3 пилюли, активная с mode-accent индикатором. */}
                 <div className="mb-5 flex flex-wrap gap-2 rounded-xl bg-muted p-1">
                   {(
                     [
                       ['ACTIVE', 'Активные', activeCount],
-                      ['SOLD', 'Продано', soldCount],
-                      ['ARCHIVED', 'Архив', archivedCount],
-                      ['ALL', 'Все', listings.length],
+                      ['NEEDS_ACTION', 'Требуют действия', needsActionCount],
+                      ['COMPLETED', 'Завершённые', completedCount],
                     ] as const
-                  ).map(([tab, label, count]) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setListingTab(tab)}
-                      className={`flex-1 min-w-[100px] rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
- activeTab === tab
- ? tab === 'ARCHIVED'
- ? 'bg-accent/10 text-white shadow-sm'
- : 'bg-card text-foreground shadow-sm'
- : 'text-muted-foreground hover:text-foreground'
+                  ).map(([tab, label, count]) => {
+                    const isActive = activeTab === tab;
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setListingTab(tab)}
+                        className={`min-w-[100px] flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+ isActive ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
  }`}
-                    >
-                      {label}
-                      <span className="ml-1 opacity-70">({count})</span>
-                    </button>
-                  ))}
+                        style={
+                          isActive && tab === 'NEEDS_ACTION' && count > 0
+                            ? { color: 'var(--mode-accent)' }
+                            : undefined
+                        }
+                      >
+                        {label}
+                        <span className="ml-1 opacity-70">({count})</span>
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {activeTab === 'ARCHIVED' ? (
+                {activeTab === 'COMPLETED' ? (
                   <ProfileArchivedSection
                     items={visibleListings}
                     onRestore={(id) => void setListingStatus(id, 'ACTIVE')}
@@ -427,7 +575,11 @@ function ListingsContent() {
                         <p className="text-sm font-medium text-muted-foreground">В этом разделе пока пусто</p>
                         <Link
                           href="/new"
-                          className="mt-3 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary"
+                          className="mt-3 inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white transition active:scale-[0.99]"
+                          style={{
+                            backgroundColor: 'var(--mode-cta)',
+                            boxShadow: '0 4px 14px var(--mode-accent-ring)',
+                          }}
                         >
                           Создать объявление
                         </Link>
@@ -466,7 +618,7 @@ function ListingsContent() {
                                 <div className="flex flex-wrap items-start justify-between gap-2">
                                   <Link
                                     href={`/listing/${x.id}`}
-                                    className="line-clamp-2 text-base font-bold text-foreground hover:text-primary hover:underline"
+                                    className="line-clamp-2 text-base font-bold text-foreground hover:[color:var(--mode-accent)] hover:underline"
                                   >
                                     {x.title}
                                   </Link>
@@ -531,7 +683,7 @@ function ListingsContent() {
                                   <button
                                     type="button"
                                     onClick={() => void publishAfterImageReview(x.id)}
-                                    className="w-full rounded-xl border border-secondary/30 bg-secondary/10 py-2 text-xs font-bold text-secondary hover:bg-secondary/10"
+                                    className="w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
                                   >
                                     Подтвердить публикацию в ленте
                                   </button>
@@ -578,20 +730,20 @@ function ListingsContent() {
                                   <input
                                     value={editForm.title}
                                     onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                                    className="h-11 w-full rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
+                                    className="h-11 w-full rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:ring-2 focus:[--tw-ring-color:var(--mode-accent-ring)]"
                                     placeholder="Название"
                                   />
                                   <textarea
                                     value={editForm.description}
                                     onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                                    className="min-h-24 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
+                                    className="min-h-24 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:ring-2 focus:[--tw-ring-color:var(--mode-accent-ring)]"
                                     placeholder="Описание (необязательно, от 10 символов)"
                                   />
                                   <div className="grid gap-2 sm:grid-cols-3">
                                     <input
                                       value={editForm.city}
                                       onChange={(e) => setEditForm((p) => ({ ...p, city: e.target.value }))}
-                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30"
+                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
                                       placeholder="Город"
                                     />
                                     <UiSelect
@@ -606,7 +758,7 @@ function ListingsContent() {
                                       onChange={(e) =>
                                         setEditForm((p) => ({ ...p, priceRub: e.target.value.replace(/[^\d]/g, '') }))
                                       }
-                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30"
+                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
                                       placeholder="Цена ₽"
                                     />
                                   </div>
@@ -614,7 +766,11 @@ function ListingsContent() {
                                     <button
                                       type="button"
                                       onClick={() => void saveEdit(x.id)}
-                                      className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary"
+                                      className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition active:scale-[0.99]"
+                                      style={{
+                                        backgroundColor: 'var(--mode-accent)',
+                                        boxShadow: '0 4px 12px var(--mode-accent-ring)',
+                                      }}
                                     >
                                       Сохранить
                                     </button>
@@ -650,7 +806,8 @@ export default function ListingsPage() {
       fallback={
         <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 bg-muted">
           <div
-            className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-transparent"
+            className="h-10 w-10 shrink-0 animate-spin rounded-full border-2 border-t-transparent"
+            style={{ borderColor: 'var(--mode-accent-ring)', borderTopColor: 'transparent' }}
             role="status"
             aria-label="Загрузка"
           />
