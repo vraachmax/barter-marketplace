@@ -1,15 +1,55 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Task #49 ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #19 (только что):** magic-nav v3.1 — починка прозрачности (shadcn-имена → наши токены), padding краёв, выравнивание иконка↔центр bubble'а, двуслойный pin-bubble (белое кольцо + accent core с тенью). ✅
-2. **Hotfix #18:** magic-nav v3 — bubble-эффект (без ушек). ✅
-3. **Hotfix #17:** magic-nav v2 — floating dark pill (deprecated). ✅
-4. **Hotfix #16:** bottom-nav в стиле «magic-navigation». ✅
-5. **Hotfix #15:** bottom-nav FAB → «Объявления» + скрытие navbar на `/new`. ✅
-6. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
-7. **Phase 1.x mobile sprint:** все 4 задачи директивы Максима ✅✅✅✅.
-8. **Phase 1.x остальное:** `/messages` (#49 — следующая задача). **Phase 4** — поиск. **Phase 13** — «Бартер» USP.
+1. **Task #49 (только что):** `/messages` — pinned support-chat (Бартер · Ассистент, 24/7, AI через `/support/advise`) + полировка мобильного списка диалогов. ✅
+2. **Hotfix #19:** magic-nav v3.1 — починка прозрачности (shadcn-имена → наши токены), padding краёв, выравнивание иконка↔центр bubble'а, двуслойный pin-bubble (белое кольцо + accent core с тенью). ✅
+3. **Hotfix #18:** magic-nav v3 — bubble-эффект (без ушек). ✅
+4. **Hotfix #17:** magic-nav v2 — floating dark pill (deprecated). ✅
+5. **Hotfix #16:** bottom-nav в стиле «magic-navigation». ✅
+6. **Hotfix #15:** bottom-nav FAB → «Объявления» + скрытие navbar на `/new`. ✅
+7. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
+8. **Phase 1.x mobile sprint:** все 5 задач директивы Максима ✅✅✅✅✅.
+9. **Дальше в очереди:** **Phase 4** — поиск + персонализация. **Phase 13** — «Бартер» USP (обмен без денег).
+
+## 2026-04-19 (16) — Task #49: `/messages` — pinned support-chat
+
+Максим после Hotfix'а #19: «да, все получилось, стартуем 49».
+
+**Что сделано:**
+- Новый компонент `apps/web/src/components/support-sheet.tsx` (~270 строк)
+  — bottom-sheet на мобилке / dialog на десктопе. Внутри — чат-подобный
+  UI с AI-ассистентом:
+  - WELCOME-сообщение + 4 стартовых chip (размещение / продвижение /
+    бартер / безопасная сделка).
+  - На каждый ввод дёргается `POST /support/advise` с
+    `{ role: 'neutral', prompt }` — бэк возвращает `tip` + массив
+    `suggestions`. `tip` рисуется как сообщение бота, `suggestions` —
+    chip'ы с `Wand2` иконкой (клик → шлёт prompt обратно).
+  - FAQ-chip'ы (первые 4 из `/support/faq`) закреплены сверху composer'а.
+  - Typing-индикатор (3 точки bounce), ESC закрывает, body-scroll lock.
+  - На 401 показываем «Войти, чтобы продолжить диалог» + дамп FAQ.
+- Закреплённая карточка в начале списка чатов (`apps/web/src/app/messages/page.tsx`):
+  - Градиент `from-primary/8 via-card to-accent/8`, accent-border 30%.
+  - Аватар 56×56 с Sparkles + success-tick.
+  - «Бартер · Поддержка» + pill «24/7», AI-бейдж.
+  - Preview-текст «Помогу разместить, продвинуть или решить спор».
+  - Клик → `setSupportSheetOpen(true)`.
+  - ВНЕ `<ul>`, не попадает под `listQuery`-фильтр, остаётся видна
+    даже при `chats.length === 0`.
+  - Под карточкой — разделитель «─ Ваши диалоги ─».
+- Empty-state обновлён: «Пока нет диалогов **с продавцами**» + подсказка
+  про закреплённый чат поддержки выше.
+- Автоответы продавца работали ещё с Phase 3.5 (бэк сам шлёт
+  `AUTO_REPLY_SELLER` шаблон в чат при первом сообщении) — фронт-работа
+  не требовалась.
+
+**Файлы:**
+- `apps/web/src/components/support-sheet.tsx` (new, ~270 lines)
+- `apps/web/src/app/messages/page.tsx` (+~60 lines: import, state,
+  pinned card, sheet mount, empty-state copy-edit)
+
+**Верификация:** `tsc --noEmit` ✓ (EXIT=0).
 
 ## 2026-04-19 (15) — Hotfix #19: magic-nav v3.1 polish
 
