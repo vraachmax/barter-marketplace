@@ -607,8 +607,15 @@ export default function NewListingPage() {
         ) : null}
       </main>
 
-      {/* ===== BOTTOM ACTION BAR ===== */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background">
+      {/* ===== BOTTOM ACTION BAR =====
+           Fixed-bar с кнопками «Назад / Далее / Опубликовать». На мобильном
+           MobileBottomNav скрыт на /new (Hotfix #15) — поэтому action-bar
+           остаётся единственной фиксированной плашкой и не уходит под
+           навигацию. paddingBottom учитывает safe-area для iPhone X+. */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           {step > 1 ? (
             <Button

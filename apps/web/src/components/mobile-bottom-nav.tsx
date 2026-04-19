@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home as HomeIcon, Search, Plus, MessageCircle, User } from 'lucide-react';
+import { Home as HomeIcon, Search, ClipboardList, MessageCircle, User } from 'lucide-react';
 
 type NavItem = {
   href: string;
@@ -19,21 +19,37 @@ type NavItem = {
  * меняются вместе с `<html data-mode>` (см. globals.css), поэтому ре-рендер
  * не нужен.
  *
- * Пункты: Главная · Поиск · +Добавить (FAB) · Сообщения · Профиль.
- * Кнопка «Поиск» ведёт на `/search` (Phase 1.x — клон моб. поиска Avito
- * с широким списком категорий и фильтрами). Пока страница не готова —
- * деградирует к `/listings`, см. fallback ниже.
+ * Пункты: Главная · Поиск · Объявления (FAB) · Сообщения · Профиль.
+ *
+ * До Hotfix #15 центральный FAB вёл напрямую на `/new` («+Добавить»). Максим
+ * попросил поменять логику — теперь FAB ведёт на `/listings`, где у пользователя
+ * уже есть привычные 3 таба (Активные / Требуют действий / Завершённые) и
+ * крупная mode-aware CTA «Разместить объявление» (голубая в Маркете, оранжевая
+ * в Бартере). Это совпадает с UX Авито и убирает «прыжок» сразу в forms-wizard.
+ *
+ * Шаг публикации (`/new`) специально скрывает MobileBottomNav (см. ниже) —
+ * иначе навигация перекрывает sticky action-bar wizard'а, и кнопка «Далее»
+ * уходит под интерфейс (Hotfix #15 баг-репорт от Максима).
  */
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Главная', icon: HomeIcon, match: (p) => p === '/' },
-  { href: '/search', label: 'Поиск', icon: Search, match: (p) => p === '/search' || p === '/listings' },
-  { href: '/new', label: 'Добавить', icon: Plus, match: (p) => p === '/new', fab: true },
+  { href: '/search', label: 'Поиск', icon: Search, match: (p) => p === '/search' },
+  { href: '/listings', label: 'Объявления', icon: ClipboardList, match: (p) => p === '/listings', fab: true },
   { href: '/messages', label: 'Сообщения', icon: MessageCircle, match: (p) => p.startsWith('/messages') },
   { href: '/profile', label: 'Профиль', icon: User, match: (p) => p === '/profile' || p.startsWith('/profile/') },
 ];
 
+/**
+ * Маршруты, на которых нижняя навигация скрывается полностью.
+ * Wizard публикации (`/new`) имеет собственный sticky action-bar
+ * («Назад / Далее / Опубликовать») — две фикс-панели одновременно
+ * перекрывают друг друга и пользователь застревает на шаге.
+ */
+const HIDE_ON_PATHS = new Set<string>(['/new']);
+
 export function MobileBottomNav() {
   const pathname = usePathname();
+  if (HIDE_ON_PATHS.has(pathname)) return null;
 
   return (
     <nav
