@@ -1,5 +1,30 @@
 'use client';
 
+/**
+ * /profile — Hotfix #10 palette + font audit (2026-04-19).
+ *
+ * До фикса страница была утыкана хардкод-хексами небесно-голубой Avito-палитры
+ * (`#007AFF`, `#0088FF`, `#00AAFF`, `#0099EE`, `#0066DD`, `#0077DD`, `#E8F2FF`,
+ * `#f0f9ff`), брендовыми Tailwind-токенами (`bg-primary`, `text-primary`,
+ * `text-accent`, `bg-accent/10`, `text-secondary`, `bg-secondary/10`), а также
+ * единичным оранжевым спарклом (`text-[#FF6F00]`). В режиме Бартер (бренд
+ * `#E85D26`) это давало синие заплатки поверх оранжевой темы и наоборот —
+ * точно то, на что жаловался Максим («моментами… на синем фоне оранжевый
+ * шрифт, так не надо»).
+ *
+ * Теперь вся цветная семантика идёт через CSS-переменные режима:
+ *  — `--mode-accent`        → primary action цвет (синий/оранжевый)
+ *  — `--mode-accent-hover`  → hover-вариант
+ *  — `--mode-accent-soft`   → пастельная плашка (bg)
+ *  — `--mode-accent-ring`   → рамка / ring / shadow
+ *  — status-чипы → success/destructive/muted + mode-accent (PENDING/SOLD)
+ *  — звёзды рейтинга → гвоздевой «рейтинговый» #FFB800 (нейтрально, как у
+ *    Google/Yandex), чтобы не конфликтовать ни с синим, ни с оранжевым.
+ *
+ * Шрифт: профиль не оверрайдит `font-*` — inherits `--font-sans`
+ * (Golos Text, из `apps/web/src/app/layout.tsx`). Font audit ✅.
+ */
+
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -237,13 +262,25 @@ export function ProfileContent() {
   ].filter(Boolean) as Array<{ key: string; title: string; hint: string; href: string }>;
 
   function statusLabel(s: MyListing['status']) {
-    if (s === 'ACTIVE') return { text: 'Активно', className: 'bg-secondary/10 text-secondary ring-secondary/30' };
+    // Статус-чипы — семантика, но не палитра бренда:
+    //  — ACTIVE → success (всегда зелёный, вне зависимости от режима)
+    //  — PENDING / SOLD → mode-accent (синий в Маркете, оранжевый в Бартере)
+    //  — BLOCKED → destructive (всегда красный)
+    //  — ARCHIVED → muted (всегда нейтральный серый)
+    if (s === 'ACTIVE') return { text: 'Активно', className: 'bg-success/10 text-success ring-success/30' };
     if (s === 'PENDING')
-      return { text: 'Модерация', className: 'bg-accent/10 text-accent ring-accent/30' };
+      return {
+        text: 'Модерация',
+        className: 'ring-1 [background-color:var(--mode-accent-soft)] [color:var(--mode-accent)] [--tw-ring-color:var(--mode-accent-ring)]',
+      };
     if (s === 'BLOCKED')
       return { text: 'Скрыто', className: 'bg-destructive/10 text-destructive ring-destructive/30' };
-    if (s === 'SOLD') return { text: 'Продано', className: 'bg-primary/10 text-primary ring-primary/30' };
-    return { text: 'Архив', className: 'bg-accent/10 text-accent ring-accent/30' };
+    if (s === 'SOLD')
+      return {
+        text: 'Продано',
+        className: 'ring-1 [background-color:var(--mode-accent-soft)] [color:var(--mode-accent)] [--tw-ring-color:var(--mode-accent-ring)]',
+      };
+    return { text: 'Архив', className: 'bg-muted text-muted-foreground ring-border' };
   }
 
   return (
@@ -271,7 +308,11 @@ export function ProfileContent() {
       <div className="mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-8">
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
-            <span className="inline-block size-10 animate-spin rounded-full border-2 border-primary/30 border-t-transparent" aria-hidden />
+            <span
+              className="inline-block size-10 animate-spin rounded-full border-2 border-t-transparent"
+              style={{ borderColor: 'var(--mode-accent-ring)', borderTopColor: 'transparent' }}
+              aria-hidden
+            />
             <p className="text-sm text-muted-foreground">Загружаем кабинет…</p>
           </div>
         ) : null}
@@ -279,9 +320,9 @@ export function ProfileContent() {
         {status === 'need_auth' ? (
           <div className="mx-auto max-w-md py-10">
             <div className="overflow-hidden rounded-lg bg-card">
-              <div className="bg-[#E8F2FF] px-6 py-10 text-center">
+              <div className="[background-color:var(--mode-accent-soft)] px-6 py-10 text-center">
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg bg-card">
-                  <Sparkles size={32} strokeWidth={s} className="text-[#007AFF]" aria-hidden />
+                  <Sparkles size={32} strokeWidth={s} className="[color:var(--mode-accent)]" aria-hidden />
                 </div>
                 <h1 className="mt-4 text-xl font-bold text-[#1a1a1a]">Кабинет продавца</h1>
                 <p className="mt-2 text-sm text-[#6b7280]">Войдите, чтобы управлять объявлениями и заказами.</p>
@@ -289,7 +330,7 @@ export function ProfileContent() {
               <div className="p-6">
                 <Link
                   href="/auth"
-                  className="flex h-12 w-full items-center justify-center rounded-lg bg-[#007AFF] text-sm font-semibold text-white transition hover:bg-[#0066DD]"
+                  className="flex h-12 w-full items-center justify-center rounded-lg [background-color:var(--mode-accent)] text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
                 >
                   Войти или зарегистрироваться
                 </Link>
@@ -382,7 +423,7 @@ export function ProfileContent() {
                                 <span>{statusLabel(x.status).text}</span>
                               </div>
                               {x.activePromotion ? (
-                                <div className="mt-1 text-[11px] font-medium text-[#007AFF]">
+                                <div className="mt-1 text-[11px] font-medium [color:var(--mode-accent)]">
                                   {x.activePromotion.type} до {formatPromoEndsAt(x.activePromotion.endsAt)}
                                 </div>
                               ) : null}
@@ -406,7 +447,7 @@ export function ProfileContent() {
                   <div className="fixed bottom-[72px] left-0 right-0 z-50 border-t border-[#E8E8E8] bg-card px-4 py-3">
                     <Link
                       href="/new"
-                      className="flex h-12 w-full items-center justify-center rounded-xl bg-[#00AAFF] text-sm font-bold text-white transition hover:bg-[#0099EE]"
+                      className="flex h-12 w-full items-center justify-center rounded-xl [background-color:var(--mode-accent)] text-sm font-bold text-white transition hover:[background-color:var(--mode-accent-hover)]"
                     >
                       Разместить объявление
                     </Link>
@@ -419,7 +460,10 @@ export function ProfileContent() {
               <div className="rounded-2xl bg-card p-6 text-center">
                 {/* Avatar with verified badge */}
                 <div className="relative mb-4 inline-block">
-                  <div className="h-20 w-20 rounded-full border-2 border-[#f4f4f4] overflow-hidden bg-primary">
+                  <div
+                    className="h-20 w-20 overflow-hidden rounded-full border-2 border-[#f4f4f4]"
+                    style={{ backgroundColor: 'var(--mode-accent-soft)' }}
+                  >
                     {avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -428,13 +472,18 @@ export function ProfileContent() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-primary">
+                      <div
+                        className="flex h-full w-full items-center justify-center text-2xl font-bold"
+                        style={{ color: 'var(--mode-accent)' }}
+                      >
                         {me.name?.charAt(0)?.toUpperCase() ?? 'P'}
                       </div>
                     )}
                   </div>
-                  <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full border-2 border-white bg-secondary/10">
-                    <CheckCircle size={20} strokeWidth={2} className="text-white" aria-hidden />
+                  <div
+                    className="absolute bottom-0 right-0 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-success"
+                  >
+                    <CheckCircle size={14} strokeWidth={2.4} className="text-white" aria-hidden />
                   </div>
                 </div>
 
@@ -448,7 +497,11 @@ export function ProfileContent() {
                   <div className="flex items-center gap-1">
                     {publicProfile && publicProfile.rating.avg ? (
                       <>
-                        <Star size={16} className="fill-accent text-accent" aria-hidden />
+                        <Star
+                          size={16}
+                          aria-hidden
+                          style={{ color: '#FFB800', fill: '#FFB800' }}
+                        />
                         <span className="text-sm font-semibold text-[#1a1a1a]">
                           {publicProfile.rating.avg.toFixed(1)}
                         </span>
@@ -475,7 +528,13 @@ export function ProfileContent() {
                 </div>
 
                 {/* Wallet Balance Card */}
-                <div className="mt-4 rounded-xl bg-primary p-4 text-white">
+                <div
+                  className="mt-4 rounded-xl p-4 text-white"
+                  style={{
+                    backgroundColor: 'var(--mode-accent)',
+                    boxShadow: '0 6px 18px var(--mode-accent-ring)',
+                  }}
+                >
                   <div className="flex items-start justify-between">
                     <div className="text-left">
                       <div className="text-xs font-medium opacity-80">Баланс кошелька</div>
@@ -486,7 +545,7 @@ export function ProfileContent() {
                   <button
                     type="button"
                     onClick={() => setShowTopUp(true)}
-                    className="mt-3 w-full rounded-lg bg-card px-3 py-2 text-xs font-semibold text-[#0088FF] transition hover:bg-muted"
+                    className="mt-3 w-full rounded-lg bg-card px-3 py-2 text-xs font-semibold [color:var(--mode-accent)] transition hover:bg-muted"
                   >
                     Пополнить
                   </button>
@@ -499,7 +558,7 @@ export function ProfileContent() {
                   href="/listings"
                   className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
-                  <Grid3x3 size={24} strokeWidth={1.5} className="text-[#0088FF]" aria-hidden />
+                  <Grid3x3 size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
                   <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Мои объявления</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
@@ -508,7 +567,7 @@ export function ProfileContent() {
                   href="/messages"
                   className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
-                  <ShoppingBag size={24} strokeWidth={1.5} className="text-[#0088FF]" aria-hidden />
+                  <ShoppingBag size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
                   <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Заказы</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
@@ -517,7 +576,7 @@ export function ProfileContent() {
                   href={`/seller/${me.id}?section=reviews`}
                   className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
-                  <Star size={24} strokeWidth={1.5} className="text-[#0088FF]" aria-hidden />
+                  <Star size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
                   <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Отзывы</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
@@ -526,7 +585,7 @@ export function ProfileContent() {
                   href="/profile/settings"
                   className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
-                  <Settings size={24} strokeWidth={1.5} className="text-[#0088FF]" aria-hidden />
+                  <Settings size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
                   <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Настройки</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
@@ -535,7 +594,7 @@ export function ProfileContent() {
                   type="button"
                   className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
-                  <Headphones size={24} strokeWidth={1.5} className="text-[#0088FF]" aria-hidden />
+                  <Headphones size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
                   <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Поддержка</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </button>
@@ -581,7 +640,7 @@ export function ProfileContent() {
                     <div className="flex shrink-0 flex-wrap justify-end gap-2">
                       <Link
                         href="/"
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#007AFF] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0066DD]"
+                        className="inline-flex items-center gap-2 rounded-lg [background-color:var(--mode-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
                       >
                         <Home size={20} strokeWidth={s} className="text-white" aria-hidden />
                         На главную
@@ -591,7 +650,7 @@ export function ProfileContent() {
 
                   {/* KPI strip — Seller Hub */}
                   <div className="overflow-hidden rounded-lg bg-card">
-                    <div className="bg-[#007AFF] px-5 py-4 text-white">
+                    <div className="[background-color:var(--mode-accent)] px-5 py-4 text-white">
                       <p className="text-xs font-medium uppercase tracking-wide text-white/80">Сводка</p>
                       <p className="mt-1 text-lg font-bold">Здравствуйте, {me.name?.split(' ')[0] ?? 'продавец'}</p>
                     </div>
@@ -599,8 +658,8 @@ export function ProfileContent() {
                       <button
                         type="button"
                         onClick={() => setListingTab('ACTIVE')}
-                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:bg-[#f0f9ff] ${
- activeTab === 'ACTIVE' ? 'bg-[#E8F2FF]' : ''
+                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:[background-color:var(--mode-accent-soft)] ${
+ activeTab === 'ACTIVE' ? '[background-color:var(--mode-accent-soft)]' : ''
  }`}
                       >
                         <span className="text-2xl font-bold text-foreground">{activeCount}</span>
@@ -609,8 +668,8 @@ export function ProfileContent() {
                       <button
                         type="button"
                         onClick={() => setListingTab('SOLD')}
-                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:bg-[#f0f9ff] ${
- activeTab === 'SOLD' ? 'bg-[#E8F2FF]' : ''
+                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:[background-color:var(--mode-accent-soft)] ${
+ activeTab === 'SOLD' ? '[background-color:var(--mode-accent-soft)]' : ''
  }`}
                       >
                         <span className="text-2xl font-bold text-foreground">{soldCount}</span>
@@ -619,8 +678,8 @@ export function ProfileContent() {
                       <button
                         type="button"
                         onClick={() => setListingTab('ARCHIVED')}
-                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:bg-accent/10 ${
- activeTab === 'ARCHIVED' ? 'bg-accent/10' : ''
+                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:bg-muted ${
+ activeTab === 'ARCHIVED' ? 'bg-muted' : ''
  }`}
                       >
                         <span className="text-2xl font-bold text-foreground">{archivedCount}</span>
@@ -628,10 +687,10 @@ export function ProfileContent() {
                       </button>
                       <Link
                         href="/messages"
-                        className="flex flex-col items-start gap-1 px-4 py-4 transition hover:bg-[#f0f9ff]"
+                        className="flex flex-col items-start gap-1 px-4 py-4 transition hover:[background-color:var(--mode-accent-soft)]"
                       >
                         <span className="text-2xl font-bold text-foreground">{chatCount}</span>
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium [color:var(--mode-accent)]">
                           Диалоги
                           <ChevronRight size={14} strokeWidth={s} aria-hidden />
                         </span>
@@ -642,7 +701,7 @@ export function ProfileContent() {
                         <div className="text-xs font-medium text-muted-foreground">Профиль заполнен</div>
                         <div className="mt-1 flex items-baseline gap-2">
                           <span className="text-xl font-bold text-foreground">{profileCompletion}%</span>
-                          <Link href="/profile/settings" className="text-xs font-semibold text-[#007AFF] hover:underline">
+                          <Link href="/profile/settings" className="text-xs font-semibold [color:var(--mode-accent)] hover:underline">
                             Улучшить
                           </Link>
                         </div>
@@ -669,7 +728,7 @@ export function ProfileContent() {
                   {actionItems.length > 0 ? (
                     <div className="rounded-lg bg-[#f0fdf9] p-4">
                       <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[#1a1a1a]">
-                        <Sparkles size={20} strokeWidth={s} className="text-[#FF6F00]" aria-hidden />
+                        <Sparkles size={20} strokeWidth={s} style={{ color: 'var(--mode-accent)' }} aria-hidden />
                         Рекомендуем сделать
                       </div>
                       <div className="grid gap-2 sm:grid-cols-3">
@@ -689,7 +748,7 @@ export function ProfileContent() {
                       </div>
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">
+                    <div className="rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success">
                       Все основные задачи выполнены — отличная работа.
                     </div>
                   )}
@@ -701,8 +760,8 @@ export function ProfileContent() {
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
  hasActiveSeller
- ? 'bg-[#f0f9ff] text-[#007AFF] border border-[#007AFF]'
- : 'bg-[#f0f0f0] text-[#6b7280]'
+ ? '[background-color:var(--mode-accent-soft)] [color:var(--mode-accent)] border [border-color:var(--mode-accent-ring)]'
+ : 'bg-muted text-muted-foreground'
  }`}
                       >
                         <CheckCircle size={16} strokeWidth={s} aria-hidden />
@@ -711,8 +770,8 @@ export function ProfileContent() {
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
  hasResponsive
- ? 'bg-[#f0f9ff] text-[#007AFF] border border-[#007AFF]'
- : 'bg-[#f0f0f0] text-[#6b7280]'
+ ? '[background-color:var(--mode-accent-soft)] [color:var(--mode-accent)] border [border-color:var(--mode-accent-ring)]'
+ : 'bg-muted text-muted-foreground'
  }`}
                       >
                         <Clock size={16} strokeWidth={s} aria-hidden />
@@ -781,7 +840,7 @@ export function ProfileContent() {
                                     <span className="font-medium text-foreground">{r.author.name ?? 'Покупатель'}</span>
                                     <span>{new Date(r.createdAt).toLocaleDateString('ru-RU')}</span>
                                   </div>
-                                  <div className="mt-1 font-semibold text-accent">★ {r.rating}/5</div>
+                                  <div className="mt-1 font-semibold" style={{ color: '#FFB800' }}>★ {r.rating}/5</div>
                                   {r.text ? <p className="mt-1 text-foreground">{r.text}</p> : null}
                                 </li>
                               ))}
@@ -808,7 +867,7 @@ export function ProfileContent() {
                       Публичная витрина
                       <ChevronRight size={16} strokeWidth={s} className="opacity-60" aria-hidden />
                     </Link>
-                    <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary">
+                    <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:[color:var(--mode-accent)]">
                       На главную
                     </Link>
                   </div>
@@ -839,7 +898,7 @@ export function ProfileContent() {
                           className={`flex-1 min-w-[100px] rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
  activeTab === tab
  ? tab === 'ARCHIVED'
- ? 'bg-accent/10 text-white shadow-sm'
+ ? 'bg-muted text-foreground shadow-sm'
  : 'bg-card text-foreground shadow-sm'
  : 'text-muted-foreground hover:text-foreground'
  }`}
@@ -863,7 +922,7 @@ export function ProfileContent() {
                             <p className="text-sm font-medium text-muted-foreground">В этом разделе пока пусто</p>
                             <Link
                               href="/new"
-                              className="mt-3 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary"
+                              className="mt-3 inline-flex items-center justify-center rounded-xl [background-color:var(--mode-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
                             >
                               Создать объявление
                             </Link>
@@ -902,7 +961,7 @@ export function ProfileContent() {
                                     <div className="flex flex-wrap items-start justify-between gap-2">
                                       <Link
                                         href={`/listing/${x.id}`}
-                                        className="line-clamp-2 text-base font-bold text-foreground hover:text-primary hover:underline"
+                                        className="line-clamp-2 text-base font-bold text-foreground hover:underline hover:[color:var(--mode-accent)]"
                                       >
                                         {x.title}
                                       </Link>
@@ -935,7 +994,7 @@ export function ProfileContent() {
                                         <button
                                           type="button"
                                           onClick={() => setPromoteTarget({ id: x.id, title: x.title })}
-                                          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-primary/90"
+                                          className="group flex w-full items-center justify-center gap-2 rounded-xl [background-color:var(--mode-accent)] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:[background-color:var(--mode-accent-hover)]"
                                         >
                                           <Sparkles size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
                                           <span>{x.activePromotion ? 'Продлить продвижение' : 'Продвинуть'}</span>
@@ -951,7 +1010,7 @@ export function ProfileContent() {
                                       )}
                                       <Link
                                         href="/pricing"
-                                        className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-card px-3 py-2 text-[11px] font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+                                        className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-card px-3 py-2 text-[11px] font-semibold text-muted-foreground transition hover:[border-color:var(--mode-accent-ring)] hover:[color:var(--mode-accent)]"
                                       >
                                         Все пакеты и подписка
                                       </Link>
@@ -960,7 +1019,7 @@ export function ProfileContent() {
                                       <button
                                         type="button"
                                         onClick={() => void publishAfterImageReview(x.id)}
-                                        className="w-full rounded-xl border border-secondary/30 bg-secondary/10 py-2 text-xs font-bold text-secondary hover:bg-secondary/10"
+                                        className="w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
                                       >
                                         Подтвердить публикацию в ленте
                                       </button>
@@ -1007,20 +1066,20 @@ export function ProfileContent() {
                                       <input
                                         value={editForm.title}
                                         onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                                        className="h-11 w-full rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
+                                        className="h-11 w-full rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
                                         placeholder="Название"
                                       />
                                       <textarea
                                         value={editForm.description}
                                         onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                                        className="min-h-24 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/30"
+                                        className="min-h-24 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
                                         placeholder="Описание (необязательно, от 10 символов)"
                                       />
                                       <div className="grid gap-2 sm:grid-cols-3">
                                         <input
                                           value={editForm.city}
                                           onChange={(e) => setEditForm((p) => ({ ...p, city: e.target.value }))}
-                                          className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30"
+                                          className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
                                           placeholder="Город"
                                         />
                                         <UiSelect
@@ -1035,7 +1094,7 @@ export function ProfileContent() {
                                           onChange={(e) =>
                                             setEditForm((p) => ({ ...p, priceRub: e.target.value.replace(/[^\d]/g, '') }))
                                           }
-                                          className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:border-primary/30"
+                                          className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
                                           placeholder="Цена ₽"
                                         />
                                       </div>
@@ -1043,7 +1102,7 @@ export function ProfileContent() {
                                         <button
                                           type="button"
                                           onClick={() => void saveEdit(x.id)}
-                                          className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary"
+                                          className="rounded-xl [background-color:var(--mode-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
                                         >
                                           Сохранить
                                         </button>
@@ -1089,7 +1148,7 @@ export function ProfileContent() {
                   onClick={() => setTopUpAmount(amt)}
                   className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${
  topUpAmount === amt
- ? 'border-[#0088FF] bg-[#0088FF]/10 text-[#0088FF]'
+ ? '[border-color:var(--mode-accent-ring)] [background-color:var(--mode-accent-soft)] [color:var(--mode-accent)]'
  : 'border-border bg-muted/50 text-[#1a1a1a] hover:border-border'
  }`}
                 >
@@ -1105,7 +1164,7 @@ export function ProfileContent() {
                 min={1}
                 value={topUpAmount && ![100, 300, 500, 1000, 2000, 5000].includes(topUpAmount) ? topUpAmount : ''}
                 onChange={(e) => setTopUpAmount(e.target.value ? Number(e.target.value) : null)}
-                className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-muted-foreground outline-none transition focus:border-[#0088FF] focus:ring-2 focus:ring-[#0088FF]/20"
+                className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-muted-foreground outline-none transition focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
               />
             </div>
 
@@ -1118,7 +1177,7 @@ export function ProfileContent() {
                 }
               }}
               disabled={!topUpAmount || topUpAmount <= 0}
-              className="mt-6 w-full rounded-lg bg-[#0088FF] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0077DD] disabled:bg-muted-foreground/30 disabled:text-muted-foreground"
+              className="mt-6 w-full rounded-lg [background-color:var(--mode-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)] disabled:bg-muted-foreground/30 disabled:text-muted-foreground"
             >
               Пополнить на {topUpAmount?.toLocaleString('ru-RU') ?? '—'} ₽
             </button>

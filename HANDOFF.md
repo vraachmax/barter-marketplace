@@ -1,10 +1,71 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Hotfix #7 ✅ · Hotfix #8 ✅ · Hotfix #9 🚧 (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#9 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Hotfix #10 🚧 (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #9 (текущий шаг):** listing detail palette-audit (#52) — orange-on-blue leak убран; всё на `--mode-accent*` (breadcrumbs, safety notice, CTA «Написать сообщение», ShowPhoneButton, seller card, listing-bot-assistant, seller-review-form, listing-mini-map, listing-gallery thumbs, FavoriteToggle hover).
-2. **Phase 1.x mobile (next):** `/favorites` (#50, 2-col grid), `/messages` (#49, pinned support + автоответы), `/profile` (#51, Avito header + font-audit), `/search` (#48, mobile Avito clone).
+1. **Hotfix #10 (текущий шаг):** mobile `/favorites` (#50) + `/profile` (#51) palette/font audit. /favorites переписан на 2-col grid (ListingCardComponent + mode-accent header + Trash-delete). /profile очищен от 30+ точек лика: hex `#007AFF`/`#0088FF`/`#00AAFF`/`#0099EE`/`#0066DD`/`#0077DD`/`#E8F2FF`/`#f0f9ff`/`#FF6F00` → `--mode-accent*`; brand-токены `bg-primary`/`text-primary`/`text-accent`/`bg-accent`/`text-secondary`/`bg-secondary` → semantic (`success`, `destructive`, `muted`) или `--mode-accent*`. Status-чипы перекатегоризированы: ACTIVE=success, PENDING/SOLD=mode-accent, BLOCKED=destructive, ARCHIVED=muted. Звёзды рейтинга зафиксированы на нейтральном `#FFB800`. Font audit: Golos Text везде через `--font-sans` inherit.
+2. **Phase 1.x mobile (next):** `/messages` (#49, pinned support + автоответы), `/search` (#48, mobile Avito clone).
 3. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+
+## 2026-04-19 (6) — Hotfix #10: mobile /favorites + /profile palette & font audit
+
+Задачи #50 и #51 из очереди Hotfix #9. Максим: «лента избранного выглядит как-то странно»
++ общий палитра-контракт (синий = Маркет, оранжевый = Бартер). Профиль был забит
+хардкод-хексами синего Avito на всех уровнях (хедер модалок, KPI-плитки, кошелёк,
+trust-бейджи, статус-чипы, фокус-кольца инпутов) — в режиме Бартер это давало синие
+заплатки поверх оранжевой темы.
+
+**Что сделано:**
+
+- **`apps/web/src/app/favorites/page.tsx`** — полный rewrite (~175 строк). Убрали
+  сломанный `bg-primary via-white` хедер и «custom» карточку-список. Теперь:
+  sticky mode-accent хедер с Heart-иконкой, 2-col mobile / 3-col md / 4-col lg
+  grid через `ListingCardComponent` (паритет с лентой), per-card Trash2-кнопка
+  удаления в правом верхнем углу (z-3, bg-background/95, hover:destructive),
+  empty-state на `--mode-accent-soft` + `--mode-accent`, русская плюрализация
+  «объявление/объявления/объявлений». Loading skeleton: 6 `ListingCardSkeleton`
+  заглушек такой же геометрии.
+
+- **`apps/web/src/app/profile/profile-content.tsx`** (1142→1170 строк) — palette
+  audit, без реорганизации layout:
+  - Хардкод-хексы → `--mode-accent*`: `#007AFF`/`#0088FF`/`#00AAFF`/`#0099EE`/
+    `#0066DD`/`#0077DD` → `--mode-accent` (+ `-hover`); `#E8F2FF`/`#f0f9ff` →
+    `--mode-accent-soft`; `#FF6F00` sparkle → `--mode-accent`.
+  - Tailwind brand-токены → семантика / mode-accent: `bg-primary` (кошелёк, CTA,
+    эмпти-state, промо-кнопка, save-кнопка) → `--mode-accent`; `text-primary`
+    (Диалоги, «На главную», title-hover, pricing-hover) → `--mode-accent`; avatar
+    `bg-primary`/`text-primary` → `--mode-accent-soft`/`--mode-accent`;
+    `bg-accent/10` archived tab → `bg-muted`.
+  - Status-чипы (новая функция `statusLabel`): ACTIVE→success, PENDING→mode-accent,
+    BLOCKED→destructive, SOLD→mode-accent, ARCHIVED→muted. Ring-цвет через
+    `[--tw-ring-color:var(--mode-accent-ring)]` + `ring-1`.
+  - Verified-badge (CheckCircle на аватаре) → `bg-success` вместо `bg-secondary/10`
+    (неконсистентная прозрачность с белой иконкой поверх).
+  - Focus-rings инпутов edit-формы и топ-ап-модалки → `focus:[border-color:
+    var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]`
+    (раньше `focus:border-primary/30 focus:ring-primary/30`).
+  - Star-rating `fill-accent text-accent` → inline `color: '#FFB800', fill: '#FFB800'`
+    (нейтральный «рейтинговый» gold, как у Google/Yandex; не оранжевый Avito).
+  - «Все основные задачи выполнены» panel: `secondary` → `success` (семантика).
+  - PENDING «Подтвердить публикацию» button: `secondary` → `success`.
+  - Добавлен leading JSDoc-блок с описанием миграции и font-audit сноской.
+
+- **Font audit:** grep по `font-mono|font-serif|font-[|fontFamily` в profile-content.tsx
+  → 0 совпадений. Страница inheritit `--font-sans` (= Golos Text) из `layout.tsx` через
+  body className. Fallback-chain: `Golos → system-ui → sans-serif`. ✅
+
+**Файлы тронутые в Hotfix #10:**
+```
+apps/web/src/app/favorites/page.tsx                     (rewrite, ~175 строк)
+apps/web/src/app/profile/profile-content.tsx            (palette audit, +30 edits)
+```
+
+**Верификация Hotfix #10:**
+- [x] `npx tsc --noEmit` в `apps/web` — exit 0, чистый
+- [ ] Визуальная сверка `/favorites` + `/profile` в обоих режимах: ни одного
+      синего пиксела в Бартере, ни одного оранжевого в Маркете (кроме звёзд
+      рейтинга — они нейтрально-золотые).
+- [ ] Регрессия: home / listing / messages должны выглядеть как были.
+
 
 ## 2026-04-19 (5) — Hotfix #9: listing-detail palette audit (orange-on-blue leak fix)
 

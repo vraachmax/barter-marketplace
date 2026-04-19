@@ -2,15 +2,28 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Heart, Home } from 'lucide-react';
+import { Heart, Home, Trash2 } from 'lucide-react';
 import { API_URL, apiFetchJson, type FavoriteItem } from '@/lib/api';
-import ListingPlaceholder from '@/components/listing-placeholder';
+import { ListingCardComponent, ListingCardSkeleton } from '@/components/listing-card';
 
-function formatRub(v: number | null) {
-  if (v == null) return 'Цена не указана';
-  return `${v.toLocaleString('ru-RU')} ₽`;
-}
-
+/**
+ * /favorites — мобильная 2-col сетка, повторяющая геометрию ленты.
+ *
+ * До Hotfix #9 страница была единой «custom» карточкой со списком объявлений
+ * в виде горизонтальных строк (эскиз 80×112 + заголовок). На мобильном это
+ * выглядело «вычурно» (Максим: «лента избранного выглядит как-то странно»).
+ *
+ * Теперь:
+ *  — На мобильном: 2 колонки × N рядов, точно как `MarketExampleCluster`
+ *    и лента главной. Используем тот же `ListingCardComponent` → полный
+ *    паритет по тени/радиусу/типографике.
+ *  — На десктопе: 3 колонки (ширина до 1200px, отступ 16px).
+ *  — Заголовок шапки мигрирует на `--mode-accent*` (сердце = brand-accent
+ *    режима), чтобы не было палитра-лика.
+ *  — Для каждого объявления есть кнопка «Удалить» (Trash2 icon). Она
+ *    парит поверх превью в правом нижнем углу, чтобы не перекрывать
+ *    промо-бейдж TOP/XL и не спорить с сердечком в правом верхнем.
+ */
 export default function FavoritesPage() {
   const [items, setItems] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,83 +59,127 @@ export default function FavoritesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-muted px-4 py-8 text-foreground antialiased md:py-10">
-      <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-3xl border border-border bg-card shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-primary via-white px-5 py-4">
+    <div className="min-h-screen bg-muted text-foreground antialiased">
+      {/* Шапка — на мобильном прилипает сверху, мягкий mode-accent акцент
+          через сердечко, без широкой плашки `bg-primary via-white` как было. */}
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary shadow-md">
-              <Heart size={22} strokeWidth={1.8} className="text-white" aria-hidden />
+            <span
+              className="grid h-9 w-9 place-items-center rounded-2xl text-white shadow-sm"
+              style={{
+                backgroundColor: 'var(--mode-accent)',
+                boxShadow: '0 4px 12px var(--mode-accent-ring)',
+              }}
+            >
+              <Heart size={18} strokeWidth={1.8} aria-hidden />
             </span>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-foreground md:text-xl">Избранное</h1>
-              <p className="text-xs font-medium text-muted-foreground">Сохранённые объявления</p>
+              <h1 className="text-[17px] font-bold tracking-tight text-foreground md:text-xl">
+                Избранное
+              </h1>
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {items.length > 0
+                  ? `${items.length} ${pluralizeListings(items.length)}`
+                  : 'Сохранённые объявления'}
+              </p>
             </div>
           </div>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card/80 px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-[color:var(--mode-accent-ring)] hover:[color:var(--mode-accent)]"
           >
-            <Home size={20} strokeWidth={1.8} className="text-muted-foreground" aria-hidden />
-            На главную
+            <Home size={18} strokeWidth={1.8} aria-hidden />
+            <span className="hidden sm:inline">На главную</span>
           </Link>
         </div>
+      </header>
 
-        <div className="p-5 md:p-6">
-          {loading ? (
-            <div className="text-sm text-muted-foreground">Загрузка…</div>
-          ) : null}
-          {error ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {error}{' '}
-              <Link href="/auth" className="font-semibold text-primary underline">
-                Войти
-              </Link>
+      <main className="mx-auto max-w-6xl px-3 pt-3 pb-28 md:px-4 md:pb-12">
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <ListingCardSkeleton key={i} thumbHeight={160} />
+            ))}
+          </div>
+        ) : null}
+
+        {error ? (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}{' '}
+            <Link
+              href="/auth"
+              className="font-semibold underline"
+              style={{ color: 'var(--mode-accent)' }}
+            >
+              Войти
+            </Link>
+          </div>
+        ) : null}
+
+        {!loading && !error && items.length === 0 ? (
+          <div
+            className="mt-6 rounded-2xl border border-dashed p-8 text-center"
+            style={{
+              borderColor: 'var(--mode-accent-ring)',
+              backgroundColor: 'var(--mode-accent-soft)',
+            }}
+          >
+            <div
+              className="mx-auto grid h-14 w-14 place-items-center rounded-full text-white"
+              style={{ backgroundColor: 'var(--mode-accent)' }}
+            >
+              <Heart size={28} strokeWidth={1.8} aria-hidden />
             </div>
-          ) : null}
+            <p className="mt-3 text-base font-bold text-foreground">Пока пусто</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Откройте объявление и нажмите «Добавить в избранное», чтобы оно появилось здесь.
+            </p>
+            <Link
+              href="/"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white transition"
+              style={{
+                backgroundColor: 'var(--mode-accent)',
+                boxShadow: '0 4px 12px var(--mode-accent-ring)',
+              }}
+            >
+              Посмотреть ленту
+            </Link>
+          </div>
+        ) : null}
 
-          {!loading && !error && items.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/50 px-4 py-4 text-sm leading-relaxed text-muted-foreground">
-              Пока пусто. Откройте объявление и нажмите «Добавить в избранное».
-            </div>
-          ) : null}
-
-          <div className="mt-4 space-y-3">
+        {items.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {items.map((x) => (
-              <div
-                key={x.id}
-                className="rounded-2xl border border-border bg-card p-3 shadow-sm transition hover:shadow-md"
-              >
-                <div className="flex gap-3">
-                  {x.listing.images?.[0]?.url ? (
-                    <div className="listing-thumb-wrap h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-border">
-                      <img
-                        src={`${API_URL}${x.listing.images[0].url}`}
-                        alt={x.listing.title}
-                        className="listing-thumb-img h-full w-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <ListingPlaceholder
-                      title={x.listing.title}
-                      categoryTitle={x.listing.category.title}
-                      className="h-20 w-28 shrink-0 rounded-xl border border-border"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      className="font-bold text-foreground hover:text-primary hover:underline"
-                      href={`/listing/${x.listing.id}`}
-                    >
-                      {x.listing.title}
-                    </Link>
-                  </div>
-                </div>
+              <div key={x.id} className="relative">
+                <ListingCardComponent data={x.listing} apiBase={API_URL} thumbHeight={160} />
+                {/* Кнопка «Удалить из избранного». Позиционируем в правом
+                    верхнем углу контейнера (over-overlay heart-icon, который
+                    внутри ListingCardComponent вообще не wired-up на действие).
+                    Используем mode-accent как нейтральный фон; на hover —
+                    destructive (красный), чтобы сигнализировать удаление. */}
+                <button
+                  type="button"
+                  aria-label="Удалить из избранного"
+                  onClick={() => void remove(x.listing.id)}
+                  className="absolute right-2 top-2 z-[3] grid size-8 place-items-center rounded-full bg-background/95 text-foreground shadow-sm backdrop-blur transition hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 size={14} strokeWidth={1.8} aria-hidden />
+                </button>
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        ) : null}
+      </main>
     </div>
   );
 }
-               
+
+function pluralizeListings(n: number): string {
+  const abs = Math.abs(n) % 100;
+  const n1 = abs % 10;
+  if (abs > 10 && abs < 20) return 'объявлений';
+  if (n1 > 1 && n1 < 5) return 'объявления';
+  if (n1 === 1) return 'объявление';
+  return 'объявлений';
+}
