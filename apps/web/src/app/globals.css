@@ -667,29 +667,32 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
 }
 
 /* =========================================================================
-   Magic bottom-nav (mobile)  v3 — floating pill + bubble indicator
+   Magic bottom-nav (mobile)  v3.1 — bubble + white ring (Hotfix #19)
    ─────────────────────────────────────────────────────────────────────────
-   Фидбек Максима после v2: «нав бар у нас светлый в светлой теме и тёмный
-   в тёмной, ушки нав бара (выбранного раздела) — это плохо, должен быть
-   эффект наоборот: не выемка, а bubble, что выбранный раздел выпирает».
+   Фидбек Максима после v3 (4 пункта):
+   1. Крайние пункты (Главная, Профиль) слишком близко к краю бара —
+      нужен внутренний отступ.
+   2. Бар прозрачный на главной (BUG): я использовал shadcn-имена
+      `var(--card)` / `var(--border)` / `var(--muted-foreground)`, которых
+      в нашем проекте НЕТ (у нас своя система токенов: `--bg-surface`,
+      `--border-default`, `--fg-muted`). Поэтому `background` оставался
+      пустым → просвечивал body. Чиним → реальные наши токены.
+   3. Иконка активного должна быть РОВНО в центре bubble'а — пересчитаны
+      translateY и top dot'а так, чтобы их center-Y совпадал.
+   4. Эффект многослойности: bubble теперь — БЕЛОЕ кольцо вокруг цветного
+      core. core отбрасывает тень на белую обводку → ощущение, что
+      цветной круг «утоплен» в белый pin, приклеенный к бару.
 
-   Решение v3:
-   • Surface бара теперь следует теме: светлый (`--card`) на лайт, тёмный
-     на dark — как и положено nav'у в нашей shadcn-палитре. Никаких
-     «вечно-тёмных» hard-code цветов.
-   • Убраны псевдо-элементы ::before / ::after — никаких «ушек/выемок»
-     по бокам индикатора.
-   • Вместо выемки — bubble: активная иконка выпрыгивает вверх, под ней
-     плавающий круг на `var(--mode-accent)` с glow-тенью. Половина
-     пузыря — над баром (top: -22px), половина — внутри. Эффект: пункт
-     «вздувается» над плоскостью, а не проваливается под неё.
-   • Bubble плавно скользит между пунктами через `translateX(N * 100%)`,
-     как и раньше. Easing и длительность сохранены.
+   Как было — как стало:
+     background: var(--card)             → var(--bg-surface) (и #fff fallback)
+     border:     var(--border)           → var(--border-default)
+     color:      var(--muted-foreground) → var(--fg-muted)
+     dot:        плоский accent-круг     → белое кольцо + inner accent core
+     centers:    иконка y=10, bubble y=3 → y=6 обе (translateY -26, top -20)
 
-   Плюс остались:
-   • Floating pill-форма (left/right: 12px, bottom: safe-area + 12px).
-   • Lable под иконкой у активного (opacity + translateY).
-   • Mode-aware цвет: оранжевый в Бартере, голубой в Маркете.
+   Плюс padding: 0 8px внутри `.magic-nav` — слоты flex-item всё равно
+   остаются равными 1/5 inner-ширины, а крайние иконки больше не давят
+   в скруглённые углы.
    ========================================================================= */
 
 .magic-nav {
@@ -698,8 +701,12 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   right: 12px;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
   z-index: 1000;
-  background: var(--card);
-  border: 1px solid var(--border);
+  padding: 0 8px; /* (1) отступ от крайних пунктов */
+  /* (2) реальные наши токены вместо shadcn-имён.
+     #fff-fallback на случай редкого лайт-контекста без токенов — чтобы бар
+     НИКОГДА не был прозрачным. */
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-default, #e6e6e6);
   border-radius: 28px;
   box-shadow:
     0 12px 32px rgba(0, 0, 0, 0.10),
@@ -730,22 +737,24 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   height: 100%;
   text-decoration: none;
   font-weight: 500;
-  color: var(--muted-foreground);
+  color: var(--fg-muted, #757575);
 }
 .magic-nav__icon {
   position: relative;
   display: grid;
   place-items: center;
   line-height: 0;
-  color: var(--muted-foreground);
+  color: var(--fg-muted, #757575);
   transition:
     transform 0.5s cubic-bezier(.34,1.56,.64,1),
     color 0.35s ease;
 }
-/* У активного — иконка улетает в центр bubble'а (над баром). Цвет —
-   белый, т.к. лежит поверх цветного пузыря. */
+/* (3) У активного — иконка улетает ровно в center Y bubble'а (=6px
+   от верха ul). ul высота 64, центр иконки при flex-center = 32,
+   translateY(-26) → y=6. Bubble top=-20 height=52 → center y=-20+26=6.
+   Центры совпадают → иконка сидит точно посередине пузыря. */
 .magic-nav__item--active .magic-nav__icon {
-  transform: translateY(-22px);
+  transform: translateY(-26px);
   color: #fff;
 }
 .magic-nav__text {
@@ -768,8 +777,7 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   transform: translateY(0);
 }
 
-/* Slot-обёртка bubble'а занимает 1/5 ширины bar'а. Перемещается через
-   inline-style `transform: translateX(N * 100%)`. */
+/* Slot-обёртка bubble'а — 1/5 от inner-ширины ul. */
 .magic-nav__indicator {
   position: absolute;
   left: 0;
@@ -781,22 +789,37 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   z-index: 1; /* над баром, под иконками */
 }
 
-/* Сам bubble: круг 50×50, top: -22px — ровно на половину выпирает над
-   баром. Без бордера, без псевдо-элементов. Только цвет + glow-тень.
-   Эффект «выпирания» достигается за счёт vertical offset и большого
-   soft-shadow (mode-accent-ring) — кажется, будто пузырь парит над
-   баром, а иконка лежит на нём. */
+/* (4) Сам bubble: БЕЛОЕ кольцо 52×52 вокруг цветного core. core —
+   через ::before внутри, с тенью, которая падает на белую часть
+   кольца. Получается эффект «pin-button»: цветной круг утоплен
+   в белую рамку, приклеенную к бару. */
 .magic-nav__indicator-dot {
   position: absolute;
-  top: -22px;
+  top: -20px;
   left: 50%;
-  width: 50px;
-  height: 50px;
-  background: var(--mode-accent);
+  width: 52px;
+  height: 52px;
+  /* Белое кольцо — на лайте всегда #fff, в dark берёт bg-surface
+     (тёмный), чтобы круг выглядел «сшитым с баром». */
+  background: var(--bg-surface, #ffffff);
   border-radius: 50%;
   transform: translateX(-50%);
   box-shadow:
-    0 10px 22px var(--mode-accent-ring),
-    0 4px 10px rgba(0, 0, 0, 0.12);
+    0 12px 26px var(--mode-accent-ring),
+    0 4px 10px rgba(0, 0, 0, 0.10);
   transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+/* Внутреннее цветное ядро bubble'а. inset: 4px → кольцо шириной 4px.
+   box-shadow на core даёт тень НА ту самую белую обводку — эффект
+   многослойности, как просил Максим. */
+.magic-nav__indicator-dot::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: var(--mode-accent);
+  border-radius: 50%;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.22),
+    inset 0 1px 2px rgba(255, 255, 255, 0.20);
+  transition: background 0.3s ease;
 }
