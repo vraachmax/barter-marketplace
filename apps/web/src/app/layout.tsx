@@ -77,10 +77,12 @@ export default function RootLayout({
           }}
         />
         {/* Pre-paint mode bootstrap — ставим <html data-mode="..."> и meta[theme-color]
-            ДО первого кадра, чтобы не было вспышки не того цвета при загрузке. */}
+            ДО первого кадра, чтобы не было вспышки не того цвета при загрузке.
+            theme-color всегда белый: по реф-дизайну (handoff-bundle/home.html)
+            мобильная шапка белая для обоих режимов. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=localStorage.getItem('barter_mode');if(m!=='barter'&&m!=='market')m='barter';document.documentElement.setAttribute('data-mode',m);var c=m==='barter'?'#E85D26':'#00AAFF';var meta=document.querySelector('meta[name="theme-color"]:not([media])');if(!meta){meta=document.createElement('meta');meta.name='theme-color';document.head.appendChild(meta);}meta.content=c;}catch(e){}})();`,
+            __html: `(function(){try{var m=localStorage.getItem('barter_mode');if(m!=='barter'&&m!=='market')m='barter';document.documentElement.setAttribute('data-mode',m);var meta=document.querySelector('meta[name="theme-color"]:not([media])');if(!meta){meta=document.createElement('meta');meta.name='theme-color';document.head.appendChild(meta);}meta.content='#FFFFFF';}catch(e){}})();`,
           }}
         />
       </head>

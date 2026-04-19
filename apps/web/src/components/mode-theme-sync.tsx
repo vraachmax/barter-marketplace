@@ -7,9 +7,19 @@ type Mode = 'barter' | 'market';
 const STORAGE_KEY = 'barter_mode';
 const EVENT = 'barter:mode-change';
 
+/**
+ * Цвет system-bar (Safari/Chrome top bar).
+ *
+ * Решение от 2026-04-19: реф-дизайн (handoff-bundle/home.html) делает шапку
+ * БЕЛОЙ для обоих режимов — акцент применяется только к мелким элементам.
+ * Поэтому status-bar тоже остаётся белым, без режим-зависимого цвета.
+ *
+ * Если в будущем захочется режим-цветной status-bar — поменять обратно на
+ * `barter: '#E85D26', market: '#00AAFF'`.
+ */
 const COLOR_BY_MODE: Record<Mode, string> = {
-  barter: '#E85D26', // оранжевый Бартер
-  market: '#00AAFF', // синий Маркет (Avito 2026)
+  barter: '#FFFFFF',
+  market: '#FFFFFF',
 };
 
 /**

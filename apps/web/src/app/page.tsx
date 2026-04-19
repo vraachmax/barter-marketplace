@@ -11,7 +11,8 @@ import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { MobileModeToggle } from '@/components/mobile-mode-toggle';
 import { MobileSearchInput } from '@/components/mobile-search-input';
-import { Bell, ChevronDown, ChevronRight, Heart, MapPin, Search, SlidersHorizontal, Sparkles, ArrowLeftRight } from 'lucide-react';
+import { BarterExampleCluster } from '@/components/barter-example-cluster';
+import { Bell, ChevronDown, Heart, MapPin, Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   page: number;
@@ -338,24 +339,35 @@ async function renderHome(sp: HomeSearchParams) {
   // marketOnly=true: категории, которых НЕ должно быть в режиме Бартер
   // (услуги / работа / недвижимость — это не товары-для-обмена).
   // Фильтрация визуальная: CSS-правило `html[data-mode="barter"] [data-market-only="true"] { display:none }`
-  const CATS_TOP: Array<{ name: string; slug: string; emoji: string; accent: string; marketOnly?: boolean }> = [
-    { name: 'Авто', slug: 'auto', emoji: '🚗', accent: '#4A90D9' },
-    { name: 'Недвижимость', slug: 'realty', emoji: '🏢', accent: '#E8A87C', marketOnly: true },
-    { name: 'Работа', slug: 'job', emoji: '💼', accent: '#c4a484', marketOnly: true },
-    // Только в маркете: «для бизнеса»
-    { name: 'Для бизнеса', slug: 'business', emoji: '🏭', accent: '#6B7280', marketOnly: true },
+  //
+  // Первый элемент — «Все» с характерными 4-цветными бабблами (реф).
+  // Остальные — плитки в стиле Avito: слева текст, справа эмодзи на цветной
+  // подложке. На мобильном рендерятся в сетке `cats-avito` (2 строки ×
+  // горизонтальный скролл, 150×72). Десктоп продолжает использовать
+  // ALL_CATS как горизонтальные вкладки.
+  type Cat = {
+    name: string;
+    slug: string;
+    emoji: string;
+    /** Цвет подложки под эмодзи (реф). */
+    mediaBg: string;
+    /** Градиент/акцент для десктоп-иконки. */
+    accent: string;
+    marketOnly?: boolean;
+    /** Для плитки «Все» — рендерим не эмодзи, а 4 цветные бабблы. */
+    allBubbles?: boolean;
+  };
+
+  const CATS: Cat[] = [
+    { name: 'Все', slug: 'all', emoji: '', mediaBg: '#ffffff', accent: '#667eea', allBubbles: true },
+    { name: 'Недвижимость', slug: 'realty', emoji: '🏠', mediaBg: 'rgb(255, 224, 230)', accent: '#E8A87C', marketOnly: true },
+    { name: 'Работа\u00a0и подработка', slug: 'job', emoji: '🎒', mediaBg: 'rgb(224, 245, 233)', accent: '#c4a484', marketOnly: true },
+    { name: 'Авто', slug: 'auto', emoji: '🛵', mediaBg: 'rgb(232, 243, 255)', accent: '#4A90D9' },
+    { name: 'Электроника', slug: 'electronics', emoji: '📱', mediaBg: 'rgb(238, 240, 255)', accent: '#8B5CF6' },
+    { name: 'Услуги', slug: 'services', emoji: '🧴', mediaBg: 'rgb(240, 232, 255)', accent: '#3B82F6', marketOnly: true },
+    { name: 'Жильё\u00a0для путешествий', slug: 'travel', emoji: '🧳', mediaBg: 'rgb(255, 244, 214)', accent: '#F59E0B' },
   ];
-  const CATS_SCROLL: Array<{ name: string; slug: string; emoji: string; accent: string; marketOnly?: boolean }> = [
-    { name: 'Услуги', slug: 'services', emoji: '🔧', accent: '#3B82F6', marketOnly: true },
-    { name: 'Техника', slug: 'electronics', emoji: '📱', accent: '#8B5CF6' },
-    { name: 'Посуточно', slug: 'home', emoji: '🏡', accent: '#F59E0B' },
-    { name: 'Дом и дача', slug: 'home', emoji: '🛋️', accent: '#10B981' },
-    { name: 'Одежда', slug: 'clothes', emoji: '👗', accent: '#EC4899' },
-    { name: 'Детям', slug: 'kids', emoji: '🧸', accent: '#F97316' },
-    { name: 'Хобби', slug: 'hobby', emoji: '⚽', accent: '#EF4444' },
-    { name: 'Животные', slug: 'animals', emoji: '🐕', accent: '#14B8A6' },
-  ];
-  const ALL_CATS = [...CATS_TOP, ...CATS_SCROLL];
+  const ALL_CATS = CATS;
 
   const catIdMap: Record<string, string> = {};
   for (const c of categories) {
@@ -417,10 +429,12 @@ async function renderHome(sp: HomeSearchParams) {
         </SiteHeader>
       </div>
 
-      {/* ===== DESKTOP CATEGORIES BAR — Avito-style horizontal icons ===== */}
+      {/* ===== DESKTOP CATEGORIES BAR — Avito-style horizontal icons =====
+          Категория «Все» на десктопе не показывается (логотип уже ведёт
+          на главную без фильтра). */}
       <div className="hidden border-b border-border bg-background md:block">
         <div className="mx-auto flex max-w-7xl items-stretch gap-0 overflow-x-auto px-6">
-          {ALL_CATS.map((cat) => {
+          {ALL_CATS.filter((cat) => cat.slug !== 'all').map((cat) => {
             const catId = catIdMap[cat.slug] || '';
             const isActive = urlCategoryId === catId && catId !== '';
             return (
@@ -437,7 +451,7 @@ async function renderHome(sp: HomeSearchParams) {
                   {cat.emoji}
                 </span>
                 <span className={`text-xs whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>
-                  {cat.name}
+                  {cat.name.replace(/\u00a0/g, ' ')}
                 </span>
               </Link>
             );
@@ -445,130 +459,235 @@ async function renderHome(sp: HomeSearchParams) {
         </div>
       </div>
 
-      {/* ===== MOBILE STICKY HEADER =====
-          Цвет фона привязан к var(--mode-primary) — меняется в момент
-          переключения Бартер/Маркет вместе с верхним system-bar браузера. */}
-      <div className="mobile-sticky-header md:hidden" style={{ marginBottom: -4, background: 'var(--mode-primary)', paddingTop: 'env(safe-area-inset-top, 0px)', transition: 'background 200ms ease' }}>
-        <header style={{ width: '100%', padding: '10px 12px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <img src="/brand/logo_icon.svg" alt="Бартер" width={30} height={30} style={{ flexShrink: 0 }} />
-          </Link>
-          <form action="/" method="GET" style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 12, padding: '8px 10px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+      {/* ===== MOBILE STICKY HEADER — реф (handoff-bundle/home.html) =====
+          БЕЛЫЙ фон, чёрный текст, акцент применяется только к мелким
+          индикаторам (точка нотификаций, счётчик «12» у сердца). Status-bar
+          iOS/Android окрашивается в белый (см. ModeThemeSync + pre-paint
+          скрипт в layout.tsx). Тон-в-тон с реф: тонкая нижняя граница,
+          grey pill поиск, город-чипс с MapPin. */}
+      <div
+        className="mobile-sticky-header md:hidden"
+        style={{
+          background: 'var(--mode-header-bg)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          borderBottom: '1px solid var(--border-subtle)',
+          transition: 'background 200ms ease',
+        }}
+      >
+        <header style={{ width: '100%', padding: '8px 16px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <Link
+              href="/"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                textDecoration: 'none',
+                color: 'var(--fg-strong)',
+                fontWeight: 800,
+                fontSize: 19,
+                letterSpacing: '-0.02em',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  width: 28,
+                  height: 28,
+                  position: 'relative',
+                  flexShrink: 0,
+                  display: 'inline-block',
+                }}
+              >
+                <span style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#E85D26', top: 0, left: 0 }} />
+                <span style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#F8B500', top: 0, right: 0, mixBlendMode: 'multiply', opacity: 0.92 }} />
+                <span style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: '#2D9E58', bottom: 0, left: 6, mixBlendMode: 'multiply', opacity: 0.92 }} />
+              </span>
+              <span>Бартер</span>
+            </Link>
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              aria-label="Уведомления"
+              style={{
+                position: 'relative',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--fg-strong)',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <Bell size={22} strokeWidth={1.8} aria-hidden />
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  top: 7,
+                  right: 8,
+                  width: 8,
+                  height: 8,
+                  background: 'var(--mode-accent)',
+                  borderRadius: '50%',
+                  border: '2px solid #fff',
+                }}
+              />
+            </button>
+            <Link
+              href="/favorites"
+              aria-label="Избранное"
+              style={{
+                position: 'relative',
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                background: 'transparent',
+                color: 'var(--fg-strong)',
+                textDecoration: 'none',
+                flexShrink: 0,
+              }}
+            >
+              <Heart size={22} strokeWidth={1.8} aria-hidden />
+              <span
+                aria-hidden
+                style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 2,
+                  minWidth: 16,
+                  height: 16,
+                  padding: '0 4px',
+                  borderRadius: 8,
+                  background: 'var(--mode-accent)',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  display: 'grid',
+                  placeItems: 'center',
+                  lineHeight: 1,
+                }}
+              >
+                12
+              </span>
+            </Link>
+          </div>
+
+          {/* Grey pill search — реф: bg=var(--bg-muted), h=44, radius=12 */}
+          <form
+            action="/"
+            method="GET"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'var(--bg-muted)',
+              height: 44,
+              borderRadius: 12,
+              padding: '0 12px',
+            }}
+          >
             {effectiveRecoMode ? <input type="hidden" name="reco" value="1" /> : null}
             {geoHidden}
             {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
-            <Search size={16} strokeWidth={1.8} color="#94A3B8" style={{ marginRight: 6, flexShrink: 0 }} aria-hidden />
+            <Search size={18} strokeWidth={1.8} color="var(--fg-subtle)" style={{ flexShrink: 0 }} aria-hidden />
             <MobileSearchInput
               defaultValue={currentQ}
-              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, flex: 1, minWidth: 0, color: '#1E293B' }}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                font: 'inherit',
+                fontSize: 15,
+                color: 'var(--fg-default)',
+              }}
             />
-            <SlidersHorizontal size={16} strokeWidth={1.8} color="#94A3B8" aria-label="Фильтры" />
+            <SlidersHorizontal size={18} strokeWidth={1.8} color="var(--fg-subtle)" aria-label="Фильтры" />
           </form>
-          <button
-            type="button"
-            aria-label="Уведомления"
-            style={{ position: 'relative', width: 38, height: 38, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none' }}
+
+          {/* Локация под поиском */}
+          <div
+            style={{
+              marginTop: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              color: 'var(--fg-muted)',
+              fontSize: 13,
+            }}
           >
-            <Bell size={18} strokeWidth={1.8} color="#fff" aria-hidden />
-            <span style={{ position: 'absolute', top: 7, right: 8, width: 8, height: 8, background: '#FF6D00', borderRadius: '50%', boxShadow: '0 0 0 2px var(--mode-primary)' }} />
-          </button>
-          <Link
-            href="/favorites"
-            aria-label="Избранное"
-            style={{ position: 'relative', width: 38, height: 38, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}
-          >
-            <Heart size={18} strokeWidth={1.8} color="#fff" aria-hidden />
-          </Link>
+            <MapPin size={14} strokeWidth={2} aria-hidden />
+            <span>{currentCity}</span>
+            <ChevronDown size={14} strokeWidth={2} aria-hidden style={{ color: 'var(--fg-subtle)' }} />
+          </div>
         </header>
-        <div style={{ padding: '0 14px 10px', display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.92)', fontSize: 13, fontWeight: 500 }}>
-          <MapPin size={14} strokeWidth={2} aria-hidden />
-          <span>{currentCity}</span>
-          <ChevronDown size={14} strokeWidth={2} aria-hidden style={{ opacity: 0.85 }} />
+      </div>
+
+      {/* ===== MOBILE CATEGORIES — cats-avito 2 строки × горизонтальный скролл =====
+          Реф (handoff-bundle/home.html): белые плитки 150×72, слева текст,
+          справа эмодзи на цветной подложке. Первая плитка «Все» с 4
+          цветными бабблами. Категории `marketOnly` скрываются в режиме
+          Бартер через CSS-фильтр `html[data-mode="barter"] [data-market-only]`. */}
+      <div className="md:hidden" style={{ background: 'var(--bg-page)' }}>
+        <div className="cats cats-avito">
+          {CATS.map((cat) => {
+            const catId = catIdMap[cat.slug] || '';
+            const href = cat.slug === 'all'
+              ? { pathname: '/', query: preservedListQuery }
+              : { pathname: '/', query: { ...preservedListQuery, categoryId: catId } };
+            return (
+              <Link
+                key={cat.slug}
+                href={href}
+                data-market-only={cat.marketOnly ? 'true' : undefined}
+                className={cat.allBubbles ? 'cat cat-all' : 'cat'}
+              >
+                <div className="cat-text">{cat.name}</div>
+                {cat.allBubbles ? (
+                  <div className="cat-media cat-bubbles">
+                    <span className="bub bub-r" />
+                    <span className="bub bub-y" />
+                    <span className="bub bub-g" />
+                    <span className="bub bub-b" />
+                  </div>
+                ) : (
+                  <div className="cat-media" style={{ background: cat.mediaBg }}>
+                    <span className="cat-emoji" aria-hidden>{cat.emoji}</span>
+                  </div>
+                )}
+              </Link>
+            );
+          })}
         </div>
       </div>
 
-      {/* ===== MOBILE CATEGORIES — dark glass cards =====
-          Фон и фейд-градиент привязаны к var(--mode-primary) — меняются
-          вместе с палитрой. Категории с `marketOnly` скрываются в режиме
-          Бартер через CSS-правило в globals.css. */}
-      <div style={{ background: 'var(--mode-primary)', paddingBottom: 36, marginTop: 0, transition: 'background 200ms ease' }} className="md:hidden">
-        <section style={{ marginTop: 4, padding: '0 12px' }}>
-          {/* Top row: 3 big cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {CATS_TOP.map((cat) => {
-              const catId = catIdMap[cat.slug] || '';
-              return (
-                <Link
-                  key={cat.slug}
-                  href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                  data-market-only={cat.marketOnly ? 'true' : undefined}
-                  style={{ background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 88, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.12)' }}
-                >
-                  <span style={{ color: '#fff', fontSize: 12, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, display: 'block' }}>{cat.name}</span>
-                  <div style={{ position: 'absolute', bottom: -4, right: -4, width: 56, height: 56, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
-                    {cat.emoji}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-          {/* Scrollable row */}
-          <div style={{ position: 'relative', marginTop: 8 }}>
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingRight: 32 }} className="hide-scrollbar">
-              {CATS_SCROLL.map((cat) => {
-                const catId = catIdMap[cat.slug] || '';
-                return (
-                  <Link
-                    key={cat.slug + cat.name}
-                    href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                    data-market-only={cat.marketOnly ? 'true' : undefined}
-                    style={{ minWidth: 96, background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 76, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0, border: '1px solid rgba(255,255,255,0.12)' }}
-                  >
-                    <span style={{ color: '#fff', fontSize: 12, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, display: 'block' }}>{cat.name}</span>
-                    <div style={{ position: 'absolute', bottom: -6, right: -6, width: 44, height: 44, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                      {cat.emoji}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, transparent, var(--mode-primary))', pointerEvents: 'none', zIndex: 5 }} />
-          </div>
-        </section>
-      </div>
-
-      {/* ===== MAIN CONTENT ===== */}
-      <main className="relative z-20 -mt-5 rounded-t-3xl bg-muted md:mt-0 md:rounded-none">
-        <div className="mx-auto max-w-7xl px-2 pt-5 pb-24 md:px-6 md:py-8">
+      {/* ===== MAIN CONTENT =====
+          Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
+          muted на десктопе ради контраста карточек. */}
+      <main className="relative z-20 bg-background md:bg-muted">
+        <div className="mx-auto max-w-7xl px-2 pt-2 pb-24 md:px-6 md:py-8">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
-          {/* ===== MOBILE: режим Бартер/Маркет (UI-стаб до Phase 13) ===== */}
+          {/* ===== MOBILE: режим Бартер/Маркет (UI-стаб до Phase 13) =====
+              Баннер «Обмен без денег» убран — режим уже реализован через
+              MobileModeToggle и сквозную CSS-палитру. */}
           <div className="mb-3 flex justify-center md:hidden">
             <MobileModeToggle />
           </div>
 
-          {/* ===== MOBILE: hero «Обмен без денег» — анонс Phase 13 ===== */}
-          <Link
-            href="/listings?mode=barter"
-            className="mb-4 flex items-center gap-3 rounded-2xl px-4 py-3.5 md:hidden"
-            style={{ background: 'linear-gradient(135deg, #FFEFE6 0%, #FFE0CC 100%)', textDecoration: 'none', color: 'inherit' }}
-          >
-            <span
-              aria-hidden
-              style={{ width: 44, height: 44, background: '#FF6D00', borderRadius: 12, display: 'grid', placeItems: 'center', color: '#fff', flexShrink: 0 }}
-            >
-              <ArrowLeftRight size={22} strokeWidth={2} />
-            </span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: 'block', fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em', color: '#1A1A1A' }}>
-                Обмен без денег
-              </span>
-              <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: '#6B6B6B', lineHeight: 1.35 }}>
-                Меняйте вещи напрямую с&nbsp;людьми рядом · скоро
-              </span>
-            </span>
-            <ChevronRight size={18} strokeWidth={2} color="#6B6B6B" aria-hidden />
-          </Link>
+          {/* ===== MOBILE: пример-кластер бартер-объявлений =====
+              Показывается только при data-mode="barter" (CSS). Временная
+              витрина до Phase 13 — чтобы раздел не выглядел пустым. */}
+          <BarterExampleCluster />
 
           {effectiveRecoMode ? (
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-primary/10 p-3.5 text-sm">

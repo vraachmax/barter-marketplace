@@ -138,7 +138,14 @@
   /* ====== Mode-aware tokens (Бартер / Маркет) ======
      Default (до hydration) = Маркет, чтобы десктоп, который не меняет режим,
      выглядел как обычный Avito-синий. На мобильном <html data-mode="..."> сразу
-     ставится клиентом из localStorage и токены переопределяются ниже. */
+     ставится клиентом из localStorage и токены переопределяются ниже.
+
+     Референс (docs/design-bundle-v2/barter/project/home.html): на мобильном
+     шапка, категории и фон — БЕЛЫЕ; акцент-цвет применяется только к мелким
+     элементам (бейджи, CTA «Хочу обменять», hover). Поэтому:
+       --mode-header-bg   — фон шапки (всегда белый)
+       --mode-accent      — активный акцент режима (оранжевый Бартер / синий Маркет)
+       --mode-accent-soft — пастельный фон для CTA `btn-swap`, бейджей, индикаторов */
   --mode-primary:       var(--brand-primary);      /* #00AAFF */
   --mode-primary-hover: var(--brand-primary-hover);/* #0095E0 */
   --mode-primary-soft:  var(--brand-primary-soft); /* #E6F7FF */
@@ -146,9 +153,16 @@
   --mode-cta:           #87D32C;                    /* Avito 2026 салатовый CTA */
   --mode-cta-hover:     #6DB020;
   --mode-msg-bubble:    #00AAFF;                    /* цвет моих сообщений в чате */
+  --mode-header-bg:     #FFFFFF;                    /* фон мобильной шапки — всегда белый (реф) */
+  --mode-accent:        #00AAFF;                    /* brand accent текущего режима */
+  --mode-accent-hover:  #0095E0;
+  --mode-accent-soft:   #E6F7FF;                    /* пастель для CTA/бейджей */
+  --mode-accent-ring:   rgba(0, 170, 255, 0.22);
 }
 
-/* Режим БАРТЕР — оранжевая палитра (#E85D26 / #FFEFE6) */
+/* Режим БАРТЕР — оранжевая палитра (#E85D26 / #FFEFE6)
+   Заголовки/фон остаются белыми (как в референсе), оранжевый применяется
+   только к акцентам: swap-badge хочу-строка, CTA «Хочу обменять», focus. */
 html[data-mode="barter"] {
   --mode-primary:       #E85D26;
   --mode-primary-hover: #D14E1F;
@@ -157,6 +171,11 @@ html[data-mode="barter"] {
   --mode-cta:           #E85D26;
   --mode-cta-hover:     #D14E1F;
   --mode-msg-bubble:    #E85D26;
+  --mode-header-bg:     #FFFFFF;
+  --mode-accent:        #E85D26;
+  --mode-accent-hover:  #CE4B17;
+  --mode-accent-soft:   #FFEFE6;
+  --mode-accent-ring:   rgba(232, 93, 38, 0.22);
 }
 
 /* Режим МАРКЕТ — синяя палитра (Avito 2026) + салатовый CTA */
@@ -168,12 +187,160 @@ html[data-mode="market"] {
   --mode-cta:           #87D32C;
   --mode-cta-hover:     #6DB020;
   --mode-msg-bubble:    #00AAFF;
+  --mode-header-bg:     #FFFFFF;
+  --mode-accent:        #00AAFF;
+  --mode-accent-hover:  #0095E0;
+  --mode-accent-soft:   #E6F7FF;
+  --mode-accent-ring:   rgba(0, 170, 255, 0.22);
 }
 
 /* CSS-фильтры категорий и промо-бейджей по режиму (используются по data-атрибутам) */
 html[data-mode="barter"] [data-market-only="true"] { display: none !important; }
 html:not([data-mode="market"]) [data-market-only-strict="true"] { display: none !important; }
 html[data-mode="barter"] [data-promo-badge="true"] { display: none !important; }
+
+/* Барter-only элементы (swap-badge на превью, "Хочу:" строка, CTA "Хочу обменять")
+   показываем только в Бартере. Это спасает от визуального шума, когда пользователь
+   находится в Маркете, но листинг помечен как barter. */
+html:not([data-mode="barter"]) [data-barter-only="true"] { display: none !important; }
+
+/* =========================================================================
+   Reference (handoff-bundle home.html) — категории cats-avito
+   2 строки × горизонтальный скролл. Цвет/радиусы/шрифты — 1:1.
+   ========================================================================= */
+.cats-avito {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, 72px);
+  grid-auto-columns: 150px;
+  gap: 10px;
+  padding: 12px 14px 16px;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.cats-avito::-webkit-scrollbar { display: none; }
+
+.cats-avito .cat {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  background: #ffffff;
+  border-radius: 14px;
+  height: 72px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  text-decoration: none;
+  scroll-snap-align: start;
+  transition: transform var(--dur-fast) var(--ease-default);
+}
+.cats-avito .cat:active { transform: scale(0.97); }
+
+.cats-avito .cat-text {
+  flex: 1 1 auto;
+  align-self: center;
+  font-size: 12.5px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  padding: 6px 4px 6px 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.cats-avito .cat-media {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 14px 14px 0;
+  background: #f3f4f6;
+  position: relative;
+}
+.cats-avito .cat-emoji {
+  font-size: 30px;
+  line-height: 1;
+  display: block;
+}
+
+/* «Все» — четыре цветные «бабблы» вместо эмодзи */
+.cats-avito .cat-all .cat-media.cat-bubbles {
+  background: #ffffff;
+  width: 56px;
+  overflow: visible;
+}
+.cats-avito .bub {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: block;
+}
+.cats-avito .bub-r { background: #ff4d4f; top: 16px; left: 10px; }
+.cats-avito .bub-y { background: #ffc83d; top: 16px; right: 10px; }
+.cats-avito .bub-g { background: #22c55e; bottom: 16px; left: 10px; }
+.cats-avito .bub-b { background: #3b82f6; bottom: 16px; right: 10px; }
+
+/* =========================================================================
+   Barter card extras (swap-badge / want-line / btn-swap) — реф
+   ========================================================================= */
+.swap-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.want-line {
+  font-size: 12px;
+  color: var(--mode-accent);
+  font-weight: 600;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.3;
+}
+.want-line svg { color: var(--mode-accent); }
+
+.btn-swap {
+  margin-top: 6px;
+  background: var(--mode-accent-soft);
+  color: var(--mode-accent);
+  border: none;
+  border-radius: 10px;
+  height: 34px;
+  width: 100%;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-default);
+}
+.btn-swap:active { background: color-mix(in srgb, var(--mode-accent-soft) 80%, var(--mode-accent) 20%); }
 
 /* Map the Tailwind v4 theme layer to our tokens so `bg-background`,
    `text-foreground`, `font-sans`, and brand color utilities pick them up. */

@@ -1,6 +1,6 @@
 'use client';
 
-import { Camera, Heart } from 'lucide-react';
+import { ArrowLeftRight, Camera, Heart } from 'lucide-react';
 import { TrackedListingLink } from '@/components/tracked-listing-link';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import { Badge } from '@/components/ui/badge';
@@ -125,6 +125,14 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
                   {photoCount}
                 </span>
               ) : null}
+              {/* Swap-badge — реф (handoff-bundle/home.html). Показывается
+                  только в режиме Бартер: чёрная пилюля внизу-слева превью.
+                  Виден через `data-barter-only`, скрытие в Маркете — через
+                  CSS-правило `html:not([data-mode="barter"]) [data-barter-only]`. */}
+              <span data-barter-only="true" className="swap-badge">
+                <ArrowLeftRight size={11} strokeWidth={2} aria-hidden />
+                Обмен
+              </span>
               <button
                 type="button"
                 aria-label="В избранное"
@@ -150,6 +158,23 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
             {data.city}
             {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}
           </div>
+          {/* Бартер-only: «Хочу: …» строка + CTA «Хочу обменять» (реф).
+              Скрывается в Маркете тем же data-barter-only фильтром. */}
+          <div data-barter-only="true" className="want-line mt-1.5">
+            <ArrowLeftRight size={12} strokeWidth={2} aria-hidden />
+            <span className="truncate">Хочу: интересный обмен</span>
+          </div>
+          <button
+            type="button"
+            data-barter-only="true"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            className="btn-swap"
+          >
+            Хочу обменять
+          </button>
         </div>
       </Card>
     </TrackedListingLink>
