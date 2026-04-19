@@ -479,18 +479,17 @@ export default function MessagesPage() {
 
   return (
     /*
-      pb на мобилке: глобальный `body { padding-bottom: 72px }` уже
-      даёт ~76px зазор под плавающий nav-pill, но у nav v3.1
-      bubble активного раздела торчит ещё ~25px над pill'ом.
-      Итерация:
-        +96  → 168px пустоты (Максим: «слишком большой отступ»)
-        +8   → bubble перекрывал Send-кнопку
-        +40  → bubble не задевал Send, но снова много воздуха
-        +20  → composer уверенно над bubble без лишней пустоты
-      На десктопе (md+) bottom-nav нет — pb обнуляем.
+      Фон страницы теперь `bg-card` (белый в light, тёмный в dark
+      теме) — Максим попросил, чтобы и messages-area, и тонкий
+      strip под composer'ом были theme-aware «card»-цвета, а не
+      серого `bg-muted`.
+      pb на мобилке: body уже даёт +72px под bottom-nav. Итерация:
+        +96 → 168px (много) · +8 → перекрывало Send · +40 (воздух)
+        +20 (хорошо) · +12 (текущее, минимум без перекрытия bubble).
+      На md+ bottom-nav нет — pb обнуляем.
     */
     <div
-      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+20px)] md:pb-0"
+      className="flex min-h-[100dvh] flex-col bg-card text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+12px)] md:pb-0"
     >
       {/* Top bar — desktop */}
       <header className="hidden shrink-0 border-b border-border bg-card md:block">
@@ -727,7 +726,7 @@ export default function MessagesPage() {
 
         {/* Thread */}
         <section
-          className={`flex min-h-0 min-w-0 flex-1 flex-col bg-muted ${
+          className={`flex min-h-0 min-w-0 flex-1 flex-col bg-card ${
  mobileThreadOpen ? 'flex flex-1' : 'hidden md:flex'
  }`}
         >
@@ -876,7 +875,7 @@ export default function MessagesPage() {
                             style={isPeer ? undefined : { background: myBubbleColor }}
                             className={`min-w-0 rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
  isPeer
- ? 'rounded-tl-md border border-border bg-card text-foreground'
+ ? 'rounded-tl-md border border-border bg-muted text-foreground'
  : 'rounded-tr-md text-white'
  }`}
                           >
