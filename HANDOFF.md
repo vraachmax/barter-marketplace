@@ -1,10 +1,77 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Hotfix #7 ✅ · Hotfix #8 🚧 (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Hotfix #7 ✅ · Hotfix #8 ✅ · Hotfix #9 🚧 (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #8 (текущий шаг):** bottom-nav mode-color, MapPin на место Bell, gradient-circle категории, Market example cluster, расширенный список категорий, «Все» убрана с мобилы.
-2. **Phase 1.x mobile:** `/search` (клон мобильного Avito), `/messages` (support-chat pinned + автоответы), `/favorites` (re-scale), `/profile` (redesign + font-audit), listing detail palette-audit.
+1. **Hotfix #9 (текущий шаг):** listing detail palette-audit (#52) — orange-on-blue leak убран; всё на `--mode-accent*` (breadcrumbs, safety notice, CTA «Написать сообщение», ShowPhoneButton, seller card, listing-bot-assistant, seller-review-form, listing-mini-map, listing-gallery thumbs, FavoriteToggle hover).
+2. **Phase 1.x mobile (next):** `/favorites` (#50, 2-col grid), `/messages` (#49, pinned support + автоответы), `/profile` (#51, Avito header + font-audit), `/search` (#48, mobile Avito clone).
 3. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+
+## 2026-04-19 (5) — Hotfix #9: listing-detail palette audit (orange-on-blue leak fix)
+
+Фокус — задача #52 из бэклога Hotfix #8. Максим жаловался: «моментами когда заходишь на
+объявление там где-то на синем фоне оранжевый шрифт». Проблема — на странице
+`/listing/[id]/page.tsx` блок «Безопасная сделка» использовал статический `bg-accent/10
+text-accent` (= оранжевый Avito #FF6D00), а вокруг — bridge-`primary` (= синий #00AAFF).
+В режиме Бартер было наоборот: синие кнопки и аватары на оранжевом окружении. Полный палитра-лик.
+
+**Что сделано:**
+
+- **`apps/web/src/app/listing/[id]/page.tsx`** — все вхождения `text-primary`, `bg-primary`,
+  `text-accent`, `border-accent/30`, `bg-accent/10` заменены на `--mode-accent*` через inline
+  `style` (для CSS-переменных) или Tailwind v4 arbitrary `hover:[color:var(--mode-accent)]`.
+  Конкретно: breadcrumbs hover, safety-notice (фон/бордер/текст/иконка), CTA «Написать
+  сообщение», seller avatar bg, hover имени продавца, Badge «Документы проверены», ссылка
+  «Все объявления продавца →».
+
+- **`apps/web/src/components/show-phone-button.tsx`** — переписан, теперь использует класс
+  `.btn-show-phone` (= зелёный CTA #87D32C в Маркете, оранжевый `--mode-accent` в Бартере).
+  Раньше использовал статический `secondary` (зелёный Avito #009F44). «Расскрытое» состояние
+  (телефон/email) теперь на `--mode-accent-soft` фоне с `--mode-accent` текстом.
+
+- **`apps/web/src/components/favorite-toggle.tsx`** — hover-палитра кнопки «Добавить в
+  избранное» теперь `--mode-accent*` (раньше красила в статический оранжевый `accent`).
+  Сердечко оставлено `#f5576c` — семантический «like»-цвет.
+
+- **`apps/web/src/components/listing-mini-map.tsx`** — pin-маркер на карте и MapPin-иконка
+  под картой перевязаны на `--mode-accent` (раньше — статический primary-blue).
+
+- **`apps/web/src/components/listing-gallery.tsx`** — обводка активной thumb-картинки
+  привязана к `--mode-accent-ring` (раньше `border-primary/30 ring-2 ring-primary/30`).
+
+- **`apps/web/src/components/seller-review-form.tsx`** — критический фикс: контейнер имел
+  сломанный класс `bg-primary to-white` (без `bg-gradient-to-b`, фактически solid синий
+  Avito-primary). Заменено на `bg-card`. Все `text-primary`/`bg-primary`/`text-accent`/
+  `bg-accent` в дочерних элементах (auth-required notice, текстарея focus-ring, кнопка
+  «Опубликовать», CTA «Перейти в чат», fallback-блок) — на `--mode-accent*`. Success-
+  сообщения оставлены `text-success` (семантический зелёный).
+
+- **`apps/web/src/components/listing-bot-assistant.tsx`** — фон, бейдж, заголовок, текст,
+  ссылки на похожие — всё на `--mode-accent*`. Раньше сплошной `bg-primary` (Avito-blue).
+
+**Файлы тронутые в Hotfix #9:**
+```
+apps/web/src/app/listing/[id]/page.tsx
+apps/web/src/components/show-phone-button.tsx
+apps/web/src/components/favorite-toggle.tsx
+apps/web/src/components/listing-mini-map.tsx
+apps/web/src/components/listing-gallery.tsx
+apps/web/src/components/seller-review-form.tsx
+apps/web/src/components/listing-bot-assistant.tsx
+```
+
+**Что НЕ тронули и почему:**
+- `seller-presence-badge.tsx` — `text-secondary` для «В сети» зелёный — семантический
+  online-indicator, общий для обоих режимов. Оставлено как было.
+- `ListingCard` промо-ring — уже было прокомментировано в Hotfix #8 (промо-бейджи скрыты
+  CSS-фильтром в Бартере, поэтому `ring-accent/40` не вытекает).
+- `listing-actions.tsx` — `secondary` (зелёный) использован только для success-state
+  «Жалоба отправлена», `destructive` (красный) — для опасных действий. Оба семантические.
+
+**Верификация Hotfix #9:**
+- [x] `npx tsc --noEmit` в `apps/web` — exit 0, чистый
+- [ ] Визуальная сверка `/listing/[id]` в обоих режимах: orange-on-blue не должно быть нигде
+- [ ] Регрессия по другим страницам: home / favorites / messages / profile
+
 
 ## 2026-04-19 (4) — Hotfix #8: bottom-nav mode-color + header chip + gradient-categories + Market-cluster
 

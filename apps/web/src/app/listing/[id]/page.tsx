@@ -137,25 +137,29 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
       <main className="mx-auto max-w-7xl px-4 pt-5 pb-28 lg:pb-12">
         <ListingViewTracker listingId={listing.id} />
 
-        {/* Breadcrumbs — Avito-style */}
+        {/* Breadcrumbs — Avito-style.
+            Hover-цвет привязан к `--mode-accent` через Tailwind arbitrary
+            syntax, поэтому в Маркете синий (#00AAFF), в Бартере оранжевый
+            (#E85D26). Без этого breadcrumbs светились статическим primary-
+            синим в Бартере — палитра-лик. */}
         <nav
           aria-label="Breadcrumb"
           className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
         >
-          <Link href="/" className="transition-colors hover:text-primary">
+          <Link href="/" className="transition-colors hover:[color:var(--mode-accent)]">
             Главная
           </Link>
           <ChevronRight size={12} className="text-foreground/30" aria-hidden />
           <Link
             href={`/?categoryId=${listing.category.id}`}
-            className="transition-colors hover:text-primary"
+            className="transition-colors hover:[color:var(--mode-accent)]"
           >
             {listing.category.title}
           </Link>
           <ChevronRight size={12} className="text-foreground/30" aria-hidden />
           <Link
             href={`/?city=${encodeURIComponent(listing.city)}`}
-            className="transition-colors hover:text-primary"
+            className="transition-colors hover:[color:var(--mode-accent)]"
           >
             {listing.city}
           </Link>
@@ -219,12 +223,23 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               </span>
             </div>
 
-            {/* Safety notice */}
-            <div className="flex gap-3 rounded-2xl border border-accent/30 bg-accent/10 p-4 text-sm text-accent">
+            {/* Safety notice — БЫЛ оранжевый (`text-accent` = #FF6D00),
+                это давало палитра-лик в Маркете (оранжевый текст на синем
+                бренде). Перевязали на `--mode-accent*` через Tailwind
+                arbitrary, поэтому в Маркете блок синий, в Бартере оранжевый. */}
+            <div
+              className="flex gap-3 rounded-2xl border p-4 text-sm"
+              style={{
+                borderColor: 'var(--mode-accent-ring)',
+                backgroundColor: 'var(--mode-accent-soft)',
+                color: 'var(--mode-accent)',
+              }}
+            >
               <AlertTriangle
                 size={20}
                 strokeWidth={1.8}
-                className="mt-0.5 shrink-0 text-accent"
+                className="mt-0.5 shrink-0"
+                style={{ color: 'var(--mode-accent)' }}
                 aria-hidden
               />
               <div>
@@ -259,10 +274,20 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <p className="text-xs text-muted-foreground">Включая торг — уточняйте в чате</p>
 
               <div className="mt-1 space-y-2">
+                {/* CTA «Написать сообщение» — основной бренд-CTA режима.
+                    Раньше `<Button>` рисовался в статическом `--color-primary`
+                    (синий Avito) → в Бартере получали синюю кнопку вопреки
+                    оранжевой палитре. Перевязали на `--mode-accent*` через
+                    inline style, сам `<Button>` оставляем для сохранения
+                    геометрии (h-11, rounded-xl, focus-ring). */}
                 <Button
                   render={<Link href={`/messages?listingId=${listing.id}`} />}
                   size="lg"
                   className="h-11 w-full rounded-xl text-[15px] font-semibold"
+                  style={{
+                    backgroundColor: 'var(--mode-accent)',
+                    color: '#ffffff',
+                  }}
                 >
                   Написать сообщение
                 </Button>
@@ -279,10 +304,16 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <FavoriteToggle listingId={listing.id} />
             </Card>
 
-            {/* Seller card */}
+            {/* Seller card — все бренд-акценты (avatar bg, hover-цвет имени,
+                badge «Документы проверены», ссылка «Все объявления продавца»)
+                перевязаны на `--mode-accent*`. Без этого аватар и бейдж
+                светились синим Avito-primary даже в Бартере. */}
             <Card className="gap-3 px-5 py-5">
               <div className="flex items-start gap-3">
-                <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-base font-bold text-primary-foreground">
+                <div
+                  className="grid size-12 shrink-0 place-items-center rounded-xl text-base font-bold text-white"
+                  style={{ backgroundColor: 'var(--mode-accent)' }}
+                >
                   {(listing.owner.name ?? 'П').slice(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -291,7 +322,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                   </p>
                   <Link
                     href={`/seller/${listing.owner.id}`}
-                    className="block truncate text-base font-bold text-foreground transition-colors hover:text-primary"
+                    className="block truncate text-base font-bold text-foreground transition-colors hover:[color:var(--mode-accent)]"
                   >
                     {listing.owner.name ?? 'Продавец'}
                   </Link>
@@ -302,14 +333,20 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               </div>
               <Badge
                 variant="outline"
-                className="w-fit gap-1.5 border-primary/20 bg-primary/10 text-primary"
+                className="w-fit gap-1.5"
+                style={{
+                  borderColor: 'var(--mode-accent-ring)',
+                  backgroundColor: 'var(--mode-accent-soft)',
+                  color: 'var(--mode-accent)',
+                }}
               >
                 <Store size={12} strokeWidth={1.8} aria-hidden />
                 Документы проверены
               </Badge>
               <Link
                 href={`/seller/${listing.owner.id}`}
-                className="text-xs font-semibold text-primary hover:underline"
+                className="text-xs font-semibold hover:underline"
+                style={{ color: 'var(--mode-accent)' }}
               >
                 Все объявления продавца →
               </Link>

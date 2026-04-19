@@ -36,7 +36,13 @@ export function ListingMiniMap({ latitude, longitude, city }: Props) {
           }}
         />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/20 ring-4 ring-white/80">
+          <span
+            className="grid h-10 w-10 place-items-center rounded-full text-white ring-4 ring-white/80"
+            style={{
+              backgroundColor: 'var(--mode-accent)',
+              boxShadow: '0 8px 16px var(--mode-accent-ring)',
+            }}
+          >
             <MapPin size={22} strokeWidth={1.8} className="text-white" aria-hidden />
           </span>
         </div>
@@ -45,7 +51,13 @@ export function ListingMiniMap({ latitude, longitude, city }: Props) {
         </span>
       </a>
       <div className="flex items-center gap-2 px-3 py-2.5">
-        <MapPin size={14} strokeWidth={1.8} className="shrink-0 text-primary" aria-hidden />
+        <MapPin
+          size={14}
+          strokeWidth={1.8}
+          className="shrink-0"
+          style={{ color: 'var(--mode-accent)' }}
+          aria-hidden
+        />
         <span className="text-sm font-medium text-foreground">{city}</span>
       </div>
     </div>

@@ -103,15 +103,29 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
 
   if (!enabled || dismissed || !visible || filteredSimilar.length === 0) return null;
 
+  // Бот-помощник был полностью завязан на `bg-primary` / `text-primary`
+  // (= synthetic Avito-blue), поэтому в режиме Бартер блок был синим. Теперь
+  // фон — пастельный `--mode-accent-soft`, текст и ссылки — `--mode-accent`.
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-primary/30 bg-primary p-4 text-sm shadow-sm">
+    <div
+      className="mt-4 overflow-hidden rounded-2xl border p-4 text-sm shadow-sm"
+      style={{
+        borderColor: 'var(--mode-accent-ring)',
+        backgroundColor: 'var(--mode-accent-soft)',
+      }}
+    >
       <div className="mb-2 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-white shadow-sm">
+        <span
+          className="grid h-8 w-8 place-items-center rounded-xl text-white shadow-sm"
+          style={{ backgroundColor: 'var(--mode-accent)' }}
+        >
           <Sparkles size={18} strokeWidth={1.8} className="text-white" aria-hidden />
         </span>
-        <div className="font-bold text-primary">Бот-помощник</div>
+        <div className="font-bold" style={{ color: 'var(--mode-accent)' }}>
+          Бот-помощник
+        </div>
       </div>
-      <p className="text-primary">
+      <p style={{ color: 'var(--mode-accent)' }}>
         Нашёл похожие варианты по цене и параметрам — возможно, подойдут и вам:
       </p>
 
@@ -119,11 +133,13 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
         {filteredSimilar.slice(0, shownCount).map((x) => (
           <div
             key={x.id}
-            className="rounded-xl border border-primary/30 bg-card/90 p-3 shadow-sm"
+            className="rounded-xl border bg-card/90 p-3 shadow-sm"
+            style={{ borderColor: 'var(--mode-accent-ring)' }}
           >
             <Link
               href={`/listing/${x.id}`}
-              className="block truncate font-bold text-primary hover:underline"
+              className="block truncate font-bold hover:underline"
+              style={{ color: 'var(--mode-accent)' }}
             >
               {x.title}
             </Link>
@@ -140,14 +156,16 @@ export default function ListingBotAssistant({ listing, similar }: Props) {
           <button
             type="button"
             onClick={() => setShownCount((p) => Math.min(filteredSimilar.length, p + 5))}
-            className="text-primary underline underline-offset-2 hover:text-primary"
+            className="underline underline-offset-2"
+            style={{ color: 'var(--mode-accent)' }}
           >
             Показать ещё 5 похожих
           </button>
         ) : (
           <Link
             href="/"
-            className="text-primary underline underline-offset-2"
+            className="underline underline-offset-2"
+            style={{ color: 'var(--mode-accent)' }}
           >
             Больше вариантов в ленте
           </Link>

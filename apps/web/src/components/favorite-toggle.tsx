@@ -25,11 +25,15 @@ export default function FavoriteToggle({ listingId }: Props) {
     setStatus('added');
   }
 
+  // Hover-цвет был статическим оранжевым (`accent` = #FF6D00) → в Маркете
+  // получали оранжевый ободок на синем бренде. Сердечко само остаётся
+  // розово-красным (#f5576c) — это сквозной семантический «like»-цвет, его
+  // не трогаем. Hover/border привязали к `--mode-accent*`.
   return (
     <div className="mt-1">
       <button
         type="button"
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground shadow-sm transition hover:border-accent/40 hover:bg-accent/10 hover:text-accent disabled:opacity-60"
+        className="group/fav flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-bold text-foreground shadow-sm transition disabled:opacity-60 hover:[border-color:var(--mode-accent-ring)] hover:[background-color:var(--mode-accent-soft)] hover:[color:var(--mode-accent)]"
         onClick={addToFavorites}
         disabled={busy || status === 'added'}
       >

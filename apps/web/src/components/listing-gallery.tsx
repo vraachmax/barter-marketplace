@@ -188,8 +188,16 @@ export default function ListingGallery({
               type="button"
               onClick={() => setIdx(i)}
               className={`shrink-0 overflow-hidden rounded-xl border-2 transition ${
- i === idx ? 'border-primary/30 ring-2 ring-primary/30' : 'border-border opacity-80 hover:opacity-100'
- }`}
+                i === idx ? '' : 'border-border opacity-80 hover:opacity-100'
+              }`}
+              style={
+                i === idx
+                  ? {
+                      borderColor: 'var(--mode-accent-ring)',
+                      boxShadow: '0 0 0 2px var(--mode-accent-ring)',
+                    }
+                  : undefined
+              }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`${apiBase}${im.url}`} alt="" className="h-16 w-16 object-cover sm:h-20 sm:w-20" loading="lazy" />

@@ -59,7 +59,12 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
         {contactData.phone ? (
           <a
             href={`tel:${contactData.phone}`}
-            className="flex items-center gap-2 rounded-xl bg-secondary/10 px-4 py-2.5 text-sm font-bold text-secondary ring-1 ring-secondary/30 transition hover:bg-secondary/10"
+            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition"
+            style={{
+              backgroundColor: 'var(--mode-accent-soft)',
+              color: 'var(--mode-accent)',
+              boxShadow: 'inset 0 0 0 1px var(--mode-accent-ring)',
+            }}
           >
             <Phone size={18} strokeWidth={1.8} aria-hidden />
             {contactData.phone}
@@ -77,16 +82,21 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
     );
   }
 
+  // Кнопка «Показать контакт» — `.btn-show-phone` даёт зелёный CTA (#87D32C)
+  // в Маркете и оранжевый (--mode-accent) в Бартере. Блок `h-auto` + `py-3`
+  // снимает фиксированную высоту 34px, чтобы лейбл «Показать контакт» с
+  // маской номера вмещался без обрезания.
   return (
     <button
       type="button"
       onClick={reveal}
-      className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:border-secondary/30 hover:bg-secondary/10 hover:text-secondary"
+      className="btn-show-phone flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
+      style={{ height: 'auto' }}
     >
       <Phone size={18} strokeWidth={1.8} aria-hidden />
       <span>Показать контакт</span>
       {maskedDisplay ? (
-        <span className="ml-auto font-mono text-xs text-muted-foreground">{maskedDisplay}</span>
+        <span className="ml-auto font-mono text-xs opacity-90">{maskedDisplay}</span>
       ) : null}
     </button>
   );
