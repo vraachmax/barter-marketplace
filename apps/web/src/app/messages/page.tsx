@@ -11,6 +11,7 @@ import {
   Mail,
   MessageCircle,
   Search,
+  Send,
   SlidersHorizontal,
   Sparkles,
   Store,
@@ -137,6 +138,15 @@ export default function MessagesPage() {
   }, [chats, listQuery]);
 
   const totalUnread = useMemo(() => chats.reduce((acc, c) => acc + (c.unreadCount ?? 0), 0), [chats]);
+
+  // AI-подсказка показывается только если у меня в этом диалоге ЕЩЁ нет
+  // отправленных сообщений. Как только я написал хоть что-то — подсказка
+  // становится не нужна (Максим: «потом есть же быстрые ответы»).
+  const hasMyMessages = useMemo(() => {
+    const peerId = selectedChat?.peer?.id;
+    if (!peerId) return false;
+    return messages.some((m) => !m.isAssistant && m.senderId !== peerId);
+  }, [messages, selectedChat?.peer?.id]);
 
   const peerStatus = useMemo(() => {
     const peerId = selectedChat?.peer?.id;
@@ -468,7 +478,16 @@ export default function MessagesPage() {
   const previewSrc = resolveAssetUrl(selectedChat?.listing?.previewImageUrl ?? null);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased">
+    /*
+      pb на мобилке = высота bottom-nav (64) + его offset снизу (12) +
+      воздух (16-20) ≈ 96px. Через safe-area-inset учитываем «уши»
+      iOS. На десктопе (md+) bottom-nav отсутствует — pb обнуляем.
+      Composer внутри thread'а живёт в `flex-col` → автоматически
+      становится sticky-снизу при длинной ленте сообщений (п.7).
+    */
+    <div
+      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+96px)] md:pb-0"
+    >
       {/* Top bar — desktop */}
       <header className="hidden shrink-0 border-b border-border bg-card md:block">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 lg:px-6">
@@ -501,30 +520,28 @@ export default function MessagesPage() {
  mobileThreadOpen ? 'hidden md:flex' : 'flex flex-1 md:flex-none'
  }`}
         >
-          <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 md:hidden">
-            <div className="flex items-center gap-2 font-semibold text-foreground">
-              <MessageCircle size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
-              Чаты
-              {totalUnread > 0 ? (
-                <span className="rounded-full bg-accent px-1.5 text-[11px] font-bold text-white">{totalUnread}</span>
-              ) : null}
-            </div>
-            <Link href="/" className="text-xs font-medium text-primary">
-              Главная
-            </Link>
+          {/*
+            Мобильная мини-шапка списка. Убрали кнопку «Главная» — туда и так
+            ведёт bottom-nav. Оставили только заголовок + счётчик непрочитанных.
+          */}
+          <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
+            <span className="text-[15px] font-bold tracking-tight text-foreground">Сообщения</span>
+            {totalUnread > 0 ? (
+              <span className="rounded-full bg-primary px-1.5 text-[11px] font-bold text-white">{totalUnread}</span>
+            ) : null}
           </div>
 
-          <div className="border-b border-border p-3">
+          <div className="border-b border-border px-3 py-2">
             <div className="relative">
               <span className="pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2">
-                <Search size={16} strokeWidth={1.8} className="opacity-60" aria-hidden />
+                <Search size={15} strokeWidth={1.8} className="opacity-60" aria-hidden />
               </span>
               <input
                 type="search"
                 value={listQuery}
                 onChange={(e) => setListQuery(e.target.value)}
                 placeholder="Поиск по чатам…"
-                className="h-10 w-full rounded-xl border border-border bg-muted/50 pl-9 pr-3 text-sm outline-none transition focus:border-primary/30 focus:bg-card focus:ring-2 focus:ring-primary/30"
+                className="h-9 w-full rounded-lg border border-border bg-muted/50 pl-8 pr-3 text-[13px] outline-none transition focus:border-primary/30 focus:bg-card focus:ring-2 focus:ring-primary/30"
               />
             </div>
           </div>
@@ -548,45 +565,39 @@ export default function MessagesPage() {
                 • оставаться видимым даже когда `chats.length === 0`
                   (empty-state сместится ниже).
             */}
-            <div className="px-2 pt-2">
+            <div className="px-2 pt-1.5">
               <button
                 type="button"
                 onClick={() => setSupportSheetOpen(true)}
-                className="group flex w-full items-center gap-3 rounded-2xl border border-accent/30 bg-gradient-to-br from-primary/8 via-card to-accent/8 p-3 text-left shadow-sm transition hover:border-accent/60 hover:shadow-md"
+                className="group flex w-full items-center gap-2.5 rounded-xl border border-accent/30 bg-gradient-to-br from-primary/8 via-card to-accent/8 p-2 text-left shadow-sm transition hover:border-accent/60 hover:shadow-md"
                 aria-label="Открыть чат с поддержкой Бартера"
               >
                 <div className="relative shrink-0">
-                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-md shadow-primary/30 ring-2 ring-card">
-                    <Sparkles size={26} strokeWidth={2} aria-hidden />
+                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-accent text-white shadow-sm shadow-primary/30">
+                    <Sparkles size={20} strokeWidth={2} aria-hidden />
                   </div>
                   <span
-                    className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-success text-[8px] font-bold text-white ring-2 ring-card"
+                    className="absolute -bottom-0.5 -right-0.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-success text-[7px] font-bold text-white ring-2 ring-card"
                     aria-hidden
                   >
                     ✓
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="line-clamp-1 text-sm font-bold text-foreground">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="line-clamp-1 text-[13px] font-bold text-foreground">
                       Бартер · Поддержка
                     </span>
-                    <span className="shrink-0 rounded-full bg-accent/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent">
-                      24/7
+                    <span className="shrink-0 rounded bg-primary/10 px-1 text-[9px] font-bold uppercase tracking-wide text-primary">
+                      AI 24/7
                     </span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5">
-                    <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded bg-primary/10 px-1.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                      <Sparkles size={9} strokeWidth={2.4} aria-hidden /> AI
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">Команда Бартера</span>
-                  </div>
-                  <div className="mt-1 line-clamp-2 text-xs font-medium text-foreground/80">
-                    Помогу разместить, продвинуть или решить спор. Спросите — отвечу мгновенно.
+                  <div className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+                    Помогу разместить, продвинуть или решить спор.
                   </div>
                 </div>
               </button>
-              <div className="mx-2 mt-3 mb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              <div className="mx-1 mt-2 mb-0.5 flex items-center gap-2 text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
                 <span className="h-px flex-1 bg-border" aria-hidden />
                 Ваши диалоги
                 <span className="h-px flex-1 bg-border" aria-hidden />
@@ -603,41 +614,41 @@ export default function MessagesPage() {
                 const chatColor = MODE_COLOR[chatMode];
                 const unreadCountLabel = c.unreadCount > 9 ? '9+' : String(c.unreadCount);
                 return (
-                  <li key={c.id} className="mb-1">
+                  <li key={c.id} className="mb-0.5">
                     <button
                       type="button"
                       onClick={() => selectChat(c.id)}
                       style={{ borderLeft: `3px solid ${chatColor}` }}
-                      className={`flex w-full gap-3 rounded-xl p-2.5 pl-3 text-left transition ${
+                      className={`flex w-full gap-2.5 rounded-lg p-1.5 pl-2.5 text-left transition ${
  active
  ? 'bg-muted ring-1 ring-border'
  : 'hover:bg-muted/60'
  }`}
                     >
                       <div className="relative shrink-0">
-                        <div className="listing-thumb-wrap h-14 w-14 overflow-hidden rounded-xl border border-border">
+                        <div className="listing-thumb-wrap h-11 w-11 overflow-hidden rounded-lg border border-border">
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={img} alt="" className="listing-thumb-img h-full w-full object-cover" />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
-                              <Store size={24} strokeWidth={1.8} aria-hidden />
+                              <Store size={20} strokeWidth={1.8} aria-hidden />
                             </div>
                           )}
                         </div>
                         {unread ? (
                           <span
                             style={{ background: chatColor }}
-                            className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full px-1 text-center text-[10px] font-bold leading-4 text-white"
+                            className="absolute -right-0.5 -top-0.5 h-3.5 min-w-3.5 rounded-full px-1 text-center text-[9px] font-bold leading-[14px] text-white ring-2 ring-card"
                           >
                             {unreadCountLabel}
                           </span>
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center justify-between gap-2">
                           <span
-                            className={`line-clamp-1 text-sm ${
+                            className={`line-clamp-1 text-[13px] leading-tight ${
  unread
  ? 'font-bold text-foreground'
  : 'font-semibold text-foreground'
@@ -645,26 +656,26 @@ export default function MessagesPage() {
                           >
                             {c.listing?.title ?? 'Без объявления'}
                           </span>
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                          <span className="shrink-0 text-[10px] text-muted-foreground">
                             {formatListTime(c.lastMessage?.createdAt ?? c.updatedAt)}
                           </span>
                         </div>
-                        <div className="mt-0.5 flex items-center gap-1.5">
+                        <div className="mt-0.5 flex items-center gap-1">
                           <span
                             style={{
-                              background: `${chatColor}1a`, // 10% opacity фон
+                              background: `${chatColor}1a`,
                               color: chatColor,
                             }}
-                            className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-[10px] font-bold tracking-wide uppercase"
+                            className="inline-flex h-[14px] shrink-0 items-center rounded px-1 text-[9px] font-bold tracking-wide uppercase"
                           >
                             {MODE_LABEL[chatMode]}
                           </span>
-                          <span className="truncate text-xs text-muted-foreground">
+                          <span className="truncate text-[11px] text-muted-foreground">
                             {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
                           </span>
                         </div>
                         <div
-                          className={`mt-1 line-clamp-2 text-xs ${
+                          className={`mt-0.5 line-clamp-1 text-[11px] leading-snug ${
  unread ? 'font-medium text-foreground' : 'text-muted-foreground'
  }`}
                         >
@@ -718,45 +729,45 @@ export default function MessagesPage() {
             </div>
           ) : (
             <>
-              {/* Thread header */}
-              <div className="flex shrink-0 items-center gap-3 border-b border-border bg-card/90 px-3 py-2.5 backdrop-blur-md md:px-4">
+              {/* Thread header — компактный для мобилки */}
+              <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card/90 px-2 py-1.5 backdrop-blur-md md:gap-3 md:px-4 md:py-2.5">
                 <button
                   type="button"
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground md:hidden"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition active:bg-muted md:hidden"
                   onClick={() => setMobileThreadOpen(false)}
                   aria-label="Назад к списку"
                 >
-                  <ChevronLeft size={22} strokeWidth={1.8} aria-hidden />
+                  <ChevronLeft size={22} strokeWidth={2} aria-hidden />
                 </button>
-                <div className="listing-thumb-wrap h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-border">
+                <div className="listing-thumb-wrap h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-border md:h-11 md:w-11 md:rounded-xl">
                   {previewSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={previewSrc} alt="" className="listing-thumb-img h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
-                      <Store size={22} strokeWidth={1.8} aria-hidden />
+                      <Store size={18} strokeWidth={1.8} aria-hidden />
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-foreground">
+                  <div className="truncate text-[13px] font-bold leading-tight text-foreground md:text-sm">
                     {selectedChat.listing?.title ?? 'Диалог'}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <span
-                        className={`inline-block h-2 w-2 rounded-full ${
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
+                    <span
+                      className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
  peerTyping
  ? 'animate-pulse bg-primary'
  : selectedChat.peer?.id && onlineByUserId[selectedChat.peer.id]
  ? 'bg-success'
  : 'bg-muted-foreground/30'
  }`}
-                      />
+                    />
+                    <span className="truncate">
                       {selectedChat.peer?.name ?? selectedChat.peer?.email ?? 'Собеседник'}
+                      <span className="mx-1 text-muted-foreground/60">·</span>
+                      <span className={peerTyping ? 'font-medium text-primary' : ''}>{peerStatus}</span>
                     </span>
-                    <span className="text-foreground">·</span>
-                    <span className={peerTyping ? 'font-medium text-primary' : ''}>{peerStatus}</span>
                   </div>
                 </div>
                 {listingHref ? (
@@ -887,8 +898,13 @@ export default function MessagesPage() {
                 </div>
               </div>
 
-              {/* AI подсказка */}
-              {advise && !adviseDismissed && (advise.tip || advise.suggestions.length > 0) ? (
+              {/*
+                AI-подсказка показывается ТОЛЬКО для нового диалога:
+                как только я отправил хотя бы одно сообщение в этот чат —
+                подсказка скрывается (Максим: «потом есть же быстрые
+                ответы, там подсказка уже не нужна»).
+              */}
+              {advise && !adviseDismissed && !hasMyMessages && (advise.tip || advise.suggestions.length > 0) ? (
                 <div className="shrink-0 border-t border-border bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 px-3 py-2.5 md:px-5">
                   <div className="mx-auto flex max-w-3xl items-start gap-2.5">
                     <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent">
@@ -946,12 +962,18 @@ export default function MessagesPage() {
                 </div>
               ) : null}
 
-              {/* Composer */}
-              <div className="shrink-0 border-t border-border bg-card p-3 md:p-4">
+              {/*
+                Composer. На мобилке — кнопка отправки иконочная (квадрат
+                40×40 с Send), чтобы не обрезалась и не съедала ширину поля
+                ввода. На десктопе — текстовая «Отправить». Padding-bottom
+                здесь НЕ добавляем: воздух над bottom-nav обеспечивается
+                через `pb-[…]` на корневом контейнере страницы (см. ниже).
+              */}
+              <div className="shrink-0 border-t border-border bg-card px-2 py-2 md:p-4">
                 {/* Quick replies chips */}
                 {quickReplies.length > 0 ? (
-                  <div className="mx-auto mb-2 flex max-w-3xl items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <div className="mx-auto mb-1.5 flex max-w-3xl items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Быстро:
                     </span>
                     {quickReplies.map((t) => (
@@ -959,7 +981,7 @@ export default function MessagesPage() {
                         key={t.code}
                         type="button"
                         onClick={() => insertQuickReply(t)}
-                        className="shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                        className="shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-[11px] font-medium text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                         title={t.text}
                       >
                         {t.title}
@@ -969,21 +991,21 @@ export default function MessagesPage() {
                 ) : null}
 
                 {selectedFile ? (
-                  <div className="mb-2 flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs">
-                    <Camera size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
+                  <div className="mb-1.5 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs">
+                    <Camera size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
                     <span className="min-w-0 flex-1 truncate font-medium text-primary">{selectedFile.name}</span>
                     <button
                       type="button"
-                      className="shrink-0 rounded-lg px-2 py-1 font-semibold text-primary hover:bg-primary"
+                      className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
                       onClick={() => setSelectedFile(null)}
                     >
                       Убрать
                     </button>
                   </div>
                 ) : null}
-                <div className="mx-auto flex max-w-3xl items-end gap-2">
-                  <label className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-border bg-muted/50 text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary">
-                    <Camera size={20} strokeWidth={1.8} aria-hidden />
+                <div className="mx-auto flex max-w-3xl items-center gap-1.5 md:gap-2">
+                  <label className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-xl border border-border bg-muted/50 text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary md:h-11 md:w-11">
+                    <Camera size={18} strokeWidth={1.8} aria-hidden />
                     <input
                       type="file"
                       className="hidden"
@@ -997,8 +1019,8 @@ export default function MessagesPage() {
                   <input
                     ref={composerRef}
                     type="text"
-                    className="flex-1 rounded-xl border border-border bg-card px-4 py-2.5 text-sm placeholder:text-muted-foreground shadow-sm transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    placeholder="Напишите сообщение..."
+                    className="min-w-0 flex-1 rounded-xl border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground shadow-sm transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/30 md:px-4 md:py-2.5"
+                    placeholder="Сообщение…"
                     value={text}
                     onChange={(e) => {
                       setText(e.target.value);
@@ -1026,9 +1048,17 @@ export default function MessagesPage() {
                       }
                     }}
                     disabled={busy || (text.trim().length === 0 && !selectedFile)}
-                    className="shrink-0 rounded-xl bg-primary px-4 py-2.5 font-semibold text-white shadow-lg shadow-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Отправить"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-white shadow-md shadow-primary/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 md:h-11 md:w-auto md:px-4"
                   >
-                    {busy ? '...' : 'Отправить'}
+                    {busy ? (
+                      <span className="inline-block size-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" aria-hidden />
+                    ) : (
+                      <>
+                        <Send size={18} strokeWidth={2} className="md:hidden" aria-hidden />
+                        <span className="hidden text-sm font-semibold md:inline">Отправить</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
