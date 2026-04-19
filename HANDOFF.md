@@ -1,9 +1,11 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Task #49 ✅ · Task #59 ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Task #49 ✅ · Task #59 ✅ · Nav-clearance ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Task #59 (только что):** `/messages` mobile polish v2 — починили растянутые thumbs (140px-override от globals.css) и убрали 92px пустоты под composer'ом. ✅
-2. **Task #49:** `/messages` — pinned support-chat (Бартер · Ассистент, 24/7, AI через `/support/advise`) + полировка мобильного списка диалогов. ✅
+1. **Phase 4 (старт):** Умный поиск + персонализация — 6 подзадач: персонализация ленты, item-to-item, NLP-парсинг запроса, фасетные фильтры, fallback «нет результатов», блоки «Вы искали»/«Вы смотрели».
+2. **Nav-clearance polish (только что):** finalize bubble-clearance в трёх местах — composer `/messages`, sticky CTA `/listings`, bottom-sheet «Пополнить кошелёк». Магическая цифра — 108px от низа viewport'а (pill 76 + bubble 25 + 7 запас) с `env(safe-area)`. ✅
+3. **Task #59:** `/messages` mobile polish v2 — починили растянутые thumbs (140px-override от globals.css) и убрали 92px пустоты под composer'ом. ✅
+4. **Task #49:** `/messages` — pinned support-chat (Бартер · Ассистент, 24/7, AI через `/support/advise`) + полировка мобильного списка диалогов. ✅
 2. **Hotfix #19:** magic-nav v3.1 — починка прозрачности (shadcn-имена → наши токены), padding краёв, выравнивание иконка↔центр bubble'а, двуслойный pin-bubble (белое кольцо + accent core с тенью). ✅
 3. **Hotfix #18:** magic-nav v3 — bubble-эффект (без ушек). ✅
 4. **Hotfix #17:** magic-nav v2 — floating dark pill (deprecated). ✅
@@ -12,6 +14,41 @@
 7. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
 8. **Phase 1.x mobile sprint:** все 5 задач директивы Максима ✅✅✅✅✅.
 9. **Дальше в очереди:** **Phase 4** — поиск + персонализация. **Phase 13** — «Бартер» USP (обмен без денег).
+
+## 2026-04-19 (18) — Mobile nav-bubble clearance (3 места)
+
+Итеративные скриншоты Максима после Task #59. Нашли одну повторяющуюся
+проблему: плавающий bottom-nav v3.1 имеет двухслойный bubble активного
+раздела — pill занимает низ 12-76px, а bubble торчит ещё ~25px над
+pill'ом (до ~101px от низа viewport'а). Все «прилипшие» к низу
+элементы приложения уезжали под этот bubble.
+
+**Финальная магическая цифра: 108px** = pill (76) + bubble (~25) +
+7px запаса. Применяется везде с `env(safe-area-inset-bottom)` для
+iOS-«ушей».
+
+**Коммиты итерации:**
+- `dd9907d` — messages pb 96→8 + thumbs оторваны от `.listing-thumb-wrap`
+- `f95c959` — messages pb 8→40 (после жалобы на перекрытие Send)
+- `c4513d7` — messages pb 40→20 + убран «фантомный» spacer 32px справа
+  от своих пузырей (теперь прижимаются к правому краю)
+- `00b8fb5` — messages: bg-muted→bg-card (theme-aware); peer-bubble
+  bg-card→bg-muted для контраста; pb 20→12
+- `d617f13` (финал) — три места одним махом:
+  1. `/messages` pb 12→20 (+3мм над bubble, финальная версия)
+  2. `/listings` sticky CTA «Разместить объявление»: `bottom-[72px]`
+     → `calc(env(safe-area-inset-bottom,0px) + 108px)`
+  3. `/profile` bottom-sheet «Пополнить кошелёк»: `pb-8` →
+     `pb-[calc(env(safe-area-inset-bottom,0px)+116px)] md:pb-6`
+     (arbitrary-класс, чтобы `md:pb-6` переопределял; inline-style
+     md-override бы не поборол)
+
+**Файлы:**
+- `apps/web/src/app/messages/page.tsx` (root pb + thread bg + peer bubble + own spacer)
+- `apps/web/src/app/listings/page.tsx` (sticky CTA bottom)
+- `apps/web/src/app/profile/profile-content.tsx` (topup modal pb)
+
+**Верификация:** `tsc --noEmit` ✓ каждый итератив.
 
 ## 2026-04-19 (17) — Task #59: `/messages` mobile polish v2
 
