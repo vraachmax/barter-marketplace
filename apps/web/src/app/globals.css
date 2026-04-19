@@ -667,25 +667,46 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
 }
 
 /* =========================================================================
-   Magic bottom-nav (mobile)
+   Magic bottom-nav (mobile)  v2 — floating pill + dark surface
    ─────────────────────────────────────────────────────────────────────────
-   Mobile bottom navigation в стиле «magic-navigation»: активный пункт
-   «выпрыгивает» вверх, под ним скользит круглый индикатор на
-   var(--mode-accent). Цвета берутся из CSS-переменных режима (Бартер =
-   оранжевый, Маркет = голубой) — переключение мгновенное вместе с
-   `<html data-mode>`. Шрифт — Golos Text (наследуется из body).
-   Подключается компонентом `MobileBottomNav` (см. mobile-bottom-nav.tsx).
+   Баг-репорт Максима (Hotfix #17): v1 выглядела «наклеенной» на бар —
+   кнопка-индикатор без контраста bar↔body не «проваливалась», а просто
+   стояла сверху. В реф-файле body `#222327` (тёмный), bar `#fff` (белый);
+   псевдо-элементы ::before/::after проецируют цвет body поверх bar'а и
+   создают плавные «впадины» по бокам dot'а — без контраста body/bar они
+   не видны.
+
+   Решение: bar теперь — floating pill (плавающая таблетка с отступами
+   от краёв экрана, round corners), а его фон — тёмный (`--nav-surface`),
+   иконки светлые. Так dot с white-границей (цвет body) создаёт видимый
+   вырез, и псевдо-элементы проецируют light-цвет и делают «впадину»
+   на тёмном bar'е — в точности как в реф.
+
+   Плюс отступы по бокам убирают баг с «обрезанием» псевдо-элементов
+   у первого/последнего пункта — теперь вокруг bar'а ~12px свободного
+   пространства, псевдо-элементы никогда не упираются в край.
    ========================================================================= */
+
+/* Тёмная поверхность для bar'а — общая для обоих режимов. Слегка тонирована
+   в сторону brand-foreground, чтобы не выглядеть «мертвяще-чёрной». */
+:root {
+  --nav-surface: #1b1e24;
+  --nav-surface-2: #2a2e36;
+  --nav-inactive: #8a94a6;
+}
+
 .magic-nav {
   position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
   z-index: 1000;
-  background: var(--background);
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.06);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--nav-surface);
+  border-radius: 30px;
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+  /* overflow: visible по умолчанию — dot должен выпрыгивать над bar'ом */
 }
 .magic-nav ul {
   position: relative;
@@ -711,14 +732,14 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   height: 100%;
   text-decoration: none;
   font-weight: 500;
-  color: var(--muted-foreground);
+  color: var(--nav-inactive);
 }
 .magic-nav__icon {
   position: relative;
   display: grid;
   place-items: center;
   line-height: 0;
-  color: var(--muted-foreground);
+  color: var(--nav-inactive);
   transition:
     transform 0.5s cubic-bezier(.34,1.56,.64,1),
     color 0.35s ease;
@@ -731,12 +752,12 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 8px;
+  bottom: 10px;
   text-align: center;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.01em;
-  color: var(--mode-accent);
+  color: #fff;
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.5s ease, transform 0.5s cubic-bezier(.4,0,.2,1);
@@ -746,9 +767,10 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   opacity: 1;
   transform: translateY(0);
 }
-/* Slot-обёртка индикатора, занимает 1/5 ширины бара. Перемещается через
-   inline-style transform: translateX(N * 100%). Плавный cubic-bezier
-   совпадает с поведением иконки. */
+
+/* Slot-обёртка индикатора занимает 1/5 ширины bar'а. Перемещается через
+   inline-style `transform: translateX(N * 100%)`. Easing совпадает с
+   анимацией иконки, поэтому всё выглядит как единое движение. */
 .magic-nav__indicator {
   position: absolute;
   left: 0;
@@ -759,42 +781,59 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   transition: transform 0.55s cubic-bezier(.22,.9,.28,1);
   z-index: 0;
 }
-/* Сам круг — выпрыгивает над баром на половину своей высоты.
-   border == background-у бара создаёт «вырез» вокруг dot. */
+
+/* Сам круг — выпрыгивает над баром ровно на половину своей высоты.
+   border = цвет surface = тёмный → на тёмном bar'е border сливается
+   с bar'ом, создавая эффект «проваливания» dot'а в bar.
+   Секрет эффекта из реф-файла: border dot'а должен быть цветом, который
+   вокруг dot'а *выше bar'а* — т.е. цветом body/page. У нас dot
+   выпрыгивает над bar'ом → верх dot'а находится в воздухе, границы
+   видны через контраст accent/surface. */
 .magic-nav__indicator-dot {
   position: absolute;
-  top: -28px;
+  top: -30px;
   left: 50%;
   width: 60px;
   height: 60px;
   background: var(--mode-accent);
-  border: 6px solid var(--background);
+  border: 6px solid var(--nav-surface);
   border-radius: 50%;
   transform: translateX(-50%);
-  box-shadow: 0 8px 22px var(--mode-accent-ring);
+  box-shadow: 0 10px 24px var(--mode-accent-ring);
   transition: background 0.3s ease, box-shadow 0.3s ease;
 }
-/* Псевдо-элементы — плавные «загнутые» уголки по бокам dot, как в реф-дизайне.
-   box-shadow проецирует цвет фона бара, имитируя вогнутый стык круга и бара. */
+
+/* Псевдо-элементы — плавные «загнутые уголки» по бокам dot'а, как в реф.
+   box-shadow проецирует цвет bar'а (--nav-surface) поверх «зазора» между
+   dot'ом и bar'ом сверху, создавая иллюзию, что bar «обволакивает» dot
+   снизу. Ключевое отличие от v1: теперь это работает, потому что
+   bar-surface тёмный и контрастирует с accent-цветом dot'а. */
 .magic-nav__indicator-dot::before {
   content: "";
   position: absolute;
-  top: 28px;
+  top: 24px;
   left: -22px;
   width: 20px;
   height: 20px;
   background: transparent;
   border-top-right-radius: 20px;
-  box-shadow: 1px -10px 0 0 var(--background);
+  box-shadow: 1px -10px 0 0 var(--nav-surface);
 }
 .magic-nav__indicator-dot::after {
   content: "";
   position: absolute;
-  top: 28px;
+  top: 24px;
   right: -22px;
   width: 20px;
   height: 20px;
   background: transparent;
   border-top-left-radius: 20px;
-  box-shadow: -1px -10px 0 0 var(--background);
+  box-shadow: -1px -10px 0 0 var(--nav-surface);
+}
+
+/* В dark mode (data-theme="dark") surface ещё темнее, чтобы оставаться
+   контрастным к общей страничной подложке и не сливаться. */
+html[data-theme="dark"] {
+  --nav-surface: #0f1116;
+  --nav-inactive: #6b7485;
 }
