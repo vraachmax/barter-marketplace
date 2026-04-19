@@ -28,6 +28,7 @@ import {
   type SupportTemplate,
   SOCKET_URL,
 } from '@/lib/api';
+import { SupportSheet } from '@/components/support-sheet';
 
 function resolveAssetUrl(url: string | null | undefined): string | null {
   if (!url) return null;
@@ -97,6 +98,7 @@ export default function MessagesPage() {
   const [advise, setAdvise] = useState<AdviseResponse | null>(null);
   const [adviseBusy, setAdviseBusy] = useState(false);
   const [adviseDismissed, setAdviseDismissed] = useState(false);
+  const [supportSheetOpen, setSupportSheetOpen] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const selectedChatIdRef = useRef<string>('');
@@ -538,7 +540,60 @@ export default function MessagesPage() {
               <div className="p-4 text-center text-sm text-destructive">Не удалось загрузить чаты</div>
             ) : null}
 
-            <ul className="p-2">
+            {/*
+              Pinned support card — закреплён всегда сверху списка чатов.
+              Не входит в общий <ul>, чтобы:
+                • не зависеть от фильтра поиска (его нельзя «отфильтровать»);
+                • визуально отделяться от обычных чатов чёткой полосой/фоном;
+                • оставаться видимым даже когда `chats.length === 0`
+                  (empty-state сместится ниже).
+            */}
+            <div className="px-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSupportSheetOpen(true)}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-accent/30 bg-gradient-to-br from-primary/8 via-card to-accent/8 p-3 text-left shadow-sm transition hover:border-accent/60 hover:shadow-md"
+                aria-label="Открыть чат с поддержкой Бартера"
+              >
+                <div className="relative shrink-0">
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-md shadow-primary/30 ring-2 ring-card">
+                    <Sparkles size={26} strokeWidth={2} aria-hidden />
+                  </div>
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-success text-[8px] font-bold text-white ring-2 ring-card"
+                    aria-hidden
+                  >
+                    ✓
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="line-clamp-1 text-sm font-bold text-foreground">
+                      Бартер · Поддержка
+                    </span>
+                    <span className="shrink-0 rounded-full bg-accent/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent">
+                      24/7
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span className="inline-flex h-[18px] shrink-0 items-center gap-1 rounded bg-primary/10 px-1.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                      <Sparkles size={9} strokeWidth={2.4} aria-hidden /> AI
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">Команда Бартера</span>
+                  </div>
+                  <div className="mt-1 line-clamp-2 text-xs font-medium text-foreground/80">
+                    Помогу разместить, продвинуть или решить спор. Спросите — отвечу мгновенно.
+                  </div>
+                </div>
+              </button>
+              <div className="mx-2 mt-3 mb-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                <span className="h-px flex-1 bg-border" aria-hidden />
+                Ваши диалоги
+                <span className="h-px flex-1 bg-border" aria-hidden />
+              </div>
+            </div>
+
+            <ul className="p-2 pt-0">
               {filteredChats.map((c) => {
                 const active = c.id === selectedChatId;
                 const img = resolveAssetUrl(c.listing?.previewImageUrl ?? null);
@@ -623,11 +678,14 @@ export default function MessagesPage() {
             </ul>
 
             {chats.length === 0 && status === 'ready' ? (
-              <div className="mx-4 mt-6 rounded-2xl border border-dashed border-border bg-muted/50 p-6 text-center">
-                <MessageCircle size={44} strokeWidth={1.8} className="mx-auto opacity-35" aria-hidden />
-                <p className="mt-3 text-sm font-medium text-foreground">Пока нет диалогов</p>
+              <div className="mx-4 mt-2 rounded-2xl border border-dashed border-border bg-muted/40 p-6 text-center">
+                <MessageCircle size={40} strokeWidth={1.8} className="mx-auto opacity-35" aria-hidden />
+                <p className="mt-3 text-sm font-medium text-foreground">
+                  Пока нет диалогов с продавцами
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Откройте объявление и нажмите «Написать в чат», чтобы начать переписку.
+                  Откройте объявление и нажмите «Написать в чат», чтобы начать переписку. Если есть
+                  вопрос к площадке — напишите в закреплённый чат поддержки выше.
                 </p>
                 <Link
                   href="/"
@@ -978,6 +1036,9 @@ export default function MessagesPage() {
           )}
         </section>
       </div>
+
+      {/* Закреплённый support-chat sheet */}
+      <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
     </div>
   );
 }
