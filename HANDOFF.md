@@ -1,8 +1,9 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Task #49 ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Task #49 ✅ · Task #59 ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Task #49 (только что):** `/messages` — pinned support-chat (Бартер · Ассистент, 24/7, AI через `/support/advise`) + полировка мобильного списка диалогов. ✅
+1. **Task #59 (только что):** `/messages` mobile polish v2 — починили растянутые thumbs (140px-override от globals.css) и убрали 92px пустоты под composer'ом. ✅
+2. **Task #49:** `/messages` — pinned support-chat (Бартер · Ассистент, 24/7, AI через `/support/advise`) + полировка мобильного списка диалогов. ✅
 2. **Hotfix #19:** magic-nav v3.1 — починка прозрачности (shadcn-имена → наши токены), padding краёв, выравнивание иконка↔центр bubble'а, двуслойный pin-bubble (белое кольцо + accent core с тенью). ✅
 3. **Hotfix #18:** magic-nav v3 — bubble-эффект (без ушек). ✅
 4. **Hotfix #17:** magic-nav v2 — floating dark pill (deprecated). ✅
@@ -11,6 +12,44 @@
 7. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
 8. **Phase 1.x mobile sprint:** все 5 задач директивы Максима ✅✅✅✅✅.
 9. **Дальше в очереди:** **Phase 4** — поиск + персонализация. **Phase 13** — «Бартер» USP (обмен без денег).
+
+## 2026-04-19 (17) — Task #59: `/messages` mobile polish v2
+
+Максим прислал 3 скриншота после b5aa591 с коротким комментом: «отступ
+от нав бара слишком большой если роллить вниз плюс я тебе говорил про
+слишком грамосткие диалоговые окна».
+
+Диагностика — два глобальных CSS-override в `globals.css` под
+`@media (max-width: 768px)`:
+
+1. `body { padding-bottom: 72px !important; }` — глобальный зазор под
+   плавающий bottom-nav (nav ~76px от низа: 12px offset + 64px высота).
+2. `.listing-thumb-wrap { height: 140px !important; min-height: 140px
+   !important; max-height: 140px !important; }` — принудительно
+   растягивает ВСЕ `.listing-thumb-wrap` элементы до 140px на мобилке.
+   Нужно для крупных карточек объявлений, но ломает квадратные 44×44
+   thumbs в чат-листе → превращаются в вытянутые пилюли 44×140.
+
+**Что сделано в `apps/web/src/app/messages/page.tsx`:**
+- Root `pb-[calc(env(safe-area-inset-bottom,0px)+96px)]` →
+  `pb-[calc(env(safe-area-inset-bottom,0px)+8px)]`. Раньше давал 96+72
+  = 168px пустоты под composer'ом (nav только 76px → 92px воздуха).
+  Теперь 72 (от body) + 8 = 80px → composer ровно над nav-pill с
+  небольшим зазором.
+- Thumbs в списке чатов (строка 629): убрали класс `listing-thumb-wrap`
+  и `listing-thumb-img`, оставили plain `h-11 w-11 overflow-hidden
+  rounded-lg border border-border bg-muted`.
+- Thumbs в thread-header (строка 742): то же самое — убрали классы
+  `listing-thumb-wrap` / `listing-thumb-img`, заменили на plain
+  `h-9 w-9 shrink-0 ... md:h-11 md:w-11`.
+
+Добавлены пояснительные комментарии прямо в коде, чтобы при будущих
+редактах никто не вернул глобальный класс обратно.
+
+**Файлы:**
+- `apps/web/src/app/messages/page.tsx` (3 блока изменений)
+
+**Верификация:** `tsc --noEmit` ✓ (EXIT=0).
 
 ## 2026-04-19 (16) — Task #49: `/messages` — pinned support-chat
 

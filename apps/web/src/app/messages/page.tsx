@@ -479,14 +479,15 @@ export default function MessagesPage() {
 
   return (
     /*
-      pb на мобилке = высота bottom-nav (64) + его offset снизу (12) +
-      воздух (16-20) ≈ 96px. Через safe-area-inset учитываем «уши»
-      iOS. На десктопе (md+) bottom-nav отсутствует — pb обнуляем.
-      Composer внутри thread'а живёт в `flex-col` → автоматически
-      становится sticky-снизу при длинной ленте сообщений (п.7).
+      pb на мобилке: глобальный `body { padding-bottom: 72px }`
+      (см. globals.css) уже даёт зазор под плавающий bottom-nav
+      (~76px от низа экрана). Здесь добавляем ЕЩЁ ~8px только чтобы
+      composer не «лежал» прямо на nav-pill. Раньше было +96px —
+      получалось 168px пустоты → Максим: «отступ слишком большой».
+      На десктопе (md+) bottom-nav отсутствует — pb обнуляем.
     */
     <div
-      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+96px)] md:pb-0"
+      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+8px)] md:pb-0"
     >
       {/* Top bar — desktop */}
       <header className="hidden shrink-0 border-b border-border bg-card md:block">
@@ -626,12 +627,20 @@ export default function MessagesPage() {
  }`}
                     >
                       <div className="relative shrink-0">
-                        <div className="listing-thumb-wrap h-11 w-11 overflow-hidden rounded-lg border border-border">
+                        {/*
+                          ВАЖНО: НЕ используем класс `.listing-thumb-wrap` —
+                          в globals.css на мобилке он принудительно ставит
+                          height: 140px !important (для крупных карточек
+                          объявлений), и наш 44×44 thumb растягивается в
+                          вытянутую пилюлю 44×140. Поэтому здесь plain div
+                          с обычным `h-11 w-11`.
+                        */}
+                        <div className="h-11 w-11 overflow-hidden rounded-lg border border-border bg-muted">
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt="" className="listing-thumb-img h-full w-full object-cover" />
+                            <img src={img} alt="" className="h-full w-full object-cover" />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
+                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                               <Store size={20} strokeWidth={1.8} aria-hidden />
                             </div>
                           )}
@@ -739,12 +748,18 @@ export default function MessagesPage() {
                 >
                   <ChevronLeft size={22} strokeWidth={2} aria-hidden />
                 </button>
-                <div className="listing-thumb-wrap h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-border md:h-11 md:w-11 md:rounded-xl">
+                {/*
+                  То же самое, что в списке чатов: НЕ используем
+                  `.listing-thumb-wrap` — иначе мобильный override в
+                  globals.css растянет аватар объявления до 140px и
+                  шапка диалога станет «громоздкой» (жалоба Максима).
+                */}
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-border bg-muted md:h-11 md:w-11 md:rounded-xl">
                   {previewSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={previewSrc} alt="" className="listing-thumb-img h-full w-full object-cover" />
+                    <img src={previewSrc} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                       <Store size={18} strokeWidth={1.8} aria-hidden />
                     </div>
                   )}
