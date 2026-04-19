@@ -1,13 +1,53 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#17 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#18 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #17 (только что):** magic-nav v2 — floating dark pill bar, теперь dot реально «проваливается» в bar, псевдо-элементы не режутся об края. ✅
-2. **Hotfix #16:** bottom-nav в стиле «magic-navigation» — активный пункт «выпрыгивает», индикатор плавно скользит. ✅
-3. **Hotfix #15:** bottom-nav FAB → «Объявления» (→ `/listings`) + скрытие navbar на `/new`. ✅
-4. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
-5. **Phase 1.x mobile sprint:** все 4 задачи директивы Максима ✅✅✅✅.
-6. **Phase 1.x остальное:** `/messages` (#49). **Phase 4** — поиск. **Phase 13** — «Бартер» USP.
+1. **Hotfix #18 (только что):** magic-nav v3 — bubble-эффект (без ушек), бар следует теме, активный пункт «вздувается» над баром. ✅
+2. **Hotfix #17:** magic-nav v2 — floating dark pill bar (deprecated — заменён v3). ✅
+3. **Hotfix #16:** bottom-nav в стиле «magic-navigation» — активный пункт «выпрыгивает», индикатор плавно скользит. ✅
+4. **Hotfix #15:** bottom-nav FAB → «Объявления» (→ `/listings`) + скрытие navbar на `/new`. ✅
+5. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
+6. **Phase 1.x mobile sprint:** все 4 задачи директивы Максима ✅✅✅✅.
+7. **Phase 1.x остальное:** `/messages` (#49 — следующая задача). **Phase 4** — поиск. **Phase 13** — «Бартер» USP.
+
+## 2026-04-19 (14) — Hotfix #18: magic-nav v3 «bubble»
+
+Фидбек Максима после v2: «нав бар у нас светлый в светлой теме и
+тёмный в тёмной, ушки нав бара (выбранного раздела) это плохо, так
+быть не должно, должен быть эффект как на референсе, подумай как это
+реализовать, может пойти другим путем, наоборот, чтобы была не выемка,
+а наоборот эффект бабл, что выбранный раздел выпирает».
+
+**Что поменялось (v2 → v3):**
+- **Убраны псевдо-элементы** ::before / ::after — никаких «ушек/выемок»
+  по бокам индикатора. CSS стал на ~30 строк короче.
+- **Surface бара** теперь `var(--card)` — следует light/dark теме. Больше
+  нет hard-code тёмных цветов и переменных `--nav-surface` / `--nav-inactive`.
+- **Активный пункт ВЫПИРАЕТ над баром** (bubble-эффект):
+  - иконка `translateY(-22px)`, цвет `#fff` (лежит на цветном пузыре);
+  - под ней плавающий круг 50×50 на `var(--mode-accent)` (`top: -22px`
+    → половина выпирает, половина внутри bar'а);
+  - glow-shadow `var(--mode-accent-ring)` усиливает эффект «парения»;
+  - label под иконкой появляется (opacity 0→1 + translateY 14→0).
+- **Bubble скользит** `translateX(N * 100%)` между пунктами, easing
+  `cubic-bezier(.22,.9,.28,1)` и длительность 550ms сохранены.
+- **Z-индексы:** bar=0, bubble=1, item/иконки=2 — иконки всегда поверх.
+
+**Сохранено:**
+- Floating pill-форма (left/right: 12px, safe-area).
+- Mode-aware цвет: оранжевый в Бартере, голубой в Маркете.
+- `HIDE_ON_PATHS = ['/new']` — на wizard'е nav скрыт.
+- Контракт классов TSX → CSS не сломан.
+
+**Файлы:**
+- `apps/web/src/app/globals.css` — блок `.magic-nav` переписан
+  (строки 668-820, без pseudo-элементов).
+- `apps/web/src/components/mobile-bottom-nav.tsx` — обновлён блок-
+  комментарий (описание v3), разметка не трогалась.
+
+**Верификация:** `tsc --noEmit` ✓ · `eslint` ✓ (0 errors, 0 warnings).
+
+**Commit:** `e880ebf` (master, pushed → Vercel auto-deploy).
 
 ## 2026-04-19 (13) — Hotfix #17: magic-nav v2 — floating pill + dark surface
 
