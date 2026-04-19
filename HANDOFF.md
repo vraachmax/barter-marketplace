@@ -1,11 +1,50 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#14 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#15 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #14 (только что):** `/search` → Avito-стиль мобильного поиска с live-suggestions, fuzzy-match категорий, недавними запросами, FiltersSheet. ✅
-2. **Phase 1.x mobile sprint (#55→#53→#54→#48):** все 4 задачи директивы Максима ✅✅✅✅ закрыты.
-3. **Phase 1.x остальное:** `/messages` (#49, pinned support + автоответы).
-4. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+1. **Hotfix #15 (только что):** bottom-nav FAB «+Добавить» → «Объявления» (→ `/listings`) + скрытие navbar на `/new` (чинит застревание «Далее» под интерфейсом). ✅
+2. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска с live-suggestions, fuzzy-match категорий, недавними запросами, FiltersSheet. ✅
+3. **Phase 1.x mobile sprint (#55→#53→#54→#48):** все 4 задачи директивы Максима ✅✅✅✅ закрыты.
+4. **Phase 1.x остальное:** `/messages` (#49, pinned support + автоответы).
+5. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+
+## 2026-04-19 (11) — Hotfix #15: bottom-nav FAB + /new action-bar z-fix
+
+Баг-репорт Максима:
+1. В mobile bottom-nav центральный FAB «+Добавить» сразу прыгает на wizard
+   `/new` — это выбивает из привычного UX Авито, где сначала показывают личные
+   объявления, а CTA публикации выделена цветом на том же экране.
+2. На `/new` step 1 кнопка «Далее» либо отсутствует, либо уходит под
+   интерфейс — пользователь застревает.
+
+**Диагноз бага #2:** `MobileBottomNav` имеет `position: fixed; bottom: 0` и
+рендерится глобально из `layout.tsx`. `/new` bottom action-bar — тоже
+`fixed; bottom: 0`. Две плашки накладываются, и action-bar с кнопкой «Далее»
+оказывается под нижней навигацией.
+
+**Фиксы в `apps/web/src/components/mobile-bottom-nav.tsx`:**
+- **FAB:** `Plus` → `ClipboardList` (lucide), label «Добавить» → «Объявления»,
+  href `/new` → `/listings`.
+- **Match для «Поиск»:** убрано совпадение с `/listings` (иначе оба пункта —
+  Поиск и центральный FAB — подсвечивались бы одновременно).
+- **HIDE_ON_PATHS = new Set(['/new'])** + ранний `return null` — навигация
+  полностью скрывается на странице wizard'а. Это корректно, потому что у
+  wizard'а своя собственная sticky action-bar с «Назад / Далее / Опубликовать».
+- JSDoc с описанием новой логики.
+
+**Фикс в `apps/web/src/app/new/page.tsx`:**
+- На bottom action-bar добавлен `paddingBottom: env(safe-area-inset-bottom)`
+  для корректного отступа на iPhone X+ (home-indicator).
+- Комментарий к action-bar дополнен ссылкой на Hotfix #15 логику.
+
+**UX-flow теперь совпадает с Avito:**
+  bottom-nav (FAB «Объявления») → `/listings` (3 таба Активные / Требуют
+  действий / Завершённые + mode-CTA «Разместить объявление») → `/new`
+  (5-step wizard).
+
+**Верификация:** `tsc --noEmit` ✓ · `eslint` ✓ (0 errors, 0 warnings).
+
+**Commit:** `6642cff` (master, pushed → Vercel auto-deploy).
 
 ## 2026-04-19 (10) — Hotfix #14: /search → Avito-стиль мобильного поиска
 
