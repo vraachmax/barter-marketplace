@@ -274,7 +274,7 @@ export default function NewListingPage() {
               href="/"
               className="mb-2 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
             >
-              <ChevronLeft size={20} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={20} strokeWidth={1.8} className="shrink-0" aria-hidden />
               На главную
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
@@ -290,9 +290,9 @@ export default function NewListingPage() {
           <Card className="flex shrink-0 flex-row items-center gap-2 rounded-2xl px-4 py-3 text-sm">
             <div className="flex items-center gap-2">
               {step1Done ? (
-                <CheckCircle size={24} strokeWidth={1.8} className="text-secondary" aria-hidden />
+                <CheckCircle size={24} strokeWidth={1.8} className="shrink-0 text-secondary" aria-hidden />
               ) : (
-                <Circle size={22} strokeWidth={1.8} className="text-primary" aria-hidden />
+                <Circle size={22} strokeWidth={1.8} className="shrink-0 text-primary" aria-hidden />
               )}
               <div>
                 <div className="font-semibold text-foreground">1. Детали</div>
@@ -302,12 +302,12 @@ export default function NewListingPage() {
             <div className="mx-2 hidden h-8 w-px bg-border sm:block" aria-hidden />
             <div className="flex items-center gap-2">
               {uploadedImages.length > 0 || pendingPhotos.length > 0 ? (
-                <CheckCircle size={24} strokeWidth={1.8} className="text-secondary" aria-hidden />
+                <CheckCircle size={24} strokeWidth={1.8} className="shrink-0 text-secondary" aria-hidden />
               ) : (
                 <Circle
                   size={22}
                   strokeWidth={1.8}
-                  className="text-muted-foreground/50"
+                  className="shrink-0 text-muted-foreground/50"
                   aria-hidden
                 />
               )}
@@ -380,7 +380,7 @@ export default function NewListingPage() {
                     <PlusCircle
                       size={44}
                       strokeWidth={1.8}
-                      className="text-primary/70"
+                      className="shrink-0 text-primary/70"
                       aria-hidden
                     />
                     <p className="mt-3 text-center text-sm font-medium text-foreground">
@@ -390,7 +390,7 @@ export default function NewListingPage() {
                       JPG, PNG, WEBP · несколько файлов
                     </p>
                     <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
-                      <PlusCircle size={16} strokeWidth={1.8} aria-hidden />
+                      <PlusCircle size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
                       Выбрать файлы
                     </span>
                   </div>
@@ -445,7 +445,7 @@ export default function NewListingPage() {
                     <PlusCircle
                       size={36}
                       strokeWidth={1.8}
-                      className="text-primary/70"
+                      className="shrink-0 text-primary/70"
                       aria-hidden
                     />
                     <span className="mt-2 text-sm font-medium text-foreground">
@@ -613,13 +613,13 @@ export default function NewListingPage() {
           {/* Auth */}
           <Card className="gap-3 p-5">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <UserCircle size={22} strokeWidth={1.8} aria-hidden />
+              <UserCircle size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
               Аккаунт
             </div>
             {me === 'loading' ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span
-                  className="inline-block size-[18px] animate-spin rounded-full border-2 border-primary border-t-transparent"
+                  className="inline-block size-[18px] shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent"
                   aria-hidden
                 />
                 Проверяем вход…
@@ -662,7 +662,7 @@ export default function NewListingPage() {
           {!showPostPublishPhotos ? (
             <Card className="gap-4 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <LayoutGrid size={22} strokeWidth={1.8} aria-hidden />
+                <LayoutGrid size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
                 Цена и размещение
               </div>
 
@@ -672,7 +672,7 @@ export default function NewListingPage() {
                     <Wallet
                       size={16}
                       strokeWidth={1.8}
-                      className="text-muted-foreground"
+                      className="shrink-0 text-muted-foreground"
                       aria-hidden
                     />
                     Цена (₽)
@@ -694,7 +694,7 @@ export default function NewListingPage() {
                     <MapPin
                       size={16}
                       strokeWidth={1.8}
-                      className="text-muted-foreground"
+                      className="shrink-0 text-muted-foreground"
                       aria-hidden
                     />
                     Город
@@ -744,7 +744,7 @@ export default function NewListingPage() {
               {busy || uploading ? (
                 <>
                   <span
-                    className="inline-block size-[22px] animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                    className="inline-block size-[22px] shrink-0 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
                     aria-hidden
                   />
                   {busy ? 'Публикуем…' : 'Загружаем фото…'}

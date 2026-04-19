@@ -89,7 +89,7 @@ export default function FavoritesPage() {
             href="/"
             className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-[color:var(--mode-accent-ring)] hover:[color:var(--mode-accent)]"
           >
-            <Home size={18} strokeWidth={1.8} aria-hidden />
+            <Home size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
             <span className="hidden sm:inline">На главную</span>
           </Link>
         </div>

@@ -434,7 +434,7 @@ export default function MessagesPage() {
               href="/"
               className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary"
             >
-              <ChevronLeft size={20} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={20} strokeWidth={1.8} className="shrink-0" aria-hidden />
               На главную
             </Link>
           </div>
@@ -501,7 +501,7 @@ export default function MessagesPage() {
         >
           <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4 md:hidden">
             <div className="flex items-center gap-2 font-semibold text-foreground">
-              <MessageCircle size={22} strokeWidth={1.8} aria-hidden />
+              <MessageCircle size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
               Чаты
               {totalUnread > 0 ? (
                 <span className="rounded-full bg-accent px-1.5 text-[11px] font-bold text-white">{totalUnread}</span>
@@ -530,7 +530,7 @@ export default function MessagesPage() {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {status === 'loading' ? (
               <div className="flex flex-col items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-                <span className="inline-block size-8 animate-spin rounded-full border-2 border-primary/30 border-t-transparent" aria-hidden />
+                <span className="inline-block size-8 shrink-0 animate-spin rounded-full border-2 border-primary/30 border-t-transparent" aria-hidden />
                 Загрузка диалогов…
               </div>
             ) : null}
@@ -706,7 +706,7 @@ export default function MessagesPage() {
                     href={listingHref}
                     className="hidden shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-primary shadow-sm transition hover:bg-primary/10 sm:inline-flex"
                   >
-                    <Link2 size={16} strokeWidth={1.8} aria-hidden />
+                    <Link2 size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
                     Объявление
                   </Link>
                 ) : null}
@@ -724,7 +724,7 @@ export default function MessagesPage() {
                   href={listingHref}
                   className="flex shrink-0 items-center justify-center gap-2 border-b border-border bg-card py-2 text-xs font-semibold text-primary sm:hidden"
                 >
-                  <Link2 size={14} strokeWidth={1.8} aria-hidden />
+                  <Link2 size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
                   Открыть объявление
                 </Link>
               ) : null}
@@ -814,9 +814,9 @@ export default function MessagesPage() {
                               </span>
                               {!isPeer ? (
                                 m.isReadByPeer ? (
-                                  <CheckCircle size={14} strokeWidth={1.8} className="text-primary" aria-hidden />
+                                  <CheckCircle size={14} strokeWidth={1.8} className="shrink-0 text-primary" aria-hidden />
                                 ) : (
-                                  <CheckCircle size={14} strokeWidth={1.8} className="opacity-70" aria-hidden />
+                                  <CheckCircle size={14} strokeWidth={1.8} className="shrink-0 opacity-70" aria-hidden />
                                 )
                               ) : null}
                             </div>
@@ -866,7 +866,7 @@ export default function MessagesPage() {
                               className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-card px-2.5 py-1 text-[11px] font-medium text-accent shadow-sm transition hover:bg-accent/10"
                               title={s.text}
                             >
-                              <Wand2 size={11} strokeWidth={1.8} aria-hidden />
+                              <Wand2 size={11} strokeWidth={1.8} className="shrink-0" aria-hidden />
                               {s.title}
                             </button>
                           ))}
@@ -874,7 +874,7 @@ export default function MessagesPage() {
                       ) : null}
                     </div>
                     {adviseBusy ? (
-                      <span className="mt-1 inline-block size-3.5 animate-spin rounded-full border-2 border-accent/40 border-t-transparent" aria-hidden />
+                      <span className="mt-1 inline-block size-3.5 shrink-0 animate-spin rounded-full border-2 border-accent/40 border-t-transparent" aria-hidden />
                     ) : (
                       <button
                         type="button"
