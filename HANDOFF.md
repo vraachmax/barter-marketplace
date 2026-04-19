@@ -1,10 +1,96 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#9 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Hotfix #10 🚧 (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#12 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #10 (текущий шаг):** mobile `/favorites` (#50) + `/profile` (#51) palette/font audit. /favorites переписан на 2-col grid (ListingCardComponent + mode-accent header + Trash-delete). /profile очищен от 30+ точек лика: hex `#007AFF`/`#0088FF`/`#00AAFF`/`#0099EE`/`#0066DD`/`#0077DD`/`#E8F2FF`/`#f0f9ff`/`#FF6F00` → `--mode-accent*`; brand-токены `bg-primary`/`text-primary`/`text-accent`/`bg-accent`/`text-secondary`/`bg-secondary` → semantic (`success`, `destructive`, `muted`) или `--mode-accent*`. Status-чипы перекатегоризированы: ACTIVE=success, PENDING/SOLD=mode-accent, BLOCKED=destructive, ARCHIVED=muted. Звёзды рейтинга зафиксированы на нейтральном `#FFB800`. Font audit: Golos Text везде через `--font-sans` inherit.
-2. **Phase 1.x mobile (next):** `/messages` (#49, pinned support + автоответы), `/search` (#48, mobile Avito clone).
-3. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+1. **Hotfix #12 (только что):** `/listings` → Avito-стиль (3 таба «Активные / Требуют действия / Завершённые», sticky bottom CTA на `--mode-cta`, palette migration, needsAction helper). ✅
+2. **Phase 1.x mobile sprint (#55→#53→#54→#48):** #55 ✅, #53 ✅, далее #54 — `/new` step-by-step wizard с автоподбором категории (local fuzzy match); #48 — `/search` mobile Avito clone.
+3. **Phase 1.x остальное:** `/messages` (#49, pinned support + автоответы).
+4. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+
+## 2026-04-19 (8) — Hotfix #12: /listings → Avito-стиль (3 таба + mode-cta CTA)
+
+Задача #53 из директивы Максима «Всё подряд: #55 → #53 → #54 → #48». До:
+4 таба (ВСЕ/ACTIVE/SOLD/ARCHIVED), пользователь вынужден отдельно искать
+объявления с проблемами (PENDING модерация, дубликат фото, без цены), CTA
+размещения была на `bg-[#00AAFF]` хардкоде → синяя в обоих режимах + не
+выделялась как primary action.
+
+**Что сделано:** `apps/web/src/app/listings/page.tsx` (+258/−101):
+
+- **Таксономия:** `ListingTab` тип `'ALL'|'ACTIVE'|'ARCHIVED'|'SOLD'` →
+  `'ACTIVE'|'NEEDS_ACTION'|'COMPLETED'`. URL backward-compat: `ALL`→`ACTIVE`,
+  `ARCHIVED`/`SOLD`→`COMPLETED` (старые ссылки не ломаются).
+
+- **`needsAction(x)` helper** определяет «требует действия» с reason-строкой:
+  - `PENDING` → «Ожидает модерации — подтвердите публикацию»
+  - `BLOCKED` → «Объявление скрыто модерацией»
+  - `duplicateImageFlag` → «Фото совпало с другим объявлением — замените»
+  - `ACTIVE` без `priceRub` → «Не указана цена»
+  - `ACTIVE` без `images` → «Нет ни одного фото»
+
+- **Mobile view** (новый): sticky header с back/title/search, табы-pills с
+  mode-accent индикатором (нижняя 2px-полоса), компактная строка-карточка
+  80×80 thumb + meta (город, статус) + per-card amber chip с reason.
+  Sticky bottom CTA «Разместить объявление» на `var(--mode-cta)` (лайм для
+  Маркета, оранж для Бартера) + `boxShadow: var(--mode-accent-ring)` +
+  PlusCircle prefix; над bottom-nav (h=56) с зазором 72px.
+
+- **Desktop view:** title + та же mode-cta CTA в шапке. Segmented tabs на
+  `bg-muted` с 3 пилюлями; для активной NEEDS_ACTION (count > 0) — color
+  переключается на `var(--mode-accent)` чтобы привлечь внимание.
+
+- **Palette migration** (полный sweep):
+  - `bg-[#00AAFF]` (CTA) → `var(--mode-cta)` + ring shadow
+  - `bg-primary` (Save, empty-state CTA) → `var(--mode-accent)` / `--mode-cta`
+  - `text-primary` (title hover) → `hover:[color:var(--mode-accent)]`
+  - `border-secondary/30 bg-secondary/10 text-secondary` (PENDING confirm) →
+    `border-success/30 bg-success/10 text-success` (зелёный = «можно публиковать»)
+  - Edit form `focus:border-primary/30 focus:ring-primary/30` →
+    `focus:[border-color:var(--mode-accent-ring)] focus:[--tw-ring-color:var(--mode-accent-ring)]`
+  - Spinner Suspense fallback → inline `borderColor: var(--mode-accent-ring)`
+  - Mobile header `bg-[#f4f4f4]` / `text-[#1a1a1a]` → `bg-muted` / `text-foreground`
+  - need_auth state хексы → `var(--mode-accent-soft)` / `var(--mode-accent)`
+
+- **Status-чипы** (как в Hotfix #10 на /profile): ACTIVE→success,
+  PENDING/SOLD→mode-accent, BLOCKED→destructive, ARCHIVED→muted.
+
+- **`shrink-0`** добавлен на ArrowLeft, Search (mobile header), Sparkles,
+  PlusCircle×2, AlertTriangle, FileText, спиннер — продолжение Hotfix #11.
+
+**Верификация:** `npx tsc --noEmit` → exit 0. Grep на `bg-primary|text-primary|
+bg-secondary` → только JSDoc-комментарии в шапке файла.
+
+**Commit:** `cdd5016` (master, pushed → Vercel auto-deploy).
+
+
+## 2026-04-19 (7) — Hotfix #11: «вытянутые» иконки → shrink-0
+
+Максим: «иконки в /new, /messages, /избранное какие-то вытянутые». Корень: lucide
+рендерит `<svg width={size} height={size}>`; как прямой ребёнок flex-контейнера
+SVG получает default `flex: 0 1 auto` → ширина может сжаться, высота держится из
+атрибута → визуально иконка «вытягивается» вертикально. Тот же баг у спиннер-spans
+(`inline-block size-[N]` без `shrink-0`).
+
+**Что сделано:** добавил `shrink-0` (= `flex-shrink: 0`) на каждый прямой
+flex-child SVG/spinner, без других визуальных изменений.
+
+- **`apps/web/src/app/new/page.tsx`** — 10 иконок (ChevronLeft, CheckCircle×2,
+  Circle×2, PlusCircle×2 + кнопка-чип, UserCircle, LayoutGrid, Wallet, MapPin)
+  + 2 спиннера (auth-loading 18px, publish-busy 22px).
+
+- **`apps/web/src/app/messages/page.tsx`** — 7 иконок (ChevronLeft, MessageCircle
+  mobile-header, Link2 desktop-cta, Link2 mobile-cta, CheckCircle read-state×2,
+  Wand2 advise-chip) + 2 спиннера (chat-list loading 32px, advise-busy 14px).
+
+- **`apps/web/src/app/favorites/page.tsx`** — 1 иконка (Home в «На главную» CTA).
+
+**Файлы:** 3 файла, +24/−24 строки.
+**Верификация:** `npx tsc --noEmit` → exit 0. Globals.css не имеет глобального
+SVG-reset (только `.want-line svg { color }`), значит фикс через `shrink-0`
+самодостаточный.
+
+**Commit:** `83b8abc` (master, pushed).
+
 
 ## 2026-04-19 (6) — Hotfix #10: mobile /favorites + /profile palette & font audit
 
