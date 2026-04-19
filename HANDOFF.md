@@ -1,14 +1,53 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#18 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #18 (только что):** magic-nav v3 — bubble-эффект (без ушек), бар следует теме, активный пункт «вздувается» над баром. ✅
-2. **Hotfix #17:** magic-nav v2 — floating dark pill bar (deprecated — заменён v3). ✅
-3. **Hotfix #16:** bottom-nav в стиле «magic-navigation» — активный пункт «выпрыгивает», индикатор плавно скользит. ✅
-4. **Hotfix #15:** bottom-nav FAB → «Объявления» (→ `/listings`) + скрытие navbar на `/new`. ✅
-5. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
-6. **Phase 1.x mobile sprint:** все 4 задачи директивы Максима ✅✅✅✅.
-7. **Phase 1.x остальное:** `/messages` (#49 — следующая задача). **Phase 4** — поиск. **Phase 13** — «Бартер» USP.
+1. **Hotfix #19 (только что):** magic-nav v3.1 — починка прозрачности (shadcn-имена → наши токены), padding краёв, выравнивание иконка↔центр bubble'а, двуслойный pin-bubble (белое кольцо + accent core с тенью). ✅
+2. **Hotfix #18:** magic-nav v3 — bubble-эффект (без ушек). ✅
+3. **Hotfix #17:** magic-nav v2 — floating dark pill (deprecated). ✅
+4. **Hotfix #16:** bottom-nav в стиле «magic-navigation». ✅
+5. **Hotfix #15:** bottom-nav FAB → «Объявления» + скрытие navbar на `/new`. ✅
+6. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
+7. **Phase 1.x mobile sprint:** все 4 задачи директивы Максима ✅✅✅✅.
+8. **Phase 1.x остальное:** `/messages` (#49 — следующая задача). **Phase 4** — поиск. **Phase 13** — «Бартер» USP.
+
+## 2026-04-19 (15) — Hotfix #19: magic-nav v3.1 polish
+
+Фидбек Максима после v3 — четыре пункта:
+1. Крайние пункты (Главная, Профиль) слишком близко к краю бара.
+2. Бар прозрачный на главной — должен быть белым.
+3. Иконка активного должна быть ровно по центру bubble'а.
+4. Bubble должен иметь белую обводку, а цветной круг отбрасывать
+   небольшую тень на эту обводку — эффект многослойности.
+
+**Корень бага #2 (важно):** в v3 я использовал shadcn-имена
+`var(--card)` / `var(--border)` / `var(--muted-foreground)`, а в нашем
+проекте этих переменных НЕТ. У нас собственная система токенов
+(`--bg-surface`, `--border-default`, `--fg-muted`) — см. globals.css
+строки 27–47. Поэтому `background` оставался пустым → бар прозрачный.
+
+**Фиксы:**
+- (1) `padding: 0 8px` на `.magic-nav` — крайние flex-слоты сжимаются
+  на 16/5 ≈ 3.2px и иконки больше не давят в скруглённые углы.
+- (2) Реальные наши токены вместо shadcn-имён + `#fff/#e6e6e6/#757575`
+  fallback'ы — бар никогда не будет прозрачным.
+- (3) Геометрия выравнивания центров:
+    bar h=64 → центр иконки flex-center y=32.
+    `translateY(-26)` → иконка y=6.
+    Bubble `top:-20, h:52` → center y = -20 + 26 = **6**.
+    Центры совпадают пиксель-в-пиксель.
+- (4) Bubble стал двуслойным «pin-button»:
+    - внешний div = белое кольцо 52×52 (`var(--bg-surface)`);
+    - `::before` inset:4px = цветной core на `var(--mode-accent)`;
+    - core имеет `box-shadow: 0 2px 6px rgba(0,0,0,0.22)` →
+      тень падает НА белую обводку, ощущение «утопленной кнопки».
+
+**Файл:** `apps/web/src/app/globals.css` — блок `.magic-nav`
+переписан (~150 строк, +30 / -25).
+
+**Верификация:** `tsc --noEmit` ✓ · `eslint` ✓.
+
+**Commit:** `2b26868` (master, pushed → Vercel).
 
 ## 2026-04-19 (14) — Hotfix #18: magic-nav v3 «bubble»
 
