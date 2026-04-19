@@ -44,6 +44,26 @@ function peerInitials(peer: ChatSummary['peer']): string {
   return (a + b).toUpperCase() || a.toUpperCase() || '?';
 }
 
+/**
+ * Определяет режим чата по связанному объявлению.
+ * До Phase 13 `isBarter` в `ChatSummary['listing']` отсутствует — читаем
+ * опционально. Все существующие чаты считаются «market» до миграции.
+ */
+function getChatMode(listing: ChatSummary['listing']): 'barter' | 'market' {
+  const isBarter = (listing as { isBarter?: boolean } | null | undefined)?.isBarter;
+  return isBarter ? 'barter' : 'market';
+}
+
+const MODE_COLOR: Record<'barter' | 'market', string> = {
+  barter: '#E85D26', // Бартер — оранжевый
+  market: '#00AAFF', // Маркет — синий (Avito 2026)
+};
+
+const MODE_LABEL: Record<'barter' | 'market', string> = {
+  barter: 'Обмен',
+  market: 'Продажа',
+};
+
 function formatListTime(iso: string | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -524,15 +544,19 @@ export default function MessagesPage() {
                 const img = resolveAssetUrl(c.listing?.previewImageUrl ?? null);
                 const peer = c.peer;
                 const unread = c.unreadCount > 0;
+                const chatMode = getChatMode(c.listing);
+                const chatColor = MODE_COLOR[chatMode];
+                const unreadCountLabel = c.unreadCount > 9 ? '9+' : String(c.unreadCount);
                 return (
                   <li key={c.id} className="mb-1">
                     <button
                       type="button"
                       onClick={() => selectChat(c.id)}
-                      className={`flex w-full gap-3 rounded-xl p-2.5 text-left transition ${
+                      style={{ borderLeft: `3px solid ${chatColor}` }}
+                      className={`flex w-full gap-3 rounded-xl p-2.5 pl-3 text-left transition ${
  active
- ? 'bg-primary/10 ring-1 ring-primary/30'
- : 'hover:bg-muted/50'
+ ? 'bg-muted ring-1 ring-border'
+ : 'hover:bg-muted/60'
  }`}
                     >
                       <div className="relative shrink-0">
@@ -547,8 +571,11 @@ export default function MessagesPage() {
                           )}
                         </div>
                         {unread ? (
-                          <span className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-bold leading-4 text-white">
-                            {c.unreadCount > 9 ? '9+' : c.unreadCount}
+                          <span
+                            style={{ background: chatColor }}
+                            className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full px-1 text-center text-[10px] font-bold leading-4 text-white"
+                          >
+                            {unreadCountLabel}
                           </span>
                         ) : null}
                       </div>
@@ -567,11 +594,22 @@ export default function MessagesPage() {
                             {formatListTime(c.lastMessage?.createdAt ?? c.updatedAt)}
                           </span>
                         </div>
-                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <span
+                            style={{
+                              background: `${chatColor}1a`, // 10% opacity фон
+                              color: chatColor,
+                            }}
+                            className="inline-flex h-[18px] shrink-0 items-center rounded px-1.5 text-[10px] font-bold tracking-wide uppercase"
+                          >
+                            {MODE_LABEL[chatMode]}
+                          </span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
+                          </span>
                         </div>
                         <div
-                          className={`mt-0.5 line-clamp-2 text-xs ${
+                          className={`mt-1 line-clamp-2 text-xs ${
  unread ? 'font-medium text-foreground' : 'text-muted-foreground'
  }`}
                         >
@@ -653,7 +691,7 @@ export default function MessagesPage() {
  peerTyping
  ? 'animate-pulse bg-primary'
  : selectedChat.peer?.id && onlineByUserId[selectedChat.peer.id]
- ? 'bg-secondary/10'
+ ? 'bg-success'
  : 'bg-muted-foreground/30'
  }`}
                       />
@@ -727,23 +765,27 @@ export default function MessagesPage() {
                     }
                     const isPeer = m.senderId === selectedChat.peer?.id;
                     const mediaFull = resolveAssetUrl(m.mediaUrl);
+                    // Пузырь «моих» сообщений красим в цвет режима чата:
+                    // оранжевый — если объявление барт., синий — если маркет.
+                    const myBubbleColor = MODE_COLOR[getChatMode(selectedChat.listing)];
                     return (
                       <div key={m.id} className={`flex ${isPeer ? 'justify-start' : 'justify-end'}`}>
                         <div
                           className={`flex max-w-[min(100%,520px)] gap-2 ${isPeer ? 'flex-row' : 'flex-row-reverse'}`}
                         >
                           {isPeer ? (
-                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-foreground">
+                            <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground">
                               {peerInitials(selectedChat.peer)}
                             </div>
                           ) : (
                             <div className="mt-1 h-8 w-8 shrink-0" aria-hidden />
                           )}
                           <div
+                            style={isPeer ? undefined : { background: myBubbleColor }}
                             className={`min-w-0 rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
  isPeer
  ? 'rounded-tl-md border border-border bg-card text-foreground'
- : 'rounded-tr-md bg-primary text-white'
+ : 'rounded-tr-md text-white'
  }`}
                           >
                             {mediaFull ? (

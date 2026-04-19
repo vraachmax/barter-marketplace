@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeSync } from "@/components/theme-sync";
+import { ModeThemeSync } from "@/components/mode-theme-sync";
 import { GlobalChatWidget } from "@/components/global-chat-widget";
 import { SupportWidget } from "@/components/support-widget";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
@@ -50,11 +51,13 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+// NB: themeColor намеренно убран — <meta name="theme-color"> управляется
+// динамически из ModeThemeSync, чтобы верхний system-bar окрашивался в
+// цвет текущего режима (Бартер = #E85D26, Маркет = #00AAFF).
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#00AAFF',
 };
 
 export default function RootLayout({
@@ -73,11 +76,19 @@ export default function RootLayout({
             __html: `(function(){try{var p=localStorage.getItem('barter_theme_pref');var r='light';if(p==='DARK')r='dark';else if(p==='LIGHT')r='light';else if(p==='SYSTEM'&&window.matchMedia('(prefers-color-scheme: dark)').matches)r='dark';var el=document.documentElement;el.setAttribute('data-theme',r);el.classList.toggle('dark',r==='dark');el.setAttribute('data-theme-pref',p||'LIGHT');}catch(e){}})();`,
           }}
         />
+        {/* Pre-paint mode bootstrap — ставим <html data-mode="..."> и meta[theme-color]
+            ДО первого кадра, чтобы не было вспышки не того цвета при загрузке. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=localStorage.getItem('barter_mode');if(m!=='barter'&&m!=='market')m='barter';document.documentElement.setAttribute('data-mode',m);var c=m==='barter'?'#E85D26':'#00AAFF';var meta=document.querySelector('meta[name="theme-color"]:not([media])');if(!meta){meta=document.createElement('meta');meta.name='theme-color';document.head.appendChild(meta);}meta.content=c;}catch(e){}})();`,
+          }}
+        />
       </head>
       <body
         className={`${golosText.variable} antialiased`}
       >
         <ThemeSync />
+        <ModeThemeSync />
         <AuthProvider>
           <PresenceProvider>
             <GlobalChatWidget />

@@ -36,8 +36,15 @@ export function MobileModeToggle({ className }: { className?: string }) {
       /* ignore */
     }
     try {
-      window.dispatchEvent(new CustomEvent<Mode>(EVENT, { detail: next }));
+      // 1) Ставим data-mode на <html>, чтобы CSS-переменные переопределились.
+      //    ModeThemeSync также слушает CustomEvent, но прямое выставление
+      //    гарантирует мгновенную реакцию на клик без моргания.
+      document.documentElement.setAttribute('data-mode', next);
+      // 2) Дополнительно сохраняем на body для совместимости с existing selectors,
+      //    если кто-то ещё пишет `body[data-mode="..."]`.
       document.body.setAttribute('data-mode', next);
+      // 3) Диспатчим событие — ModeThemeSync обновит <meta name="theme-color">.
+      window.dispatchEvent(new CustomEvent<Mode>(EVENT, { detail: next }));
     } catch {
       /* ignore */
     }

@@ -134,7 +134,46 @@
   /* Root canvas used by <body> and Next.js */
   --background: var(--bg-page);
   --foreground: var(--fg-default);
+
+  /* ====== Mode-aware tokens (Бартер / Маркет) ======
+     Default (до hydration) = Маркет, чтобы десктоп, который не меняет режим,
+     выглядел как обычный Avito-синий. На мобильном <html data-mode="..."> сразу
+     ставится клиентом из localStorage и токены переопределяются ниже. */
+  --mode-primary:       var(--brand-primary);      /* #00AAFF */
+  --mode-primary-hover: var(--brand-primary-hover);/* #0095E0 */
+  --mode-primary-soft:  var(--brand-primary-soft); /* #E6F7FF */
+  --mode-primary-ring:  rgba(0, 170, 255, 0.55);
+  --mode-cta:           #87D32C;                    /* Avito 2026 салатовый CTA */
+  --mode-cta-hover:     #6DB020;
+  --mode-msg-bubble:    #00AAFF;                    /* цвет моих сообщений в чате */
 }
+
+/* Режим БАРТЕР — оранжевая палитра (#E85D26 / #FFEFE6) */
+html[data-mode="barter"] {
+  --mode-primary:       #E85D26;
+  --mode-primary-hover: #D14E1F;
+  --mode-primary-soft:  #FFEFE6;
+  --mode-primary-ring:  rgba(232, 93, 38, 0.55);
+  --mode-cta:           #E85D26;
+  --mode-cta-hover:     #D14E1F;
+  --mode-msg-bubble:    #E85D26;
+}
+
+/* Режим МАРКЕТ — синяя палитра (Avito 2026) + салатовый CTA */
+html[data-mode="market"] {
+  --mode-primary:       #00AAFF;
+  --mode-primary-hover: #0095E0;
+  --mode-primary-soft:  #E6F7FF;
+  --mode-primary-ring:  rgba(0, 170, 255, 0.55);
+  --mode-cta:           #87D32C;
+  --mode-cta-hover:     #6DB020;
+  --mode-msg-bubble:    #00AAFF;
+}
+
+/* CSS-фильтры категорий и промо-бейджей по режиму (используются по data-атрибутам) */
+html[data-mode="barter"] [data-market-only="true"] { display: none !important; }
+html:not([data-mode="market"]) [data-market-only-strict="true"] { display: none !important; }
+html[data-mode="barter"] [data-promo-badge="true"] { display: none !important; }
 
 /* Map the Tailwind v4 theme layer to our tokens so `bg-background`,
    `text-foreground`, `font-sans`, and brand color utilities pick them up. */

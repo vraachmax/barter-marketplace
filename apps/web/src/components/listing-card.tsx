@@ -100,18 +100,22 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
           }
           badges={
             <>
+              {/* Промо-бейджи TOP/XL/VIP — ТОЛЬКО в режиме Маркет.
+                  В режиме Бартер платное продвижение не предусмотрено и
+                  скрывается CSS-правилом `html[data-mode="barter"] [data-promo-badge="true"] { display:none }`. */}
               {data.promoType === 'TOP' || data.isBoosted ? (
                 <Badge
+                  data-promo-badge="true"
                   className="absolute left-2 top-2 z-[2] h-[18px] rounded bg-accent px-1.5 text-[10px] font-bold tracking-wider uppercase text-accent-foreground"
                 >
                   Топ
                 </Badge>
               ) : data.promoType === 'XL' ? (
-                <Badge className="absolute left-2 top-2 z-[2] h-[18px] rounded bg-primary px-1.5 text-[10px] font-bold tracking-wider uppercase text-primary-foreground">
+                <Badge data-promo-badge="true" className="absolute left-2 top-2 z-[2] h-[18px] rounded bg-primary px-1.5 text-[10px] font-bold tracking-wider uppercase text-primary-foreground">
                   XL
                 </Badge>
               ) : data.promoType === 'VIP' ? (
-                <Badge className="absolute left-2 top-2 z-[2] h-[18px] rounded bg-foreground px-1.5 text-[10px] font-bold tracking-wider uppercase text-background">
+                <Badge data-promo-badge="true" className="absolute left-2 top-2 z-[2] h-[18px] rounded bg-foreground px-1.5 text-[10px] font-bold tracking-wider uppercase text-background">
                   VIP
                 </Badge>
               ) : null}

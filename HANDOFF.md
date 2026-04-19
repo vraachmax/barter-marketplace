@@ -1,7 +1,52 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6 ✅ · Mobile Redesign v1 ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача: Phase 4 — поиск + персонализация. Phase 13 — раздел «Бартер» (USP, запланирован)
+
+## 2026-04-19 (2) — Mode-aware UI-система: палитра, плейсхолдер, фильтрация категорий
+
+Пользователь попросил: при переключении Бартер↔Маркет менять **всё мобильное оформление**, а не
+только режим фильтра. Реализовано полностью mode-aware через CSS-переменные + `<html data-mode="...">`.
+
+**Чем управляется режим:**
+- `localStorage.getItem('barter_mode')` — `'barter' | 'market'`, дефолт = `barter`.
+- `MobileModeToggle` сохраняет режим и диспатчит `barter:mode-change` CustomEvent.
+- Инлайновый pre-paint скрипт в `<head>` ставит `<html data-mode="...">` и корректный
+  `<meta name="theme-color">` ДО первого кадра — статус-бар iOS/Android красится в цвет режима
+  без FOUC.
+- Новый клиентский `ModeThemeSync` (смонтирован в `layout.tsx`) следит за событиями и синком
+  между вкладками.
+
+**Цветовые токены (`globals.css`):**
+- Default `:root` = Маркет (синий `#00AAFF` + салатовый CTA `#87D32C`, как Авито 2026).
+- `html[data-mode="barter"]` = оранжевый `#E85D26` / мягкий фон `#FFEFE6`.
+- `html[data-mode="market"]` = синий Avito 2026 + салатовый CTA.
+- Переменные: `--mode-primary`, `--mode-primary-hover`, `--mode-primary-soft`,
+  `--mode-primary-ring`, `--mode-cta`, `--mode-cta-hover`, `--mode-msg-bubble`.
+
+**CSS-фильтры:**
+- `html[data-mode="barter"] [data-market-only="true"] { display: none !important; }` —
+  скрывает в бартер-режиме категории «Недвижимость», «Работа», «Услуги», «Для бизнеса».
+- `html[data-mode="barter"] [data-promo-badge="true"] { display: none !important; }` —
+  прячет TOP/XL/VIP бейджи (в бартере продвижения нет).
+
+**Точки применения:**
+- `apps/web/src/app/page.tsx` — мобильная sticky-шапка, категории и fade-градиент — теперь на
+  `var(--mode-primary)` вместо хардкодного `#00AAFF`. Категории с `marketOnly: true` помечены
+  `data-market-only="true"`. Добавлена «Для бизнеса» в CATS_TOP (только для маркета).
+- `apps/web/src/components/mobile-search-input.tsx` (новый клиент-компонент) — плейсхолдер
+  меняется: `Бартер → «Что обмениваем?»`, `Маркет → «Что ищем?»` (как в Авито).
+- `apps/web/src/components/listing-card.tsx` — промо-бейджи TOP/XL/VIP получили
+  `data-promo-badge="true"`.
+- `apps/web/src/app/messages/page.tsx` — список чатов: левая 3px-граница в цвете режима
+  связанного объявления (`getChatMode(listing)` с fallback на `market` до Phase 13), мини-бейдж
+  «Обмен»/«Продажа». Пузырь «моих» сообщений красится тем же цветом. Поправлена «кривость»:
+  аватар пира `bg-primary` → `bg-muted` (было невидно текст), online-dot `bg-secondary/10`
+  → `bg-success`.
+
+**Верификация:**
+- `npx tsc --noEmit` — clean (exit 0).
+- Визуальная сверка на мобиле — за пользователем после деплоя.
 
 ## 2026-04-19 — Мобильный редизайн главной по Claude Design home.html
 

@@ -10,6 +10,7 @@ import { FeedLoadMore } from '@/components/feed-load-more';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { MobileModeToggle } from '@/components/mobile-mode-toggle';
+import { MobileSearchInput } from '@/components/mobile-search-input';
 import { Bell, ChevronDown, ChevronRight, Heart, MapPin, Search, SlidersHorizontal, Sparkles, ArrowLeftRight } from 'lucide-react';
 
 type ListingsResponse = {
@@ -334,13 +335,18 @@ async function renderHome(sp: HomeSearchParams) {
     ...(geoOk ? { lat: String(latN), lon: String(lonN), radiusKm: currentRadiusKm } : {}),
   };
 
-  const CATS_TOP: Array<{ name: string; slug: string; emoji: string; accent: string }> = [
+  // marketOnly=true: категории, которых НЕ должно быть в режиме Бартер
+  // (услуги / работа / недвижимость — это не товары-для-обмена).
+  // Фильтрация визуальная: CSS-правило `html[data-mode="barter"] [data-market-only="true"] { display:none }`
+  const CATS_TOP: Array<{ name: string; slug: string; emoji: string; accent: string; marketOnly?: boolean }> = [
     { name: 'Авто', slug: 'auto', emoji: '🚗', accent: '#4A90D9' },
-    { name: 'Недвижимость', slug: 'realty', emoji: '🏢', accent: '#E8A87C' },
-    { name: 'Работа', slug: 'job', emoji: '💼', accent: '#c4a484' },
+    { name: 'Недвижимость', slug: 'realty', emoji: '🏢', accent: '#E8A87C', marketOnly: true },
+    { name: 'Работа', slug: 'job', emoji: '💼', accent: '#c4a484', marketOnly: true },
+    // Только в маркете: «для бизнеса»
+    { name: 'Для бизнеса', slug: 'business', emoji: '🏭', accent: '#6B7280', marketOnly: true },
   ];
-  const CATS_SCROLL: Array<{ name: string; slug: string; emoji: string; accent: string }> = [
-    { name: 'Услуги', slug: 'services', emoji: '🔧', accent: '#3B82F6' },
+  const CATS_SCROLL: Array<{ name: string; slug: string; emoji: string; accent: string; marketOnly?: boolean }> = [
+    { name: 'Услуги', slug: 'services', emoji: '🔧', accent: '#3B82F6', marketOnly: true },
     { name: 'Техника', slug: 'electronics', emoji: '📱', accent: '#8B5CF6' },
     { name: 'Посуточно', slug: 'home', emoji: '🏡', accent: '#F59E0B' },
     { name: 'Дом и дача', slug: 'home', emoji: '🛋️', accent: '#10B981' },
@@ -439,8 +445,10 @@ async function renderHome(sp: HomeSearchParams) {
         </div>
       </div>
 
-      {/* ===== MOBILE STICKY HEADER ===== */}
-      <div className="mobile-sticky-header md:hidden" style={{ marginBottom: -4, background: '#00AAFF', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      {/* ===== MOBILE STICKY HEADER =====
+          Цвет фона привязан к var(--mode-primary) — меняется в момент
+          переключения Бартер/Маркет вместе с верхним system-bar браузера. */}
+      <div className="mobile-sticky-header md:hidden" style={{ marginBottom: -4, background: 'var(--mode-primary)', paddingTop: 'env(safe-area-inset-top, 0px)', transition: 'background 200ms ease' }}>
         <header style={{ width: '100%', padding: '10px 12px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <img src="/brand/logo_icon.svg" alt="Бартер" width={30} height={30} style={{ flexShrink: 0 }} />
@@ -450,7 +458,10 @@ async function renderHome(sp: HomeSearchParams) {
             {geoHidden}
             {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
             <Search size={16} strokeWidth={1.8} color="#94A3B8" style={{ marginRight: 6, flexShrink: 0 }} aria-hidden />
-            <input name="q" defaultValue={currentQ} type="text" placeholder="Что обмениваем?" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, flex: 1, minWidth: 0, color: '#1E293B' }} />
+            <MobileSearchInput
+              defaultValue={currentQ}
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, flex: 1, minWidth: 0, color: '#1E293B' }}
+            />
             <SlidersHorizontal size={16} strokeWidth={1.8} color="#94A3B8" aria-label="Фильтры" />
           </form>
           <button
@@ -459,7 +470,7 @@ async function renderHome(sp: HomeSearchParams) {
             style={{ position: 'relative', width: 38, height: 38, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: 'none' }}
           >
             <Bell size={18} strokeWidth={1.8} color="#fff" aria-hidden />
-            <span style={{ position: 'absolute', top: 7, right: 8, width: 8, height: 8, background: '#FF6D00', borderRadius: '50%', border: '2px solid #00AAFF' }} />
+            <span style={{ position: 'absolute', top: 7, right: 8, width: 8, height: 8, background: '#FF6D00', borderRadius: '50%', boxShadow: '0 0 0 2px var(--mode-primary)' }} />
           </button>
           <Link
             href="/favorites"
@@ -476,16 +487,23 @@ async function renderHome(sp: HomeSearchParams) {
         </div>
       </div>
 
-      {/* ===== MOBILE CATEGORIES — dark glass cards ===== */}
-      <div style={{ background: '#00AAFF', paddingBottom: 36, marginTop: 0 }} className="md:hidden">
+      {/* ===== MOBILE CATEGORIES — dark glass cards =====
+          Фон и фейд-градиент привязаны к var(--mode-primary) — меняются
+          вместе с палитрой. Категории с `marketOnly` скрываются в режиме
+          Бартер через CSS-правило в globals.css. */}
+      <div style={{ background: 'var(--mode-primary)', paddingBottom: 36, marginTop: 0, transition: 'background 200ms ease' }} className="md:hidden">
         <section style={{ marginTop: 4, padding: '0 12px' }}>
           {/* Top row: 3 big cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {CATS_TOP.map((cat) => {
               const catId = catIdMap[cat.slug] || '';
               return (
-                <Link key={cat.slug} href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                  style={{ background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 88, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.12)' }}>
+                <Link
+                  key={cat.slug}
+                  href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                  data-market-only={cat.marketOnly ? 'true' : undefined}
+                  style={{ background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 88, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.12)' }}
+                >
                   <span style={{ color: '#fff', fontSize: 12, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, display: 'block' }}>{cat.name}</span>
                   <div style={{ position: 'absolute', bottom: -4, right: -4, width: 56, height: 56, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
                     {cat.emoji}
@@ -500,8 +518,12 @@ async function renderHome(sp: HomeSearchParams) {
               {CATS_SCROLL.map((cat) => {
                 const catId = catIdMap[cat.slug] || '';
                 return (
-                  <Link key={cat.slug + cat.name} href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
-                    style={{ minWidth: 96, background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 76, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0, border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <Link
+                    key={cat.slug + cat.name}
+                    href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                    data-market-only={cat.marketOnly ? 'true' : undefined}
+                    style={{ minWidth: 96, background: 'rgba(0,0,0,0.22)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 14, padding: '10px 10px 8px', height: 76, position: 'relative', overflow: 'hidden', display: 'block', textDecoration: 'none', flexShrink: 0, border: '1px solid rgba(255,255,255,0.12)' }}
+                  >
                     <span style={{ color: '#fff', fontSize: 12, fontWeight: 600, position: 'relative', zIndex: 10, lineHeight: 1.3, display: 'block' }}>{cat.name}</span>
                     <div style={{ position: 'absolute', bottom: -6, right: -6, width: 44, height: 44, background: cat.accent, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                       {cat.emoji}
@@ -510,7 +532,7 @@ async function renderHome(sp: HomeSearchParams) {
                 );
               })}
             </div>
-            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, transparent, #00AAFF)', pointerEvents: 'none', zIndex: 5 }} />
+            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, background: 'linear-gradient(to right, transparent, var(--mode-primary))', pointerEvents: 'none', zIndex: 5 }} />
           </div>
         </section>
       </div>
