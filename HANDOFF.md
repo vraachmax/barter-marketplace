@@ -1,11 +1,94 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#13 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#14 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #13 (только что):** `/new` → Avito-style 5-step wizard с локальным fuzzy-match подбором категории (no AI, no network). ✅
-2. **Phase 1.x mobile sprint (#55→#53→#54→#48):** #55 ✅, #53 ✅, #54 ✅, далее #48 — `/search` mobile Avito clone.
+1. **Hotfix #14 (только что):** `/search` → Avito-стиль мобильного поиска с live-suggestions, fuzzy-match категорий, недавними запросами, FiltersSheet. ✅
+2. **Phase 1.x mobile sprint (#55→#53→#54→#48):** все 4 задачи директивы Максима ✅✅✅✅ закрыты.
 3. **Phase 1.x остальное:** `/messages` (#49, pinned support + автоответы).
 4. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+
+## 2026-04-19 (10) — Hotfix #14: /search → Avito-стиль мобильного поиска
+
+Задача #48 — финальная из директивы Максима «Всё подряд: #55 → #53 → #54 → #48».
+До: `/search` был тонким редиректом на главную с тем же feed — пользователь,
+который тапал по search-input в шапке, получал ленту «как была», без состояний
+«пустой запрос / набираю / есть результаты». Нет недавних, нет фильтров по цене,
+нет сортировки, нет подсказок категорий.
+
+**Что сделано:** новый файл `apps/web/src/app/search/page.tsx` (914 строк):
+
+- **Sticky-шапка:** [←] + `<input>` с auto-focus (когда initialQ пустой),
+  enterKeyHint="search", кнопка [×] внутри поля для clear, кнопка «Найти»
+  справа (видима на sm+).
+
+- **Состояние «пустое поле»:**
+  - **Недавние запросы:** чипы из localStorage
+    (ключ `barter:recentSearches`, max 8, lowercase-dedup). Кнопка
+    «Очистить» справа. При клике — немедленный commit.
+  - **Популярные запросы:** 8 hardcoded
+    (iPhone, Велосипед, Диван, Коляска, Кроссовки, PlayStation,
+    Ноутбук, Куртка зимняя). Grid 2×4 на мобильном, flex-wrap на десктопе.
+  - **Категории:** icon-bubble grid 2/3/4 col (mode-accent-soft фон,
+    mode-accent иконка), клик → commit + set categoryId.
+
+- **Состояние «набираю» (draftQuery.length >= 2):**
+  - **Live-suggestions:** debounce 180ms → `GET /search/suggestions?q&limit=6`
+    (Meilisearch + Prisma fallback на бэке). HighlightedText для
+    match-фрагмента (`<mark>` на `var(--mode-accent)`).
+  - **Fuzzy-match категорий:** локально, мгновенно, top-4 по
+    substring match title (`fuzzyMatchCategoriesByTitle`).
+
+- **Состояние «результаты» (activeQuery || categoryId):**
+  - **Чип-ряд:** [Фильтры •N] + активные чипы с «✕»
+    (категория/сортировка/цена).
+  - **2-col grid** из `ListingCardComponent` (thumbHeight=160, apiBase).
+  - **Skeleton ×8** во время loading (ListingCardSkeleton).
+  - **Пустое состояние:** card с советами («попробуйте изменить запрос
+    или сбросить фильтры»).
+  - **SummaryRow:** «{N} {объявление/объявления/объявлений}» с плюрализацией.
+
+- **FiltersSheet (bottom-anchored modal):**
+  - Backdrop click-to-close + content click-stopPropagation.
+  - **Категории:** pill-chips из `cats`, активная на `var(--mode-accent)`.
+  - **Сортировка:** 4 radio-варианта
+    (relevant / new / cheap / expensive), visual-radio-row.
+  - **Цена:** `<input type="number">` × 2 (priceMin / priceMax),
+    inline-валидация через Tailwind arbitrary.
+  - **Футер:** [Сбросить] + [Показать N результатов] на `var(--mode-cta)`.
+
+- **URL-sync:** `router.push('/search?q=…&sort=…&priceMin=…&categoryId=…')`
+  на commitQuery() и applyFilters() — shareable links, работает [Back].
+  Начальные значения из `useSearchParams`.
+
+- **localStorage helpers:** `loadRecent()` / `saveRecent(q)` / `clearRecent()` —
+  SSR-safe (проверка `typeof window !== 'undefined'`).
+
+- **Палитра:** только `var(--mode-accent*)` и `var(--mode-cta)` +
+  семантические токены (foreground / muted / border / card).
+  0 использований `bg-primary` / `text-primary` / `bg-secondary` / brand-токенов.
+
+- **Иконки:** все `lucide-react` с `shrink-0` (Hotfix #11 convention).
+
+- **Доступность:** `aria-label` на всех icon-only buttons,
+  `role="dialog" aria-modal="true"` на FiltersSheet,
+  `enterKeyHint="search"` + `inputMode="search"` на input.
+
+- **Suspense-wrap:** страница импортируется `SearchContent`, обёрнутая в
+  `<Suspense>` со spinner-fallback (избегаем Next 16 warning об
+  useSearchParams без Suspense).
+
+**Верификация:**
+- `npx tsc --noEmit` → exit 0
+- `npx eslint src/app/search/page.tsx` → 0 errors, 0 warnings
+  (после ESLint-disable для 2 legitimate setState-in-effect сайтов:
+  `setRecent(loadRecent())` в init-effect и `setSuggestions([])` в guard-clause
+  debounce-effect — это sync external localStorage/draftQuery → React state).
+
+**Commit:** `933087f` (master, pushed → Vercel auto-deploy).
+
+**Закрыта директива Максима «#55 → #53 → #54 → #48»:** все 4 задачи финально
+выполнены. `/search` теперь равноценный Avito-экран: набор→подсказки→результаты
+→фильтры, с модульной палитрой, shareable URL, и memory of recent queries.
 
 ## 2026-04-19 (9) — Hotfix #13: /new → Avito-style 5-step wizard
 
