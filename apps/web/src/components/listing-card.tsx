@@ -25,7 +25,13 @@ function formatRub(v: number | null | undefined, priceType?: string | null) {
   return suffix ? `${base} ${suffix}` : base;
 }
 
-/** Едва заметная цветная подсветка краёв для промо-карточек (Avito 2026). */
+/** Едва заметная цветная подсветка краёв для промо-карточек (Avito 2026).
+ *
+ * Промо-бейджи показываются только в режиме Маркет (см. CSS-фильтр
+ * `html[data-mode="barter"] [data-promo-badge="true"] { display:none }`),
+ * поэтому ring-цвет привязан к нейтральной палитре: TOP/VIP — мягкий акцент
+ * primary-палитры бренда, XL — чуть ярче. Мы НЕ используем `--mode-accent`
+ * здесь, так как оранжевая подсветка в Маркете была бы палитра-лик. */
 function promoRing(promo: ListingCardData['promoType']): string {
   switch (promo) {
     case 'TOP':

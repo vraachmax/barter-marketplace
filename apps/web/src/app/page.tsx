@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { MobileModeToggle } from '@/components/mobile-mode-toggle';
 import { MobileSearchInput } from '@/components/mobile-search-input';
 import { BarterExampleCluster } from '@/components/barter-example-cluster';
-import { Bell, ChevronDown, Heart, MapPin, Search, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { MarketExampleCluster } from '@/components/market-example-cluster';
+import { ChevronDown, Heart, MapPin, Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   page: number;
@@ -338,34 +339,41 @@ async function renderHome(sp: HomeSearchParams) {
 
   // marketOnly=true: категории, которых НЕ должно быть в режиме Бартер
   // (услуги / работа / недвижимость — это не товары-для-обмена).
-  // Фильтрация визуальная: CSS-правило `html[data-mode="barter"] [data-market-only="true"] { display:none }`
+  // Фильтрация визуальная: CSS-правило `html[data-mode="barter"] [data-market-only="true"] { display:none }`.
   //
-  // Первый элемент — «Все» с характерными 4-цветными бабблами (реф).
-  // Остальные — плитки в стиле Avito: слева текст, справа эмодзи на цветной
-  // подложке. На мобильном рендерятся в сетке `cats-avito` (2 строки ×
-  // горизонтальный скролл, 150×72). Десктоп продолжает использовать
-  // ALL_CATS как горизонтальные вкладки.
+  // desktopMarketOnly=true: плитка «Все» рендерится только на десктопе
+  // в режиме Маркет. Мобильный DOM её НЕ содержит (фильтр в JSX ниже).
+  //
+  // Все плитки стилизуются как Avito: слева текст, справа эмодзи в
+  // градиентном круге. Сетка `cats-avito` (2 × горизонтальный скролл, 150×72).
+  // Градиент берётся из --cat-* CSS-переменных (globals.css).
   type Cat = {
     name: string;
     slug: string;
     emoji: string;
-    /** Цвет подложки под эмодзи (реф). */
-    mediaBg: string;
-    /** Градиент/акцент для десктоп-иконки. */
+    /** CSS-градиент круглой подложки под эмодзи. */
+    gradient: string;
+    /** Десктоп-акцент (используется в activeTab подсветке). */
     accent: string;
     marketOnly?: boolean;
+    desktopMarketOnly?: boolean;
     /** Для плитки «Все» — рендерим не эмодзи, а 4 цветные бабблы. */
     allBubbles?: boolean;
   };
 
   const CATS: Cat[] = [
-    { name: 'Все', slug: 'all', emoji: '', mediaBg: '#ffffff', accent: '#667eea', allBubbles: true },
-    { name: 'Недвижимость', slug: 'realty', emoji: '🏠', mediaBg: 'rgb(255, 224, 230)', accent: '#E8A87C', marketOnly: true },
-    { name: 'Работа\u00a0и подработка', slug: 'job', emoji: '🎒', mediaBg: 'rgb(224, 245, 233)', accent: '#c4a484', marketOnly: true },
-    { name: 'Авто', slug: 'auto', emoji: '🛵', mediaBg: 'rgb(232, 243, 255)', accent: '#4A90D9' },
-    { name: 'Электроника', slug: 'electronics', emoji: '📱', mediaBg: 'rgb(238, 240, 255)', accent: '#8B5CF6' },
-    { name: 'Услуги', slug: 'services', emoji: '🧴', mediaBg: 'rgb(240, 232, 255)', accent: '#3B82F6', marketOnly: true },
-    { name: 'Жильё\u00a0для путешествий', slug: 'travel', emoji: '🧳', mediaBg: 'rgb(255, 244, 214)', accent: '#F59E0B' },
+    { name: 'Все', slug: 'all', emoji: '', gradient: 'linear-gradient(135deg, #667eea, #764ba2)', accent: '#667eea', allBubbles: true, desktopMarketOnly: true },
+    { name: 'Недвижимость', slug: 'realty', emoji: '🏠', gradient: 'var(--cat-realty)', accent: '#fa709a', marketOnly: true },
+    { name: 'Работа\u00a0и подработка', slug: 'job', emoji: '🎒', gradient: 'var(--cat-work)', accent: '#f59e0b', marketOnly: true },
+    { name: 'Авто', slug: 'auto', emoji: '🚗', gradient: 'var(--cat-auto)', accent: '#f5576c' },
+    { name: 'Электроника', slug: 'electronics', emoji: '📱', gradient: 'var(--cat-electronics)', accent: '#667eea' },
+    { name: 'Для\u00a0дома и дачи', slug: 'home', emoji: '🛋️', gradient: 'var(--cat-home)', accent: '#43e97b' },
+    { name: 'Детские\u00a0товары', slug: 'kids', emoji: '🧸', gradient: 'var(--cat-baby)', accent: '#4facfe' },
+    { name: 'Одежда\u00a0и обувь', slug: 'clothes', emoji: '👕', gradient: 'var(--cat-clothes)', accent: '#a18cd1' },
+    { name: 'Хобби\u00a0и отдых', slug: 'hobby', emoji: '🎸', gradient: 'var(--cat-hobby)', accent: '#f6d365' },
+    { name: 'Спорт\u00a0и туризм', slug: 'sport', emoji: '⚽️', gradient: 'linear-gradient(135deg, #f093fb, #f5576c)', accent: '#f5576c' },
+    { name: 'Услуги', slug: 'services', emoji: '🧰', gradient: 'var(--cat-services)', accent: '#e11d48', marketOnly: true },
+    { name: 'Жильё\u00a0для путешествий', slug: 'travel', emoji: '🧳', gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)', accent: '#4facfe' },
   ];
   const ALL_CATS = CATS;
 
@@ -430,25 +438,29 @@ async function renderHome(sp: HomeSearchParams) {
       </div>
 
       {/* ===== DESKTOP CATEGORIES BAR — Avito-style horizontal icons =====
-          Категория «Все» на десктопе не показывается (логотип уже ведёт
-          на главную без фильтра). */}
+          На десктопе плитка «Все» показывается ТОЛЬКО в режиме Маркет
+          (через data-market-only-strict, CSS-фильтр в globals.css).
+          В Бартере «Все» не имеет смысла — там режим сам по себе фильтр. */}
       <div className="hidden border-b border-border bg-background md:block">
         <div className="mx-auto flex max-w-7xl items-stretch gap-0 overflow-x-auto px-6">
-          {ALL_CATS.filter((cat) => cat.slug !== 'all').map((cat) => {
+          {ALL_CATS.map((cat) => {
             const catId = catIdMap[cat.slug] || '';
             const isActive = urlCategoryId === catId && catId !== '';
+            const desktopAllTile = cat.slug === 'all';
             return (
               <Link
                 key={cat.slug + cat.name}
-                href={{ pathname: '/', query: { ...preservedListQuery, categoryId: catId } }}
+                href={{ pathname: '/', query: { ...preservedListQuery, ...(desktopAllTile ? {} : { categoryId: catId }) } }}
+                data-market-only-strict={desktopAllTile ? 'true' : undefined}
+                data-market-only={cat.marketOnly ? 'true' : undefined}
                 className={`relative flex shrink-0 flex-col items-center justify-center gap-1 px-4 pt-3.5 pb-3 transition-colors ${
- isActive
+ isActive || (desktopAllTile && !urlCategoryId)
  ? 'border-b-2 border-primary text-primary'
  : 'border-b-2 border-transparent text-foreground/70 hover:text-foreground'
  }`}
               >
                 <span className="text-[26px] leading-none" aria-hidden>
-                  {cat.emoji}
+                  {desktopAllTile ? '🗂️' : cat.emoji}
                 </span>
                 <span className={`text-xs whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>
                   {cat.name.replace(/\u00a0/g, ' ')}
@@ -461,10 +473,13 @@ async function renderHome(sp: HomeSearchParams) {
 
       {/* ===== MOBILE STICKY HEADER — реф (handoff-bundle/home.html) =====
           БЕЛЫЙ фон, чёрный текст, акцент применяется только к мелким
-          индикаторам (точка нотификаций, счётчик «12» у сердца). Status-bar
-          iOS/Android окрашивается в белый (см. ModeThemeSync + pre-paint
-          скрипт в layout.tsx). Тон-в-тон с реф: тонкая нижняя граница,
-          grey pill поиск, город-чипс с MapPin. */}
+          индикаторам (счётчик «12» у сердца). Status-bar iOS/Android
+          окрашивается в белый (см. ModeThemeSync + pre-paint скрипт в
+          layout.tsx).
+          Колокольчик (уведомления) убран — все системные сообщения
+          агрегируются в /messages. Вместо него — кнопка-чипс города
+          с MapPin (раньше висела отдельной строкой под поиском).
+          Справа остаётся «Избранное» (Heart) со счётчиком. */}
       <div
         className="mobile-sticky-header md:hidden"
         style={{
@@ -507,37 +522,35 @@ async function renderHome(sp: HomeSearchParams) {
               <span>Бартер</span>
             </Link>
             <span style={{ flex: 1 }} />
+            {/* Городская плашка (раньше была колокольчиком) — кликабельный
+                чипс, ведущий на /profile/settings?section=location (future).
+                Пока рендерим как обычный button — handler прикрутим в
+                Phase 1.x вместе с селектором города. */}
             <button
               type="button"
-              aria-label="Уведомления"
+              aria-label={`Город: ${currentCity}. Изменить`}
               style={{
-                position: 'relative',
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                display: 'grid',
-                placeItems: 'center',
-                background: 'transparent',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                height: 32,
+                padding: '0 10px',
+                background: 'var(--bg-muted)',
                 border: 'none',
+                borderRadius: 999,
                 color: 'var(--fg-strong)',
+                font: 'inherit',
+                fontSize: 13,
+                fontWeight: 600,
                 cursor: 'pointer',
                 flexShrink: 0,
+                maxWidth: 160,
+                overflow: 'hidden',
               }}
             >
-              <Bell size={22} strokeWidth={1.8} aria-hidden />
-              <span
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  top: 7,
-                  right: 8,
-                  width: 8,
-                  height: 8,
-                  background: 'var(--mode-accent)',
-                  borderRadius: '50%',
-                  border: '2px solid #fff',
-                }}
-              />
+              <MapPin size={14} strokeWidth={2} color="var(--mode-accent)" aria-hidden />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentCity}</span>
+              <ChevronDown size={14} strokeWidth={2} aria-hidden style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
             </button>
             <Link
               href="/favorites"
@@ -580,7 +593,9 @@ async function renderHome(sp: HomeSearchParams) {
             </Link>
           </div>
 
-          {/* Grey pill search — реф: bg=var(--bg-muted), h=44, radius=12 */}
+          {/* Grey pill search — реф: bg=var(--bg-muted), h=44, radius=12.
+              Строка города больше НЕ идёт под поиском (переехала в чипс
+              на месте колокольчика). */}
           <form
             action="/"
             method="GET"
@@ -613,57 +628,31 @@ async function renderHome(sp: HomeSearchParams) {
             />
             <SlidersHorizontal size={18} strokeWidth={1.8} color="var(--fg-subtle)" aria-label="Фильтры" />
           </form>
-
-          {/* Локация под поиском */}
-          <div
-            style={{
-              marginTop: 10,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              color: 'var(--fg-muted)',
-              fontSize: 13,
-            }}
-          >
-            <MapPin size={14} strokeWidth={2} aria-hidden />
-            <span>{currentCity}</span>
-            <ChevronDown size={14} strokeWidth={2} aria-hidden style={{ color: 'var(--fg-subtle)' }} />
-          </div>
         </header>
       </div>
 
       {/* ===== MOBILE CATEGORIES — cats-avito 2 строки × горизонтальный скролл =====
           Реф (handoff-bundle/home.html): белые плитки 150×72, слева текст,
-          справа эмодзи на цветной подложке. Первая плитка «Все» с 4
-          цветными бабблами. Категории `marketOnly` скрываются в режиме
-          Бартер через CSS-фильтр `html[data-mode="barter"] [data-market-only]`. */}
+          справа эмодзи в цветном градиентном круге (Avito 2026 visual).
+          На мобиле плитка «Все» НЕ рендерится (см. desktopMarketOnly).
+          Категории `marketOnly` скрываются в режиме Бартер через CSS-фильтр
+          `html[data-mode="barter"] [data-market-only]`. */}
       <div className="md:hidden" style={{ background: 'var(--bg-page)' }}>
         <div className="cats cats-avito">
-          {CATS.map((cat) => {
+          {CATS.filter((cat) => !cat.desktopMarketOnly).map((cat) => {
             const catId = catIdMap[cat.slug] || '';
-            const href = cat.slug === 'all'
-              ? { pathname: '/', query: preservedListQuery }
-              : { pathname: '/', query: { ...preservedListQuery, categoryId: catId } };
+            const href = { pathname: '/', query: { ...preservedListQuery, categoryId: catId } };
             return (
               <Link
                 key={cat.slug}
                 href={href}
                 data-market-only={cat.marketOnly ? 'true' : undefined}
-                className={cat.allBubbles ? 'cat cat-all' : 'cat'}
+                className="cat"
               >
                 <div className="cat-text">{cat.name}</div>
-                {cat.allBubbles ? (
-                  <div className="cat-media cat-bubbles">
-                    <span className="bub bub-r" />
-                    <span className="bub bub-y" />
-                    <span className="bub bub-g" />
-                    <span className="bub bub-b" />
-                  </div>
-                ) : (
-                  <div className="cat-media" style={{ background: cat.mediaBg }}>
-                    <span className="cat-emoji" aria-hidden>{cat.emoji}</span>
-                  </div>
-                )}
+                <div className="cat-media" style={{ background: cat.gradient }}>
+                  <span className="cat-emoji" aria-hidden>{cat.emoji}</span>
+                </div>
               </Link>
             );
           })}
@@ -684,10 +673,14 @@ async function renderHome(sp: HomeSearchParams) {
             <MobileModeToggle />
           </div>
 
-          {/* ===== MOBILE: пример-кластер бартер-объявлений =====
-              Показывается только при data-mode="barter" (CSS). Временная
-              витрина до Phase 13 — чтобы раздел не выглядел пустым. */}
+          {/* ===== MOBILE: пример-кластер по режиму =====
+              BarterExampleCluster — показывается только при data-mode="barter"
+              (CSS), CTA «Хочу обменять».
+              MarketExampleCluster — показывается только при data-mode="market"
+              (CSS), цена + CTA «Показать номер» (салатовый Avito 2026).
+              Временная витрина до Phase 4 (поиск) и Phase 13 (бартер). */}
           <BarterExampleCluster />
+          <MarketExampleCluster />
 
           {effectiveRecoMode ? (
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-primary/10 p-3.5 text-sm">

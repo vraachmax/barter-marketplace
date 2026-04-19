@@ -1,7 +1,89 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Hotfix #7 ✅ (2026-04-19)
-## Следующая задача: Phase 4 — поиск + персонализация. Phase 13 — раздел «Бартер» (USP, запланирован)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Hotfix #7 ✅ · Hotfix #8 🚧 (2026-04-19)
+## Следующая задача (очередь):
+1. **Hotfix #8 (текущий шаг):** bottom-nav mode-color, MapPin на место Bell, gradient-circle категории, Market example cluster, расширенный список категорий, «Все» убрана с мобилы.
+2. **Phase 1.x mobile:** `/search` (клон мобильного Avito), `/messages` (support-chat pinned + автоответы), `/favorites` (re-scale), `/profile` (redesign + font-audit), listing detail palette-audit.
+3. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+
+## 2026-04-19 (4) — Hotfix #8: bottom-nav mode-color + header chip + gradient-categories + Market-cluster
+
+Фидбек Максима после Hotfix #7 (14 пунктов одним сообщением). Mobile-only scope.
+
+**Что сделано в этом коммите:**
+
+- **Bottom-nav теперь mode-aware** (`apps/web/src/components/mobile-bottom-nav.tsx`).
+  Активная иконка + лейбл красятся в `var(--mode-accent)` (оранжевый в Бартере, синий в Маркете).
+  FAB-кнопка «+Добавить» — тоже `--mode-accent` + `box-shadow: 0 4px 12px var(--mode-accent-ring)`.
+  Переключение мгновенное (CSS-переменные, без ре-рендера).
+
+- **Кнопка «Поиск» в nav ведёт на `/search`** (новый маршрут, Phase 1.x). Fallback: если /search
+  ещё не смонтирован, пользователь видит Next.js 404 — планируется клон моб. Авито с полной
+  решёткой категорий + фильтрами (Task #48).
+
+- **MapPin переехал на место колокольчика в шапке** (`apps/web/src/app/page.tsx` mobile header).
+  Bell удалён: уведомления и так агрегируются в `/messages`. Теперь в шапке справа — компактный
+  pill-чипс с MapPin+городом+ChevronDown (`<button>`, обработчик селектора города — в Phase 1.x),
+  а строка под поиском (ранее отдельная) полностью убрана. Экономим ~30px высоты шапки.
+
+- **Категории получили градиентный круг** (`apps/web/src/app/globals.css` → `.cats-avito .cat-media`).
+  56×56px круг с CSS-градиентом (из `--cat-*` токенов), 28px эмодзи, мягкая тень.
+  Раньше был grey square 56×72 справа с плоской подложкой — теперь визуально ближе к Авито 2026.
+
+- **«Все» убрана из мобильной сетки категорий.** На мобиле — сразу плитки по категориям
+  (без «Все»-бабблов). На десктопе «Все» остаётся **только в режиме Маркет** через
+  `data-market-only-strict="true"` (в Бартере CSS скрывает её; в Бартере «Все» бессмысленна,
+  т. к. режим = фильтр).
+
+- **Расширен список категорий** (page.tsx → `CATS`): добавлены `home` (Для дома и дачи),
+  `kids` (Детские товары), `clothes` (Одежда и обувь), `hobby` (Хобби и отдых), `sport` (Спорт
+  и туризм). Итого на мобиле в Бартере видны: Авто · Электроника · Для дома и дачи · Детские
+  товары · Одежда и обувь · Хобби и отдых · Спорт и туризм · Жильё для путешествий.
+  В Маркете добавляются `realty`, `job`, `services` (через снятие `data-market-only` фильтра).
+
+- **`MarketExampleCluster` создан** (`apps/web/src/components/market-example-cluster.tsx`) —
+  зеркало `BarterExampleCluster`, 8 товарных карточек с теми же фото + цена + CTA
+  «Показать номер» (салатовый `--mode-cta` = #87D32C Avito-style). Показывается ТОЛЬКО в Маркете
+  через существующий фильтр `html[data-mode="barter"] [data-market-only="true"] { display:none }`.
+  Рядом в ленте больше не пусто ни в одном режиме до Phase 4/13.
+
+- **`.btn-show-phone`** — новый класс в `globals.css` (для Market CTA). Цвет = `--mode-cta`,
+  hover = `--mode-cta-hover`. В Бартере (если компонент случайно попадёт в DOM) деградирует
+  к `--mode-accent` (оранжевый). Использует иконку `Phone` из lucide (12px).
+
+- **ListingCard palette audit** — в `components/listing-card.tsx` промо-ring оставлен на
+  `ring-accent/40` / `ring-primary/40` (бренд-palette), т. к. промо-бейджи сами по себе
+  CSS-скрыты в Бартере. Палитра-лик на детальной странице (`/listing/[id]`) — отдельная
+  задача #52 (orange-on-blue bug Максима).
+
+**Файлы тронутые в Hotfix #8:**
+```
+apps/web/src/app/globals.css              → .cat-media gradient circle, .btn-show-phone
+apps/web/src/app/page.tsx                 → CATS expanded, MapPin chip, Bell removed, Market cluster
+apps/web/src/components/mobile-bottom-nav.tsx → --mode-accent bindings, /search route
+apps/web/src/components/market-example-cluster.tsx → NEW (8 product cards, "Показать номер")
+apps/web/src/components/listing-card.tsx → promoRing comment clarifying no leak
+```
+
+**Что НЕ сделано (остаётся в бэклоге):**
+
+| # | Задача | Task ID |
+|---|--------|---------|
+| 1 | `/search` мобильная страница — клон Авито 1:1 (широкий грид категорий + фильтры). Ссылки: есть git-репы Авито на GitHub, надо изучить. | #48 |
+| 2 | `/messages` mobile — pinned support-chat (SupportTemplate backend уже готов), автоответы, фикс масштабирования превью. | #49 |
+| 3 | `/favorites` mobile — фикс «вычурного» вида, стандартная 2-col grid геометрия как в ленте. | #50 |
+| 4 | `/profile` mobile — Avito-like аватар-header, stats, tabs; font-audit (Golos Text везде). | #51 |
+| 5 | Listing detail — palette-leak fix (оранжевый текст на синем фоне в Маркете). | #52 |
+
+**Верификация Hotfix #8:**
+- [ ] `npx tsc --noEmit` — чистый
+- [ ] Визуальная сверка на мобиле: bottom-nav красится при переключении режима
+- [ ] MapPin-чипс отображается на месте колокольчика, нет строки локации под поиском
+- [ ] «Все» отсутствует на мобиле в обоих режимах; в Бартере нет realty/job/services
+- [ ] MarketExampleCluster виден только при Маркете, CTA зелёный; BarterExampleCluster виден
+      только при Бартере, CTA оранжевый
+- [ ] Категории-плитки имеют градиентные круги, эмодзи крупнее
+- [ ] Git commit + push в master
 
 ## 2026-04-19 (3) — Hotfix #7: точная сверка мобильной главной с handoff-bundle-v2/home.html
 
