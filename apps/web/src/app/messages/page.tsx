@@ -480,17 +480,17 @@ export default function MessagesPage() {
   return (
     /*
       pb на мобилке: глобальный `body { padding-bottom: 72px }` уже
-      даёт ~76px зазор под плавающий nav-pill (12px offset + 64px
-      высота). НО у nav v3.1 двухслойный bubble активного раздела
-      торчит ВЫШЕ pill'а ещё на ~25-30px — поэтому при +8px Send-
-      кнопка оказывалась под bubble'ом «Сообщения». Сейчас +40px:
-      composer ~112px от низа viewport'а — bubble (≈100-105px)
-      больше не задевает Send. Раньше было +96px — давало 168px
-      пустоты, Максим жаловался на отступ.
-      На десктопе (md+) bottom-nav отсутствует — pb обнуляем.
+      даёт ~76px зазор под плавающий nav-pill, но у nav v3.1
+      bubble активного раздела торчит ещё ~25px над pill'ом.
+      Итерация:
+        +96  → 168px пустоты (Максим: «слишком большой отступ»)
+        +8   → bubble перекрывал Send-кнопку
+        +40  → bubble не задевал Send, но снова много воздуха
+        +20  → composer уверенно над bubble без лишней пустоты
+      На десктопе (md+) bottom-nav нет — pb обнуляем.
     */
     <div
-      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+40px)] md:pb-0"
+      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+20px)] md:pb-0"
     >
       {/* Top bar — desktop */}
       <header className="hidden shrink-0 border-b border-border bg-card md:block">
@@ -860,13 +860,18 @@ export default function MessagesPage() {
                         <div
                           className={`flex max-w-[min(100%,520px)] gap-2 ${isPeer ? 'flex-row' : 'flex-row-reverse'}`}
                         >
+                          {/*
+                            Для peer-сообщений — аватар с инициалами слева.
+                            Для своих сообщений аватар/spacer НЕ рисуем
+                            (раньше был пустой 32px div-«фантом» для
+                            симметрии — из-за него мои пузыри отъезжали
+                            от правого края экрана на лишние ~40px).
+                          */}
                           {isPeer ? (
                             <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground">
                               {peerInitials(selectedChat.peer)}
                             </div>
-                          ) : (
-                            <div className="mt-1 h-8 w-8 shrink-0" aria-hidden />
-                          )}
+                          ) : null}
                           <div
                             style={isPeer ? undefined : { background: myBubbleColor }}
                             className={`min-w-0 rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
