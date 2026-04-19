@@ -1135,7 +1135,16 @@ export function ProfileContent() {
       {showTopUp ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowTopUp(false)} />
-          <div className="relative w-full max-w-md rounded-t-3xl bg-card p-6 pb-8 shadow-xl md:rounded-3xl md:pb-6">
+          {/*
+            На мобилке bottom-sheet прижимается к низу viewport'а. Чтобы
+            кнопка «Пополнить на N ₽» не уезжала под bottom-nav v3.1
+            (pill 76px от низа + bubble торчит ещё ~25px = 101px), даём
+            нижний padding 116px (108 nav-clearance + 8 воздух). На md+
+            модалка центрирована — стандартный pb-6.
+            Через arbitrary-значение Tailwind, чтобы `md:pb-6` мог его
+            переопределить (inline-style бы md:-override не поборол).
+          */}
+          <div className="relative w-full max-w-md rounded-t-3xl bg-card p-6 pb-[calc(env(safe-area-inset-bottom,0px)+116px)] shadow-xl md:rounded-3xl md:pb-6">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30 md:hidden" />
             <h2 className="text-lg font-bold text-[#1a1a1a]">Пополнить кошелёк</h2>
             <p className="mt-1 text-sm text-muted-foreground">Выберите сумму или введите свою</p>

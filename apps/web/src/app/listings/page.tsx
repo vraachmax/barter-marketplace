@@ -486,8 +486,16 @@ function ListingsContent() {
               </div>
 
               {/* Sticky bottom CTA — Avito-стиль: лаймовый mode-cta (Маркет) /
-                  оранжевый (Бартер). Над bottom-nav (h=56) — оставляем зазор 72px. */}
-              <div className="fixed bottom-[72px] left-0 right-0 z-50 border-t border-border bg-card px-4 py-3">
+                  оранжевый (Бартер). Над bottom-nav v3.1: pill занимает
+                  низ 12-76px, bubble активного раздела торчит до ~101px
+                  от низа. Зазор 108px = CTA чуть выше bubble, не
+                  задевает. Через env(safe-area) учитываем «уши» iOS. */}
+              <div
+                className="fixed left-0 right-0 z-50 border-t border-border bg-card px-4 py-3"
+                style={{
+                  bottom: 'calc(env(safe-area-inset-bottom, 0px) + 108px)',
+                }}
+              >
                 <Link
                   href="/new"
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition active:scale-[0.99]"
