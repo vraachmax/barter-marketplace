@@ -665,3 +665,136 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* =========================================================================
+   Magic bottom-nav (mobile)
+   ─────────────────────────────────────────────────────────────────────────
+   Mobile bottom navigation в стиле «magic-navigation»: активный пункт
+   «выпрыгивает» вверх, под ним скользит круглый индикатор на
+   var(--mode-accent). Цвета берутся из CSS-переменных режима (Бартер =
+   оранжевый, Маркет = голубой) — переключение мгновенное вместе с
+   `<html data-mode>`. Шрифт — Golos Text (наследуется из body).
+   Подключается компонентом `MobileBottomNav` (см. mobile-bottom-nav.tsx).
+   ========================================================================= */
+.magic-nav {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 1000;
+  background: var(--background);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.06);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.magic-nav ul {
+  position: relative;
+  display: flex;
+  height: 68px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.magic-nav__item {
+  position: relative;
+  flex: 1 1 0;
+  height: 100%;
+  z-index: 1;
+}
+.magic-nav__item a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.magic-nav__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+  color: var(--muted-foreground);
+  transition:
+    transform 0.5s cubic-bezier(.34,1.56,.64,1),
+    color 0.35s ease;
+}
+.magic-nav__item--active .magic-nav__icon {
+  transform: translateY(-34px);
+  color: #fff;
+}
+.magic-nav__text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--mode-accent);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+.magic-nav__item--active .magic-nav__text {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Slot-обёртка индикатора, занимает 1/5 ширины бара. Перемещается через
+   inline-style transform: translateX(N * 100%). Плавный cubic-bezier
+   совпадает с поведением иконки. */
+.magic-nav__indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% / 5);
+  height: 100%;
+  pointer-events: none;
+  transition: transform 0.55s cubic-bezier(.22,.9,.28,1);
+  z-index: 0;
+}
+/* Сам круг — выпрыгивает над баром на половину своей высоты.
+   border == background-у бара создаёт «вырез» вокруг dot. */
+.magic-nav__indicator-dot {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  background: var(--mode-accent);
+  border: 6px solid var(--background);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 8px 22px var(--mode-accent-ring);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+/* Псевдо-элементы — плавные «загнутые» уголки по бокам dot, как в реф-дизайне.
+   box-shadow проецирует цвет фона бара, имитируя вогнутый стык круга и бара. */
+.magic-nav__indicator-dot::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: -22px;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border-top-right-radius: 20px;
+  box-shadow: 1px -10px 0 0 var(--background);
+}
+.magic-nav__indicator-dot::after {
+  content: "";
+  position: absolute;
+  top: 28px;
+  right: -22px;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border-top-left-radius: 20px;
+  box-shadow: -1px -10px 0 0 var(--background);
+}

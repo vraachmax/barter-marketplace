@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
 import { Home as HomeIcon, Search, ClipboardList, MessageCircle, User } from 'lucide-react';
 
 type NavItem = {
@@ -9,142 +10,103 @@ type NavItem = {
   label: string;
   icon: typeof HomeIcon;
   match: (pathname: string) => boolean;
-  fab?: boolean;
 };
 
 /**
- * Bottom-nav — mode-aware (Бартер / Маркет).
- * Активный пункт и FAB подсвечиваются `var(--mode-accent)` — оранжевым в
- * Бартере и голубым в Маркете. Переключение мгновенное: CSS-переменные
- * меняются вместе с `<html data-mode>` (см. globals.css), поэтому ре-рендер
- * не нужен.
+ * Mobile bottom-navigation в стиле «magic-navigation» (Hotfix #16).
  *
- * Пункты: Главная · Поиск · Объявления (FAB) · Сообщения · Профиль.
+ * Дизайн:
+ *   • Бар прибит к низу (fixed), 5 равных пунктов на всю ширину экрана.
+ *   • Активный пункт «выпрыгивает» вверх — иконка translateY(-34px),
+ *     под ним появляется круглый индикатор на var(--mode-accent)
+ *     (оранжевый в Бартере / голубой в Маркете).
+ *   • Снизу под иконкой плавно проявляется label (opacity 0→1 +
+ *     translateY 20→0). У неактивных — спрятан.
+ *   • Индикатор плавно «скользит» к новому активному пункту через
+ *     transform: translateX(N * 100%), где N — индекс активного из
+ *     NAV_ITEMS. CSS transitions делают это бесшовным.
  *
- * До Hotfix #15 центральный FAB вёл напрямую на `/new` («+Добавить»). Максим
- * попросил поменять логику — теперь FAB ведёт на `/listings`, где у пользователя
- * уже есть привычные 3 таба (Активные / Требуют действий / Завершённые) и
- * крупная mode-aware CTA «Разместить объявление» (голубая в Маркете, оранжевая
- * в Бартере). Это совпадает с UX Авито и убирает «прыжок» сразу в forms-wizard.
+ * Палитра/шрифты — наши:
+ *   • var(--mode-accent) для индикатора и label, var(--background) для
+ *     "выреза" вокруг кружка (имитация вогнутого стыка через border +
+ *     ::before/::after box-shadow).
+ *   • Шрифт Golos Text наследуется из body.
  *
- * Шаг публикации (`/new`) специально скрывает MobileBottomNav (см. ниже) —
- * иначе навигация перекрывает sticky action-bar wizard'а, и кнопка «Далее»
- * уходит под интерфейс (Hotfix #15 баг-репорт от Максима).
+ * Пункты (под нашу IA Avito-клона):
+ *   Главная · Поиск · Объявления (центральный) · Сообщения · Профиль.
+ *
+ * Hotfix #15 контракт сохранён: на `/new` (wizard) bottom-nav скрыт
+ * полностью — у wizard'а свой sticky action-bar и две fixed-плашки
+ * перекрывали бы друг друга.
+ *
+ * Стили — в globals.css блок `.magic-nav { ... }`. Псевдо-элементы для
+ * "выреза" вокруг dot Tailwind не покрывает, поэтому отдельный CSS-блок.
  */
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Главная', icon: HomeIcon, match: (p) => p === '/' },
   { href: '/search', label: 'Поиск', icon: Search, match: (p) => p === '/search' },
-  { href: '/listings', label: 'Объявления', icon: ClipboardList, match: (p) => p === '/listings', fab: true },
+  { href: '/listings', label: 'Объявления', icon: ClipboardList, match: (p) => p === '/listings' },
   { href: '/messages', label: 'Сообщения', icon: MessageCircle, match: (p) => p.startsWith('/messages') },
   { href: '/profile', label: 'Профиль', icon: User, match: (p) => p === '/profile' || p.startsWith('/profile/') },
 ];
 
-/**
- * Маршруты, на которых нижняя навигация скрывается полностью.
- * Wizard публикации (`/new`) имеет собственный sticky action-bar
- * («Назад / Далее / Опубликовать») — две фикс-панели одновременно
- * перекрывают друг друга и пользователь застревает на шаге.
- */
+/** Маршруты, на которых нижняя навигация полностью скрывается. */
 const HIDE_ON_PATHS = new Set<string>(['/new']);
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+
+  // Индекс активного пункта — нужен для translateX индикатора.
+  // Если pathname не матчит ни один пункт (например, /listing/[id]) —
+  // индикатор уезжает за левый край (translateX -100%) и кажется скрытым,
+  // активного label тоже нет.
+  const activeIndex = useMemo(
+    () => NAV_ITEMS.findIndex((it) => it.match(pathname)),
+    [pathname],
+  );
+
   if (HIDE_ON_PATHS.has(pathname)) return null;
 
   return (
-    <nav
-      className="md:hidden"
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        zIndex: 1000,
-        background: 'var(--color-background, #fff)',
-        borderTop: '1px solid var(--color-border, #ECECEC)',
-        boxShadow: '0 -2px 16px rgba(0,0,0,0.06)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          alignItems: 'center',
-          padding: '8px 4px 10px',
-        }}
-      >
-        {NAV_ITEMS.map((item) => {
-          const active = item.match(pathname);
-          if (item.fab) {
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-label={item.label}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 4,
-                  textDecoration: 'none',
-                  color: 'var(--color-muted-foreground, #6B6B6B)',
-                  fontSize: 10,
-                  fontWeight: 500,
-                  padding: '4px 0',
-                }}
-              >
-                <span
-                  style={{
-                    width: 44,
-                    height: 44,
-                    background: 'var(--mode-accent)',
-                    borderRadius: 14,
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: '#fff',
-                    boxShadow: '0 4px 12px var(--mode-accent-ring)',
-                    marginTop: -12,
-                    transition: 'background 200ms ease, box-shadow 200ms ease',
-                  }}
-                >
-                  <item.icon size={22} strokeWidth={2.2} aria-hidden />
-                </span>
-                {item.label}
-              </Link>
-            );
-          }
+    <nav className="magic-nav md:hidden" aria-label="Основная навигация">
+      <ul>
+        {NAV_ITEMS.map((item, idx) => {
+          const active = idx === activeIndex;
+          const Icon = item.icon;
           return (
-            <Link
+            <li
               key={item.href}
-              href={item.href}
-              aria-current={active ? 'page' : undefined}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 4,
-                textDecoration: 'none',
-                color: active
-                  ? 'var(--mode-accent)'
-                  : 'var(--color-muted-foreground, #94A3B8)',
-                fontWeight: active ? 700 : 500,
-                fontSize: 10,
-                padding: '4px 0',
-                transition: 'color 200ms ease',
-              }}
+              className={
+                active ? 'magic-nav__item magic-nav__item--active' : 'magic-nav__item'
+              }
             >
-              <item.icon
-                size={24}
-                strokeWidth={1.8}
-                fill={active ? 'currentColor' : 'none'}
-                aria-hidden
-              />
-              {item.label}
-            </Link>
+              <Link
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                aria-label={item.label}
+              >
+                <span className="magic-nav__icon">
+                  <Icon size={22} strokeWidth={1.9} aria-hidden />
+                </span>
+                <span className="magic-nav__text">{item.label}</span>
+              </Link>
+            </li>
           );
         })}
-      </div>
+        <div
+          className="magic-nav__indicator"
+          style={{
+            // Если активного нет (-1) — прячем индикатор за левый край.
+            transform:
+              activeIndex >= 0
+                ? `translateX(${activeIndex * 100}%)`
+                : 'translateX(-200%)',
+          }}
+          aria-hidden
+        >
+          <span className="magic-nav__indicator-dot" />
+        </div>
+      </ul>
     </nav>
   );
 }
