@@ -1,12 +1,62 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#15 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#16 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ (2026-04-19)
 ## Следующая задача (очередь):
-1. **Hotfix #15 (только что):** bottom-nav FAB «+Добавить» → «Объявления» (→ `/listings`) + скрытие navbar на `/new` (чинит застревание «Далее» под интерфейсом). ✅
-2. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска с live-suggestions, fuzzy-match категорий, недавними запросами, FiltersSheet. ✅
-3. **Phase 1.x mobile sprint (#55→#53→#54→#48):** все 4 задачи директивы Максима ✅✅✅✅ закрыты.
-4. **Phase 1.x остальное:** `/messages` (#49, pinned support + автоответы).
-5. **Phase 4** — поиск + персонализация. **Phase 13** — раздел «Бартер» (USP).
+1. **Hotfix #16 (только что):** bottom-nav перерисован в стиле «magic-navigation» из реф-файла — активный пункт «выпрыгивает», круглый индикатор плавно скользит, mode-aware цвета. ✅
+2. **Hotfix #15:** bottom-nav FAB → «Объявления» (→ `/listings`) + скрытие navbar на `/new`. ✅
+3. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
+4. **Phase 1.x mobile sprint:** все 4 задачи директивы Максима ✅✅✅✅.
+5. **Phase 1.x остальное:** `/messages` (#49). **Phase 4** — поиск. **Phase 13** — «Бартер» USP.
+
+## 2026-04-19 (12) — Hotfix #16: magic-nav стиль для mobile bottom-bar
+
+Максим прислал реф-файл `magic-nav.html` с популярным демо-эффектом
+«magic-navigation» и попросил сделать bottom-nav в этой стилистике, но
+с нашими цветами, шрифтами и названиями. Перерисовал компонент.
+
+**Эффекты (повторяют реф, адаптированы под наш UX):**
+- Активный пункт «выпрыгивает»: иконка `translateY(-34px)`, под ней
+  появляется круглый индикатор Ø60 на `var(--mode-accent)`.
+- Индикатор плавно «скользит» к новому активному пункту через
+  `transform: translateX(N * 100%)`, где N — индекс активного пункта в
+  `NAV_ITEMS`. Easing `cubic-bezier(.22,.9,.28,1)`, длительность 550ms.
+- Под иконкой появляется label
+  (`opacity: 0→1` + `translateY: 20→0`, `cubic-bezier(.4,0,.2,1)`).
+  У неактивных — спрятан.
+- Выемка вокруг dot: `border: 6px solid var(--background)` + два
+  псевдо-элемента с `box-shadow`, имитирующих вогнутый стык круга
+  и бара (в точности как в реф-файле).
+
+**Адаптация под наш стек:**
+- **Цвета:** `var(--mode-accent)` и `var(--mode-accent-ring)` для
+  индикатора, `var(--background)` для выреза, `var(--muted-foreground)`
+  для неактивных иконок. Mode-aware: оранжевый в Бартере, голубой в
+  Маркете. Переключение мгновенное вместе с `<html data-mode>`.
+- **Шрифт:** Golos Text (наследуется из body, вместо Poppins из реф).
+- **Иконки:** lucide-react (HomeIcon, Search, ClipboardList,
+  MessageCircle, User), вместо ion-icon.
+- **Названия:** Главная · Поиск · Объявления · Сообщения · Профиль.
+- **Ширина:** на всю ширину экрана (не 400px-таблетка), 5 равных
+  пунктов `flex: 1 1 0`. Высота 68px + `safe-area-inset-bottom`.
+
+**Файлы:**
+- `apps/web/src/app/globals.css` — добавлен блок `.magic-nav { ... }`
+  (~120 строк). Псевдо-элементы Tailwind не покрывает, поэтому plain CSS.
+- `apps/web/src/components/mobile-bottom-nav.tsx` — полный rewrite
+  (78% изменено). Разметка: `<nav.magic-nav> → <ul> → <li.magic-nav__item>
+  → <a> → <span.magic-nav__icon> + <span.magic-nav__text>`, плюс
+  `<div.magic-nav__indicator>` — sibling всех li, inline-style
+  `transform: translateX(${activeIndex * 100}%)`.
+
+**Сохранены контракты прошлых hotfix'ов:**
+- Hotfix #15: `HIDE_ON_PATHS = new Set(['/new'])` — на wizard'е nav
+  скрыт (ранний return null).
+- Hotfix #15: центральный пункт ведёт на `/listings`, а не `/new`.
+- Hotfix #8 / #40: mode-aware палитра, реактивная через `<html data-mode>`.
+
+**Верификация:** `tsc --noEmit` ✓ · `eslint` ✓ (0 errors, 0 warnings).
+
+**Commit:** `bcb71e1` (master, pushed → Vercel auto-deploy).
 
 ## 2026-04-19 (11) — Hotfix #15: bottom-nav FAB + /new action-bar z-fix
 
