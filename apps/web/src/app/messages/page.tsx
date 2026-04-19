@@ -479,15 +479,18 @@ export default function MessagesPage() {
 
   return (
     /*
-      pb на мобилке: глобальный `body { padding-bottom: 72px }`
-      (см. globals.css) уже даёт зазор под плавающий bottom-nav
-      (~76px от низа экрана). Здесь добавляем ЕЩЁ ~8px только чтобы
-      composer не «лежал» прямо на nav-pill. Раньше было +96px —
-      получалось 168px пустоты → Максим: «отступ слишком большой».
+      pb на мобилке: глобальный `body { padding-bottom: 72px }` уже
+      даёт ~76px зазор под плавающий nav-pill (12px offset + 64px
+      высота). НО у nav v3.1 двухслойный bubble активного раздела
+      торчит ВЫШЕ pill'а ещё на ~25-30px — поэтому при +8px Send-
+      кнопка оказывалась под bubble'ом «Сообщения». Сейчас +40px:
+      composer ~112px от низа viewport'а — bubble (≈100-105px)
+      больше не задевает Send. Раньше было +96px — давало 168px
+      пустоты, Максим жаловался на отступ.
       На десктопе (md+) bottom-nav отсутствует — pb обнуляем.
     */
     <div
-      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+8px)] md:pb-0"
+      className="flex min-h-[100dvh] flex-col bg-muted text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+40px)] md:pb-0"
     >
       {/* Top bar — desktop */}
       <header className="hidden shrink-0 border-b border-border bg-card md:block">
