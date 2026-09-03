@@ -4,17 +4,17 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { PrismaClientExceptionFilter } from './prisma/prisma-exception.filter';
-import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import express from 'express';
+import { getAllowedCorsOrigins } from './config/security';
+import { getUploadsDirectory, getUploadsRoot } from './storage/uploads-path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new PrismaClientExceptionFilter());
-  // В dev cwd = корень monorepo, в prod (Render) cwd = apps/api
-  const uploadsRoot = join(__dirname, '..', 'uploads');
-  mkdirSync(join(uploadsRoot, 'listings'), { recursive: true });
-  mkdirSync(join(uploadsRoot, 'chat-media'), { recursive: true });
+  const uploadsRoot = getUploadsRoot();
+  mkdirSync(getUploadsDirectory('listings'), { recursive: true });
+  mkdirSync(getUploadsDirectory('chat-media'), { recursive: true });
   app.use('/uploads', express.static(uploadsRoot));
   app.use(cookieParser());
   app.useGlobalPipes(
@@ -24,10 +24,22 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  const allowedOrigins = getAllowedCorsOrigins();
   app.enableCors({
-    origin: true,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin.replace(/\/$/, ''))) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('cors_origin_not_allowed'), false);
+    },
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id', 'x-anonymous-id'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-session-id',
+      'x-anonymous-id',
+    ],
   });
   await app.listen(Number(process.env.PORT ?? 3001));
 }

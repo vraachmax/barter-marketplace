@@ -18,6 +18,7 @@ import { extname } from 'node:path';
 import { SendMessageDto } from './dto';
 import { ChatsGateway } from './chats.gateway';
 import { ChatsService } from './chats.service';
+import { getUploadsDirectory } from '../storage/uploads-path';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('chats')
@@ -43,7 +44,11 @@ export class ChatsController {
   }
 
   @Post(':chatId/messages')
-  async sendMessage(@Req() req: any, @Param('chatId') chatId: string, @Body() dto: SendMessageDto) {
+  async sendMessage(
+    @Req() req: any,
+    @Param('chatId') chatId: string,
+    @Body() dto: SendMessageDto,
+  ) {
     const message = await this.chats.sendMessage(chatId, req.user.id, dto.text);
     this.gateway.server.to(`chat:${chatId}`).emit('message-created', {
       chatId,
@@ -58,7 +63,7 @@ export class ChatsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: 'apps/api/uploads/chat-media',
+        destination: getUploadsDirectory('chat-media'),
         filename: (_req, file, cb) => {
           const stamp = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
           cb(null, `${stamp}${extname(file.originalname || '')}`);
@@ -99,4 +104,3 @@ export class ChatsController {
     return message;
   }
 }
-

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserBehaviorEventType } from '@prisma/client';
 import { extractJwtFromRequest } from '../auth/extract-jwt-from-request';
+import { getJwtSecret } from '../config/security';
 import { PrismaService } from '../prisma/prisma.service';
 import { BehaviorEventTypeInput } from './dto/track-events.dto';
 
@@ -23,7 +24,7 @@ export class AnalyticsService {
     if (!raw) return null;
     try {
       const payload = this.jwt.verify<{ sub: string }>(raw, {
-        secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
+        secret: getJwtSecret(),
       });
       return typeof payload?.sub === 'string' ? payload.sub : null;
     } catch {
@@ -31,7 +32,10 @@ export class AnalyticsService {
     }
   }
 
-  private static readonly typeMap: Record<BehaviorEventTypeInput, UserBehaviorEventType> = {
+  private static readonly typeMap: Record<
+    BehaviorEventTypeInput,
+    UserBehaviorEventType
+  > = {
     [BehaviorEventTypeInput.view_item]: 'VIEW_ITEM',
     [BehaviorEventTypeInput.click_item]: 'CLICK_ITEM',
     [BehaviorEventTypeInput.add_to_favorites]: 'ADD_TO_FAVORITES',
@@ -50,7 +54,11 @@ export class AnalyticsService {
     body: {
       sessionId: string;
       anonymousId?: string;
-      events: Array<{ type: BehaviorEventTypeInput; listingId: string; occurredAt?: string }>;
+      events: Array<{
+        type: BehaviorEventTypeInput;
+        listingId: string;
+        occurredAt?: string;
+      }>;
     },
   ) {
     const userId = this.tryResolveUserId(req);
@@ -58,7 +66,8 @@ export class AnalyticsService {
     const anonymousId = body.anonymousId?.trim() || null;
 
     if (!sessionId) throw new BadRequestException('session_id_required');
-    if (!userId && !anonymousId) throw new BadRequestException('anonymous_id_or_auth_required');
+    if (!userId && !anonymousId)
+      throw new BadRequestException('anonymous_id_or_auth_required');
 
     return this.track({
       sessionId,
@@ -87,7 +96,8 @@ export class AnalyticsService {
     const anonymousId = params.anonymousId?.trim() || null;
     const userId = params.userId ?? null;
     if (!sessionId) return { ok: false as const, reason: 'no_session' };
-    if (!userId && !anonymousId) return { ok: false as const, reason: 'no_actor' };
+    if (!userId && !anonymousId)
+      return { ok: false as const, reason: 'no_actor' };
 
     return this.track({
       sessionId,
@@ -133,7 +143,11 @@ export class AnalyticsService {
 
     await this.prisma.userBehaviorEvent.createMany({ data: rows });
 
-    const clickIds = [...new Set(rows.filter((r) => r.type === 'CLICK_ITEM').map((r) => r.listingId))];
+    const clickIds = [
+      ...new Set(
+        rows.filter((r) => r.type === 'CLICK_ITEM').map((r) => r.listingId),
+      ),
+    ];
     for (const id of clickIds) {
       void this.prisma.listing
         .updateMany({
