@@ -29,6 +29,7 @@ import {
 } from './listing-ranking';
 import { listingBodySimilarity } from './listing-text-similarity';
 import { haversineDistanceKm } from './haversine';
+import { MediaStorageService } from '../storage/media-storage.service';
 
 type SortType = 'relevant' | 'new' | 'cheap' | 'expensive' | 'nearby';
 
@@ -70,6 +71,7 @@ export class ListingsService {
     private prisma: PrismaService,
     private readonly meili: MeilisearchService,
     private readonly analytics: AnalyticsService,
+    private readonly mediaStorage: MediaStorageService,
   ) {}
 
   private startOfUtcDay(d: Date): Date {
@@ -177,6 +179,10 @@ export class ListingsService {
     if (!listing) throw new NotFoundException('listing_not_found');
     if (listing.ownerId !== userId) throw new ForbiddenException('not_listing_owner');
     return listing;
+  }
+
+  async assertCanManage(userId: string, listingId: string) {
+    return this.assertOwner(userId, listingId);
   }
 
   private selectCard(now: Date) {
@@ -1330,11 +1336,23 @@ export class ListingsService {
 
   async remove(userId: string, listingId: string) {
     await this.assertOwner(userId, listingId);
-    const chats = await this.prisma.chat.findMany({
-      where: { listingId },
-      select: { id: true },
-    });
+    const [chats, listingImages] = await Promise.all([
+      this.prisma.chat.findMany({
+        where: { listingId },
+        select: { id: true },
+      }),
+      this.prisma.listingImage.findMany({
+        where: { listingId },
+        select: { url: true },
+      }),
+    ]);
     const chatIds = chats.map((x) => x.id);
+    const chatMedia = chatIds.length > 0
+      ? await this.prisma.message.findMany({
+          where: { chatId: { in: chatIds }, mediaUrl: { not: null } },
+          select: { mediaUrl: true },
+        })
+      : [];
 
     await this.prisma.favorite.deleteMany({ where: { listingId } });
     await this.prisma.listingPromotion.deleteMany({ where: { listingId } });
@@ -1347,6 +1365,10 @@ export class ListingsService {
     if (this.meili.isEnabled()) {
       void this.meili.deleteListing(listingId);
     }
+    await this.mediaStorage.deleteMany([
+      ...listingImages.map((image) => image.url),
+      ...chatMedia.map((message) => message.mediaUrl),
+    ]);
     return { ok: true };
   }
 
@@ -1459,9 +1481,14 @@ export class ListingsService {
 
   async deleteImage(userId: string, listingId: string, imageId: string) {
     await this.assertOwner(userId, listingId);
+    const image = await this.prisma.listingImage.findFirst({
+      where: { id: imageId, listingId },
+      select: { url: true },
+    });
     await this.prisma.listingImage.deleteMany({
       where: { id: imageId, listingId },
     });
+    await this.mediaStorage.deleteMany([image?.url]);
     return { ok: true };
   }
 

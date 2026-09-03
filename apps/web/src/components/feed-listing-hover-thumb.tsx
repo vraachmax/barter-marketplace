@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { resolveAssetUrl } from '@/lib/api';
 
 type Img = { url: string };
 
@@ -115,7 +116,7 @@ export default function FeedListingHoverThumb({
       onMouseLeave={onMouseLeave}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`${apiBase}${current.url}`} alt={title} className={imageClassName} style={imageStyle} loading="lazy" />
+      <img src={resolveAssetUrl(current.url, apiBase) ?? ''} alt={title} className={imageClassName} style={imageStyle} loading="lazy" />
       {badges}
       {n > 1 ? (
         <>

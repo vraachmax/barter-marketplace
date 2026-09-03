@@ -6,6 +6,9 @@ export function getUploadsRoot(): string {
   return uploadsRoot;
 }
 
-export function getUploadsDirectory(name: 'listings' | 'chat-media'): string {
-  return join(uploadsRoot, name);
+export function getUploadsDirectory(
+  name: 'listings' | 'chat-media',
+  ...segments: string[]
+): string {
+  return join(uploadsRoot, name, ...segments);
 }

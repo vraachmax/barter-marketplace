@@ -53,10 +53,10 @@ import {
 
 const s = 1.8;
 import {
-  API_URL,
   type AuthMe,
   apiFetchJson,
   apiGetJson,
+  resolveAssetUrl,
   type Category,
   type ChatSummary,
   type MyListing,
@@ -230,11 +230,7 @@ export function ProfileContent() {
   });
   const currentPathname = usePathname();
   const showListingsView = searchParams.get('tab') !== null || currentPathname === '/profile/listings';
-  const avatarUrl = me?.avatarUrl?.startsWith('http')
-    ? me.avatarUrl
-    : me?.avatarUrl
-      ? `${API_URL}${me.avatarUrl}`
-      : null;
+  const avatarUrl = resolveAssetUrl(me?.avatarUrl);
   const profileFields = [me?.name, me?.avatarUrl, me?.about, me?.companyName, me?.companyInfo, me?.email, me?.phone];
   const profileCompletion = Math.round(
     (profileFields.filter((x) => Boolean(String(x ?? '').trim())).length / profileFields.length) * 100,
@@ -391,9 +387,7 @@ export function ProfileContent() {
                     ) : (
                       visibleListings.map((x) => {
                         const thumbImg = x.images?.[0];
-                        const thumbUrl = thumbImg
-                          ? thumbImg.url.startsWith('http') ? thumbImg.url : `${API_URL}${thumbImg.url}`
-                          : null;
+                        const thumbUrl = resolveAssetUrl(thumbImg?.url);
                         return (
                           <div key={x.id} className="flex gap-3 border-b border-[#F0F0F0] px-4 py-3">
                             {/* Thumbnail */}
@@ -944,7 +938,7 @@ export function ProfileContent() {
                                     {x.images?.[0]?.url ? (
                                       // eslint-disable-next-line @next/next/no-img-element
                                       <img
-                                        src={`${API_URL}${x.images[0].url}`}
+                                        src={resolveAssetUrl(x.images[0].url) ?? ''}
                                         alt=""
                                         className="listing-thumb-img h-full w-full object-cover"
                                       />

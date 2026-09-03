@@ -23,6 +23,7 @@ import {
   API_URL,
   apiFetchJson,
   apiUploadFile,
+  resolveAssetUrl,
   type AdviseResponse,
   type ChatMessage,
   type ChatSummary,
@@ -30,12 +31,6 @@ import {
   SOCKET_URL,
 } from '@/lib/api';
 import { SupportSheet } from '@/components/support-sheet';
-
-function resolveAssetUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  return `${API_URL}${url}`;
-}
 
 function peerInitials(peer: ChatSummary['peer']): string {
   const raw = peer?.name?.trim() || peer?.email?.trim() || peer?.phone?.trim() || '';

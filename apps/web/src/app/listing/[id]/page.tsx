@@ -10,7 +10,7 @@ import {
   MapPin,
   Store,
 } from 'lucide-react';
-import { apiGetJson, type ListingCard, API_URL } from '@/lib/api';
+import { apiGetJson, type ListingCard, API_URL, resolveAssetUrl } from '@/lib/api';
 import FavoriteToggle from '@/components/favorite-toggle';
 import SellerReviewForm from '@/components/seller-review-form';
 import ListingBotAssistant from '@/components/listing-bot-assistant';
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const price = listing.priceRub != null ? `${listing.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена договорная';
     const title = `${listing.title} — ${price}`;
     const desc = `${listing.title} в ${listing.city}. ${price}. Купить на Бартер.`;
-    const img = listing.images?.[0]?.url ? `${API_URL}${listing.images[0].url}` : undefined;
+    const img = resolveAssetUrl(listing.images?.[0]?.url) ?? undefined;
     return {
       title,
       description: desc,

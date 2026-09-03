@@ -11,7 +11,7 @@ import {
   Store,
   UserCircle,
 } from 'lucide-react';
-import { API_URL, apiGetJson, type SellerProfileResponse } from '@/lib/api';
+import { apiGetJson, resolveAssetUrl, type SellerProfileResponse } from '@/lib/api';
 import ListingPlaceholder from '@/components/listing-placeholder';
 import { SellerPresenceBadge } from '@/components/seller-presence-badge';
 
@@ -43,9 +43,7 @@ function reviewsWord(n: number) {
 }
 
 function resolveAvatar(url: string | null): string | null {
-  if (!url) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  return `${API_URL}${url}`;
+  return resolveAssetUrl(url);
 }
 
 function StarRow({ value }: { value: number }) {
@@ -240,7 +238,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                 ) : (
                   <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {profile.activeListings.map((x) => {
-                      const img = x.images?.[0]?.url ? `${API_URL}${x.images[0].url}` : null;
+                      const img = resolveAssetUrl(x.images?.[0]?.url);
                       return (
                         <li key={x.id}>
                           <Link
