@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateSellerReviewDto } from './dto';
 import { ReviewsService } from './reviews.service';
@@ -19,11 +27,6 @@ export class ReviewsController {
     return this.reviews.eligibility(req.user.id, listingId);
   }
 
-  @Post('admin/boost-me')
-  boostMe(@Req() req: any) {
-    return this.reviews.boostMe(req.user.id);
-  }
-
   @Post('seller/:sellerId')
   create(
     @Req() req: any,
@@ -33,4 +36,3 @@ export class ReviewsController {
     return this.reviews.create(req.user.id, sellerId, dto);
   }
 }
-

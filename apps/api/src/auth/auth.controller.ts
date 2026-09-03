@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -8,7 +17,7 @@ function cookieOpts(req: Request) {
   const proto = req.headers['x-forwarded-proto'] ?? req.protocol;
   const isSecure = proto === 'https';
   return {
-    httpOnly: false,
+    httpOnly: true,
     sameSite: isSecure ? ('none' as const) : ('lax' as const),
     secure: isSecure,
     path: '/',
@@ -21,22 +30,31 @@ export class AuthController {
   constructor(private auth: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async register(
+    @Body() dto: RegisterDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const { token } = await this.auth.register(dto);
     res.cookie('token', token, cookieOpts(req));
     return { ok: true, token };
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const { token } = await this.auth.login(dto);
     res.cookie('token', token, cookieOpts(req));
     return { ok: true, token };
   }
 
   @Post('logout')
-  async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('token', { path: '/' });
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { maxAge: _maxAge, ...clearOptions } = cookieOpts(req);
+    res.clearCookie('token', clearOptions);
     return { ok: true };
   }
 
@@ -67,4 +85,3 @@ export class AuthController {
     return result;
   }
 }
-

@@ -1,19 +1,36 @@
 # Barter Clone — Handoff Context
 
-## Статус: ALPHA | Текущая фаза: Phase 3 ✅ · Hotfix #6–#19 ✅ · Mobile Redesign v1 ✅ · Mode-aware UI ✅ · Task #49 ✅ · Task #59 ✅ · Nav-clearance ✅ (2026-04-19)
+## Статус: ALPHA | Текущая фаза: Phase 0 — стабилизация production (2026-09-03)
+
+## 2026-09-03 — Production recovery и ревизия направления
+
+- Создана новая PostgreSQL 16 в Render, `DATABASE_URL` переключён, миграции применены.
+- API снова `live`, `/health` отвечает `200`, frontend использует актуальный Render API.
+- Продуктовая цель вынесена в `docs/PRODUCT_VISION.md`; barter core поднят сразу после стабильности.
+- Начат security sweep: production JWT без fallback-секрета, CORS allowlist,
+  httpOnly auth-cookie, отключение mock topup, удаление `reviews/admin/boost-me`.
+- Исправляются абсолютные upload paths для реального cwd Render и возвращается строгая
+  проверка TypeScript в Next build.
+
+**Следующая работа:** закончить Phase 0 (rate limiting, постоянное object storage,
+CI и интеграционные тесты), затем реализовать barter matching и предложения обмена.
+
+---
+
 ## Следующая задача (очередь):
+
 1. **Phase 4 (старт):** Умный поиск + персонализация — 6 подзадач: персонализация ленты, item-to-item, NLP-парсинг запроса, фасетные фильтры, fallback «нет результатов», блоки «Вы искали»/«Вы смотрели».
 2. **Nav-clearance polish (только что):** finalize bubble-clearance в трёх местах — composer `/messages`, sticky CTA `/listings`, bottom-sheet «Пополнить кошелёк». Магическая цифра — 108px от низа viewport'а (pill 76 + bubble 25 + 7 запас) с `env(safe-area)`. ✅
 3. **Task #59:** `/messages` mobile polish v2 — починили растянутые thumbs (140px-override от globals.css) и убрали 92px пустоты под composer'ом. ✅
 4. **Task #49:** `/messages` — pinned support-chat (Бартер · Ассистент, 24/7, AI через `/support/advise`) + полировка мобильного списка диалогов. ✅
-2. **Hotfix #19:** magic-nav v3.1 — починка прозрачности (shadcn-имена → наши токены), padding краёв, выравнивание иконка↔центр bubble'а, двуслойный pin-bubble (белое кольцо + accent core с тенью). ✅
-3. **Hotfix #18:** magic-nav v3 — bubble-эффект (без ушек). ✅
-4. **Hotfix #17:** magic-nav v2 — floating dark pill (deprecated). ✅
-5. **Hotfix #16:** bottom-nav в стиле «magic-navigation». ✅
-6. **Hotfix #15:** bottom-nav FAB → «Объявления» + скрытие navbar на `/new`. ✅
-7. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
-8. **Phase 1.x mobile sprint:** все 5 задач директивы Максима ✅✅✅✅✅.
-9. **Дальше в очереди:** **Phase 4** — поиск + персонализация. **Phase 13** — «Бартер» USP (обмен без денег).
+5. **Hotfix #19:** magic-nav v3.1 — починка прозрачности (shadcn-имена → наши токены), padding краёв, выравнивание иконка↔центр bubble'а, двуслойный pin-bubble (белое кольцо + accent core с тенью). ✅
+6. **Hotfix #18:** magic-nav v3 — bubble-эффект (без ушек). ✅
+7. **Hotfix #17:** magic-nav v2 — floating dark pill (deprecated). ✅
+8. **Hotfix #16:** bottom-nav в стиле «magic-navigation». ✅
+9. **Hotfix #15:** bottom-nav FAB → «Объявления» + скрытие navbar на `/new`. ✅
+10. **Hotfix #14:** `/search` → Avito-стиль мобильного поиска. ✅
+11. **Phase 1.x mobile sprint:** все 5 задач директивы Максима ✅✅✅✅✅.
+12. **Дальше в очереди:** **Phase 4** — поиск + персонализация. **Phase 13** — «Бартер» USP (обмен без денег).
 
 ## 2026-04-19 (18) — Mobile nav-bubble clearance (3 места)
 
@@ -28,6 +45,7 @@ pill'ом (до ~101px от низа viewport'а). Все «прилипшие»
 iOS-«ушей».
 
 **Коммиты итерации:**
+
 - `dd9907d` — messages pb 96→8 + thumbs оторваны от `.listing-thumb-wrap`
 - `f95c959` — messages pb 8→40 (после жалобы на перекрытие Send)
 - `c4513d7` — messages pb 40→20 + убран «фантомный» spacer 32px справа
@@ -44,6 +62,7 @@ iOS-«ушей».
      md-override бы не поборол)
 
 **Файлы:**
+
 - `apps/web/src/app/messages/page.tsx` (root pb + thread bg + peer bubble + own spacer)
 - `apps/web/src/app/listings/page.tsx` (sticky CTA bottom)
 - `apps/web/src/app/profile/profile-content.tsx` (topup modal pb)
@@ -62,12 +81,13 @@ iOS-«ушей».
 1. `body { padding-bottom: 72px !important; }` — глобальный зазор под
    плавающий bottom-nav (nav ~76px от низа: 12px offset + 64px высота).
 2. `.listing-thumb-wrap { height: 140px !important; min-height: 140px
-   !important; max-height: 140px !important; }` — принудительно
+!important; max-height: 140px !important; }` — принудительно
    растягивает ВСЕ `.listing-thumb-wrap` элементы до 140px на мобилке.
    Нужно для крупных карточек объявлений, но ломает квадратные 44×44
    thumbs в чат-листе → превращаются в вытянутые пилюли 44×140.
 
 **Что сделано в `apps/web/src/app/messages/page.tsx`:**
+
 - Root `pb-[calc(env(safe-area-inset-bottom,0px)+96px)]` →
   `pb-[calc(env(safe-area-inset-bottom,0px)+8px)]`. Раньше давал 96+72
   = 168px пустоты под composer'ом (nav только 76px → 92px воздуха).
@@ -75,7 +95,7 @@ iOS-«ушей».
   небольшим зазором.
 - Thumbs в списке чатов (строка 629): убрали класс `listing-thumb-wrap`
   и `listing-thumb-img`, оставили plain `h-11 w-11 overflow-hidden
-  rounded-lg border border-border bg-muted`.
+rounded-lg border border-border bg-muted`.
 - Thumbs в thread-header (строка 742): то же самое — убрали классы
   `listing-thumb-wrap` / `listing-thumb-img`, заменили на plain
   `h-9 w-9 shrink-0 ... md:h-11 md:w-11`.
@@ -84,6 +104,7 @@ iOS-«ушей».
 редактах никто не вернул глобальный класс обратно.
 
 **Файлы:**
+
 - `apps/web/src/app/messages/page.tsx` (3 блока изменений)
 
 **Верификация:** `tsc --noEmit` ✓ (EXIT=0).
@@ -93,6 +114,7 @@ iOS-«ушей».
 Максим после Hotfix'а #19: «да, все получилось, стартуем 49».
 
 **Что сделано:**
+
 - Новый компонент `apps/web/src/components/support-sheet.tsx` (~270 строк)
   — bottom-sheet на мобилке / dialog на десктопе. Внутри — чат-подобный
   UI с AI-ассистентом:
@@ -121,6 +143,7 @@ iOS-«ушей».
   не требовалась.
 
 **Файлы:**
+
 - `apps/web/src/components/support-sheet.tsx` (new, ~270 lines)
 - `apps/web/src/app/messages/page.tsx` (+~60 lines: import, state,
   pinned card, sheet mount, empty-state copy-edit)
@@ -130,6 +153,7 @@ iOS-«ушей».
 ## 2026-04-19 (15) — Hotfix #19: magic-nav v3.1 polish
 
 Фидбек Максима после v3 — четыре пункта:
+
 1. Крайние пункты (Главная, Профиль) слишком близко к краю бара.
 2. Бар прозрачный на главной — должен быть белым.
 3. Иконка активного должна быть ровно по центру bubble'а.
@@ -143,20 +167,21 @@ iOS-«ушей».
 строки 27–47. Поэтому `background` оставался пустым → бар прозрачный.
 
 **Фиксы:**
+
 - (1) `padding: 0 8px` на `.magic-nav` — крайние flex-слоты сжимаются
   на 16/5 ≈ 3.2px и иконки больше не давят в скруглённые углы.
 - (2) Реальные наши токены вместо shadcn-имён + `#fff/#e6e6e6/#757575`
   fallback'ы — бар никогда не будет прозрачным.
 - (3) Геометрия выравнивания центров:
-    bar h=64 → центр иконки flex-center y=32.
-    `translateY(-26)` → иконка y=6.
-    Bubble `top:-20, h:52` → center y = -20 + 26 = **6**.
-    Центры совпадают пиксель-в-пиксель.
+  bar h=64 → центр иконки flex-center y=32.
+  `translateY(-26)` → иконка y=6.
+  Bubble `top:-20, h:52` → center y = -20 + 26 = **6**.
+  Центры совпадают пиксель-в-пиксель.
 - (4) Bubble стал двуслойным «pin-button»:
-    - внешний div = белое кольцо 52×52 (`var(--bg-surface)`);
-    - `::before` inset:4px = цветной core на `var(--mode-accent)`;
-    - core имеет `box-shadow: 0 2px 6px rgba(0,0,0,0.22)` →
-      тень падает НА белую обводку, ощущение «утопленной кнопки».
+  - внешний div = белое кольцо 52×52 (`var(--bg-surface)`);
+  - `::before` inset:4px = цветной core на `var(--mode-accent)`;
+  - core имеет `box-shadow: 0 2px 6px rgba(0,0,0,0.22)` →
+    тень падает НА белую обводку, ощущение «утопленной кнопки».
 
 **Файл:** `apps/web/src/app/globals.css` — блок `.magic-nav`
 переписан (~150 строк, +30 / -25).
@@ -174,6 +199,7 @@ iOS-«ушей».
 а наоборот эффект бабл, что выбранный раздел выпирает».
 
 **Что поменялось (v2 → v3):**
+
 - **Убраны псевдо-элементы** ::before / ::after — никаких «ушек/выемок»
   по бокам индикатора. CSS стал на ~30 строк короче.
 - **Surface бара** теперь `var(--card)` — следует light/dark теме. Больше
@@ -189,12 +215,14 @@ iOS-«ушей».
 - **Z-индексы:** bar=0, bubble=1, item/иконки=2 — иконки всегда поверх.
 
 **Сохранено:**
+
 - Floating pill-форма (left/right: 12px, safe-area).
 - Mode-aware цвет: оранжевый в Бартере, голубой в Маркете.
 - `HIDE_ON_PATHS = ['/new']` — на wizard'е nav скрыт.
 - Контракт классов TSX → CSS не сломан.
 
 **Файлы:**
+
 - `apps/web/src/app/globals.css` — блок `.magic-nav` переписан
   (строки 668-820, без pseudo-элементов).
 - `apps/web/src/components/mobile-bottom-nav.tsx` — обновлён блок-
@@ -213,6 +241,7 @@ iOS-«ушей».
 должно быть как на референсе».
 
 **Диагноз — почему v1 не работала:**
+
 - В реф-файле body `#222327` (тёмный) ↔ bar `#fff` (белый).
   Псевдо-элементы `::before/::after` рисуют `box-shadow` цветом body,
   накладывая «впадины» по бокам dot'а сверху bar'а. Иллюзия выреза
@@ -224,8 +253,9 @@ iOS-«ушей».
   viewport и обрезались.
 
 **Решение — v2 floating pill:**
+
 - Bar теперь — плавающая «таблетка»: `left: 12px; right: 12px;
-  bottom: safe-area + 12px; border-radius: 30px`. По 12px свободного
+bottom: safe-area + 12px; border-radius: 30px`. По 12px свободного
   пространства по бокам — псевдо-элементы крайних пунктов больше
   не клипятся.
 - Surface bar'а — **тёмная** (`--nav-surface: #1b1e24`, в dark mode
@@ -243,6 +273,7 @@ iOS-«ушей».
   в Бартере, голубой в Маркете.
 
 **Файлы:**
+
 - `apps/web/src/app/globals.css` — блок `.magic-nav` полностью
   переписан (строки 668-839, +71 / -32). Добавлены CSS-переменные
   `--nav-surface`, `--nav-surface-2`, `--nav-inactive` + override
@@ -261,6 +292,7 @@ iOS-«ушей».
 с нашими цветами, шрифтами и названиями. Перерисовал компонент.
 
 **Эффекты (повторяют реф, адаптированы под наш UX):**
+
 - Активный пункт «выпрыгивает»: иконка `translateY(-34px)`, под ней
   появляется круглый индикатор Ø60 на `var(--mode-accent)`.
 - Индикатор плавно «скользит» к новому активному пункту через
@@ -274,6 +306,7 @@ iOS-«ушей».
   и бара (в точности как в реф-файле).
 
 **Адаптация под наш стек:**
+
 - **Цвета:** `var(--mode-accent)` и `var(--mode-accent-ring)` для
   индикатора, `var(--background)` для выреза, `var(--muted-foreground)`
   для неактивных иконок. Mode-aware: оранжевый в Бартере, голубой в
@@ -286,15 +319,17 @@ iOS-«ушей».
   пунктов `flex: 1 1 0`. Высота 68px + `safe-area-inset-bottom`.
 
 **Файлы:**
+
 - `apps/web/src/app/globals.css` — добавлен блок `.magic-nav { ... }`
   (~120 строк). Псевдо-элементы Tailwind не покрывает, поэтому plain CSS.
 - `apps/web/src/components/mobile-bottom-nav.tsx` — полный rewrite
   (78% изменено). Разметка: `<nav.magic-nav> → <ul> → <li.magic-nav__item>
-  → <a> → <span.magic-nav__icon> + <span.magic-nav__text>`, плюс
+→ <a> → <span.magic-nav__icon> + <span.magic-nav__text>`, плюс
   `<div.magic-nav__indicator>` — sibling всех li, inline-style
   `transform: translateX(${activeIndex * 100}%)`.
 
 **Сохранены контракты прошлых hotfix'ов:**
+
 - Hotfix #15: `HIDE_ON_PATHS = new Set(['/new'])` — на wizard'е nav
   скрыт (ранний return null).
 - Hotfix #15: центральный пункт ведёт на `/listings`, а не `/new`.
@@ -307,6 +342,7 @@ iOS-«ушей».
 ## 2026-04-19 (11) — Hotfix #15: bottom-nav FAB + /new action-bar z-fix
 
 Баг-репорт Максима:
+
 1. В mobile bottom-nav центральный FAB «+Добавить» сразу прыгает на wizard
    `/new` — это выбивает из привычного UX Авито, где сначала показывают личные
    объявления, а CTA публикации выделена цветом на том же экране.
@@ -319,6 +355,7 @@ iOS-«ушей».
 оказывается под нижней навигацией.
 
 **Фиксы в `apps/web/src/components/mobile-bottom-nav.tsx`:**
+
 - **FAB:** `Plus` → `ClipboardList` (lucide), label «Добавить» → «Объявления»,
   href `/new` → `/listings`.
 - **Match для «Поиск»:** убрано совпадение с `/listings` (иначе оба пункта —
@@ -329,14 +366,15 @@ iOS-«ушей».
 - JSDoc с описанием новой логики.
 
 **Фикс в `apps/web/src/app/new/page.tsx`:**
+
 - На bottom action-bar добавлен `paddingBottom: env(safe-area-inset-bottom)`
   для корректного отступа на iPhone X+ (home-indicator).
 - Комментарий к action-bar дополнен ссылкой на Hotfix #15 логику.
 
 **UX-flow теперь совпадает с Avito:**
-  bottom-nav (FAB «Объявления») → `/listings` (3 таба Активные / Требуют
-  действий / Завершённые + mode-CTA «Разместить объявление») → `/new`
-  (5-step wizard).
+bottom-nav (FAB «Объявления») → `/listings` (3 таба Активные / Требуют
+действий / Завершённые + mode-CTA «Разместить объявление») → `/new`
+(5-step wizard).
 
 **Верификация:** `tsc --noEmit` ✓ · `eslint` ✓ (0 errors, 0 warnings).
 
@@ -413,6 +451,7 @@ iOS-«ушей».
   useSearchParams без Suspense).
 
 **Верификация:**
+
 - `npx tsc --noEmit` → exit 0
 - `npx eslint src/app/search/page.tsx` → 0 errors, 0 warnings
   (после ESLint-disable для 2 legitimate setState-in-effect сайтов:
@@ -438,7 +477,7 @@ iOS-«ушей».
 - **5 шагов мастера** с прогресс-баром сверху и sticky bottom-bar:
   1. **«Что продаёте?»** — один большой Input + live-подсказки категорий.
      Алгоритм fuzzyMatchCategory(): score = 100 (title-substring) +
-     50 + 2*len(kw) на каждое keyword-совпадение, top-4 в подсказках.
+     50 + 2\*len(kw) на каждое keyword-совпадение, top-4 в подсказках.
      Fallback `<details>` «Выбрать вручную» с полным списком (раскрывается
      автоматически если текст ≥2 символа и подсказок нет).
   2. **«Категория и описание»** — breadcrumb выбранной категории
@@ -480,10 +519,9 @@ iOS-«ушей».
   (listing_daily_limit / listing_active_limit / listing_duplicate_similarity).
 
 **Верификация:** `npx tsc --noEmit` → exit 0. ESLint clean (после удаления
-unused `Camera` import). 
+unused `Camera` import).
 
 **Commit:** `236a3f0` (master, pushed → Vercel auto-deploy).
-
 
 ## 2026-04-19 (8) — Hotfix #12: /listings → Avito-стиль (3 таба + mode-cta CTA)
 
@@ -540,7 +578,6 @@ bg-secondary` → только JSDoc-комментарии в шапке фай
 
 **Commit:** `cdd5016` (master, pushed → Vercel auto-deploy).
 
-
 ## 2026-04-19 (7) — Hotfix #11: «вытянутые» иконки → shrink-0
 
 Максим: «иконки в /new, /messages, /избранное какие-то вытянутые». Корень: lucide
@@ -554,7 +591,7 @@ flex-child SVG/spinner, без других визуальных изменен�
 
 - **`apps/web/src/app/new/page.tsx`** — 10 иконок (ChevronLeft, CheckCircle×2,
   Circle×2, PlusCircle×2 + кнопка-чип, UserCircle, LayoutGrid, Wallet, MapPin)
-  + 2 спиннера (auth-loading 18px, publish-busy 22px).
+  - 2 спиннера (auth-loading 18px, publish-busy 22px).
 
 - **`apps/web/src/app/messages/page.tsx`** — 7 иконок (ChevronLeft, MessageCircle
   mobile-header, Link2 desktop-cta, Link2 mobile-cta, CheckCircle read-state×2,
@@ -569,14 +606,14 @@ SVG-reset (только `.want-line svg { color }`), значит фикс че�
 
 **Commit:** `83b8abc` (master, pushed).
 
-
 ## 2026-04-19 (6) — Hotfix #10: mobile /favorites + /profile palette & font audit
 
 Задачи #50 и #51 из очереди Hotfix #9. Максим: «лента избранного выглядит как-то странно»
-+ общий палитра-контракт (синий = Маркет, оранжевый = Бартер). Профиль был забит
-хардкод-хексами синего Avito на всех уровнях (хедер модалок, KPI-плитки, кошелёк,
-trust-бейджи, статус-чипы, фокус-кольца инпутов) — в режиме Бартер это давало синие
-заплатки поверх оранжевой темы.
+
+- общий палитра-контракт (синий = Маркет, оранжевый = Бартер). Профиль был забит
+  хардкод-хексами синего Avito на всех уровнях (хедер модалок, KPI-плитки, кошелёк,
+  trust-бейджи, статус-чипы, фокус-кольца инпутов) — в режиме Бартер это давало синие
+  заплатки поверх оранжевой темы.
 
 **Что сделано:**
 
@@ -605,7 +642,7 @@ trust-бейджи, статус-чипы, фокус-кольца инпуто�
   - Verified-badge (CheckCircle на аватаре) → `bg-success` вместо `bg-secondary/10`
     (неконсистентная прозрачность с белой иконкой поверх).
   - Focus-rings инпутов edit-формы и топ-ап-модалки → `focus:[border-color:
-    var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]`
+var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]`
     (раньше `focus:border-primary/30 focus:ring-primary/30`).
   - Star-rating `fill-accent text-accent` → inline `color: '#FFB800', fill: '#FFB800'`
     (нейтральный «рейтинговый» gold, как у Google/Yandex; не оранжевый Avito).
@@ -618,18 +655,19 @@ trust-бейджи, статус-чипы, фокус-кольца инпуто�
   body className. Fallback-chain: `Golos → system-ui → sans-serif`. ✅
 
 **Файлы тронутые в Hotfix #10:**
+
 ```
 apps/web/src/app/favorites/page.tsx                     (rewrite, ~175 строк)
 apps/web/src/app/profile/profile-content.tsx            (palette audit, +30 edits)
 ```
 
 **Верификация Hotfix #10:**
+
 - [x] `npx tsc --noEmit` в `apps/web` — exit 0, чистый
 - [ ] Визуальная сверка `/favorites` + `/profile` в обоих режимах: ни одного
       синего пиксела в Бартере, ни одного оранжевого в Маркете (кроме звёзд
       рейтинга — они нейтрально-золотые).
 - [ ] Регрессия: home / listing / messages должны выглядеть как были.
-
 
 ## 2026-04-19 (5) — Hotfix #9: listing-detail palette audit (orange-on-blue leak fix)
 
@@ -674,6 +712,7 @@ text-accent` (= оранжевый Avito #FF6D00), а вокруг — bridge-`p
   ссылки на похожие — всё на `--mode-accent*`. Раньше сплошной `bg-primary` (Avito-blue).
 
 **Файлы тронутые в Hotfix #9:**
+
 ```
 apps/web/src/app/listing/[id]/page.tsx
 apps/web/src/components/show-phone-button.tsx
@@ -685,6 +724,7 @@ apps/web/src/components/listing-bot-assistant.tsx
 ```
 
 **Что НЕ тронули и почему:**
+
 - `seller-presence-badge.tsx` — `text-secondary` для «В сети» зелёный — семантический
   online-indicator, общий для обоих режимов. Оставлено как было.
 - `ListingCard` промо-ring — уже было прокомментировано в Hotfix #8 (промо-бейджи скрыты
@@ -693,10 +733,10 @@ apps/web/src/components/listing-bot-assistant.tsx
   «Жалоба отправлена», `destructive` (красный) — для опасных действий. Оба семантические.
 
 **Верификация Hotfix #9:**
+
 - [x] `npx tsc --noEmit` в `apps/web` — exit 0, чистый
 - [ ] Визуальная сверка `/listing/[id]` в обоих режимах: orange-on-blue не должно быть нигде
 - [ ] Регрессия по другим страницам: home / favorites / messages / profile
-
 
 ## 2026-04-19 (4) — Hotfix #8: bottom-nav mode-color + header chip + gradient-categories + Market-cluster
 
@@ -749,6 +789,7 @@ apps/web/src/components/listing-bot-assistant.tsx
   задача #52 (orange-on-blue bug Максима).
 
 **Файлы тронутые в Hotfix #8:**
+
 ```
 apps/web/src/app/globals.css              → .cat-media gradient circle, .btn-show-phone
 apps/web/src/app/page.tsx                 → CATS expanded, MapPin chip, Bell removed, Market cluster
@@ -759,15 +800,16 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
 
 **Что НЕ сделано (остаётся в бэклоге):**
 
-| # | Задача | Task ID |
-|---|--------|---------|
-| 1 | `/search` мобильная страница — клон Авито 1:1 (широкий грид категорий + фильтры). Ссылки: есть git-репы Авито на GitHub, надо изучить. | #48 |
-| 2 | `/messages` mobile — pinned support-chat (SupportTemplate backend уже готов), автоответы, фикс масштабирования превью. | #49 |
-| 3 | `/favorites` mobile — фикс «вычурного» вида, стандартная 2-col grid геометрия как в ленте. | #50 |
-| 4 | `/profile` mobile — Avito-like аватар-header, stats, tabs; font-audit (Golos Text везде). | #51 |
-| 5 | Listing detail — palette-leak fix (оранжевый текст на синем фоне в Маркете). | #52 |
+| #   | Задача                                                                                                                                 | Task ID |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1   | `/search` мобильная страница — клон Авито 1:1 (широкий грид категорий + фильтры). Ссылки: есть git-репы Авито на GitHub, надо изучить. | #48     |
+| 2   | `/messages` mobile — pinned support-chat (SupportTemplate backend уже готов), автоответы, фикс масштабирования превью.                 | #49     |
+| 3   | `/favorites` mobile — фикс «вычурного» вида, стандартная 2-col grid геометрия как в ленте.                                             | #50     |
+| 4   | `/profile` mobile — Avito-like аватар-header, stats, tabs; font-audit (Golos Text везде).                                              | #51     |
+| 5   | Listing detail — palette-leak fix (оранжевый текст на синем фоне в Маркете).                                                           | #52     |
 
 **Верификация Hotfix #8:**
+
 - [ ] `npx tsc --noEmit` — чистый
 - [ ] Визуальная сверка на мобиле: bottom-nav красится при переключении режима
 - [ ] MapPin-чипс отображается на месте колокольчика, нет строки локации под поиском
@@ -787,10 +829,11 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
 поскольку мы уже реализовываем этот режим».
 
 **Что сделано (коммит `7304a32`, push to master):**
+
 - **Шапка БЕЛАЯ** (реф `.app-header`) — акцент только у индикаторов: точка-бейдж у колокольчика +
   счётчик «12» у сердца. Убран коллажный блюр-фон, `var(--mode-primary)` больше не красит шапку.
 - **Status-bar тоже белый** — `COLOR_BY_MODE` в `ModeThemeSync` теперь `{barter: '#FFFFFF',
-  market: '#FFFFFF'}` + pre-paint скрипт в `layout.tsx` прошит на `#FFFFFF`. Реф не использует
+market: '#FFFFFF'}` + pre-paint скрипт в `layout.tsx` прошит на `#FFFFFF`. Реф не использует
   цветной status-bar; оба режима = белый.
 - **Категории — `cats-avito` 2-рядный горизонтальный скролл** (реф `.cats-avito`: grid
   `grid-auto-flow: column; grid-template-rows: repeat(2, 72px); grid-auto-columns: 150px`).
@@ -818,6 +861,7 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
 только режим фильтра. Реализовано полностью mode-aware через CSS-переменные + `<html data-mode="...">`.
 
 **Чем управляется режим:**
+
 - `localStorage.getItem('barter_mode')` — `'barter' | 'market'`, дефолт = `barter`.
 - `MobileModeToggle` сохраняет режим и диспатчит `barter:mode-change` CustomEvent.
 - Инлайновый pre-paint скрипт в `<head>` ставит `<html data-mode="...">` и корректный
@@ -827,6 +871,7 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
   между вкладками.
 
 **Цветовые токены (`globals.css`):**
+
 - Default `:root` = Маркет (синий `#00AAFF` + салатовый CTA `#87D32C`, как Авито 2026).
 - `html[data-mode="barter"]` = оранжевый `#E85D26` / мягкий фон `#FFEFE6`.
 - `html[data-mode="market"]` = синий Avito 2026 + салатовый CTA.
@@ -834,12 +879,14 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
   `--mode-primary-ring`, `--mode-cta`, `--mode-cta-hover`, `--mode-msg-bubble`.
 
 **CSS-фильтры:**
+
 - `html[data-mode="barter"] [data-market-only="true"] { display: none !important; }` —
   скрывает в бартер-режиме категории «Недвижимость», «Работа», «Услуги», «Для бизнеса».
 - `html[data-mode="barter"] [data-promo-badge="true"] { display: none !important; }` —
   прячет TOP/XL/VIP бейджи (в бартере продвижения нет).
 
 **Точки применения:**
+
 - `apps/web/src/app/page.tsx` — мобильная sticky-шапка, категории и fade-градиент — теперь на
   `var(--mode-primary)` вместо хардкодного `#00AAFF`. Категории с `marketOnly: true` помечены
   `data-market-only="true"`. Добавлена «Для бизнеса» в CATS_TOP (только для маркета).
@@ -854,6 +901,7 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
   → `bg-success`.
 
 **Верификация:**
+
 - `npx tsc --noEmit` — clean (exit 0).
 - Визуальная сверка на мобиле — за пользователем после деплоя.
 
@@ -866,6 +914,7 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
 полупрозрачных стеклянных карточках пользователю нравится больше).
 
 **Что внедрено сейчас (mobile-only, `md:hidden`):**
+
 - Sticky-шапка: пилл-поиск с иконкой фильтра внутри, **колокольчик уведомлений** (с точкой-бейджем),
   **сердце избранного** → /favorites. Поиск переименован в «Что обмениваем?».
 - **Локация-чип** (MapPin + город + chevron) под поиском.
@@ -883,6 +932,7 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
   переехало в шапку.
 
 **Что НЕ трогали (по запросу пользователя):**
+
 - Логотип (текущий `/brand/logo_icon.svg`) — оставлен.
 - Сине-голубая категорийная секция с glass-карточками — оставлена как есть.
 - Десктопная версия — полностью нетронута.
@@ -904,6 +954,7 @@ apps/web/src/components/listing-card.tsx → promoRing comment clarifying no lea
 нужные куски в `docs/design-system/barter/` как read-only reference.
 
 **Верификация:**
+
 - `npx tsc --noEmit` — clean.
 - Визуальная сверка на мобиле — за пользователем после деплоя.
 
@@ -915,6 +966,7 @@ Phase 4 — поиск + персонализация (продолжение п
 После Phase 3-деплоя главная на Vercel падала в error boundary «Что-то пошло не так» (`digest: 1434632452`). Пять предыдущих хотфиксов (defensive data fetching, `Promise.allSettled`, `force-dynamic`, нуклеарная главная, etc.) не помогали — данные грузились корректно, падал сам рендер.
 
 **Путь диагностики:**
+
 - `/build-check` → деплой доходит до Vercel.
 - Nuclear `/` (полностью пустая главная) → рендерится чисто → layout/providers невиновны.
 - Бисекция v1 (data-only панель) → `mergedFeed: 20`, API отвечает 24 объявления → пайплайн данных работает.
@@ -925,6 +977,7 @@ Phase 4 — поиск + персонализация (продолжение п
 `apps/web/src/components/listing-card.tsx` был server component и передавал `badges={<>…<button onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} />…</>}` в client-компонент `FeedListingHoverThumb`. React 19 / Next 16 запрещают передавать функции через server→client границу — отсюда digest `1434632452`.
 
 **Три фикса:**
+
 1. `apps/web/src/components/listing-card.tsx` — добавлен `'use client';` в самый верх файла (commit `f07332d`).
 2. `apps/web/src/components/feed-load-more.tsx` — сломанный Tailwind класс `hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)](0,0,0,0.35)]` → `hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)]` (commit `7b4a569`).
 3. Вычищена вся диагностика из `apps/web/src/app/page.tsx` (нуклеарные ветки, `BUILD_TAG`, бисекционные панели v1/v2/v3) и из `apps/web/src/app/error.tsx` (детали, digest, showDetails стейт). Cleanup-коммит в этом патче.
@@ -933,6 +986,7 @@ Phase 4 — поиск + персонализация (продолжение п
 Любой компонент, который рендерит `onClick`/`onChange`/`onSubmit`/`onKeyDown`/любой event-handler inline, обязан быть `'use client'`. Server component не имеет права передавать JSX с функцией в пропсах — даже если handler «невидимый» (вложен в `badges={<></>}`). Тихие крэши SSR с digest без текста — красный флаг именно на это.
 
 **Верификация:**
+
 - `npx tsc --noEmit` — clean.
 - Пользователь подтвердил скриншотом `?full=1&with=all` — главная рендерится полностью.
 - Осталось подтвердить: `https://web-one-blond-66.vercel.app/` без query-параметров.
@@ -942,6 +996,7 @@ Phase 4 — поиск + персонализация (продолжение п
 Полностью закрыли Phase 3 (3.1 → 3.5). Поддержка на сайте, быстрые ответы в чате, AI-подсказки по роли (продавец/покупатель), авто-ответ продавца на первое сообщение — всё на своих endpoint'ах без внешних LLM (rule-based для alpha).
 
 **Сделано по задачам:**
+
 - **3.1 Prisma + API** — миграция `20260418210000_support_templates_tickets/migration.sql`: enums `SupportTemplateCategory` (QUICK_REPLY_BUYER/SELLER, FAQ, SUPPORT_REPLY, AUTO_REPLY_SELLER) и `SupportTicketStatus`, модели `SupportTemplate` и `SupportTicket`, поля `User.sellerAutoReplyEnabled`/`sellerAutoReplyText`. Модуль `apps/api/src/support/` (`support.service.ts` ~340 строк, `support.controller.ts`, `dto.ts`, `support.module.ts`, shim `prisma-support.d.ts`). Seed 22 шаблона (6 покупательских quick-reply, 6 продавцовых, 7 FAQ, 2 SUPPORT_REPLY, 1 AUTO_REPLY_SELLER default) — idempotent upsert по `code` в `OnModuleInit`. Эндпоинты: `GET /support/templates?category=`, `GET /support/faq`, `GET /support/templates/:code`, `POST /support/tickets` (можно гостем), `GET /support/tickets/mine`, `POST /support/advise`, `GET /support/seller/auto-reply`, `PUT /support/seller/auto-reply`.
 - **3.2 Web: quick-reply chips в чате** — в `apps/web/src/app/messages/page.tsx` добавлен горизонтальный ряд чипов над композером. Роль (buyer/seller) определяется через `ChatSummary.myRole` (добавлено в `chats.service.ts` по сравнению `listing.ownerId === userId`). Шаблоны грузятся один раз на монтирование. Клик — вставка текста в input + focus.
 - **3.3 AI-ассистент** — `POST /support/advise`: rule-based keyword matching (торг/доставка/фото/когда/актуал/whatsapp+telegram) + роль-специфичные советы. В `/messages` показывается подсказка (плашка с лампочкой и кнопками-саджестами) при смене чата, + кнопка «Ещё» и «×» (скрыть). Ассистент активен только в выбранном чате, `setAdvise(null)` при смене.
@@ -949,12 +1004,14 @@ Phase 4 — поиск + персонализация (продолжение п
 - **3.5 Автоответы продавца** — в `profile/settings/settings-content.tsx` внутри секции «Витрина продавца» новый блок: toggle «Включить автоответ» + textarea (до 1000 символов). GET/PUT `/support/seller/auto-reply`. Интеграция с чатом: `ChatsService.maybePostSellerAutoReply()` + `ChatsGateway.broadcastSellerAutoReply()` — срабатывает ровно один раз, когда buyer отправил 1-е сообщение, а seller ещё не отвечал. Сообщение помечается `isAutoReply: true` и рассылается в socket + REST.
 
 **Архитектурные решения:**
+
 - AI-ассистент — rule-based (KEYWORD_TO_CODES regex). Реальный LLM подключим в Phase 11 когда подключим биллинг/лимиты.
 - Tickets поддерживают гостей (`userId` nullable) — виджет работает даже без логина.
 - Seller auto-reply хранится в `User`, а не в отдельной таблице — чтобы проще отдавать через `/auth/me` в будущем.
 - Добавлен next.js rewrite `/support/:path*` → `${apiUrl}/support/:path*` (раньше только для основных модулей).
 
 **Верификация:**
+
 - `apps/web`: `npx tsc --noEmit` — clean (исключая предсуществующую `next.config.ts(11,3)` про `eslint`).
 - `apps/api`: `npx tsc --noEmit` — полностью clean.
 
@@ -966,6 +1023,7 @@ Phase 4 — attribute schemas для категорий (JSON-конфиг ат�
 Полностью закрыли Phase 2 (2.1 → 2.7). Рубль-копейка модель денег, кошелёк, 14 пакетов продвижения (PERSONAL+BUSINESS), 3 плана Barter Pro (Старт/Профи/Бизнес), мгновенное списание/начисление и страница `/pricing` с интерактивной активацией.
 
 **Сделано по задачам:**
+
 - **2.1 Prisma** — `Wallet`, `WalletTransaction`, `PromotionPackage`, `ProPlan`, `UserProSubscription`; enum `PromotionType` расширен на `COLOR`, `LIFT`; новые enum `PromotionAudience`, `WalletTransactionType`, `WalletTransactionStatus`, `ProSubscriptionStatus`. SQL-миграция `20260418170000_wallet_promotions_pro/migration.sql` (написана вручную — Prisma engine недоступен в sandbox, на проде сгенерируется).
 - **2.2 API wallet module** — `apps/api/src/wallet/` (`wallet.service.ts`, `wallet.controller.ts`, `dto.ts`, `wallet.module.ts`). Эндпоинты: `GET /wallet/balance`, `GET /wallet/transactions`, `POST /wallet/topup`, `POST /wallet/promote`, `POST /wallet/pro/subscribe`, `GET /wallet/pro/subscription`, `GET /wallet/packages?audience=`, `GET /wallet/pro-plans`. Все списания обёрнуты в `prisma.$transaction` для атомарности.
 - **2.3 Seed** — `WalletService.ensureSeed()` по `OnModuleInit` upsert-ит 14 пакетов (7 PERSONAL + 7 BUSINESS) и 3 плана. Цены — ровно ½ от Avito (как обещано в README).
@@ -975,6 +1033,7 @@ Phase 4 — attribute schemas для категорий (JSON-конфиг ат�
 - **2.7 Barter Pro лимиты** — `assertActiveListingsLimit(ownerId)` в `listings.service.ts`. Без подписки — 5 активных объявлений; на тарифе — `plan.listingsLimit` (или `null` = без лимита). Ошибка `listing_active_limit` маппится на UX-сообщение в `app/new/page.tsx` со ссылкой на `/pricing`.
 
 **Архитектурные решения:**
+
 - Деньги хранятся как `Int` копейки (`balanceKopecks`, `priceKopecks`, `amountKopecks`). RUB вычисляется = kopecks/100. Никаких float.
 - Транзакция = одна запись в `WalletTransaction` (даже PROMOTION), `balanceAfterKopecks` фиксирует состояние после операции — для корректной истории и аудита.
 - `topup()` сейчас mock-instant credit (для разработки). Реальная интеграция с YooKassa/Stripe — отдельная задача Phase 12.
@@ -982,6 +1041,7 @@ Phase 4 — attribute schemas для категорий (JSON-конфиг ат�
 - Shim-файл `apps/api/src/wallet/prisma-wallet.d.ts` дополняет `@prisma/client` новыми enum/делегатами для tsc — на проде после `prisma generate` он становится no-op merge.
 
 **Верификация:**
+
 - `apps/web`: `npx tsc --noEmit` — clean (только предсуществующая `next.config.ts(11,3)` про `eslint`).
 - `apps/api`: `npx tsc --noEmit` — полностью clean.
 
@@ -993,6 +1053,7 @@ Phase 3 — каталог категорий по образцу Авито (~3
 Полностью закрыли Phase 1 (1.1 → 1.6). Весь `apps/web/src/app/` и `apps/web/src/components/` переведены на семантические brand-токены CSS-переменных (из `@theme inline`). Legacy-палитра Tailwind (zinc/sky/cyan/slate/emerald/amber/violet/indigo/rose/teal/fuchsia/orange/red/pink) вычищена полностью вне базового `components/ui/`.
 
 **Сделано по задачам:**
+
 - **1.1 Шапка** — `site-header.tsx`, `mega-menu.tsx`, `site-footer.tsx`, `mobile-bottom-nav.tsx` на shadcn/ui примитивах, иконки lucide-react @strokeWidth 1.8, brand-токены.
 - **1.2 Карточки ленты** — новый `components/listing-card.tsx` (shadcn `Card` + `Badge` + `Skeleton`), `feed-listing-hover-thumb`, `feed-load-more`, `home-*` виджеты, `listings-map` — на токенах.
 - **1.3 Карточка объявления** — `app/listing/[id]/page.tsx`, `listing-gallery`, `listing-actions`, `listing-attributes-display`, `listing-bot-assistant`, `listing-mini-map`, `listing-placeholder`, `show-phone-button`, `seller-review-form`, `seller-presence-badge`, `listing/[id]/loading.tsx`.
@@ -1001,6 +1062,7 @@ Phase 3 — каталог категорий по образцу Авито (~3
 - **1.6 Чат/сообщения** — `app/messages/page.tsx` (772 строки), `messages/layout.tsx`, `home-chat-widget.tsx`.
 
 **Скрипт миграции:** `scripts/migrate_brand_tokens.py`
+
 - Убирает `dark:`-варианты из кастомного слоя (CSS-переменные уже переключают тему через `@theme inline`).
 - Сворачивает `bg-gradient-to-r from-sky-500 to-cyan-500` → `bg-primary`.
 - Мапит zinc/slate → muted/foreground/border, sky/cyan → primary, red → destructive, emerald → secondary, amber → accent, violet/indigo/fuchsia → accent.
@@ -1008,11 +1070,13 @@ Phase 3 — каталог категорий по образцу Авито (~3
 - Фикс регулярок: для `hover:from-/to-/via-` используется ограниченный класс символов `[A-Za-z0-9_:/\[\]\-.#]+` вместо `\S+` — иначе ест закрывающую кавычку `"` у JSX-атрибута.
 
 **Верификация:**
+
 - `npx tsc --noEmit` — clean (остаётся только предсуществующая ошибка `next.config.ts(11,3): TS2353` про `eslint` — не от правок).
 - Финальный аудит: `grep` не находит ни одного `zinc|sky|cyan|slate|emerald|amber|violet|indigo|rose|teal|fuchsia|orange|red|pink-[0-9]` в `apps/web/src/app/` и `apps/web/src/components/` (вне `components/ui/`).
 - Визуальная сверка в браузере — за юзером после деплоя на Vercel.
 
 **Что не трогал:**
+
 - `apps/web/src/components/ui/*` — shadcn-шаблоны, legacy `dark:`-варианты здесь ожидаемы и корректны (часть base-ui стиля).
 - API, Prisma, миграции — за пределами Phase 1.
 
@@ -1021,6 +1085,7 @@ Phase 3 — каталог категорий по образцу Авито (~3
 Применён Phase 0.5 — фундаментальный слой из Claude Design handoff bundle (`docs/design-system/`).
 
 **Сделано:**
+
 - `docs/design-system/` — весь handoff-бандл (README, чаты, preview HTML, UI kit, assets, fonts) как read-only референс для всех будущих фаз
 - `apps/web/src/fonts/golos/` — 6 TTF-файлов Golos Text (Regular 400 → Black 900) от Paratype
 - `apps/web/src/app/layout.tsx` — шрифт переключён с Inter (Google) на Golos Text через `next/font/local` (переменная `--font-sans`, `display: swap`, preload, latin+cyrillic встроены в TTF)
@@ -1036,20 +1101,21 @@ Phase 3 — каталог категорий по образцу Авито (~3
 - Проверка: `tsc --noEmit` проходит (единственная ошибка `next.config.ts` про `eslint` — предсуществующая, не от правок)
 
 **Что НЕ трогал** (отложено до задачи 1.1+ по бэклогу):
+
 - `site-header.tsx`, `mega-menu.tsx`, `site-footer.tsx`, `mobile-bottom-nav.tsx` — перекрасятся автоматически через CSS-переменные, пересборка раскладки — отдельные задачи
 - `ui/button.tsx`, `ui/input.tsx` и остальные shadcn — те же токены подхватятся через `--brand-*` и `--color-*`
 - Логотипы в `public/brand/` — содержимое handoff идентично (только self-closing whitespace diff), не перезаписывал
 
 **Где искать гайд** при работе над 1.1 и далее:
+
 - `docs/design-system/README.md` — Content & Visual Foundations, правила воркфлоу
 - `docs/design-system/project/README.md` — подробный brand brief
 - `docs/design-system/project/SKILL.md` — skills-совместимый entry point
 - `docs/design-system/project/ui_kits/web/` — React-референс (Header/ListingCard/Categories/Pages)
 - `docs/design-system/project/preview/*.html` — эталонные карточки компонентов
 
-
-
 ## Стек
+
 - **Web:** Next.js 16 + React 19 + Tailwind 4 + **shadcn/ui** (порт 3000)
 - **API:** NestJS 11 + Prisma 6 + PostgreSQL (порт 3001)
 - **Search:** Meilisearch v1.11 (fallback Prisma)
@@ -1059,6 +1125,7 @@ Phase 3 — каталог категорий по образцу Авито (~3
 - **Дизайн-система:** shadcn/ui (18 компонентов в `src/components/ui/`)
 
 ## Как запустить
+
 ```
 npm run dev          # web + api
 npm run dev:api      # API (3001)
@@ -1066,11 +1133,13 @@ npm run dev:web      # Web (3000)
 ```
 
 ## GitHub
+
 - **Репо:** `vraachmax/barter-marketplace`, ветка `master`
 - **Последний коммит:** `2b6be94` (force push 2026-04-12)
 - **Vercel:** `web-one-blond-66.vercel.app`
 
 ## Ключевые документы
+
 - `FULL_AVITO_SPEC.md` — ПОЛНАЯ спецификация всего функционала (тарифы, сервисы, каталоги, геймификация)
 - `PRODUCT_BACKLOG.md` — 12 фаз с задачами, строго по порядку
 - `.cursor/rules/pricing.mdc` — тарифы Barter (физлица / бизнес / Pro)
@@ -1081,6 +1150,7 @@ npm run dev:web      # Web (3000)
 ## Последний завершённый шаг (2026-04-12)
 
 ### Мобильный редизайн в стиле Avito
+
 Полный редизайн мобильной версии. **Только мобилка (`md:hidden`)**, десктоп не трогали.
 
 **Файлы — ЗАПУШЕНЫ на GitHub (коммит `2b6be94`):**
@@ -1109,23 +1179,28 @@ npm run dev:web      # Web (3000)
    - Модалка кошелька: `showTopUp`, `topUpAmount` state, пресеты `[100, 300, 500, 1000, 2000, 5000]`
 
 ### Git Push
+
 - GitHub токен (classic) создан с полным доступом
 - Пуш через терминал пользователя (sandbox не имеет сетевого доступа к GitHub)
+
 6. Закоммитить через UI автоматизацию
 
 ### Дизайн-токены (мобильная версия)
+
 - Иконки: `text-[#0088FF]`
 - Текст: `text-[#1a1a1a]`
 - Карточки: `rounded-2xl bg-white p-4`
 - Кнопки-градиент: `from-[#0088FF] to-[#0066DD]`
 
 ### Предыдущие сессии
+
 - Полный редизайн главной страницы (page.tsx) — Avito-style категории, карточки, VIP-лента
 - Фикс мобильных переполнений текста
 - Деплой на Vercel работает
 - Установлен awesome-design-md (54 файла дизайн-референсов)
 
 ## Что делать дальше
+
 1. **⚠️ ЗАПУШИТЬ 2 файла** — settings-content.tsx и profile-content.tsx (через Chrome MCP, метод выше)
 2. **Проверить Vercel билд** — после пуша убедиться что `web-one-blond-66.vercel.app` работает
 3. **Phase 1, задача 1.1** — Переделать шапку на shadcn/ui (DropdownMenu, Button, Command)
@@ -1134,6 +1209,7 @@ npm run dev:web      # Web (3000)
 6. Главная страница: `apps/web/src/app/page.tsx` (~673 строк)
 
 ## Важно
+
 - **Мобильная версия** — фокус на мобилке, десктоп пока не трогаем
 - **Git через sandbox** не работает (коррапт `.git/index`), пушить только из терминала юзера
 - **Force push** был необходим из-за рассинхрона коммитов (remote 68 vs local 10)

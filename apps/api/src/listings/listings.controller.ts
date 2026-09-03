@@ -27,6 +27,7 @@ import {
   UpdateListingStatusDto,
 } from './dto';
 import { ListingsService } from './listings.service';
+import { getUploadsDirectory } from '../storage/uploads-path';
 
 @Controller('listings')
 export class ListingsController {
@@ -43,10 +44,16 @@ export class ListingsController {
   ) {
     const limit = Math.min(500, Math.max(1, Number(limitRaw) || 200));
     const bounds = {
-      swLat: Number(swLat), swLon: Number(swLon),
-      neLat: Number(neLat), neLon: Number(neLon),
+      swLat: Number(swLat),
+      swLon: Number(swLon),
+      neLat: Number(neLat),
+      neLon: Number(neLon),
     };
-    if ([bounds.swLat, bounds.swLon, bounds.neLat, bounds.neLon].some((v) => !Number.isFinite(v))) {
+    if (
+      [bounds.swLat, bounds.swLon, bounds.neLat, bounds.neLon].some(
+        (v) => !Number.isFinite(v),
+      )
+    ) {
       return { pins: [] };
     }
     return this.listings.mapPins(bounds, categoryId, limit);
@@ -70,7 +77,8 @@ export class ListingsController {
     const max = priceMax ? Number(priceMax) : undefined;
     const latN = lat !== undefined && lat !== '' ? Number(lat) : undefined;
     const lonN = lon !== undefined && lon !== '' ? Number(lon) : undefined;
-    const radN = radiusKm !== undefined && radiusKm !== '' ? Number(radiusKm) : undefined;
+    const radN =
+      radiusKm !== undefined && radiusKm !== '' ? Number(radiusKm) : undefined;
     return this.listings.list({
       q,
       categoryId,
@@ -124,19 +132,31 @@ export class ListingsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/promote')
-  promote(@Param('id') id: string, @Body() dto: PromoteListingDto, @Req() req: any) {
+  promote(
+    @Param('id') id: string,
+    @Body() dto: PromoteListingDto,
+    @Req() req: any,
+  ) {
     return this.listings.promote(req.user.id, id, dto);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateListingDto, @Req() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateListingDto,
+    @Req() req: any,
+  ) {
     return this.listings.update(req.user.id, id, dto);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() dto: UpdateListingStatusDto, @Req() req: any) {
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateListingStatusDto,
+    @Req() req: any,
+  ) {
     return this.listings.updateStatus(req.user.id, id, dto);
   }
 
@@ -151,7 +171,7 @@ export class ListingsController {
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
-        destination: 'apps/api/uploads/listings',
+        destination: getUploadsDirectory('listings'),
         filename: (_req, file, cb) => {
           const stamp = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
           cb(null, `${stamp}${extname(file.originalname || '.jpg')}`);
@@ -181,20 +201,31 @@ export class ListingsController {
 
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id/images/:imageId')
-  removeImage(@Param('id') id: string, @Param('imageId') imageId: string, @Req() req: any) {
+  removeImage(
+    @Param('id') id: string,
+    @Param('imageId') imageId: string,
+    @Req() req: any,
+  ) {
     return this.listings.deleteImage(req.user.id, id, imageId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id/images/reorder')
-  reorderImages(@Param('id') id: string, @Body() dto: ReorderListingImagesDto, @Req() req: any) {
+  reorderImages(
+    @Param('id') id: string,
+    @Body() dto: ReorderListingImagesDto,
+    @Req() req: any,
+  ) {
     return this.listings.reorderImages(req.user.id, id, dto);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/report')
-  report(@Param('id') id: string, @Body() dto: ReportListingDto, @Req() req: any) {
+  report(
+    @Param('id') id: string,
+    @Body() dto: ReportListingDto,
+    @Req() req: any,
+  ) {
     return this.listings.reportListing(id, req.user.id, dto.reason);
   }
 }
-

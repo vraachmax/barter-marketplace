@@ -3,11 +3,9 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
-import {
-  ListingStatus,
-  Prisma,
-} from '@prisma/client';
+import { ListingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PromoteFromWalletDto, SubscribeProDto, TopupDto } from './dto';
 
@@ -130,6 +128,13 @@ export class WalletService {
 
   /// Mock-пополнение: моментально зачисляет на баланс. Для alpha без реальной платёжки.
   async topup(userId: string, dto: TopupDto) {
+    if (
+      process.env.NODE_ENV === 'production' &&
+      process.env.MOCK_PAYMENTS_ENABLED !== 'true'
+    ) {
+      throw new ServiceUnavailableException('payments_not_configured');
+    }
+
     const amountKopecks = dto.amountRub * KOPECKS_PER_RUB;
 
     return this.prisma.$transaction(async (tx) => {
@@ -154,7 +159,12 @@ export class WalletService {
           description: `Пополнение баланса на ${dto.amountRub.toLocaleString('ru-RU')} ₽`,
           externalId: dto.externalId ?? `mock_${Date.now()}`,
         },
-        select: { id: true, createdAt: true, amountKopecks: true, balanceAfterKopecks: true },
+        select: {
+          id: true,
+          createdAt: true,
+          amountKopecks: true,
+          balanceAfterKopecks: true,
+        },
       });
 
       return {
@@ -175,14 +185,16 @@ export class WalletService {
     const pkg = await this.prisma.promotionPackage.findUnique({
       where: { code: dto.packageCode },
     });
-    if (!pkg || !pkg.isActive) throw new NotFoundException('promotion_package_not_found');
+    if (!pkg || !pkg.isActive)
+      throw new NotFoundException('promotion_package_not_found');
 
     const listing = await this.prisma.listing.findUnique({
       where: { id: dto.listingId },
       select: { id: true, ownerId: true, status: true, title: true },
     });
     if (!listing) throw new NotFoundException('listing_not_found');
-    if (listing.ownerId !== userId) throw new ForbiddenException('not_listing_owner');
+    if (listing.ownerId !== userId)
+      throw new ForbiddenException('not_listing_owner');
     if (listing.status !== ListingStatus.ACTIVE) {
       throw new BadRequestException('listing_not_active_for_promotion');
     }
@@ -252,7 +264,8 @@ export class WalletService {
     const plan = await this.prisma.proPlan.findUnique({
       where: { code: dto.planCode },
     });
-    if (!plan || !plan.isActive) throw new NotFoundException('pro_plan_not_found');
+    if (!plan || !plan.isActive)
+      throw new NotFoundException('pro_plan_not_found');
 
     return this.prisma.$transaction(async (tx) => {
       const wallet = await tx.wallet.upsert({
@@ -274,8 +287,11 @@ export class WalletService {
       const monthSec = 30 * 24 * 60 * 60 * 1000;
 
       // Если уже есть активная подписка, продлеваем endsAt; иначе создаём от now
-      const existing = await tx.userProSubscription.findUnique({ where: { userId } });
-      const baseStart = existing && existing.endsAt > now ? existing.endsAt : now;
+      const existing = await tx.userProSubscription.findUnique({
+        where: { userId },
+      });
+      const baseStart =
+        existing && existing.endsAt > now ? existing.endsAt : now;
       const newEndsAt = new Date(baseStart.getTime() + monthSec);
 
       const subscription = existing
@@ -403,22 +419,164 @@ export class WalletService {
       sortOrder: number;
     }> = [
       // === Физлица ===
-      { code: 'personal_lift_x2', title: 'Поднятие x2', description: 'В 2 раза больше показов на 1 день', audience: 'PERSONAL', promotionType: PromotionType.LIFT, weightMultiplier: 2, durationSec: 86400, priceKopecks: 1900, sortOrder: 10 },
-      { code: 'personal_lift_x5', title: 'Поднятие x5', description: 'В 5 раз больше показов на 1 день', audience: 'PERSONAL', promotionType: PromotionType.LIFT, weightMultiplier: 5, durationSec: 86400, priceKopecks: 2900, sortOrder: 11 },
-      { code: 'personal_lift_x10', title: 'Поднятие x10', description: 'В 10 раз больше показов на 1 день', audience: 'PERSONAL', promotionType: PromotionType.LIFT, weightMultiplier: 10, durationSec: 86400, priceKopecks: 4900, sortOrder: 12 },
-      { code: 'personal_color', title: 'Выделение цветом', description: 'Объявление выделено цветом 7 дней', audience: 'PERSONAL', promotionType: PromotionType.COLOR, weightMultiplier: 1, durationSec: 7 * 86400, priceKopecks: 3000, sortOrder: 20 },
-      { code: 'personal_xl', title: 'XL-объявление', description: 'Большая карточка в ленте 7 дней', audience: 'PERSONAL', promotionType: PromotionType.XL, weightMultiplier: 1, durationSec: 7 * 86400, priceKopecks: 6000, sortOrder: 30 },
-      { code: 'personal_vip', title: 'VIP-размещение', description: 'VIP-блок наверху ленты 7 дней', audience: 'PERSONAL', promotionType: PromotionType.VIP, weightMultiplier: 1, durationSec: 7 * 86400, priceKopecks: 9900, sortOrder: 40 },
-      { code: 'personal_turbo', title: 'Турбо', description: 'Поднятие x10 + XL + VIP на 7 дней', audience: 'PERSONAL', promotionType: PromotionType.VIP, weightMultiplier: 10, durationSec: 7 * 86400, priceKopecks: 14900, isBundle: true, sortOrder: 50 },
+      {
+        code: 'personal_lift_x2',
+        title: 'Поднятие x2',
+        description: 'В 2 раза больше показов на 1 день',
+        audience: 'PERSONAL',
+        promotionType: PromotionType.LIFT,
+        weightMultiplier: 2,
+        durationSec: 86400,
+        priceKopecks: 1900,
+        sortOrder: 10,
+      },
+      {
+        code: 'personal_lift_x5',
+        title: 'Поднятие x5',
+        description: 'В 5 раз больше показов на 1 день',
+        audience: 'PERSONAL',
+        promotionType: PromotionType.LIFT,
+        weightMultiplier: 5,
+        durationSec: 86400,
+        priceKopecks: 2900,
+        sortOrder: 11,
+      },
+      {
+        code: 'personal_lift_x10',
+        title: 'Поднятие x10',
+        description: 'В 10 раз больше показов на 1 день',
+        audience: 'PERSONAL',
+        promotionType: PromotionType.LIFT,
+        weightMultiplier: 10,
+        durationSec: 86400,
+        priceKopecks: 4900,
+        sortOrder: 12,
+      },
+      {
+        code: 'personal_color',
+        title: 'Выделение цветом',
+        description: 'Объявление выделено цветом 7 дней',
+        audience: 'PERSONAL',
+        promotionType: PromotionType.COLOR,
+        weightMultiplier: 1,
+        durationSec: 7 * 86400,
+        priceKopecks: 3000,
+        sortOrder: 20,
+      },
+      {
+        code: 'personal_xl',
+        title: 'XL-объявление',
+        description: 'Большая карточка в ленте 7 дней',
+        audience: 'PERSONAL',
+        promotionType: PromotionType.XL,
+        weightMultiplier: 1,
+        durationSec: 7 * 86400,
+        priceKopecks: 6000,
+        sortOrder: 30,
+      },
+      {
+        code: 'personal_vip',
+        title: 'VIP-размещение',
+        description: 'VIP-блок наверху ленты 7 дней',
+        audience: 'PERSONAL',
+        promotionType: PromotionType.VIP,
+        weightMultiplier: 1,
+        durationSec: 7 * 86400,
+        priceKopecks: 9900,
+        sortOrder: 40,
+      },
+      {
+        code: 'personal_turbo',
+        title: 'Турбо',
+        description: 'Поднятие x10 + XL + VIP на 7 дней',
+        audience: 'PERSONAL',
+        promotionType: PromotionType.VIP,
+        weightMultiplier: 10,
+        durationSec: 7 * 86400,
+        priceKopecks: 14900,
+        isBundle: true,
+        sortOrder: 50,
+      },
 
       // === Бизнес ===
-      { code: 'business_lift_x2', title: 'Поднятие x2', description: 'В 2 раза больше показов на 1 день', audience: 'BUSINESS', promotionType: PromotionType.LIFT, weightMultiplier: 2, durationSec: 86400, priceKopecks: 2900, sortOrder: 10 },
-      { code: 'business_lift_x5', title: 'Поднятие x5', description: 'В 5 раз больше показов на 1 день', audience: 'BUSINESS', promotionType: PromotionType.LIFT, weightMultiplier: 5, durationSec: 86400, priceKopecks: 5900, sortOrder: 11 },
-      { code: 'business_lift_x10', title: 'Поднятие x10', description: 'В 10 раз больше показов на 1 день', audience: 'BUSINESS', promotionType: PromotionType.LIFT, weightMultiplier: 10, durationSec: 86400, priceKopecks: 9900, sortOrder: 12 },
-      { code: 'business_color', title: 'Выделение цветом', description: 'Объявление выделено цветом 7 дней', audience: 'BUSINESS', promotionType: PromotionType.COLOR, weightMultiplier: 1, durationSec: 7 * 86400, priceKopecks: 8500, sortOrder: 20 },
-      { code: 'business_xl', title: 'XL-объявление', description: 'Большая карточка в ленте 7 дней', audience: 'BUSINESS', promotionType: PromotionType.XL, weightMultiplier: 1, durationSec: 7 * 86400, priceKopecks: 8500, sortOrder: 30 },
-      { code: 'business_vip', title: 'VIP-размещение', description: 'VIP-блок наверху ленты 7 дней', audience: 'BUSINESS', promotionType: PromotionType.VIP, weightMultiplier: 1, durationSec: 7 * 86400, priceKopecks: 14900, sortOrder: 40 },
-      { code: 'business_turbo', title: 'Турбо', description: 'Поднятие x10 + XL + VIP на 7 дней', audience: 'BUSINESS', promotionType: PromotionType.VIP, weightMultiplier: 10, durationSec: 7 * 86400, priceKopecks: 24900, isBundle: true, sortOrder: 50 },
+      {
+        code: 'business_lift_x2',
+        title: 'Поднятие x2',
+        description: 'В 2 раза больше показов на 1 день',
+        audience: 'BUSINESS',
+        promotionType: PromotionType.LIFT,
+        weightMultiplier: 2,
+        durationSec: 86400,
+        priceKopecks: 2900,
+        sortOrder: 10,
+      },
+      {
+        code: 'business_lift_x5',
+        title: 'Поднятие x5',
+        description: 'В 5 раз больше показов на 1 день',
+        audience: 'BUSINESS',
+        promotionType: PromotionType.LIFT,
+        weightMultiplier: 5,
+        durationSec: 86400,
+        priceKopecks: 5900,
+        sortOrder: 11,
+      },
+      {
+        code: 'business_lift_x10',
+        title: 'Поднятие x10',
+        description: 'В 10 раз больше показов на 1 день',
+        audience: 'BUSINESS',
+        promotionType: PromotionType.LIFT,
+        weightMultiplier: 10,
+        durationSec: 86400,
+        priceKopecks: 9900,
+        sortOrder: 12,
+      },
+      {
+        code: 'business_color',
+        title: 'Выделение цветом',
+        description: 'Объявление выделено цветом 7 дней',
+        audience: 'BUSINESS',
+        promotionType: PromotionType.COLOR,
+        weightMultiplier: 1,
+        durationSec: 7 * 86400,
+        priceKopecks: 8500,
+        sortOrder: 20,
+      },
+      {
+        code: 'business_xl',
+        title: 'XL-объявление',
+        description: 'Большая карточка в ленте 7 дней',
+        audience: 'BUSINESS',
+        promotionType: PromotionType.XL,
+        weightMultiplier: 1,
+        durationSec: 7 * 86400,
+        priceKopecks: 8500,
+        sortOrder: 30,
+      },
+      {
+        code: 'business_vip',
+        title: 'VIP-размещение',
+        description: 'VIP-блок наверху ленты 7 дней',
+        audience: 'BUSINESS',
+        promotionType: PromotionType.VIP,
+        weightMultiplier: 1,
+        durationSec: 7 * 86400,
+        priceKopecks: 14900,
+        sortOrder: 40,
+      },
+      {
+        code: 'business_turbo',
+        title: 'Турбо',
+        description: 'Поднятие x10 + XL + VIP на 7 дней',
+        audience: 'BUSINESS',
+        promotionType: PromotionType.VIP,
+        weightMultiplier: 10,
+        durationSec: 7 * 86400,
+        priceKopecks: 24900,
+        isBundle: true,
+        sortOrder: 50,
+      },
     ];
 
     for (const p of packages) {
@@ -458,9 +616,27 @@ export class WalletService {
       priceKopecksPerMonth: number;
       sortOrder: number;
     }> = [
-      { code: 'start', title: 'Старт', listingsLimit: 25, priceKopecksPerMonth: 99000, sortOrder: 10 },
-      { code: 'pro', title: 'Профи', listingsLimit: 200, priceKopecksPerMonth: 299000, sortOrder: 20 },
-      { code: 'business', title: 'Бизнес', listingsLimit: null, priceKopecksPerMonth: 599000, sortOrder: 30 },
+      {
+        code: 'start',
+        title: 'Старт',
+        listingsLimit: 25,
+        priceKopecksPerMonth: 99000,
+        sortOrder: 10,
+      },
+      {
+        code: 'pro',
+        title: 'Профи',
+        listingsLimit: 200,
+        priceKopecksPerMonth: 299000,
+        sortOrder: 20,
+      },
+      {
+        code: 'business',
+        title: 'Бизнес',
+        listingsLimit: null,
+        priceKopecksPerMonth: 599000,
+        sortOrder: 30,
+      },
     ];
     for (const pl of plans) {
       await this.prisma.proPlan.upsert({

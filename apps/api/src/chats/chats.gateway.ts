@@ -10,13 +10,16 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { PresenceService } from '../presence/presence.service';
+import { getJwtSecret } from '../config/security';
+import { getAllowedCorsOrigins } from '../config/security';
 import { ChatsService } from './chats.service';
 
 function getCookieToken(cookieHeader: string | undefined): string | null {
   if (!cookieHeader) return null;
   const parts = cookieHeader.split(';').map((x) => x.trim());
   for (const p of parts) {
-    if (p.startsWith('token=')) return decodeURIComponent(p.slice('token='.length));
+    if (p.startsWith('token='))
+      return decodeURIComponent(p.slice('token='.length));
   }
   return null;
 }
@@ -25,7 +28,7 @@ type AuthedSocket = Socket & { data: { userId?: string } };
 
 @WebSocketGateway({
   cors: {
-    origin: true,
+    origin: [...getAllowedCorsOrigins()],
     credentials: true,
   },
 })
@@ -47,7 +50,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
       const payload = this.jwt.verify<{ sub: string }>(token, {
-        secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
+        secret: getJwtSecret(),
       });
       const userId = payload.sub;
       client.data.userId = userId;
@@ -78,7 +81,10 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /** Если у продавца включён автоответ — постит его на первое сообщение покупателя. */
   async broadcastSellerAutoReply(chatId: string, senderUserId: string) {
     try {
-      const msgs = await this.chats.maybePostSellerAutoReply(chatId, senderUserId);
+      const msgs = await this.chats.maybePostSellerAutoReply(
+        chatId,
+        senderUserId,
+      );
       for (const m of msgs) {
         this.server.to(`chat:${chatId}`).emit('message-created', {
           chatId,
@@ -93,17 +99,25 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(client: AuthedSocket) {
     const userId = client.data.userId;
     if (!userId) return;
-    const stillConnected = Array.from(this.server.sockets.sockets.values()).some(
-      (s) => (s as AuthedSocket).id !== client.id && (s as AuthedSocket).data.userId === userId,
+    const stillConnected = Array.from(
+      this.server.sockets.sockets.values(),
+    ).some(
+      (s) =>
+        (s as AuthedSocket).id !== client.id &&
+        (s as AuthedSocket).data.userId === userId,
     );
     if (stillConnected) return;
     this.presence.setOffline(userId);
-    const lastSeenAt = this.presence.getLastSeenAt(userId) ?? new Date().toISOString();
+    const lastSeenAt =
+      this.presence.getLastSeenAt(userId) ?? new Date().toISOString();
     this.server.emit('presence-changed', { userId, online: false, lastSeenAt });
   }
 
   @SubscribeMessage('join-chat')
-  async joinChat(@ConnectedSocket() client: AuthedSocket, @MessageBody() body: { chatId: string }) {
+  async joinChat(
+    @ConnectedSocket() client: AuthedSocket,
+    @MessageBody() body: { chatId: string },
+  ) {
     const userId = client.data.userId;
     if (!userId || !body?.chatId) return { ok: false };
     await this.chats.assertParticipant(body.chatId, userId);
@@ -118,7 +132,11 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const userId = client.data.userId;
     if (!userId || !body?.chatId || !body?.text?.trim()) return { ok: false };
-    const message = await this.chats.sendMessage(body.chatId, userId, body.text.trim());
+    const message = await this.chats.sendMessage(
+      body.chatId,
+      userId,
+      body.text.trim(),
+    );
     this.server.to(`chat:${body.chatId}`).emit('message-created', {
       chatId: body.chatId,
       ...message,
@@ -145,7 +163,10 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('read-chat')
-  async readChat(@ConnectedSocket() client: AuthedSocket, @MessageBody() body: { chatId: string }) {
+  async readChat(
+    @ConnectedSocket() client: AuthedSocket,
+    @MessageBody() body: { chatId: string },
+  ) {
     const userId = client.data.userId;
     if (!userId || !body?.chatId) return { ok: false };
     const { readAt } = await this.chats.markRead(body.chatId, userId);
@@ -157,4 +178,3 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { ok: true };
   }
 }
-

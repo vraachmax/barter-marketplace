@@ -6,6 +6,7 @@ import { SupportModule } from '../support/support.module';
 import { ChatsController } from './chats.controller';
 import { ChatsGateway } from './chats.gateway';
 import { ChatsService } from './chats.service';
+import { getJwtSecret } from '../config/security';
 
 @Module({
   imports: [
@@ -13,11 +14,10 @@ import { ChatsService } from './chats.service';
     PresenceModule,
     SupportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
+      secret: getJwtSecret(),
     }),
   ],
   controllers: [ChatsController],
   providers: [ChatsService, ChatsGateway],
 })
 export class ChatsModule {}
-
