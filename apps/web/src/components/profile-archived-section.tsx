@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Archive, Folder, Link2, Package, RefreshCw, Search, Trash2 } from 'lucide-react';
-import { API_URL, type MyListing } from '@/lib/api';
+import { resolveAssetUrl, type MyListing } from '@/lib/api';
 import ListingPlaceholder from '@/components/listing-placeholder';
 
 const s = 1.8;
@@ -113,7 +113,7 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
                   {x.images?.[0]?.url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={`${API_URL}${x.images[0].url}`}
+                      src={resolveAssetUrl(x.images[0].url) ?? ''}
                       alt=""
                       className="listing-thumb-img h-full w-full object-cover"
                     />

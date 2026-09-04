@@ -14,10 +14,6 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'node:path';
-import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import {
   CreateListingDto,
   PromoteListingDto,
@@ -27,11 +23,14 @@ import {
   UpdateListingStatusDto,
 } from './dto';
 import { ListingsService } from './listings.service';
-import { getUploadsDirectory } from '../storage/uploads-path';
+import { assertListingImage, MediaStorageService } from '../storage/media-storage.service';
 
 @Controller('listings')
 export class ListingsController {
-  constructor(private listings: ListingsService) {}
+  constructor(
+    private listings: ListingsService,
+    private mediaStorage: MediaStorageService,
+  ) {}
 
   @Get('map')
   async mapPins(
@@ -170,13 +169,6 @@ export class ListingsController {
   @Post(':id/images')
   @UseInterceptors(
     FileInterceptor('image', {
-      storage: diskStorage({
-        destination: getUploadsDirectory('listings'),
-        filename: (_req, file, cb) => {
-          const stamp = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-          cb(null, `${stamp}${extname(file.originalname || '.jpg')}`);
-        },
-      }),
       limits: { fileSize: 8 * 1024 * 1024 },
     }),
   )
@@ -186,17 +178,15 @@ export class ListingsController {
     @UploadedFile() file?: Express.Multer.File,
   ) {
     if (!file) return { ok: false, message: 'file_required' };
-    const url = `/uploads/listings/${file.filename}`;
-    let sha256: string | undefined;
+    assertListingImage(file);
+    await this.listings.assertCanManage(req.user.id, id);
+    const stored = await this.mediaStorage.upload('listings', id, file);
     try {
-      if (file.path) {
-        const buf = readFileSync(file.path);
-        sha256 = createHash('sha256').update(buf).digest('hex');
-      }
-    } catch {
-      // без хеша антиспам по фото не сработает для этого файла
+      return await this.listings.addImage(req.user.id, id, stored.url, stored.sha256);
+    } catch (error) {
+      await this.mediaStorage.delete(stored.url).catch(() => undefined);
+      throw error;
     }
-    return this.listings.addImage(req.user.id, id, url, sha256);
   }
 
   @UseGuards(AuthGuard('jwt'))

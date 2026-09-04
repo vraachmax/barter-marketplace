@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { API_URL } from '@/lib/api';
+import { resolveAssetUrl } from '@/lib/api';
 import {
   Archive,
   Bell,
@@ -44,8 +44,7 @@ export default function ProfileSidebar({
   sellerUserId,
   onLogout,
 }: Props) {
-  const resolvedAvatarUrl =
-    profileAvatarUrl && !profileAvatarUrl.startsWith('http') ? `${API_URL}${profileAvatarUrl}` : profileAvatarUrl;
+  const resolvedAvatarUrl = resolveAssetUrl(profileAvatarUrl);
 
   function NavItem({
     href,

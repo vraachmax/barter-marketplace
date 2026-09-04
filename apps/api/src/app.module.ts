@@ -13,10 +13,12 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { SupportModule } from './support/support.module';
 import { UsersModule } from './users/users.module';
 import { WalletModule } from './wallet/wallet.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
     PrismaModule,
+    StorageModule,
     AnalyticsModule,
     AuthModule,
     CategoriesModule,

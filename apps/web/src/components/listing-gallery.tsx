@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { resolveAssetUrl } from '@/lib/api';
 
 type Img = { id: string; url: string };
 
@@ -123,7 +124,7 @@ export default function ListingGallery({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`${apiBase}${main.url}`}
+            src={resolveAssetUrl(main.url, apiBase) ?? ''}
             alt={title}
             draggable={false}
             className="listing-thumb-img pointer-events-none h-full w-full object-cover"
@@ -200,7 +201,7 @@ export default function ListingGallery({
               }
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${apiBase}${im.url}`} alt="" className="h-16 w-16 object-cover sm:h-20 sm:w-20" loading="lazy" />
+              <img src={resolveAssetUrl(im.url, apiBase) ?? ''} alt="" className="h-16 w-16 object-cover sm:h-20 sm:w-20" loading="lazy" />
             </button>
           ))}
         </div>
@@ -292,7 +293,7 @@ function FullscreenGallery({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`${apiBase}${current.url}`}
+          src={resolveAssetUrl(current.url, apiBase) ?? ''}
           alt={title}
           className="max-h-full max-w-full rounded-lg object-contain"
           draggable={false}
@@ -330,7 +331,7 @@ function FullscreenGallery({
  }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${apiBase}${im.url}`} alt="" className="h-14 w-14 object-cover sm:h-16 sm:w-16" loading="lazy" />
+            <img src={resolveAssetUrl(im.url, apiBase) ?? ''} alt="" className="h-14 w-14 object-cover sm:h-16 sm:w-16" loading="lazy" />
           </button>
         ))}
       </div>

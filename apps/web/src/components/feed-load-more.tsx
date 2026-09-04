@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import type { ListingCard } from '@/lib/api';
+import { resolveAssetUrl, type ListingCard } from '@/lib/api';
 
 type Props = {
   initialPage: number;
@@ -39,11 +39,6 @@ function timeAgo(iso: string): string {
   if (days === 1) return 'вчера';
   if (days < 7) return `${days} дн. назад`;
   return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-}
-
-function resolveImg(url: string, apiBase: string) {
-  if (url.startsWith('http')) return url;
-  return `${apiBase}${url}`;
 }
 
 export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: Props) {
@@ -97,7 +92,7 @@ export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: P
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={resolveImg(x.images[0].url, apiBase)}
+                  src={resolveAssetUrl(x.images[0].url, apiBase) ?? ''}
                   alt={x.title}
                   className="listing-thumb-img h-full w-full object-cover"
                   loading="lazy"

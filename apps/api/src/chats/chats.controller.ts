@@ -13,12 +13,10 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'node:path';
 import { SendMessageDto } from './dto';
 import { ChatsGateway } from './chats.gateway';
 import { ChatsService } from './chats.service';
-import { getUploadsDirectory } from '../storage/uploads-path';
+import { getMediaType, MediaStorageService } from '../storage/media-storage.service';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('chats')
@@ -26,6 +24,7 @@ export class ChatsController {
   constructor(
     private chats: ChatsService,
     private gateway: ChatsGateway,
+    private mediaStorage: MediaStorageService,
   ) {}
 
   @Get()
@@ -62,13 +61,6 @@ export class ChatsController {
   @Post(':chatId/media')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: getUploadsDirectory('chat-media'),
-        filename: (_req, file, cb) => {
-          const stamp = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-          cb(null, `${stamp}${extname(file.originalname || '')}`);
-        },
-      }),
       limits: { fileSize: 40 * 1024 * 1024 },
     }),
   )
@@ -81,20 +73,23 @@ export class ChatsController {
     @Headers('x-anonymous-id') anonymousId?: string,
   ) {
     if (!file) throw new BadRequestException('file_required');
-    const mime = String(file.mimetype || '').toLowerCase();
-    let mediaType: 'IMAGE' | 'VIDEO';
-    if (mime.startsWith('image/')) mediaType = 'IMAGE';
-    else if (mime.startsWith('video/')) mediaType = 'VIDEO';
-    else throw new BadRequestException('unsupported_media_type');
-
-    const message = await this.chats.sendMediaMessage(
-      chatId,
-      req.user.id,
-      `/uploads/chat-media/${file.filename}`,
-      mediaType,
-      text,
-      { sessionId, anonymousId },
-    );
+    const mediaType = getMediaType(file);
+    await this.chats.assertParticipant(chatId, req.user.id);
+    const stored = await this.mediaStorage.upload('chat-media', chatId, file);
+    let message;
+    try {
+      message = await this.chats.sendMediaMessage(
+        chatId,
+        req.user.id,
+        stored.url,
+        mediaType,
+        text,
+        { sessionId, anonymousId },
+      );
+    } catch (error) {
+      await this.mediaStorage.delete(stored.url).catch(() => undefined);
+      throw error;
+    }
     this.gateway.server.to(`chat:${chatId}`).emit('message-created', {
       chatId,
       ...message,

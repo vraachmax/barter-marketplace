@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { API_URL } from '@/lib/api';
+import { resolveAssetUrl } from '@/lib/api';
 
 type Pin = {
   id: string;
@@ -151,7 +151,7 @@ export default function ListingsMap({ center = [55.7558, 37.6173], zoom = 11, ca
             {selected.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={`${API_URL}${selected.imageUrl}`}
+                src={resolveAssetUrl(selected.imageUrl) ?? ''}
                 alt={selected.title}
                 className="h-32 w-full object-cover"
               />

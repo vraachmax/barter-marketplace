@@ -21,6 +21,17 @@ const browserHost = typeof window !== 'undefined' ? window.location.hostname : '
 const localhostBrowser = browserHost === 'localhost' || browserHost === '127.0.0.1';
 export const SOCKET_URL = explicitApiUrl ?? (isServer || localhostBrowser ? LOCAL_API_ORIGIN : '');
 
+export function resolveAssetUrl(
+  url: string | null | undefined,
+  apiBase = API_URL,
+): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//i.test(url) || url.startsWith('blob:') || url.startsWith('data:')) return url;
+  const base = apiBase.replace(/\/$/, '');
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${base}${path}`;
+}
+
 export type Category = {
   id: string;
   slug: string;

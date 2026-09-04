@@ -42,10 +42,10 @@ import {
   X,
 } from 'lucide-react';
 import {
-  API_URL,
   apiFetchJson,
   apiGetJson,
   apiUploadImage,
+  resolveAssetUrl,
   type AuthMe,
   type Category,
 } from '@/lib/api';
@@ -1351,7 +1351,7 @@ function PostPublishScreen(props: {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`${API_URL}${img.url}`}
+                    src={resolveAssetUrl(img.url) ?? ''}
                     alt=""
                     className="listing-thumb-img h-full w-full object-cover"
                   />

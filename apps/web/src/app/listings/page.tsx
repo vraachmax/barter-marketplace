@@ -37,10 +37,10 @@ import {
 
 const s = 1.8;
 import {
-  API_URL,
   type AuthMe,
   apiFetchJson,
   apiGetJson,
+  resolveAssetUrl,
   type Category,
   type MyListing,
 } from '@/lib/api';
@@ -412,11 +412,7 @@ function ListingsContent() {
                 ) : (
                   visibleListings.map((x) => {
                     const thumbImg = x.images?.[0];
-                    const thumbUrl = thumbImg
-                      ? thumbImg.url.startsWith('http')
-                        ? thumbImg.url
-                        : `${API_URL}${thumbImg.url}`
-                      : null;
+                    const thumbUrl = resolveAssetUrl(thumbImg?.url);
                     const action = needsAction(x);
                     return (
                       <div key={x.id} className="flex gap-3 border-b border-border px-4 py-3">
@@ -609,7 +605,7 @@ function ListingsContent() {
                                 {x.images?.[0]?.url ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
-                                    src={`${API_URL}${x.images[0].url}`}
+                                    src={resolveAssetUrl(x.images[0].url) ?? ''}
                                     alt=""
                                     className="listing-thumb-img h-full w-full object-cover"
                                   />
