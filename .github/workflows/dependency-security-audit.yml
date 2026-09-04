@@ -1,0 +1,43 @@
+name: Dependency security audit
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit npm dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Produce audit reports
+        shell: bash
+        run: |
+          npm audit --omit=dev --json > audit-production.json || true
+          npm audit --json > audit-all.json || true
+          node -e 'for (const file of ["audit-production.json","audit-all.json"]) { const report=require("./"+file); console.log("\n### "+file); console.log(JSON.stringify(report.metadata?.vulnerabilities ?? {}, null, 2)); for (const [name, item] of Object.entries(report.vulnerabilities ?? {})) console.log(name+" | "+item.severity+" | direct="+item.isDirect+" | fix="+JSON.stringify(item.fixAvailable)); }'
+
+      - name: Enforce production high and critical threshold
+        run: npm audit --omit=dev --audit-level=high
