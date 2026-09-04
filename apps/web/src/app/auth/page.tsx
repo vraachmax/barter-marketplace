@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ function humanError(msg: string): string {
 }
 
 export default function AuthPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>('login');
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -30,10 +32,17 @@ export default function AuthPage() {
     { kind: 'idle' } | { kind: 'error'; msg: string } | { kind: 'ok' }
   >({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
+  const [yandexEnabled, setYandexEnabled] = useState(false);
 
   useEffect(() => {
     const modeParam = new URLSearchParams(window.location.search).get('mode');
-    if (modeParam === 'register' || modeParam === 'add-account') setMode('register');
+    if (modeParam === 'register' || modeParam === 'add-account') {
+      queueMicrotask(() => setMode('register'));
+    }
+    void fetch('/auth/providers')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setYandexEnabled(data?.yandex?.enabled === true))
+      .catch(() => setYandexEnabled(false));
   }, []);
 
   const payload = useMemo(() => {
@@ -64,7 +73,7 @@ export default function AuthPage() {
       await authLogin(data.token);
       setStatus({ kind: 'ok' });
       setTimeout(() => {
-        window.location.href = '/';
+        router.replace('/');
       }, 300);
     } catch (e: unknown) {
       setBusy(false);
@@ -100,6 +109,32 @@ export default function AuthPage() {
         </div>
 
         <div className="p-5 md:p-6">
+          <a
+            href={yandexEnabled ? '/auth/yandex' : undefined}
+            aria-disabled={!yandexEnabled}
+            className={`flex h-12 w-full items-center justify-center gap-3 rounded-xl border text-sm font-bold transition ${
+              yandexEnabled
+                ? 'border-border bg-background hover:bg-muted'
+                : 'cursor-not-allowed border-border/60 bg-muted text-muted-foreground'
+            }`}
+          >
+            <span className="grid size-7 place-items-center rounded-lg bg-[#fc3f1d] text-base font-black text-white">
+              Я
+            </span>
+            Продолжить с Яндекс ID
+          </a>
+          {!yandexEnabled ? (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Вход появится после добавления ключей Яндекс ID.
+            </p>
+          ) : null}
+
+          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            или
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
           {/* Mode tabs */}
           <div className="grid grid-cols-2 gap-1.5 rounded-2xl bg-muted p-1.5">
             <button

@@ -19,7 +19,7 @@ model User {
 
   email                String?  @unique
   phone                String?  @unique
-  passwordHash         String
+  passwordHash         String?
   name                 String?
   avatarUrl            String?
   about                String?
@@ -50,8 +50,26 @@ model User {
   walletTransactions WalletTransaction[]
   proSubscription UserProSubscription?
   supportTickets  SupportTicket[]
+  oauthAccounts      OAuthAccount[]
 
   @@index([createdAt])
+}
+
+
+/// Stable link between a Barter user and an external identity provider.
+/// Provider access tokens are intentionally not stored: login only needs the provider user id.
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  provider          String
+  providerAccountId String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Category {
