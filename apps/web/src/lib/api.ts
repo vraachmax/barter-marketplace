@@ -47,6 +47,7 @@ export type ListingCard = {
   priceType?: string | null;
   city: string;
   createdAt: string;
+  oauthAccounts?: Array<{ provider: string }>;
   category: { id: string; title: string };
   owner?: { id: string; name: string | null };
   images?: ListingImage[];

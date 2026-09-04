@@ -1,5 +1,21 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-04 — Яндекс ID: безопасный фундамент интеграции
+
+- Добавлен OAuth Authorization Code flow с `state` и PKCE (`S256`).
+- OAuth-only аккаунты поддерживаются без локального пароля; внешний аккаунт связан
+  через `OAuthAccount(provider, providerAccountId)`, токены Яндекса не сохраняются.
+- Добавлены callback-страница web, provider status и кнопка входа, которая остаётся
+  отключённой до настройки секретов.
+- Нужны Render env: `YANDEX_CLIENT_ID`, `YANDEX_CLIENT_SECRET`, `WEB_APP_URL`;
+  опционально `YANDEX_REDIRECT_URI`. Redirect URI по умолчанию:
+  `<WEB_APP_URL>/auth/yandex/callback-api`.
+- Проверено: Prisma validate/generate, API TypeScript, auth lint, 9 Jest tests,
+  web lint затронутых auth-файлов и Next production build.
+
+**Следом:** включить Яндекс ID тестовыми ключами, затем отдельными PR подключить
+реальный ключ Яндекс Карт и sandbox-магазин ЮKassa с идемпотентными платежами/webhooks.
+
 ## Статус: ALPHA | Текущая фаза: Phase 0 — стабилизация production (2026-09-03)
 
 ## 2026-09-03 — Production recovery и ревизия направления

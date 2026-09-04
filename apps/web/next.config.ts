@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
       { source: "/auth/login", destination: `${apiUrl}/auth/login` },
       { source: "/auth/logout", destination: `${apiUrl}/auth/logout` },
       { source: "/auth/me", destination: `${apiUrl}/auth/me` },
+      { source: "/auth/providers", destination: `${apiUrl}/auth/providers` },
+      { source: "/auth/yandex", destination: `${apiUrl}/auth/yandex` },
+      {
+        source: "/auth/yandex/callback-api",
+        destination: `${apiUrl}/auth/yandex/callback`,
+      },
       {
         source: "/auth/change-password",
         destination: `${apiUrl}/auth/change-password`,

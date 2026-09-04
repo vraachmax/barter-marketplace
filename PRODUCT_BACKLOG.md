@@ -12,6 +12,8 @@
 ### Инфраструктура
 - [x] Monorepo: NestJS 11 + Next.js 16 + Prisma 6 + PostgreSQL
 - [x] JWT auth (AuthProvider + localStorage + Bearer)
+- [x] Фундамент Яндекс ID OAuth (state + PKCE, OAuthAccount, callback UI)
+- [ ] Включить Яндекс ID production-ключами и пройти smoke-test
 - [x] SEO, 404, error boundary, loading skeletons, PWA manifest
 - [x] shadcn/ui: 18 компонентов установлены
 
@@ -23,8 +25,9 @@
 - [x] Показать телефон с маскировкой
 
 ### Карта
-- [x] Яндекс.Карты с маркерами цен + карточка при клике
-- [x] Мини-карта на объявлении
+- [ ] Яндекс.Карты с production API-ключом, ограниченным доменами
+- [x] UI карты с маркерами цен + карточка при клике
+- [x] Мини-карта на объявлении (нужен API-ключ для production)
 
 ### Чат
 - [x] Socket.IO realtime + медиа + typing + read receipts + presence
@@ -74,6 +77,8 @@
 | 2.5 | Web: кнопка "Продвинуть" в кабинете с выбором пакета (PromoteDialog) | ✅ |
 | 2.6 | Web: страница тарифов /pricing (визуальное сравнение + табы PERSONAL/BUSINESS) | ✅ |
 | 2.7 | Подписка Barter Pro (Старт/Профи/Бизнес) + assertActiveListingsLimit | ✅ |
+| 2.8 | ЮKassa sandbox: создание платежа, redirect, webhook, идемпотентное зачисление | 🔲 |
+| 2.9 | ЮKassa production: договор, чеки/54-ФЗ, возвраты и мониторинг | 🔲 |
 
 ## Phase 3: БОТ ПОДДЕРЖКИ + БЫСТРЫЕ ОТВЕТЫ -- ✅ ЗАВЕРШЕНО (2026-04-18)
 
