@@ -1,0 +1,4 @@
+[[IgnoredVulns]]
+id = "GHSA-38f7-945m-qr2g"
+ignoreUntil = 2027-03-01
+reason = "Prisma 6.19.2 uses effect only in its build-time config loader; the vulnerable concurrent RPC/AsyncLocalStorage path is not reachable in the application runtime. Remove this exception when upgrading Prisma."
