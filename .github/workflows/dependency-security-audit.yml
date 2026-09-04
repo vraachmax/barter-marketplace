@@ -11,33 +11,22 @@ on:
     - cron: "17 4 * * 1"
 
 permissions:
+  actions: read
   contents: read
+  security-events: write
 
 jobs:
-  audit:
-    name: Audit npm dependencies
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  full-scan:
+    name: Full OSV dependency scan
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.5.0
+    with:
+      scan-args: |-
+        --lockfile=./package-lock.json
+        --verbosity=info
+      fail-on-vuln: true
+      upload-sarif: true
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install locked dependencies
-        run: npm ci
-
-      - name: Produce audit reports
-        shell: bash
-        run: |
-          npm audit --omit=dev --json > audit-production.json || true
-          npm audit --json > audit-all.json || true
-          node -e 'for (const file of ["audit-production.json","audit-all.json"]) { const report=require("./"+file); console.log("\n### "+file); console.log(JSON.stringify(report.metadata?.vulnerabilities ?? {}, null, 2)); for (const [name, item] of Object.entries(report.vulnerabilities ?? {})) console.log(name+" | "+item.severity+" | direct="+item.isDirect+" | fix="+JSON.stringify(item.fixAvailable)); }'
-
-      - name: Enforce production high and critical threshold
-        run: npm audit --omit=dev --audit-level=high
+  changed-dependencies:
+    name: Block newly introduced vulnerabilities
+    if: github.event_name == 'pull_request'
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.5.0
