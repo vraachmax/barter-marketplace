@@ -21,6 +21,13 @@ access the existing checkout/runtime outside its root. No fallback browser or
 alternate browser control was used. Preview-only fixture server/adapter are
 outside the repo; no production data was modified.
 
+Follow-up, 2026-09-05: GitHub reports a successful Vercel deployment status for
+commit `0d0d5b2cfa738adb9fac7f0fef80221c43381b48`. The branch preview is
+[available here](https://web-git-feat-unified-design-search-plan-vraachmaxs-projects.vercel.app),
+but opening it redirects to Vercel login. The connected Vercel workspace lookup
+also returned 403. Deployment protection was not changed or bypassed. A successful
+deployment status is not a visual pass; implementation captures remain unavailable.
+
 ## Findings
 
 - [P1] Browser visual verification blocked. Need working preview of this branch;
