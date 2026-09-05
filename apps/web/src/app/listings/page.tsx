@@ -25,7 +25,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle,
-  ArrowLeft,
   Camera,
   FileText,
   PlusCircle,
@@ -288,15 +287,9 @@ function ListingsContent() {
   return (
     <div className="min-h-screen bg-muted text-foreground antialiased">
       {/* Mobile header — Avito-стиль: back / заголовок / поиск. */}
-      <header className="sticky top-0 z-20 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
+      <header className="glass-panel sticky top-0 z-20 md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-muted"
-            aria-label="Назад"
-          >
-            <ArrowLeft size={24} strokeWidth={s} className="shrink-0 text-foreground" aria-hidden />
-          </button>
+          <span className="size-11" aria-hidden />
           <h1 className="text-base font-bold text-foreground">Мои объявления</h1>
           <button
             type="button"

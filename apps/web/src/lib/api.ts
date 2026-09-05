@@ -16,7 +16,7 @@ const LOCAL_API_ORIGIN = 'http://127.0.0.1:3001';
 // For local/dev without explicit public API URL:
 // - server components call local API directly
 // - browser calls same-origin paths (works behind reverse proxy/tunnel)
-export const API_URL = explicitApiUrl ?? (isServer ? LOCAL_API_ORIGIN : '');
+export const API_URL = explicitApiUrl ?? (isServer ? LOCAL_API_ORIGIN : '/api/backend');
 const browserHost = typeof window !== 'undefined' ? window.location.hostname : '';
 const localhostBrowser = browserHost === 'localhost' || browserHost === '127.0.0.1';
 export const SOCKET_URL = explicitApiUrl ?? (isServer || localhostBrowser ? LOCAL_API_ORIGIN : '');

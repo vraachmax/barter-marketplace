@@ -1,6 +1,6 @@
 'use client';
 
-import { Camera } from 'lucide-react';
+import { Camera, MapPin } from 'lucide-react';
 import { TrackedListingLink } from '@/components/tracked-listing-link';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import { Badge } from '@/components/ui/badge';
@@ -40,7 +40,7 @@ function promoRing(promo: ListingCardData['promoType']): string {
     case 'XL':
       return 'ring-primary/40';
     default:
-      return 'ring-foreground/10';
+      return 'ring-0';
   }
 }
 
@@ -74,8 +74,8 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
   const useSquareThumb = thumbHeight === undefined;
   const thumbStyleProp = useSquareThumb ? undefined : { height: thumbHeight };
   const thumbClassName = useSquareThumb
-    ? 'relative w-full aspect-square overflow-hidden bg-muted'
-    : 'relative w-full overflow-hidden bg-muted';
+    ? 'relative w-full aspect-square overflow-hidden rounded-2xl bg-muted'
+    : 'relative w-full overflow-hidden rounded-2xl bg-muted';
 
   return (
     <TrackedListingLink
@@ -86,7 +86,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
       <Card
         size="sm"
         className={cn(
-          'group/card-listing gap-0 rounded-xl py-0 shadow-none transition-shadow hover:shadow-md',
+          'group/card-listing gap-0 rounded-2xl bg-transparent py-0 shadow-none data-[size=sm]:gap-0 data-[size=sm]:py-0',
           promoRingClass,
           className,
         )}
@@ -137,16 +137,16 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
             </>
           }
         />
-        <div className="flex flex-col gap-1 px-3 pb-3 pt-2.5">
-          <div className="text-[16px] leading-tight font-bold tracking-tight text-foreground">
+        <div className="flex flex-col gap-1 px-0.5 pb-1 pt-2.5">
+          <div className="text-[18px] leading-tight font-bold md:text-xl tracking-tight text-foreground">
             {formatRub(data.priceRub, data.priceType)}
           </div>
-          <div className="line-clamp-2 text-[13px] leading-snug text-foreground/85">
+          <div className="line-clamp-2 text-[14px] leading-snug text-foreground md:text-[15px]">
             {data.title}
           </div>
-          <div className="mt-1 truncate text-[12px] text-muted-foreground">
-            {data.city}
-            {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}
+          <div className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
+            <MapPin size={14} className="shrink-0" aria-hidden /><span className="truncate">{data.city}
+            {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}</span>
           </div>
         </div>
       </Card>

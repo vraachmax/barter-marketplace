@@ -22,7 +22,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  ArrowLeft,
   Clock,
   Filter,
   Search as SearchIcon,
@@ -245,16 +244,9 @@ function SearchContent() {
   return (
     <div className="min-h-screen bg-muted text-foreground antialiased">
       {/* ===== STICKY HEADER ===== */}
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
+      <header className="glass-panel sticky top-0 z-30 border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2.5">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl transition hover:bg-muted"
-            aria-label="Назад"
-          >
-            <ArrowLeft size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
-          </button>
+          <h1 className="sr-only">Поиск</h1>
           <form
             onSubmit={(e) => {
               e.preventDefault();

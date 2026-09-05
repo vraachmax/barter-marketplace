@@ -391,7 +391,7 @@ html[data-mode="barter"] .btn-show-phone:active { background: var(--mode-accent-
   --color-foreground: var(--foreground);
 
   /* Brand */
-  --color-primary:               var(--brand-primary);
+  --color-primary:               var(--mode-primary);
   --color-primary-foreground:    #ffffff;
   --color-secondary:             var(--brand-secondary);
   --color-secondary-foreground:  #ffffff;
@@ -409,7 +409,7 @@ html[data-mode="barter"] .btn-show-phone:active { background: var(--mode-accent-
   /* Borders / focus ring */
   --color-border:      var(--border-default);
   --color-input:       var(--border-input);
-  --color-ring:        var(--brand-primary);
+  --color-ring:        var(--mode-primary);
 
   /* Semantic */
   --color-destructive: var(--danger);
@@ -823,3 +823,74 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
     inset 0 1px 2px rgba(255, 255, 255, 0.20);
   transition: background 0.3s ease;
 }
+
+/* Crystal Catalog, selected by Maxim on 2026-09-05.
+   Shared material for both product palettes. Content stays on an opaque canvas. */
+:root {
+  --fg-default: #151b2b;
+  --fg-muted: #636d80;
+  --bg-muted: #f3f5f8;
+  --border-default: #dfe4ec;
+  --glass-surface: rgba(255, 255, 255, 0.86);
+  --glass-edge: rgba(214, 223, 234, 0.85);
+  --glass-highlight: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 8px 28px rgba(37, 59, 93, 0.08);
+}
+html[data-theme='dark'] {
+  --fg-default: #edf0f7;
+  --fg-muted: #a6b0c2;
+  --bg-page: #10131b;
+  --bg-surface: #191e29;
+  --bg-muted: #232b39;
+  --border-default: #354052;
+  --glass-surface: rgba(25, 30, 41, 0.90);
+  --glass-edge: rgba(145, 163, 191, 0.28);
+  --glass-highlight: rgba(220, 232, 255, 0.12);
+  --glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
+  --mode-header-bg: var(--bg-page);
+}
+.glass-panel,
+.magic-nav {
+  background: var(--bg-surface);
+  border-color: var(--glass-edge);
+  box-shadow: inset 0 1px 1px var(--glass-highlight), var(--glass-shadow);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-panel,
+  .magic-nav {
+    background: var(--glass-surface);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    backdrop-filter: blur(18px) saturate(125%);
+  }
+}
+/* Keep the hub's existing five slots, ring, dimensions and active-item motion. */
+.magic-nav__indicator-dot {
+  background: var(--glass-surface);
+  box-shadow: inset 0 1px 1px var(--glass-highlight), 0 5px 18px var(--mode-accent-ring);
+}
+.magic-nav__item a:focus-visible {
+  outline: 2px solid var(--mode-accent);
+  outline-offset: 3px;
+  border-radius: 20px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel, .magic-nav, .magic-nav__indicator-dot {
+    background: var(--bg-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .magic-nav__icon, .magic-nav__text, .magic-nav__indicator,
+  .magic-nav__indicator-dot, .magic-nav__indicator-dot::before {
+    transition: none;
+  }
+}
+
+/* Keep white action labels readable; decorative hub cores retain brighter accents. */
+:root, html[data-mode="market"] { --mode-primary: #006bd6; --mode-primary-hover: #0058b0; }
+html[data-mode="barter"] { --mode-primary: #b84617; --mode-primary-hover: #9d3b12; }
+html[data-theme="dark"] { --mode-primary: #176cd1; }
+html[data-theme="dark"][data-mode="barter"] { --mode-primary: #b84617; }
+
+.magic-nav__text { color: var(--mode-primary); }
