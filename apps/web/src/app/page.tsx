@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { API_URL, apiGetJson, type Category, type ListingCard } from '@/lib/api';
+import { getAvailableCatalogCategories } from '@/lib/catalog-categories';
 import { HomePreferenceCookieSync } from '@/components/home-preference-cookie-sync';
 import { ListingCardComponent } from '@/components/listing-card';
 import { SiteHeader } from '@/components/site-header';
@@ -9,10 +10,7 @@ import { SearchInputWithSuggestions } from '@/components/search-input-with-sugge
 import { FeedLoadMore } from '@/components/feed-load-more';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
-import { MobileModeToggle } from '@/components/mobile-mode-toggle';
 import { MobileSearchInput } from '@/components/mobile-search-input';
-import { BarterExampleCluster } from '@/components/barter-example-cluster';
-import { MarketExampleCluster } from '@/components/market-example-cluster';
 import { ChevronDown, Heart, MapPin, Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
@@ -337,12 +335,9 @@ async function renderHome(sp: HomeSearchParams) {
     ...(geoOk ? { lat: String(latN), lon: String(lonN), radiusKm: currentRadiusKm } : {}),
   };
 
-  // marketOnly=true: категории, которых НЕ должно быть в режиме Бартер
-  // (услуги / работа / недвижимость — это не товары-для-обмена).
-  // Фильтрация визуальная: CSS-правило `html[data-mode="barter"] [data-market-only="true"] { display:none }`.
-  //
-  // desktopMarketOnly=true: плитка «Все» рендерится только на десктопе
-  // в режиме Маркет. Мобильный DOM её НЕ содержит (фильтр в JSX ниже).
+  // The catalog shows real API categories in either cosmetic theme.
+  // Do not present a barter filter until listings support exchange intent.
+  // desktopMarketOnly=true retains the compact mobile category layout.
   //
   // Все плитки стилизуются как Avito: слева текст, справа эмодзи в
   // градиентном круге. Сетка `cats-avito` (2 × горизонтальный скролл, 150×72).
@@ -355,7 +350,6 @@ async function renderHome(sp: HomeSearchParams) {
     gradient: string;
     /** Десктоп-акцент (используется в activeTab подсветке). */
     accent: string;
-    marketOnly?: boolean;
     desktopMarketOnly?: boolean;
     /** Для плитки «Все» — рендерим не эмодзи, а 4 цветные бабблы. */
     allBubbles?: boolean;
@@ -363,8 +357,8 @@ async function renderHome(sp: HomeSearchParams) {
 
   const CATS: Cat[] = [
     { name: 'Все', slug: 'all', emoji: '', gradient: 'linear-gradient(135deg, #667eea, #764ba2)', accent: '#667eea', allBubbles: true, desktopMarketOnly: true },
-    { name: 'Недвижимость', slug: 'realty', emoji: '🏠', gradient: 'var(--cat-realty)', accent: '#fa709a', marketOnly: true },
-    { name: 'Работа\u00a0и подработка', slug: 'job', emoji: '🎒', gradient: 'var(--cat-work)', accent: '#f59e0b', marketOnly: true },
+    { name: 'Недвижимость', slug: 'realty', emoji: '🏠', gradient: 'var(--cat-realty)', accent: '#fa709a' },
+    { name: 'Работа\u00a0и подработка', slug: 'job', emoji: '🎒', gradient: 'var(--cat-work)', accent: '#f59e0b' },
     { name: 'Авто', slug: 'auto', emoji: '🚗', gradient: 'var(--cat-auto)', accent: '#f5576c' },
     { name: 'Электроника', slug: 'electronics', emoji: '📱', gradient: 'var(--cat-electronics)', accent: '#667eea' },
     { name: 'Для\u00a0дома и дачи', slug: 'home', emoji: '🛋️', gradient: 'var(--cat-home)', accent: '#43e97b' },
@@ -372,21 +366,10 @@ async function renderHome(sp: HomeSearchParams) {
     { name: 'Одежда\u00a0и обувь', slug: 'clothes', emoji: '👕', gradient: 'var(--cat-clothes)', accent: '#a18cd1' },
     { name: 'Хобби\u00a0и отдых', slug: 'hobby', emoji: '🎸', gradient: 'var(--cat-hobby)', accent: '#f6d365' },
     { name: 'Спорт\u00a0и туризм', slug: 'sport', emoji: '⚽️', gradient: 'linear-gradient(135deg, #f093fb, #f5576c)', accent: '#f5576c' },
-    { name: 'Услуги', slug: 'services', emoji: '🧰', gradient: 'var(--cat-services)', accent: '#e11d48', marketOnly: true },
+    { name: 'Услуги', slug: 'services', emoji: '🧰', gradient: 'var(--cat-services)', accent: '#e11d48' },
     { name: 'Жильё\u00a0для путешествий', slug: 'travel', emoji: '🧳', gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)', accent: '#4facfe' },
   ];
-  const ALL_CATS = CATS;
-
-  const catIdMap: Record<string, string> = {};
-  for (const c of categories) {
-    const cTitle = typeof c?.title === 'string' ? c.title : '';
-    const cId = typeof c?.id === 'string' ? c.id : '';
-    if (!cTitle || !cId) continue;
-    for (const cat of ALL_CATS) {
-      const cleanName = cat.name.replace(/[\n-]/g, '');
-      if (cTitle.includes(cleanName) || cleanName.includes(cTitle.split(' ')[0])) catIdMap[cat.slug] = cId;
-    }
-  }
+  const availableCategories = getAvailableCatalogCategories(CATS, categories);
 
   /* Merge VIP + recommended + regular into one unified feed */
   const vipItems = Array.isArray(listings.vipStrip) ? listings.vipStrip : [];
@@ -437,22 +420,17 @@ async function renderHome(sp: HomeSearchParams) {
         </SiteHeader>
       </div>
 
-      {/* ===== DESKTOP CATEGORIES BAR — Avito-style horizontal icons =====
-          На десктопе плитка «Все» показывается ТОЛЬКО в режиме Маркет
-          (через data-market-only-strict, CSS-фильтр в globals.css).
-          В Бартере «Все» не имеет смысла — там режим сам по себе фильтр. */}
+      {/* ===== DESKTOP CATEGORIES BAR — real, slug-matched categories ===== */}
       <div className="hidden border-b border-border bg-background md:block">
         <div className="mx-auto flex max-w-7xl items-stretch gap-0 overflow-x-auto px-6">
-          {ALL_CATS.map((cat) => {
-            const catId = catIdMap[cat.slug] || '';
+          {availableCategories.map((cat) => {
+            const catId = cat.categoryId;
             const isActive = urlCategoryId === catId && catId !== '';
             const desktopAllTile = cat.slug === 'all';
             return (
               <Link
                 key={cat.slug + cat.name}
                 href={{ pathname: '/', query: { ...preservedListQuery, ...(desktopAllTile ? {} : { categoryId: catId }) } }}
-                data-market-only-strict={desktopAllTile ? 'true' : undefined}
-                data-market-only={cat.marketOnly ? 'true' : undefined}
                 className={`relative flex shrink-0 flex-col items-center justify-center gap-1 px-4 pt-3.5 pb-3 transition-colors ${
  isActive || (desktopAllTile && !urlCategoryId)
  ? 'border-b-2 border-primary text-primary'
@@ -635,18 +613,16 @@ async function renderHome(sp: HomeSearchParams) {
           Реф (handoff-bundle/home.html): белые плитки 150×72, слева текст,
           справа эмодзи в цветном градиентном круге (Avito 2026 visual).
           На мобиле плитка «Все» НЕ рендерится (см. desktopMarketOnly).
-          Категории `marketOnly` скрываются в режиме Бартер через CSS-фильтр
-          `html[data-mode="barter"] [data-market-only]`. */}
+          Категории доступны независимо от сохранённой цветовой темы. */}
       <div className="md:hidden" style={{ background: 'var(--bg-page)' }}>
         <div className="cats cats-avito">
-          {CATS.filter((cat) => !cat.desktopMarketOnly).map((cat) => {
-            const catId = catIdMap[cat.slug] || '';
+          {availableCategories.filter((cat) => !cat.desktopMarketOnly).map((cat) => {
+            const catId = cat.categoryId;
             const href = { pathname: '/', query: { ...preservedListQuery, categoryId: catId } };
             return (
               <Link
                 key={cat.slug}
                 href={href}
-                data-market-only={cat.marketOnly ? 'true' : undefined}
                 className="cat"
               >
                 <div className="cat-text">{cat.name}</div>
@@ -666,21 +642,8 @@ async function renderHome(sp: HomeSearchParams) {
         <div className="mx-auto max-w-7xl px-2 pt-2 pb-24 md:px-6 md:py-8">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
-          {/* ===== MOBILE: режим Бартер/Маркет (UI-стаб до Phase 13) =====
-              Баннер «Обмен без денег» убран — режим уже реализован через
-              MobileModeToggle и сквозную CSS-палитру. */}
-          <div className="mb-3 flex justify-center md:hidden">
-            <MobileModeToggle />
-          </div>
-
-          {/* ===== MOBILE: пример-кластер по режиму =====
-              BarterExampleCluster — показывается только при data-mode="barter"
-              (CSS), CTA «Хочу обменять».
-              MarketExampleCluster — показывается только при data-mode="market"
-              (CSS), цена + CTA «Показать номер» (салатовый Avito 2026).
-              Временная витрина до Phase 4 (поиск) и Phase 13 (бартер). */}
-          <BarterExampleCluster />
-          <MarketExampleCluster />
+          {/* Real listings only. Demo clusters and the cosmetic mode toggle
+              stay out of the catalog until those actions work end to end. */}
 
           {effectiveRecoMode ? (
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-primary/10 p-3.5 text-sm">

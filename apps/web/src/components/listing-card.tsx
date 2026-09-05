@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeftRight, Camera, Heart } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { TrackedListingLink } from '@/components/tracked-listing-link';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import { Badge } from '@/components/ui/badge';
@@ -61,7 +61,7 @@ type Props = {
  *
  * Структура (см. `docs/design-system/project/ui_kits/web/ListingCard.jsx`):
  *  ┌──────────────────────┐
- *  │  thumb 1:1 / 140px   │  ← бейдж промо TL · сердце TR · точки фото
+ *  │  thumb 1:1 / 140px   │  ← бейдж промо TL · точки фото
  *  ├──────────────────────┤
  *  │  16/700  цена        │
  *  │  13/400  заголовок   │
@@ -131,25 +131,9 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
                   {photoCount}
                 </span>
               ) : null}
-              {/* Swap-badge — реф (handoff-bundle/home.html). Показывается
-                  только в режиме Бартер: чёрная пилюля внизу-слева превью.
-                  Виден через `data-barter-only`, скрытие в Маркете — через
-                  CSS-правило `html:not([data-mode="barter"]) [data-barter-only]`. */}
-              <span data-barter-only="true" className="swap-badge">
-                <ArrowLeftRight size={11} strokeWidth={2} aria-hidden />
-                Обмен
-              </span>
-              <button
-                type="button"
-                aria-label="В избранное"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                className="absolute right-2 top-2 z-[2] grid size-7 place-items-center rounded-full bg-background/90 text-muted-foreground backdrop-blur transition-colors hover:text-foreground"
-              >
-                <Heart size={14} strokeWidth={1.8} aria-hidden />
-              </button>
+              {/* Do not infer exchange availability from a cosmetic theme.
+                  Favorites remain available on the listing detail page until
+                  the feed has a real, synchronized favorite control. */}
             </>
           }
         />
@@ -164,23 +148,6 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
             {data.city}
             {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}
           </div>
-          {/* Бартер-only: «Хочу: …» строка + CTA «Хочу обменять» (реф).
-              Скрывается в Маркете тем же data-barter-only фильтром. */}
-          <div data-barter-only="true" className="want-line mt-1.5">
-            <ArrowLeftRight size={12} strokeWidth={2} aria-hidden />
-            <span className="truncate">Хочу: интересный обмен</span>
-          </div>
-          <button
-            type="button"
-            data-barter-only="true"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className="btn-swap"
-          >
-            Хочу обменять
-          </button>
         </div>
       </Card>
     </TrackedListingLink>
