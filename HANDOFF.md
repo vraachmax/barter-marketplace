@@ -1,5 +1,18 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-06 — подготовка согласованного выпуска PR #6
+
+Максим согласовал выпуск в master. Перед слиянием выявлен failure OSV:
+ajv 8.17.1 (GHSA-2g4f-4pwh-qvx6) и picomatch 4.0.2
+(GHSA-3v7f-55p6-f55p, GHSA-c2c7-rcm5-vvqj), только dev-зависимости.
+Заменены четыре вложенные записи на ajv 8.18.0 / picomatch 4.0.4, integrity
+сверены с npm registry. Добавлены version-scoped overrides. Исключения OSV
+не расширялись, workflow не отключался. Остальные версии не обновлялись.
+Чистая установка npm ci --ignore-scripts прошла. Слияние выполнять только
+после повторных сборок/тестов и успешного OSV на новом commit.
+После merge auto-deploy Render/Vercel: не вызывать повторный trigger_deploy.
+Проверить /health, mode/appliedMode, ошибки 400, CORS и отсутствие новых миграций.
+
 ## 2026-09-06 — CORS preview применён в Render
 
 Максим подтвердил My Workspace и сообщил прежний CORS_ORIGINS:
