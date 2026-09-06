@@ -143,6 +143,27 @@ describe('ranked database pages', () => {
     expect(result).toMatchObject({ total: 0, searchWindowLimited: true });
   });
 
+  it('requires every query group in SQL, including single-digit models', async () => {
+    findMany.mockResolvedValue([]);
+    count.mockResolvedValue(0);
+    await service.list({ q: 'айфон 1', sort: 'new' });
+    const match = (term: string) => [
+      { title: { contains: term, mode: 'insensitive' } },
+      { description: { contains: term, mode: 'insensitive' } },
+      { city: { contains: term, mode: 'insensitive' } },
+      { category: { title: { contains: term, mode: 'insensitive' } } },
+    ];
+    expect(count).toHaveBeenCalledWith({
+      where: {
+        status: 'ACTIVE',
+        AND: [
+          { OR: ['айфон', 'iphone', 'айфона', 'айфоне'].flatMap(match) },
+          { OR: match('1') },
+        ],
+      },
+    });
+  });
+
   it.each(['relevant', 'nearby'] as const)(
     'breaks ties and returns disjoint %s pages',
     async (sort) => {

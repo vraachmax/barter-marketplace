@@ -8,6 +8,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { BARTER_CATEGORY_SLUGS, categoryAllowsBarter } from '../categories/barter-policy';
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
+import { searchTermGroups } from '../search/search-synonyms';
 import {
   CreateListingDto,
   PromoteListingDto,
@@ -54,17 +55,6 @@ const promotionWeightByType: Record<string, number> = {
   LIFT: 60,
 };
 
-const querySynonyms: Record<string, string[]> = {
-  машига: ['машина', 'авто', 'автомобиль'],
-  машина: ['авто', 'автомобиль', 'sedan', 'kia', 'hyundai'],
-  авто: ['машина', 'автомобиль'],
-  автомобиль: ['машина', 'авто'],
-  квартира: ['недвижимость', 'жилье', 'аренда'],
-  жилье: ['квартира', 'недвижимость', 'аренда'],
-  аренда: ['квартира', 'жилье', 'недвижимость'],
-  телефон: ['смартфон', 'iphone', 'samsung'],
-  смартфон: ['телефон', 'iphone', 'samsung'],
-};
 
 @Injectable()
 export class ListingsService {
@@ -154,23 +144,6 @@ export class ListingsService {
     }
   }
 
-  private expandQueryTerms(raw: string): string[] {
-    const q = raw.trim().toLowerCase();
-    if (!q) return [];
-    const terms = new Set<string>([q]);
-
-    const words = q.split(/\s+/).filter(Boolean);
-    for (const word of words) {
-      terms.add(word);
-      const mapped = querySynonyms[word];
-      if (mapped) for (const x of mapped) terms.add(x);
-    }
-
-    const wholeMapped = querySynonyms[q];
-    if (wholeMapped) for (const x of wholeMapped) terms.add(x);
-
-    return Array.from(terms).filter((x) => x.length >= 2).slice(0, 10);
-  }
 
   private async assertOwner(userId: string, listingId: string) {
     const listing = await this.prisma.listing.findUnique({
@@ -723,13 +696,17 @@ export class ListingsService {
       }
     }
     if (qTrim.length > 0) {
-      const terms = this.expandQueryTerms(qTrim);
-      where.OR = terms.flatMap((term) => [
-        { title: { contains: term, mode: 'insensitive' } },
-        { description: { contains: term, mode: 'insensitive' } },
-        { city: { contains: term, mode: 'insensitive' } },
-        { category: { title: { contains: term, mode: 'insensitive' } } },
-      ]);
+      const groups = searchTermGroups(qTrim);
+      where.AND = groups.length
+        ? groups.map(terms => ({
+            OR: terms.flatMap(term => [
+              { title: { contains: term, mode: 'insensitive' } },
+              { description: { contains: term, mode: 'insensitive' } },
+              { city: { contains: term, mode: 'insensitive' } },
+              { category: { title: { contains: term, mode: 'insensitive' } } },
+            ]),
+          }))
+        : [{ id: { in: [] } }];
     }
     if (sort === 'nearby') {
       where.latitude = { not: null };
@@ -750,7 +727,7 @@ export class ListingsService {
       // Recheck hard filters against current database rows, but leave text
       // matching to Meili so typo matches are not lost to SQL substring rules.
       const eligibilityWhere = { ...where };
-      delete eligibilityWhere.OR;
+      delete eligibilityWhere.AND;
       const viaMeili = await this.tryListViaMeilisearch({
         eligibilityWhere,
         q: qTrim,

@@ -2,6 +2,11 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+S2 2026-09-06, PR #7: общий консервативный словарь, SQL AND по словам,
+Meili matchingStrategy=all. 147 API-тестов и Nest build. Защита точных
+моделей/чисел, общий typo fallback и live top-5 evaluation ещё не реализованы.
+Изменения не выпущены; окно кандидатов и масштабирование остаются в очереди.
+
 S1 Meili 2026-09-06, PR #7: устранён overfetch со смещением, hydration проверяет
 актуальные status/city/category/price до пагинации и count, ID уникальны, VIP
 исключён. 132 API-теста и Nest build. Окно до 3000/index maxTotalHits остаётся;

@@ -1,31 +1,39 @@
-/**
- * Синонимы для Meilisearch (полнотекст + опечатки обрабатываются движком).
- * Каждый ключ — слово/фраза; значение — взаимозаменяемые варианты.
- */
-export const MEILISEARCH_LISTING_SYNONYMS: Record<string, string[]> = {
-  iphone: ['айфон', 'айфона', 'айфоне'],
-  айфон: ['iphone', 'айфона', 'айфоне'],
-  айфона: ['iphone', 'айфон'],
-  samsung: ['самсунг', 'galaxy', 'галакси'],
-  самсунг: ['samsung', 'galaxy'],
-  машина: ['авто', 'автомобиль', 'sedan'],
-  /** частая опечатка */
+/** Equivalent names only. Brands, families and transaction types stay distinct. */
+const groups = [
+  ['iphone', 'айфон', 'айфона', 'айфоне'],
+  ['samsung', 'самсунг'],
+  ['galaxy', 'галакси'],
+  ['машина', 'авто', 'автомобиль'],
+  ['macbook', 'макбук'],
+  ['ipad', 'айпад'],
+  ['playstation', 'плейстейшн'],
+  ['ps5', 'пс5'],
+  ['велосипед', 'велик'],
+  ['ноутбук', 'laptop'],
+] as const;
+
+export const MEILISEARCH_LISTING_SYNONYMS: Record<string, string[]> = {};
+for (const group of groups) {
+  for (const word of group) {
+    MEILISEARCH_LISTING_SYNONYMS[word] = group.filter(
+      (other) => other !== word,
+    );
+  }
+}
+
+// Corrections are directional; correct words do not expand to misspellings.
+Object.assign(MEILISEARCH_LISTING_SYNONYMS, {
   машига: ['машина', 'авто', 'автомобиль'],
-  авто: ['машина', 'автомобиль'],
-  автомобиль: ['машина', 'авто'],
-  квартира: ['недвижимость', 'жилье', 'аренда'],
-  жилье: ['квартира', 'недвижимость'],
-  аренда: ['квартира', 'жилье', 'сдам', 'сдаю'],
-  телефон: ['смартфон', 'мобильный'],
-  смартфон: ['телефон', 'iphone', 'samsung'],
-  macbook: ['макбук', 'мак'],
-  макбук: ['macbook', 'mac'],
-  ipad: ['айпад', 'планшет'],
-  айпад: ['ipad', 'планшет'],
-  playstation: ['ps5', 'ps 5', 'плейстейшн', 'пс5'],
-  ps5: ['playstation', 'пс5'],
-  велосипед: ['байк', 'велик'],
-  байк: ['велосипед'],
-  ноутбук: ['laptop', 'нотебук'],
-  laptop: ['ноутбук'],
-};
+  нотебук: ['ноутбук', 'laptop'],
+});
+
+/** Every group is required; alternatives inside a group are interchangeable. */
+export function searchTermGroups(raw: string): string[][] {
+  const words = [...new Set(raw.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])];
+  return words.map((word) => [
+    word,
+    ...(Object.hasOwn(MEILISEARCH_LISTING_SYNONYMS, word)
+      ? MEILISEARCH_LISTING_SYNONYMS[word]
+      : []),
+  ]);
+}
