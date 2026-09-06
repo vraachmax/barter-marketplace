@@ -1,5 +1,26 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-06 — PR #6 выпущен, проверен рабочий API
+
+После явного согласия Максима PR #6 слит в master, merge commit
+`d739a2b8791fd1d375d6190dd7d6fbca2f9f2cfb`. Перед merge OSV run 34042911973
+и Vercel на head 36c0ab7 прошли; после исправления зависимостей чистая установка,
+92 API + 15 web тестов и обе production-сборки прошли. Проверки не обходились.
+Render deploy `dep-daeoi2cs728c738774j0` live; Vercel master status success.
+Новая главная на https://web-one-blond-66.vercel.app вернула HTML 200 с обоими
+переключателями. Это HTTP-проверка, не полная визуальная/авторизованная приёмка.
+
+Рабочий API: /health 200 ok=true; /listings?mode=market&limit=2 — 200,
+appliedMode=market, total=24; mode=barter — 200, appliedMode=barter, total=0.
+Неверный диапазон priceMin=20&priceMax=10 даёт 400. Пустой Barter ожидаем:
+реальные продавцы ещё не включили opt-in; тестовые объявления не создавались.
+Журнал запуска: 19 migrations found, No pending migrations to apply.
+
+Следующий блок в отдельной ветке: строгая сортировка и стабильная пагинация S1,
+потом опечатки; редизайн остальных страниц остаётся частичным. Яндекс/платежи
+не включены. Бесплатная база требует решения до 2026-10-03. Полный matching
+и новый алгоритм рекомендаций НЕ объявлять выпущенными.
+
 ## 2026-09-06 — подготовка согласованного выпуска PR #6
 
 Максим согласовал выпуск в master. Перед слиянием выявлен failure OSV:
