@@ -252,49 +252,39 @@ export function slicePageWithBoostCap<T extends { id: string }>(
   maxBoost: number,
   isBoosted: (raw: T) => boolean,
 ): ScoredRow<T>[] {
-  const window = merged.slice(skip);
-  const taken = new Set<string>();
-  const page: ScoredRow<T>[] = [];
-  let boosts = 0;
-
-  for (const row of window) {
-    if (page.length >= limit) break;
-    const id = row.raw.id;
-    if (taken.has(id)) continue;
-    if (isBoosted(row.raw)) {
-      if (boosts >= maxBoost) continue;
-      page.push(row);
-      taken.add(id);
-      boosts++;
-    } else {
-      page.push(row);
-      taken.add(id);
-    }
-  }
-
-  if (page.length < limit) {
-    for (const row of window) {
-      if (page.length >= limit) break;
-      const id = row.raw.id;
-      if (taken.has(id)) continue;
-      if (!isBoosted(row.raw)) {
-        page.push(row);
-        taken.add(id);
+  // Build the same page sequence from its beginning. Slicing the raw input
+  // first overlaps pages whenever the promotion cap skips a row.
+  if (limit <= 0 || skip < 0) return [];
+  const unique = new Set<string>();
+  let remaining = merged.filter(({ raw }) => {
+    if (unique.has(raw.id)) return false;
+    unique.add(raw.id);
+    return true;
+  });
+  for (let offset = 0; remaining.length; offset += limit) {
+    const page: ScoredRow<T>[] = [];
+    const deferred: ScoredRow<T>[] = [];
+    let boosts = 0;
+    let index = 0;
+    for (; index < remaining.length && page.length < limit; index++) {
+      const row = remaining[index];
+      if (isBoosted(row.raw)) {
+        if (boosts >= maxBoost) {
+          deferred.push(row);
+          continue;
+        }
+        boosts++;
       }
-    }
-  }
-
-  if (page.length < limit) {
-    for (const row of window) {
-      if (page.length >= limit) break;
-      const id = row.raw.id;
-      if (taken.has(id)) continue;
       page.push(row);
-      taken.add(id);
     }
+    // Once organic supply runs out, retain promoted listings as ordinary
+    // results instead of losing them or returning premature empty pages.
+    const fill = Math.min(limit - page.length, deferred.length);
+    page.push(...deferred.splice(0, fill));
+    if (offset === skip) return page;
+    remaining = [...deferred, ...remaining.slice(index)];
   }
-
-  return page;
+  return [];
 }
 
 export function rankListings(

@@ -1,4 +1,5 @@
 'use client';
+import { canOfferBarter } from '@/lib/barter-category';
 
 /**
  * /listings — «Мои объявления» в Avito-стиле (Hotfix #12).
@@ -198,11 +199,13 @@ function ListingsContent() {
   }
 
   async function saveEdit(id: string) {
+    const category = categories.find((item) => item.id === editForm.categoryId);
+    if (!category) return false;
     const payload: Record<string, unknown> = {
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
-      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: editForm.isBarter },
+      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: canOfferBarter(category) && editForm.isBarter },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
     payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;

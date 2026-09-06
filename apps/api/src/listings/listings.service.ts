@@ -5,8 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { BARTER_CATEGORY_SLUGS, categoryAllowsBarter } from '../categories/barter-policy';
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
+import { searchTermGroups } from '../search/search-synonyms';
 import {
   CreateListingDto,
   PromoteListingDto,
@@ -53,17 +55,6 @@ const promotionWeightByType: Record<string, number> = {
   LIFT: 60,
 };
 
-const querySynonyms: Record<string, string[]> = {
-  машига: ['машина', 'авто', 'автомобиль'],
-  машина: ['авто', 'автомобиль', 'sedan', 'kia', 'hyundai'],
-  авто: ['машина', 'автомобиль'],
-  автомобиль: ['машина', 'авто'],
-  квартира: ['недвижимость', 'жилье', 'аренда'],
-  жилье: ['квартира', 'недвижимость', 'аренда'],
-  аренда: ['квартира', 'жилье', 'недвижимость'],
-  телефон: ['смартфон', 'iphone', 'samsung'],
-  смартфон: ['телефон', 'iphone', 'samsung'],
-};
 
 @Injectable()
 export class ListingsService {
@@ -153,23 +144,6 @@ export class ListingsService {
     }
   }
 
-  private expandQueryTerms(raw: string): string[] {
-    const q = raw.trim().toLowerCase();
-    if (!q) return [];
-    const terms = new Set<string>([q]);
-
-    const words = q.split(/\s+/).filter(Boolean);
-    for (const word of words) {
-      terms.add(word);
-      const mapped = querySynonyms[word];
-      if (mapped) for (const x of mapped) terms.add(x);
-    }
-
-    const wholeMapped = querySynonyms[q];
-    if (wholeMapped) for (const x of wholeMapped) terms.add(x);
-
-    return Array.from(terms).filter((x) => x.length >= 2).slice(0, 10);
-  }
 
   private async assertOwner(userId: string, listingId: string) {
     const listing = await this.prisma.listing.findUnique({
@@ -295,7 +269,7 @@ export class ListingsService {
           },
         ],
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
       take: Math.min(48, limit + 24),
       select: this.selectCard(now),
     });
@@ -482,6 +456,13 @@ export class ListingsService {
   }
 
   async create(userId: string, dto: CreateListingDto) {
+    const category = await this.prisma.category.findUnique({
+      where: { id: dto.categoryId }, select: { slug: true },
+    });
+    if (!category) throw new NotFoundException('category_not_found');
+    if (dto.attributes?.isBarter === true && !categoryAllowsBarter(category.slug)) {
+      throw new BadRequestException('barter_not_available_for_category');
+    }
     await this.assertListingDailyLimit(userId);
     await this.assertActiveListingsLimit(userId);
     await this.assertNotDuplicateListingText(dto.title, dto.description);
@@ -532,6 +513,7 @@ export class ListingsService {
    * При сетевой ошибке — null, вызывающий код падает обратно на Prisma.
    */
   private async tryListViaMeilisearch(params: {
+    eligibilityWhere: Prisma.ListingWhereInput;
     q: string;
     categoryId?: string;
     city?: string;
@@ -557,8 +539,10 @@ export class ListingsService {
         priceMin: params.priceMin,
         priceMax: params.priceMax,
         sort: meiliSort,
-        offset: params.skip,
-        limit: params.limit + 32,
+        // Hydrate one fixed candidate window before paginating. Overfetching
+        // separately at raw offsets repeats rows after eligibility filtering.
+        offset: 0,
+        limit: 3000,
       });
       hits = res.hits;
       estimatedTotalHits = res.estimatedTotalHits;
@@ -566,19 +550,19 @@ export class ListingsService {
       return null;
     }
 
-    const ids = hits.map((h) => h.id);
+    const ids = [...new Set(hits.map((h) => h.id))];
     if (ids.length === 0) {
       return {
         page: params.page,
         limit: params.limit,
-        total: estimatedTotalHits,
+        total: 0,
         vipStrip: params.vipStrip,
         items: [],
       };
     }
 
     const rows = await this.prisma.listing.findMany({
-      where: { id: { in: ids }, status: 'ACTIVE' },
+      where: { AND: [params.eligibilityWhere, { id: { in: ids } }] },
       select: this.selectCard(params.now),
     });
     const byId = new Map(rows.map((r) => [r.id, r]));
@@ -594,7 +578,7 @@ export class ListingsService {
 
     const pageSlice = slicePageWithBoostCap(
       scored,
-      0,
+      params.skip,
       params.limit,
       params.boostSlotsPerPage,
       (raw) => isBoostPromotionType(raw.promotions[0]?.type),
@@ -605,7 +589,8 @@ export class ListingsService {
     return {
       page: params.page,
       limit: params.limit,
-      total: estimatedTotalHits,
+      total: ordered.length,
+      searchWindowLimited: estimatedTotalHits > ids.length,
       vipStrip: params.vipStrip,
       items,
     };
@@ -627,6 +612,7 @@ export class ListingsService {
     const maxPool = 3000;
     const pool = await this.prisma.listing.findMany({
       where: args.where,
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
       take: maxPool,
       select: this.selectCard(args.now),
     });
@@ -640,7 +626,8 @@ export class ListingsService {
       .sort(
         (a, b) =>
           a.distanceKm - b.distanceKm ||
-          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt),
+          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt) ||
+          a.raw.id.localeCompare(b.raw.id),
       );
 
     const main = withDist.filter((x) => !args.vipIds.has(x.raw.id));
@@ -692,7 +679,7 @@ export class ListingsService {
     const where: Prisma.ListingWhereInput = {
       status: 'ACTIVE',
       ...(params.mode === 'barter'
-        ? { attributes: { path: ['isBarter'], equals: true } }
+        ? { attributes: { path: ['isBarter'], equals: true }, category: { slug: { in: [...BARTER_CATEGORY_SLUGS] } } }
         : {}),
     };
     if (params.categoryId) where.categoryId = params.categoryId;
@@ -709,13 +696,17 @@ export class ListingsService {
       }
     }
     if (qTrim.length > 0) {
-      const terms = this.expandQueryTerms(qTrim);
-      where.OR = terms.flatMap((term) => [
-        { title: { contains: term, mode: 'insensitive' } },
-        { description: { contains: term, mode: 'insensitive' } },
-        { city: { contains: term, mode: 'insensitive' } },
-        { category: { title: { contains: term, mode: 'insensitive' } } },
-      ]);
+      const groups = searchTermGroups(qTrim);
+      where.AND = groups.length
+        ? groups.map(terms => ({
+            OR: terms.flatMap(term => [
+              { title: { contains: term, mode: 'insensitive' } },
+              { description: { contains: term, mode: 'insensitive' } },
+              { city: { contains: term, mode: 'insensitive' } },
+              { category: { title: { contains: term, mode: 'insensitive' } } },
+            ]),
+          }))
+        : [{ id: { in: [] } }];
     }
     if (sort === 'nearby') {
       where.latitude = { not: null };
@@ -729,10 +720,16 @@ export class ListingsService {
       return this.listNearbyPage({ where, geo, page, limit, skip, now, vipStrip, vipIds });
     }
 
-    // Until the index carries exchange eligibility, use the database filter
-    // before counting/pagination. Do not filter an already paginated Meili page.
-    if (params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled()) {
+    // Keep explicit sorts on the authoritative database path: index relevance
+    // and post-page promotion merging must not change their order or page size.
+    // Barter also requires eligibility filtering before counting/pagination.
+    if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled()) {
+      // Recheck hard filters against current database rows, but leave text
+      // matching to Meili so typo matches are not lost to SQL substring rules.
+      const eligibilityWhere = { ...where };
+      delete eligibilityWhere.AND;
       const viaMeili = await this.tryListViaMeilisearch({
+        eligibilityWhere,
         q: qTrim,
         categoryId: params.categoryId,
         city: params.city,
@@ -752,51 +749,41 @@ export class ListingsService {
       }
     }
 
-    const orderBy =
-      sort === 'cheap'
-        ? [{ priceRub: 'asc' as const }, { createdAt: 'desc' as const }]
-        : sort === 'expensive'
-          ? [{ priceRub: 'desc' as const }, { createdAt: 'desc' as const }]
-          : [{ createdAt: 'desc' as const }];
-
-    const mergePriceNewPage = async () => {
-      const take = Math.min(skip + limit + 80, 400);
-      const [pool, total] = await Promise.all([
+    if (sort === 'new' || sort === 'cheap' || sort === 'expensive') {
+      // Explicit sorting must not be reordered by paid boosts. Exclude the
+      // separate VIP strip before both pagination and counting.
+      const mainWhere: Prisma.ListingWhereInput = vipIds.size
+        ? { AND: [where, { id: { notIn: [...vipIds] } }] }
+        : where;
+      const orderBy: Prisma.ListingOrderByWithRelationInput[] = [];
+      if (sort !== 'new') {
+        orderBy.push({
+          priceRub: { sort: sort === 'cheap' ? 'asc' : 'desc', nulls: 'last' },
+        });
+      }
+      orderBy.push({ createdAt: 'desc' }, { id: 'asc' });
+      const [rows, total] = await Promise.all([
         this.prisma.listing.findMany({
-          where,
+          where: mainWhere,
           orderBy,
-          skip: 0,
-          take,
+          skip,
+          take: limit,
           select: this.selectCard(now),
         }),
-        this.prisma.listing.count({ where }),
+        this.prisma.listing.count({ where: mainWhere }),
       ]);
-      const nonVip = pool.filter((x) => !vipIds.has(x.id));
-      const scored: ScoredRow<(typeof pool)[number]>[] = nonVip.map((raw) => ({ raw, finalScore: 0 }));
-      const organic = scored.filter((s) => !isBoostPromotionType(s.raw.promotions[0]?.type));
-      const boosted = scored.filter((s) => isBoostPromotionType(s.raw.promotions[0]?.type));
-      const merged = mergeOrganicAndBoostFeeds(organic, boosted, boostSlotsPerPage);
-      const pageSlice = slicePageWithBoostCap(
-        merged,
-        skip,
-        limit,
-        boostSlotsPerPage,
-        (raw) => isBoostPromotionType(raw.promotions[0]?.type),
-      );
-      const items = pageSlice.map((s) => this.toFeedCard(s.raw));
+      const items = rows.map((row) => this.toFeedCard(row));
       return { page, limit, total, vipStrip, items };
-    };
-
-    if (sort === 'new' || sort === 'cheap' || sort === 'expensive') {
-      return mergePriceNewPage();
     }
 
     if (sort === 'relevant') {
-      const poolTake = Math.max(200, page * limit * 3);
-      const [pool, total] = await Promise.all([
+      // Candidate membership must not depend on the requested page. This
+      // bounded fallback ranks the newest 3000 matches, not the whole index.
+      const poolTake = 3000;
+      const [pool, totalMatches] = await Promise.all([
         this.prisma.listing.findMany({
           where,
-          orderBy: [{ createdAt: 'desc' }],
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
           take: poolTake,
           select: this.selectForRanking(now),
         }),
@@ -853,7 +840,8 @@ export class ListingsService {
       scoredRows.sort(
         (a, b) =>
           b.finalScore - a.finalScore ||
-          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt),
+          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt) ||
+          a.raw.id.localeCompare(b.raw.id),
       );
 
       const organic = scoredRows.filter((x) => !isBoostPromotionType(x.raw.promotions[0]?.type));
@@ -868,20 +856,17 @@ export class ListingsService {
       );
 
       const items = pageSlice.map(({ raw }) => {
-        const promo = raw.promotions[0];
-        const { promotions: _p, _count: _c, description: _d, categoryId: _cid, ownerId: _oid, owner, ...rest } = raw;
-        return {
+        const { _count: _c, description: _d, categoryId: _cid, ownerId: _oid, owner, ...rest } = raw;
+        return this.toFeedCard({
           ...rest,
           owner: { id: owner.id, name: owner.name },
-          images: raw.images,
-          promoType: promo?.type ?? null,
-          promoEndsAt: promo?.endsAt ?? null,
-          isBoosted: isBoostPromotionType(promo?.type),
-          isVip: isVipPromotionType(promo?.type),
-        };
+        });
       });
 
-      return { page, limit, total, vipStrip, items };
+      return {
+        page, limit, total: nonVipPool.length, vipStrip, items,
+        searchWindowLimited: totalMatches > pool.length,
+      };
     }
 
     throw new Error(`Unsupported listing sort: ${String(sort)}`);
@@ -1240,6 +1225,8 @@ export class ListingsService {
         title: true,
         description: true,
         status: true,
+        categoryId: true,
+        attributes: true,
       },
     });
     if (!current) throw new NotFoundException('listing_not_found');
@@ -1247,12 +1234,13 @@ export class ListingsService {
       throw new ForbiddenException('listing_blocked');
     }
 
-    if (dto.categoryId) {
-      const category = await this.prisma.category.findUnique({
-        where: { id: dto.categoryId },
-        select: { id: true },
-      });
-      if (!category) throw new NotFoundException('category_not_found');
+    const category = await this.prisma.category.findUnique({
+      where: { id: dto.categoryId ?? current.categoryId }, select: { slug: true },
+    });
+    if (!category) throw new NotFoundException('category_not_found');
+    const barterAllowed = categoryAllowsBarter(category.slug);
+    if (!barterAllowed && dto.attributes?.isBarter === true) {
+      throw new BadRequestException('barter_not_available_for_category');
     }
 
     const nextTitle = dto.title ?? current.title;
@@ -1271,6 +1259,12 @@ export class ListingsService {
     if (typeof dto.priceRub === 'number') data.priceRub = dto.priceRub;
     if (dto.attributes !== undefined) {
       data.attributes = dto.attributes as Prisma.InputJsonValue;
+    }
+    // Category changes must also clear an old opt-in when attributes are omitted.
+    if (!barterAllowed && dto.attributes === undefined && current.attributes &&
+      typeof current.attributes === 'object' && !Array.isArray(current.attributes) &&
+      current.attributes.isBarter === true) {
+      data.attributes = { ...current.attributes, isBarter: false };
     }
 
     if (dto.publishFromModeration === true) {

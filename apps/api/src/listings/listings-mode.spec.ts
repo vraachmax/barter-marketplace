@@ -52,6 +52,20 @@ describe('exchange eligibility', () => {
       const eligibility: unknown = expect.objectContaining({
         status: 'ACTIVE',
         attributes: { path: ['isBarter'], equals: true },
+        category: {
+          slug: {
+            in: [
+              'auto',
+              'realty',
+              'services',
+              'electronics',
+              'home',
+              'clothes',
+              'kids',
+              'hobby',
+            ],
+          },
+        },
         city: { equals: 'Краснодар', mode: 'insensitive' },
         categoryId: 'hobby',
         priceRub: { gte: 1000 },
