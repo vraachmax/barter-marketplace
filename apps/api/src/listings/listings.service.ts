@@ -635,6 +635,7 @@ export class ListingsService {
     const maxPool = 3000;
     const pool = await this.prisma.listing.findMany({
       where: args.where,
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
       take: maxPool,
       select: this.selectCard(args.now),
     });
@@ -648,7 +649,8 @@ export class ListingsService {
       .sort(
         (a, b) =>
           a.distanceKm - b.distanceKm ||
-          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt),
+          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt) ||
+          a.raw.id.localeCompare(b.raw.id),
       );
 
     const main = withDist.filter((x) => !args.vipIds.has(x.raw.id));
@@ -789,11 +791,13 @@ export class ListingsService {
     }
 
     if (sort === 'relevant') {
-      const poolTake = Math.max(200, page * limit * 3);
-      const [pool, total] = await Promise.all([
+      // Candidate membership must not depend on the requested page. This
+      // bounded fallback ranks the newest 3000 matches, not the whole index.
+      const poolTake = 3000;
+      const [pool, totalMatches] = await Promise.all([
         this.prisma.listing.findMany({
           where,
-          orderBy: [{ createdAt: 'desc' }],
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
           take: poolTake,
           select: this.selectForRanking(now),
         }),
@@ -850,7 +854,8 @@ export class ListingsService {
       scoredRows.sort(
         (a, b) =>
           b.finalScore - a.finalScore ||
-          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt),
+          +new Date(b.raw.createdAt) - +new Date(a.raw.createdAt) ||
+          a.raw.id.localeCompare(b.raw.id),
       );
 
       const organic = scoredRows.filter((x) => !isBoostPromotionType(x.raw.promotions[0]?.type));
@@ -865,20 +870,17 @@ export class ListingsService {
       );
 
       const items = pageSlice.map(({ raw }) => {
-        const promo = raw.promotions[0];
-        const { promotions: _p, _count: _c, description: _d, categoryId: _cid, ownerId: _oid, owner, ...rest } = raw;
-        return {
+        const { _count: _c, description: _d, categoryId: _cid, ownerId: _oid, owner, ...rest } = raw;
+        return this.toFeedCard({
           ...rest,
           owner: { id: owner.id, name: owner.name },
-          images: raw.images,
-          promoType: promo?.type ?? null,
-          promoEndsAt: promo?.endsAt ?? null,
-          isBoosted: isBoostPromotionType(promo?.type),
-          isVip: isVipPromotionType(promo?.type),
-        };
+        });
       });
 
-      return { page, limit, total, vipStrip, items };
+      return {
+        page, limit, total: nonVipPool.length, vipStrip, items,
+        searchWindowLimited: totalMatches > pool.length,
+      };
     }
 
     throw new Error(`Unsupported listing sort: ${String(sort)}`);

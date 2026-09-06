@@ -2,6 +2,12 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+S1 продолжение 2026-09-06, PR #7: устранены повторы/пропуски в boost-pagination,
+DB relevant имеет фиксированный пул 3000 и честный total окна; tie-break для
+rank/nearby, общий isBarter mapper. 129 API-тестов и Nest build прошли.
+Остаются глобальная выдача за пределами окна, Meili hydration/overfetch,
+геовыборка за пределами 3000 и cursor/snapshot. Production не обновлён.
+
 S1, 2026-09-06: в PR #7 исправлены new/cheap/expensive: прямая DB-пагинация
 без потолка 400, сохранение порядка при продвижении, null-цена в конце,
 id tie-break, VIP исключается до count/skip/take. 120 API-тестов.
