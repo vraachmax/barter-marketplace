@@ -1,5 +1,14 @@
 # Crystal Catalog implementation QA • 2026-09-05
 
+### Toggle follow-up, 2026-09-06
+
+Owner reports a much better homepage but stuttering mode selection. Code showed
+immediate global theme mutation versus server-delayed active link. Replaced with
+an optimistic, transform-based 200 ms indicator and commit-time preference sync.
+Reduced-motion supported; modifier/new-tab navigation no longer changes this tab.
+Lint, 15 existing web tests and build checked; no animation FPS/browser measurement.
+Still needs device verification: slow navigation, rapid toggling, history, new tab.
+
 ## Update 2026-09-06
 
 The owner viewed the previous preview and liked the direction, requesting the
