@@ -1,5 +1,25 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-06 — CORS preview применён в Render
+
+Максим подтвердил My Workspace и сообщил прежний CORS_ORIGINS:
+`https://web-one-blond-66.vercel.app`. В сервисе barter-api обновлена только эта
+переменная (merge, не замена всех env): сохранён основной сайт и добавлен точный
+`https://web-git-feat-unified-design-search-plan-vraachmaxs-projects.vercel.app`.
+Wildcard-домены не разрешены. Render автоматически выпустил прежний master
+6b5fbec744d843464211291a84c1d44c3ee40e23, deploy dep-daekcseq1p3s739nh160: live.
+Это изменение production-конфигурации, не выпуск кода PR #6. Новые алгоритмы
+и контракт Barter ещё не в рабочем API. Повторный trigger_deploy не выполнялся.
+
+Проверка GET /health с Origin preview: до выпуска 500; после 200, ok=true,
+Access-Control-Allow-Origin совпадает с preview, Allow-Credentials=true.
+Журнал старта: 19 migrations found, No pending migrations to apply.
+Read-only SQL через connector ранее не прошёл SSL; напрямую его не обходили.
+Схема/миграции ветки совпадают с текущим master. База бесплатная до 2026-10-03;
+платный тариф не включён. Для отката CORS вернуть единственный основной origin.
+Следующий шаг: согласовать слияние PR #6 (auto-deploy master) и проверить
+контракт mode/appliedMode на рабочем API, затем продолжать поиск/страницы.
+
 ## 2026-09-06 — восстановлена чистая сборка API
 
 Максим разрешил скачивание npm-зависимостей для исправления сборки.
