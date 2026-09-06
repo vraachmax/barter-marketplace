@@ -2,6 +2,11 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+S1 Meili 2026-09-06, PR #7: устранён overfetch со смещением, hydration проверяет
+актуальные status/city/category/price до пагинации и count, ID уникальны, VIP
+исключён. 132 API-теста и Nest build. Окно до 3000/index maxTotalHits остаётся;
+live index QA, snapshot и поиск за пределами окна ещё не выполнены.
+
 S1 продолжение 2026-09-06, PR #7: устранены повторы/пропуски в boost-pagination,
 DB relevant имеет фиксированный пул 3000 и честный total окна; tie-break для
 rank/nearby, общий isBarter mapper. 129 API-тестов и Nest build прошли.

@@ -29,8 +29,11 @@ describe('ranked database pages', () => {
   let service: ListingsService;
   const findMany = jest.fn();
   const count = jest.fn();
+  const searchListings = jest.fn();
+  let meiliEnabled = false;
   beforeEach(async () => {
     jest.resetAllMocks();
+    meiliEnabled = false;
     const moduleRef = await Test.createTestingModule({
       providers: [
         ListingsService,
@@ -41,12 +44,87 @@ describe('ranked database pages', () => {
             sellerReview: { groupBy: jest.fn().mockResolvedValue([]) },
           },
         },
-        { provide: MeilisearchService, useValue: { isEnabled: () => false } },
+        {
+          provide: MeilisearchService,
+          useValue: { isEnabled: () => meiliEnabled, searchListings },
+        },
         { provide: AnalyticsService, useValue: {} },
         { provide: MediaStorageService, useValue: {} },
       ],
     }).compile();
     service = moduleRef.get(ListingsService);
+  });
+
+  it('paginates hydrated index candidates without overlaps or stale IDs', async () => {
+    meiliEnabled = true;
+    searchListings.mockResolvedValue({
+      hits: ['stale', 'a', 'a', 'b', 'c', 'd'].map((id) => ({ id })),
+      estimatedTotalHits: 6,
+    });
+    const pool = ['d', 'b', 'a', 'c'].map(row);
+    findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(pool)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(pool);
+    const params = {
+      q: 'веласипед',
+      city: 'Краснодар',
+      categoryId: 'hobby',
+      priceMin: 500,
+      priceMax: 2000,
+      limit: 2,
+    };
+    const first = await service.list({ ...params, page: 1 });
+    const second = await service.list({ ...params, page: 2 });
+    expect(first.items.map((x: { id: string }) => x.id)).toEqual(['a', 'b']);
+    expect(second.items.map((x: { id: string }) => x.id)).toEqual(['c', 'd']);
+    expect(first.total).toBe(4);
+    expect(second.total).toBe(4);
+    expect(searchListings).toHaveBeenLastCalledWith(
+      'веласипед',
+      expect.objectContaining({ offset: 0, limit: 3000 }),
+    );
+    expect(findMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: {
+          AND: [
+            {
+              status: 'ACTIVE',
+              city: { equals: 'Краснодар', mode: 'insensitive' },
+              categoryId: 'hobby',
+              priceRub: { gte: 500, lte: 2000 },
+            },
+            { id: { in: ['stale', 'a', 'b', 'c', 'd'] } },
+          ],
+        },
+      }),
+    );
+  });
+
+  it('removes VIP before counting index results and reports the candidate limit', async () => {
+    meiliEnabled = true;
+    searchListings.mockResolvedValue({
+      hits: [{ id: 'vip' }, { id: 'a' }],
+      estimatedTotalHits: 4000,
+    });
+    findMany
+      .mockResolvedValueOnce([row('vip')])
+      .mockResolvedValueOnce([row('vip'), row('a')]);
+    const result = await service.list({ q: 'велосипед', limit: 20 });
+    expect(result).toMatchObject({ total: 1, searchWindowLimited: true });
+    expect(result.items.map((x: { id: string }) => x.id)).toEqual(['a']);
+  });
+
+  it('falls back to the database when the index request fails', async () => {
+    meiliEnabled = true;
+    searchListings.mockRejectedValue(new Error('unavailable'));
+    findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([row('a')]);
+    count.mockResolvedValue(1);
+    const result = await service.list({ q: 'велосипед' });
+    expect(result.items.map((x: { id: string }) => x.id)).toEqual(['a']);
+    expect(count).toHaveBeenCalledTimes(1);
   });
 
   it('uses the same bounded candidates on early and late pages', async () => {

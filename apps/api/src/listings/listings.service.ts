@@ -540,6 +540,7 @@ export class ListingsService {
    * При сетевой ошибке — null, вызывающий код падает обратно на Prisma.
    */
   private async tryListViaMeilisearch(params: {
+    eligibilityWhere: Prisma.ListingWhereInput;
     q: string;
     categoryId?: string;
     city?: string;
@@ -565,8 +566,10 @@ export class ListingsService {
         priceMin: params.priceMin,
         priceMax: params.priceMax,
         sort: meiliSort,
-        offset: params.skip,
-        limit: params.limit + 32,
+        // Hydrate one fixed candidate window before paginating. Overfetching
+        // separately at raw offsets repeats rows after eligibility filtering.
+        offset: 0,
+        limit: 3000,
       });
       hits = res.hits;
       estimatedTotalHits = res.estimatedTotalHits;
@@ -574,19 +577,19 @@ export class ListingsService {
       return null;
     }
 
-    const ids = hits.map((h) => h.id);
+    const ids = [...new Set(hits.map((h) => h.id))];
     if (ids.length === 0) {
       return {
         page: params.page,
         limit: params.limit,
-        total: estimatedTotalHits,
+        total: 0,
         vipStrip: params.vipStrip,
         items: [],
       };
     }
 
     const rows = await this.prisma.listing.findMany({
-      where: { id: { in: ids }, status: 'ACTIVE' },
+      where: { AND: [params.eligibilityWhere, { id: { in: ids } }] },
       select: this.selectCard(params.now),
     });
     const byId = new Map(rows.map((r) => [r.id, r]));
@@ -602,7 +605,7 @@ export class ListingsService {
 
     const pageSlice = slicePageWithBoostCap(
       scored,
-      0,
+      params.skip,
       params.limit,
       params.boostSlotsPerPage,
       (raw) => isBoostPromotionType(raw.promotions[0]?.type),
@@ -613,7 +616,8 @@ export class ListingsService {
     return {
       page: params.page,
       limit: params.limit,
-      total: estimatedTotalHits,
+      total: ordered.length,
+      searchWindowLimited: estimatedTotalHits > ids.length,
       vipStrip: params.vipStrip,
       items,
     };
@@ -743,7 +747,12 @@ export class ListingsService {
     // and post-page promotion merging must not change their order or page size.
     // Barter also requires eligibility filtering before counting/pagination.
     if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled()) {
+      // Recheck hard filters against current database rows, but leave text
+      // matching to Meili so typo matches are not lost to SQL substring rules.
+      const eligibilityWhere = { ...where };
+      delete eligibilityWhere.OR;
       const viaMeili = await this.tryListViaMeilisearch({
+        eligibilityWhere,
         q: qTrim,
         categoryId: params.categoryId,
         city: params.city,
