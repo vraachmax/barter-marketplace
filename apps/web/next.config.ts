@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["http://127.0.0.1:3000", "http://localhost:3000"],
   async rewrites() {
     return [
+      { source: "/api/backend/:path*", destination: `${apiUrl}/:path*` },
       { source: "/auth/register", destination: `${apiUrl}/auth/register` },
       { source: "/auth/login", destination: `${apiUrl}/auth/login` },
       { source: "/auth/logout", destination: `${apiUrl}/auth/logout` },

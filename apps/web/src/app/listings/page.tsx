@@ -25,7 +25,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle,
-  ArrowLeft,
   Camera,
   FileText,
   PlusCircle,
@@ -46,7 +45,7 @@ import {
 } from '@/lib/api';
 import ListingPlaceholder from '@/components/listing-placeholder';
 import { ProfileArchivedSection } from '@/components/profile-archived-section';
-import { UiSelect } from '@/components/ui-select';
+import { ListingEditorDialog } from '@/components/listing-editor-dialog';
 import { listingThumbPromoExtraClass } from '@/lib/listing-card-visuals';
 
 type ListingTab = 'ACTIVE' | 'NEEDS_ACTION' | 'COMPLETED';
@@ -129,6 +128,7 @@ function ListingsContent() {
     city: '',
     categoryId: '',
     priceRub: '',
+    isBarter: false,
   });
 
   function setListingTab(tab: ListingTab) {
@@ -193,6 +193,7 @@ function ListingsContent() {
       city: x.city,
       categoryId: x.category.id,
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
+      isBarter: x.attributes?.isBarter === true,
     });
   }
 
@@ -201,9 +202,10 @@ function ListingsContent() {
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
+      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: editForm.isBarter },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
-    if (editForm.priceRub.trim().length > 0) payload.priceRub = Number(editForm.priceRub);
+    payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
     const res = await apiFetchJson(`/listings/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
@@ -212,6 +214,7 @@ function ListingsContent() {
       setEditingId(null);
       await loadData();
     }
+    return res.ok;
   }
 
   useEffect(() => {
@@ -287,16 +290,11 @@ function ListingsContent() {
 
   return (
     <div className="min-h-screen bg-muted text-foreground antialiased">
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} /> : null}
       {/* Mobile header — Avito-стиль: back / заголовок / поиск. */}
-      <header className="sticky top-0 z-20 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
+      <header className="glass-panel sticky top-0 z-20 md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-muted"
-            aria-label="Назад"
-          >
-            <ArrowLeft size={24} strokeWidth={s} className="shrink-0 text-foreground" aria-hidden />
-          </button>
+          <span className="size-11" aria-hidden />
           <h1 className="text-base font-bold text-foreground">Мои объявления</h1>
           <button
             type="button"
@@ -728,67 +726,6 @@ function ListingsContent() {
                               </div>
                             </div>
 
-                            {editingId === x.id ? (
-                              <div className="border-t border-border bg-card p-4">
-                                <div className="mx-auto max-w-3xl space-y-3">
-                                  <input
-                                    value={editForm.title}
-                                    onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                                    className="h-11 w-full rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:ring-2 focus:[--tw-ring-color:var(--mode-accent-ring)]"
-                                    placeholder="Название"
-                                  />
-                                  <textarea
-                                    value={editForm.description}
-                                    onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                                    className="min-h-24 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:ring-2 focus:[--tw-ring-color:var(--mode-accent-ring)]"
-                                    placeholder="Описание (необязательно, от 10 символов)"
-                                  />
-                                  <div className="grid gap-2 sm:grid-cols-3">
-                                    <input
-                                      value={editForm.city}
-                                      onChange={(e) => setEditForm((p) => ({ ...p, city: e.target.value }))}
-                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
-                                      placeholder="Город"
-                                    />
-                                    <UiSelect
-                                      value={editForm.categoryId}
-                                      onChange={(v) => setEditForm((p) => ({ ...p, categoryId: v }))}
-                                      options={categories.map((c) => ({ value: c.id, label: c.title }))}
-                                      className="h-11 rounded-xl border-border bg-muted/50 px-2 text-sm"
-                                      menuClassName="text-sm"
-                                    />
-                                    <input
-                                      value={editForm.priceRub}
-                                      onChange={(e) =>
-                                        setEditForm((p) => ({ ...p, priceRub: e.target.value.replace(/[^\d]/g, '') }))
-                                      }
-                                      className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
-                                      placeholder="Цена ₽"
-                                    />
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => void saveEdit(x.id)}
-                                      className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition active:scale-[0.99]"
-                                      style={{
-                                        backgroundColor: 'var(--mode-accent)',
-                                        boxShadow: '0 4px 12px var(--mode-accent-ring)',
-                                      }}
-                                    >
-                                      Сохранить
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setEditingId(null)}
-                                      className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/50"
-                                    >
-                                      Отмена
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : null}
                           </li>
                         );
                       })}

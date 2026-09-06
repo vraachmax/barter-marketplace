@@ -68,6 +68,7 @@ import ProfileSidebar from '@/components/profile-sidebar';
 import { UiSelect } from '@/components/ui-select';
 import { listingThumbPromoExtraClass } from '@/lib/listing-card-visuals';
 import { PromoteDialog } from '@/components/promote-dialog';
+import { SupportSheet } from '@/components/support-sheet';
 
 type ListingTab = 'ALL' | 'ACTIVE' | 'ARCHIVED' | 'SOLD';
 
@@ -85,6 +86,7 @@ function formatPromoEndsAt(iso: string) {
 }
 
 export function ProfileContent() {
+  const [supportSheetOpen, setSupportSheetOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [me, setMe] = useState<AuthMe | null>(null);
@@ -284,16 +286,22 @@ export function ProfileContent() {
       {/* Mobile header */}
       <header className="sticky top-0 z-20 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4]"
-          >
-            <ArrowLeft size={24} strokeWidth={s} className="text-[#1a1a1a]" aria-hidden />
-          </button>
+          {showListingsView ? (
+            <Link
+              href="/profile"
+              aria-label="Вернуться в профиль"
+              className="inline-flex size-11 items-center justify-center rounded-lg transition hover:bg-muted"
+            >
+              <ArrowLeft size={24} strokeWidth={s} aria-hidden />
+            </Link>
+          ) : (
+            <span className="size-11" aria-hidden />
+          )}
           <h1 className="text-base font-bold text-[#1a1a1a]">Профиль</h1>
           <button
             type="button"
             onClick={() => router.push('/search')}
+            aria-label="Открыть поиск"
             className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4]"
           >
             <Search size={24} strokeWidth={s} className="text-[#1a1a1a]" aria-hidden />
@@ -558,7 +566,7 @@ export function ProfileContent() {
                 </Link>
 
                 <Link
-                  href="/messages"
+                  href="/profile/orders"
                   className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
                   <ShoppingBag size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
@@ -567,7 +575,7 @@ export function ProfileContent() {
                 </Link>
 
                 <Link
-                  href={`/seller/${me.id}?section=reviews`}
+                  href="/profile/reviews"
                   className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
                   <Star size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
@@ -586,6 +594,7 @@ export function ProfileContent() {
 
                 <button
                   type="button"
+                  onClick={() => setSupportSheetOpen(true)}
                   className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
                 >
                   <Headphones size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
@@ -1187,6 +1196,8 @@ export function ProfileContent() {
           </div>
         </div>
       ) : null}
+
+      <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
 
       {promoteTarget ? (
         <PromoteDialog

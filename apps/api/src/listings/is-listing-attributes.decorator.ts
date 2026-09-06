@@ -12,6 +12,8 @@ function isListingAttributesValue(value: unknown): boolean {
   for (const k of keys) {
     if (k.length > MAX_KEY_LEN || k.trim() !== k) return false;
     const v = (value as Record<string, unknown>)[k];
+    // Exchange is an explicit seller choice, never a truthy string or inferred theme.
+    if (k === 'isBarter' && typeof v !== 'boolean') return false;
     if (v === null || v === undefined) continue;
     const t = typeof v;
     if (t === 'string') {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { resolveAssetUrl } from '@/lib/api';
+import { ListingPhoto } from '@/components/listing-photo';
 
 type Img = { id: string; url: string };
 
@@ -14,11 +15,13 @@ export default function ListingGallery({
   title,
   apiBase,
   placeholder,
+  categoryTitle,
 }: {
   images: Img[];
   title: string;
   apiBase: string;
   placeholder: React.ReactNode;
+  categoryTitle?: string;
 }) {
   const [idx, setIdx] = useState(0);
   const [pullPx, setPullPx] = useState(0);
@@ -26,8 +29,6 @@ export default function ListingGallery({
   const [fullscreen, setFullscreen] = useState(false);
   const startXRef = useRef(0);
   const activePointerRef = useRef<number | null>(null);
-
-  if (!images.length) return <>{placeholder}</>;
 
   const main = images[idx] ?? images[0];
   const n = images.length;
@@ -107,6 +108,8 @@ export default function ListingGallery({
     setPullPx(0);
   }, []);
 
+  if (!images.length) return <>{placeholder}</>;
+
   return (
     <div className="space-y-3">
       <div className="relative overflow-hidden rounded-2xl border border-border bg-muted">
@@ -122,11 +125,10 @@ export default function ListingGallery({
           style={{ touchAction: n > 1 ? 'none' : undefined }}
           aria-label={n > 1 ? 'Потяните фото влево или вправо, чтобы перелистать' : undefined}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={resolveAssetUrl(main.url, apiBase) ?? ''}
+          <ListingPhoto
+            src={resolveAssetUrl(main.url, apiBase)}
             alt={title}
-            draggable={false}
+            categoryTitle={categoryTitle}
             className="listing-thumb-img pointer-events-none h-full w-full object-cover"
             style={{
               transform: `translateX(${pullPx}px)`,
@@ -188,7 +190,8 @@ export default function ListingGallery({
               key={im.id}
               type="button"
               onClick={() => setIdx(i)}
-              className={`shrink-0 overflow-hidden rounded-xl border-2 transition ${
+              aria-label={`Показать фото ${i + 1}`}
+              className={`relative size-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:size-20 ${
                 i === idx ? '' : 'border-border opacity-80 hover:opacity-100'
               }`}
               style={
@@ -200,8 +203,7 @@ export default function ListingGallery({
                   : undefined
               }
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={resolveAssetUrl(im.url, apiBase) ?? ''} alt="" className="h-16 w-16 object-cover sm:h-20 sm:w-20" loading="lazy" />
+              <ListingPhoto src={resolveAssetUrl(im.url, apiBase)} alt="" categoryTitle={categoryTitle} />
             </button>
           ))}
         </div>
@@ -209,6 +211,7 @@ export default function ListingGallery({
 
       {fullscreen ? (
         <FullscreenGallery
+          categoryTitle={categoryTitle}
           images={images}
           title={title}
           apiBase={apiBase}
@@ -221,12 +224,14 @@ export default function ListingGallery({
 }
 
 function FullscreenGallery({
+  categoryTitle,
   images,
   title,
   apiBase,
   initialIdx,
   onClose,
 }: {
+  categoryTitle?: string;
   images: Img[];
   title: string;
   apiBase: string;
@@ -291,12 +296,11 @@ function FullscreenGallery({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={resolveAssetUrl(current.url, apiBase) ?? ''}
+        <ListingPhoto
+          src={resolveAssetUrl(current.url, apiBase)}
           alt={title}
-          className="max-h-full max-w-full rounded-lg object-contain"
-          draggable={false}
+          categoryTitle={categoryTitle}
+          className="object-contain"
         />
         {n > 1 ? (
           <>
@@ -326,12 +330,12 @@ function FullscreenGallery({
             key={im.id}
             type="button"
             onClick={(e) => { e.stopPropagation(); setIdx(i); }}
-            className={`shrink-0 overflow-hidden rounded-lg border-2 transition ${
+            aria-label={`Показать фото ${i + 1}`}
+            className={`relative size-14 shrink-0 overflow-hidden rounded-lg border-2 transition sm:size-16 ${
  i === idx ? 'border-white ring-1 ring-white/40' : 'border-transparent opacity-50 hover:opacity-80'
  }`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={resolveAssetUrl(im.url, apiBase) ?? ''} alt="" className="h-14 w-14 object-cover sm:h-16 sm:w-16" loading="lazy" />
+            <ListingPhoto src={resolveAssetUrl(im.url, apiBase)} alt="" categoryTitle={categoryTitle} />
           </button>
         ))}
       </div>

@@ -399,6 +399,7 @@ export function getListingAttrFieldMeta(key: string): ListingAttrField | undefin
 }
 
 export function getListingAttrLabel(key: string): string {
+  if (key === 'isBarter') return 'Рассматриваю обмен';
   return getListingAttrFieldMeta(key)?.label ?? key.replace(/_/g, ' ');
 }
 

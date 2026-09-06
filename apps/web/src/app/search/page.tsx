@@ -22,7 +22,6 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  ArrowLeft,
   Clock,
   Filter,
   Search as SearchIcon,
@@ -41,6 +40,8 @@ import {
   ListingCardComponent,
   ListingCardSkeleton,
 } from '@/components/listing-card';
+import { CatalogModeToggle, useCatalogMode } from '@/components/catalog-mode-toggle';
+import { assertCatalogMode, catalogErrorMessage } from '@/lib/catalog-mode';
 
 const RECENT_KEY = 'barter:recentSearches';
 const RECENT_MAX = 8;
@@ -66,6 +67,7 @@ const SORT_LABELS: Record<SortMode, string> = {
 };
 
 type ListingsResponse = {
+  appliedMode?: string;
   page: number;
   limit: number;
   total: number;
@@ -133,6 +135,8 @@ function clearRecent(): void {
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const mode = useCatalogMode(searchParams.get('mode'));
+  const city = searchParams.get('city') ?? '';
 
   const initialQ = searchParams.get('q') ?? '';
   const initialSort = (searchParams.get('sort') as SortMode | null) ?? 'relevant';
@@ -152,6 +156,8 @@ function SearchContent() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [results, setResults] = useState<ListingCard[] | null>(null);
   const [loadingResults, setLoadingResults] = useState(false);
+  const [resultsError, setResultsError] = useState('');
+  const [retry, setRetry] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -185,24 +191,34 @@ function SearchContent() {
 
   /* -------------------- результаты -------------------- */
   useEffect(() => {
-    if (!activeQuery && !categoryId) {
+    if (!activeQuery && !categoryId && mode !== 'barter') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults(null);
       return;
     }
     setLoadingResults(true);
+    setResultsError('');
+    const controller = new AbortController();
     const params = new URLSearchParams();
+    params.set('mode', mode);
+    if (city) params.set('city', city);
     if (activeQuery) params.set('q', activeQuery);
     if (categoryId) params.set('categoryId', categoryId);
     if (sort !== 'relevant') params.set('sort', sort);
     if (priceMin) params.set('priceMin', priceMin);
     if (priceMax) params.set('priceMax', priceMax);
     params.set('limit', '40');
-    void apiGetJson<ListingsResponse>(`/listings?${params.toString()}`)
-      .then((data) => setResults(data.items ?? []))
-      .catch(() => setResults([]))
-      .finally(() => setLoadingResults(false));
-  }, [activeQuery, categoryId, sort, priceMin, priceMax]);
+    void apiGetJson<ListingsResponse>(`/listings?${params.toString()}`, { signal: controller.signal })
+      .then((data) => {
+        assertCatalogMode(data, mode);
+        if (!controller.signal.aborted) setResults(data.items ?? []);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) { setResults(null); setResultsError(catalogErrorMessage(error)); }
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoadingResults(false); });
+    return () => controller.abort();
+  }, [activeQuery, categoryId, sort, priceMin, priceMax, city, mode, retry]);
 
   /* -------------------- категории-подсказки локально -------------------- */
   const categorySuggestions = useMemo(
@@ -217,6 +233,8 @@ function SearchContent() {
     setActiveQuery(trimmed);
     if (trimmed) setRecent(saveRecent(trimmed));
     const params = new URLSearchParams();
+    params.set('mode', mode);
+    if (city) params.set('city', city);
     if (trimmed) params.set('q', trimmed);
     if (categoryId) params.set('categoryId', categoryId);
     if (sort !== 'relevant') params.set('sort', sort);
@@ -230,7 +248,7 @@ function SearchContent() {
     setActiveQuery(draftQuery.trim()); // commit-режим без перезагрузки query
   }
 
-  const hasResults = activeQuery.length > 0 || categoryId.length > 0;
+  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || mode === 'barter';
   const selectedCategory = useMemo(
     () => cats.find((c) => c.id === categoryId) ?? null,
     [cats, categoryId],
@@ -245,16 +263,9 @@ function SearchContent() {
   return (
     <div className="min-h-screen bg-muted text-foreground antialiased">
       {/* ===== STICKY HEADER ===== */}
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
+      <header className="glass-panel sticky top-0 z-30 border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2.5">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl transition hover:bg-muted"
-            aria-label="Назад"
-          >
-            <ArrowLeft size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
-          </button>
+          <h1 className="sr-only">Поиск</h1>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -340,6 +351,9 @@ function SearchContent() {
 
       {/* ===== BODY ===== */}
       <main className="mx-auto max-w-3xl px-3 pb-24 pt-4 md:px-4">
+        <div className="mb-4">
+          <CatalogModeToggle mode={mode} syncPreference={false} path="/search" values={{ q: activeQuery, categoryId, sort, priceMin, priceMax, city }} />
+        </div>
         {/* Состояние «нет активного запроса» — empty state */}
         {!hasResults ? (
           <EmptyState
@@ -361,7 +375,11 @@ function SearchContent() {
         ) : null}
 
         {/* Состояние «есть результаты» */}
-        {hasResults ? (
+        {hasResults && resultsError ? <div role="alert" className="rounded-2xl border border-border bg-background p-5 text-sm text-foreground">
+          <p>{resultsError}</p>
+          <button type="button" onClick={() => setRetry((value) => value + 1)} className="mt-3 min-h-11 rounded-full bg-primary px-5 font-semibold text-primary-foreground">Повторить</button>
+        </div> : null}
+        {hasResults && !resultsError ? (
           <ResultsBlock
             query={activeQuery}
             results={results}

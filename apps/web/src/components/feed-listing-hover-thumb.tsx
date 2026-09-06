@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { resolveAssetUrl } from '@/lib/api';
+import { usablePhotoUrls } from '@/lib/listing-placeholder';
+import { ListingPhoto } from '@/components/listing-photo';
 
 type Img = { url: string };
 
@@ -9,6 +11,8 @@ type Props = {
   images?: Img[] | null;
   title: string;
   apiBase: string;
+  categoryTitle?: string;
+  categorySlug?: string;
   /** Обёртка превью (как раньше listing-thumb-wrap …) */
   thumbClassName: string;
   /** Классы для <img> */
@@ -31,6 +35,8 @@ export default function FeedListingHoverThumb({
   images,
   title,
   apiBase,
+  categoryTitle,
+  categorySlug,
   thumbClassName,
   imageClassName,
   thumbStyle,
@@ -38,7 +44,7 @@ export default function FeedListingHoverThumb({
   placeholder,
   badges,
 }: Props) {
-  const list = (images ?? []).filter((im) => im?.url);
+  const list = usablePhotoUrls(images).map((url) => ({ url }));
   const n = list.length;
   const [hoverIdx, setHoverIdx] = useState(0);
   const rafRef = useRef<number | null>(null);
@@ -115,8 +121,7 @@ export default function FeedListingHoverThumb({
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={resolveAssetUrl(current.url, apiBase) ?? ''} alt={title} className={imageClassName} style={imageStyle} loading="lazy" />
+      <ListingPhoto src={resolveAssetUrl(current.url, apiBase)} alt={title} categoryTitle={categoryTitle} categorySlug={categorySlug} className={imageClassName} style={imageStyle} fallback={placeholder} />
       {badges}
       {n > 1 ? (
         <>

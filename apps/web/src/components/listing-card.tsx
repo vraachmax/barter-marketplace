@@ -1,11 +1,12 @@
 'use client';
 
-import { ArrowLeftRight, Camera, Heart } from 'lucide-react';
+import { Camera, MapPin } from 'lucide-react';
 import { TrackedListingLink } from '@/components/tracked-listing-link';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import ListingPlaceholder from '@/components/listing-placeholder';
 import { cn } from '@/lib/utils';
 import type { ListingCard as ListingCardData } from '@/lib/api';
 
@@ -25,13 +26,7 @@ function formatRub(v: number | null | undefined, priceType?: string | null) {
   return suffix ? `${base} ${suffix}` : base;
 }
 
-/** Едва заметная цветная подсветка краёв для промо-карточек (Avito 2026).
- *
- * Промо-бейджи показываются только в режиме Маркет (см. CSS-фильтр
- * `html[data-mode="barter"] [data-promo-badge="true"] { display:none }`),
- * поэтому ring-цвет привязан к нейтральной палитре: TOP/VIP — мягкий акцент
- * primary-палитры бренда, XL — чуть ярче. Мы НЕ используем `--mode-accent`
- * здесь, так как оранжевая подсветка в Маркете была бы палитра-лик. */
+/** Промо-маркировка и нейтральная подсветка сохраняются в обоих режимах. */
 function promoRing(promo: ListingCardData['promoType']): string {
   switch (promo) {
     case 'TOP':
@@ -40,7 +35,7 @@ function promoRing(promo: ListingCardData['promoType']): string {
     case 'XL':
       return 'ring-primary/40';
     default:
-      return 'ring-foreground/10';
+      return 'ring-0';
   }
 }
 
@@ -56,12 +51,12 @@ type Props = {
 };
 
 /**
- * Карточка объявления — Avito-стиль pixel-for-pixel 2026.
+ * Общая карточка объявления в выбранном дизайне каталога.
  * Используется в ленте главной, на /listings, в избранном и в кабинете продавца.
  *
  * Структура (см. `docs/design-system/project/ui_kits/web/ListingCard.jsx`):
  *  ┌──────────────────────┐
- *  │  thumb 1:1 / 140px   │  ← бейдж промо TL · сердце TR · точки фото
+ *  │  thumb 1:1 / 140px   │  ← бейдж промо TL · точки фото
  *  ├──────────────────────┤
  *  │  16/700  цена        │
  *  │  13/400  заголовок   │
@@ -74,8 +69,8 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
   const useSquareThumb = thumbHeight === undefined;
   const thumbStyleProp = useSquareThumb ? undefined : { height: thumbHeight };
   const thumbClassName = useSquareThumb
-    ? 'relative w-full aspect-square overflow-hidden bg-muted'
-    : 'relative w-full overflow-hidden bg-muted';
+    ? 'relative w-full aspect-square overflow-hidden rounded-2xl bg-muted'
+    : 'relative w-full overflow-hidden rounded-2xl bg-muted';
 
   return (
     <TrackedListingLink
@@ -86,7 +81,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
       <Card
         size="sm"
         className={cn(
-          'group/card-listing gap-0 rounded-xl py-0 shadow-none transition-shadow hover:shadow-md',
+          'group/card-listing gap-0 rounded-2xl bg-transparent py-0 shadow-none data-[size=sm]:gap-0 data-[size=sm]:py-0',
           promoRingClass,
           className,
         )}
@@ -95,20 +90,16 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
           images={data.images}
           title={data.title}
           apiBase={apiBase}
+          categoryTitle={data.category.title}
+          categorySlug={data.category.slug}
           thumbClassName={thumbClassName}
           imageClassName="w-full h-full object-cover"
           thumbStyle={thumbStyleProp}
           imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          placeholder={
-            <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground/60">
-              <Camera size={32} strokeWidth={1.4} aria-hidden />
-            </div>
-          }
+          placeholder={<ListingPlaceholder categoryTitle={data.category.title} categorySlug={data.category.slug} />}
           badges={
             <>
-              {/* Промо-бейджи TOP/XL/VIP — ТОЛЬКО в режиме Маркет.
-                  В режиме Бартер платное продвижение не предусмотрено и
-                  скрывается CSS-правилом `html[data-mode="barter"] [data-promo-badge="true"] { display:none }`. */}
+              {/* Продвижение обозначается независимо от режима каталога. */}
               {data.promoType === 'TOP' || data.isBoosted ? (
                 <Badge
                   data-promo-badge="true"
@@ -131,56 +122,24 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
                   {photoCount}
                 </span>
               ) : null}
-              {/* Swap-badge — реф (handoff-bundle/home.html). Показывается
-                  только в режиме Бартер: чёрная пилюля внизу-слева превью.
-                  Виден через `data-barter-only`, скрытие в Маркете — через
-                  CSS-правило `html:not([data-mode="barter"]) [data-barter-only]`. */}
-              <span data-barter-only="true" className="swap-badge">
-                <ArrowLeftRight size={11} strokeWidth={2} aria-hidden />
-                Обмен
-              </span>
-              <button
-                type="button"
-                aria-label="В избранное"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                className="absolute right-2 top-2 z-[2] grid size-7 place-items-center rounded-full bg-background/90 text-muted-foreground backdrop-blur transition-colors hover:text-foreground"
-              >
-                <Heart size={14} strokeWidth={1.8} aria-hidden />
-              </button>
+              {/* Do not infer exchange availability from a cosmetic theme.
+                  Favorites remain available on the listing detail page until
+                  the feed has a real, synchronized favorite control. */}
             </>
           }
         />
-        <div className="flex flex-col gap-1 px-3 pb-3 pt-2.5">
-          <div className="text-[16px] leading-tight font-bold tracking-tight text-foreground">
+        <div className="flex flex-col gap-1 px-0.5 pb-1 pt-2.5">
+          {data.isBarter ? <span className="text-xs font-medium text-primary">Возможен обмен</span> : null}
+          <div className="text-[18px] leading-tight font-bold md:text-xl tracking-tight text-foreground">
             {formatRub(data.priceRub, data.priceType)}
           </div>
-          <div className="line-clamp-2 text-[13px] leading-snug text-foreground/85">
+          <div className="line-clamp-2 text-[14px] leading-snug text-foreground md:text-[15px]">
             {data.title}
           </div>
-          <div className="mt-1 truncate text-[12px] text-muted-foreground">
-            {data.city}
-            {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}
+          <div className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
+            <MapPin size={14} className="shrink-0" aria-hidden /><span className="truncate">{data.city}
+            {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}</span>
           </div>
-          {/* Бартер-only: «Хочу: …» строка + CTA «Хочу обменять» (реф).
-              Скрывается в Маркете тем же data-barter-only фильтром. */}
-          <div data-barter-only="true" className="want-line mt-1.5">
-            <ArrowLeftRight size={12} strokeWidth={2} aria-hidden />
-            <span className="truncate">Хочу: интересный обмен</span>
-          </div>
-          <button
-            type="button"
-            data-barter-only="true"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className="btn-swap"
-          >
-            Хочу обменять
-          </button>
         </div>
       </Card>
     </TrackedListingLink>

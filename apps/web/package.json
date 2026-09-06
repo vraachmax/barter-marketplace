@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "icons:strip-bg": "node scripts/strip-icon-background.mjs"
   },
   "dependencies": {

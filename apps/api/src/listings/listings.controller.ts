@@ -22,6 +22,10 @@ import {
   UpdateListingDto,
   UpdateListingStatusDto,
 } from './dto';
+import {
+  ListListingsQueryDto,
+  normalizeListingsQuery,
+} from './list-listings-query.dto';
 import { ListingsService } from './listings.service';
 import { assertListingImage, MediaStorageService } from '../storage/media-storage.service';
 
@@ -59,38 +63,10 @@ export class ListingsController {
   }
 
   @Get()
-  list(
-    @Query('q') q?: string,
-    @Query('categoryId') categoryId?: string,
-    @Query('city') city?: string,
-    @Query('sort') sort?: 'relevant' | 'new' | 'cheap' | 'expensive' | 'nearby',
-    @Query('lat') lat?: string,
-    @Query('lon') lon?: string,
-    @Query('radiusKm') radiusKm?: string,
-    @Query('priceMin') priceMin?: string,
-    @Query('priceMax') priceMax?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const min = priceMin ? Number(priceMin) : undefined;
-    const max = priceMax ? Number(priceMax) : undefined;
-    const latN = lat !== undefined && lat !== '' ? Number(lat) : undefined;
-    const lonN = lon !== undefined && lon !== '' ? Number(lon) : undefined;
-    const radN =
-      radiusKm !== undefined && radiusKm !== '' ? Number(radiusKm) : undefined;
-    return this.listings.list({
-      q,
-      categoryId,
-      city,
-      sort,
-      lat: Number.isFinite(latN) ? latN : undefined,
-      lon: Number.isFinite(lonN) ? lonN : undefined,
-      radiusKm: Number.isFinite(radN) ? radN : undefined,
-      priceMin: Number.isFinite(min) ? min : undefined,
-      priceMax: Number.isFinite(max) ? max : undefined,
-      page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
-    });
+  async list(@Query() query: ListListingsQueryDto) {
+    const params = normalizeListingsQuery(query);
+    const result = await this.listings.list(params);
+    return { ...result, appliedMode: params.mode ?? 'market' };
   }
 
   @UseGuards(AuthGuard('jwt'))

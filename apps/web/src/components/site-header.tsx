@@ -10,7 +10,6 @@ import {
   Heart,
   LayoutGrid,
   LogOut,
-  MapPin,
   MessageCircle,
   Package,
   Plus,
@@ -25,6 +24,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { MegaMenu } from '@/components/mega-menu';
+import { SupportSheet } from '@/components/support-sheet';
 import { ThemeQuickToggle } from '@/components/theme-quick-toggle';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,10 +51,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
  * Brand colors come from `--brand-primary` (#00AAFF) via the @theme layer
  * (`bg-primary`, `text-primary`, etc.) — no hardcoded hex.
  */
-export function SiteHeader({ children }: { children?: ReactNode }) {
+export function SiteHeader({ children, regionControl }: { children?: ReactNode; regionControl?: ReactNode }) {
   const { ready, user, logout } = useAuth();
   const router = useRouter();
   const [megaOpen, setMegaOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   const closeMega = useCallback(() => setMegaOpen(false), []);
 
@@ -78,20 +79,14 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
 
   return (
     <>
-      <header className="sticky top-0 z-[100] bg-background border-b border-border">
+      <header className="glass-panel sticky top-0 z-[100] border-b border-border">
         {/* ── Top utility bar — desktop only ─────────────────────────────── */}
         <div className="hidden border-b border-border/60 md:block">
           <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">
-            <nav className="flex items-center gap-5">
-              <button type="button" className={topLinkClass}>
-                Для бизнеса <ChevronDown size={13} strokeWidth={1.8} className="opacity-60" />
-              </button>
-              <span className={topLinkClass}>Карьера в Бартере</span>
-              <span className={topLinkClass}>Помощь</span>
-              <button type="button" className={topLinkClass}>
-                Каталоги <ChevronDown size={13} strokeWidth={1.8} className="opacity-60" />
-              </button>
-              <span className={topLinkClass}>#яПомогаю</span>
+            <nav className="flex items-center gap-5" aria-label="Сервисы">
+              <Link href="/pricing" className={topLinkClass}>Тарифы</Link>
+              <button type="button" onClick={() => setSupportOpen(true)} className={topLinkClass}>Помощь</button>
+              <button type="button" onClick={() => setMegaOpen(true)} className={topLinkClass}>Категории</button>
             </nav>
 
             <div className="flex items-center gap-5">
@@ -225,16 +220,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
           {/* Search — outer 2px primary frame; the inner input + Найти button live in `children` (page.tsx) */}
           {children}
 
-          {/* Region selector — Avito pin + city */}
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-11 shrink-0 gap-1.5 px-3 text-[15px] font-normal text-foreground hover:bg-muted"
-          >
-            <MapPin size={16} strokeWidth={1.8} aria-hidden />
-            <span className="hidden whitespace-nowrap lg:inline">Москва</span>
-            <span className="whitespace-nowrap lg:hidden">Регион</span>
-          </Button>
+          {regionControl ?? <Link href="/search" className="rounded-full px-3 py-3 text-sm text-muted-foreground hover:bg-muted">Город и фильтры</Link>}
         </div>
 
         {/* ── Mobile row ─────────────────────────────────────────────────── */}
@@ -266,6 +252,7 @@ export function SiteHeader({ children }: { children?: ReactNode }) {
         </div>
       </header>
 
+      <SupportSheet open={supportOpen} onClose={() => setSupportOpen(false)} />
       <MegaMenu open={megaOpen} onClose={closeMega} />
     </>
   );

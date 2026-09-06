@@ -25,21 +25,23 @@ Build a marketplace better than Avito: reliable mechanics, high trust, and clean
 6. Update context docs with what changed.
 
 ## Current Priorities (Ordered)
-1. Seller Cabinet expansion:
-   - privacy settings
-   - security settings (password/session basics)
-   - promotions history
-2. Chat quality polish:
-   - message composer/attachments visual pass
-   - robust read/delivery states in all chat surfaces
-3. Mobile parity for key pages:
-   - `/listing/[id]`
-   - `/messages`
-   - `/profile`
-4. Trust & safety baseline:
-   - reports/complaints
-   - anti-spam limits
-   - verification flags
+
+Owner decision, 2026-09-05. See `docs/PRODUCT_VISION.md` for acceptance gates.
+
+1. Functional integrity: audit core journeys, remove misleading/no-op controls,
+   fix publication, listing details, favorites and chat states on mobile/desktop.
+2. Search correctness: filters, ordering, pagination, empty/error states,
+   then measured relevance improvements on a fixed Russian query set.
+3. Real barter mechanics: exchange preferences, mutual matching, structured
+   proposals and lifecycle; useful saved searches and explainable matches.
+4. Trust, usability and retention: reports, anti-spam, post-deal reputation,
+   performance and accessible mobile interactions.
+5. External integrations, only when Maxim explicitly resumes them.
+
+**Deferred:** Yandex ID, Yandex Maps and payment providers including YooKassa.
+Maxim has no Yandex access yet. Do not request keys or treat them as blockers.
+Preserve the disabled OAuth foundation and existing local authentication.
+Stability and security remain release requirements throughout, not a later phase.
 
 ## Definition of Done (for each task)
 - Works on desktop + mobile.

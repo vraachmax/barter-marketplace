@@ -11,6 +11,8 @@ export function HomePreferenceCookieSync({ city, categoryId }: Props) {
   useEffect(() => {
     if (city.trim()) {
       document.cookie = `barter_pref_city=${encodeURIComponent(city.trim())}; path=/; max-age=15552000; samesite=lax`;
+    } else {
+      document.cookie = 'barter_pref_city=; path=/; max-age=0; samesite=lax';
     }
     if (categoryId.trim()) {
       document.cookie = `barter_pref_category=${encodeURIComponent(categoryId.trim())}; path=/; max-age=15552000; samesite=lax`;

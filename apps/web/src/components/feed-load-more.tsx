@@ -1,140 +1,75 @@
 'use client';
 
-import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import { resolveAssetUrl, type ListingCard } from '@/lib/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { apiGetJson, type ListingCard } from '@/lib/api';
+import { ListingCardComponent } from '@/components/listing-card';
+import { assertCatalogMode, type CatalogMode } from '@/lib/catalog-mode';
 
 type Props = {
+  mode?: CatalogMode;
   initialPage: number;
+  initialIds?: string[];
   total: number;
   limit: number;
   basePath: string;
   apiBase: string;
 };
 
-const PRICE_TYPE_SUFFIX: Record<string, string> = {
-  per_day: 'за сутки',
-  per_hour: 'в час',
-  per_service: 'за услугу',
-  per_sqm: 'за м²',
-  per_month: 'в месяц',
-  per_shift: 'за смену',
-};
-
-function formatPrice(v: number | null, priceType?: string | null) {
-  if (v == null) return 'Цена не указана';
-  const base = `${v.toLocaleString('ru-RU')} ₽`;
-  const suffix = priceType ? PRICE_TYPE_SUFFIX[priceType] : undefined;
-  return suffix ? `${base} ${suffix}` : base;
-}
-
-function timeAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(ms / 60_000);
-  if (mins < 1) return 'только что';
-  if (mins < 60) return `${mins} мин. назад`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} ч. назад`;
-  const days = Math.floor(hrs / 24);
-  if (days === 1) return 'вчера';
-  if (days < 7) return `${days} дн. назад`;
-  return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-}
-
-export function FeedLoadMore({ initialPage, total, limit, basePath, apiBase }: Props) {
+export function FeedLoadMore({ mode = 'market', initialPage, initialIds = [], total, limit, basePath, apiBase }: Props) {
   const [extra, setExtra] = useState<ListingCard[]>([]);
   const [page, setPage] = useState(initialPage);
-  const [isPending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState(false);
   const [done, setDone] = useState(initialPage * limit >= total);
+  const seen = useRef(new Set(initialIds));
+  const inFlight = useRef(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const loadMore = useCallback(() => {
-    if (isPending || done) return;
+  const loadMore = useCallback(async () => {
+    if (inFlight.current || done) return;
+    inFlight.current = true;
+    setPending(true);
+    setError(false);
     const nextPage = page + 1;
-    startTransition(async () => {
-      try {
-        const sep = basePath.includes('?') ? '&' : '?';
-        const res = await fetch(`${basePath}${sep}page=${nextPage}`);
-        if (!res.ok) { setDone(true); return; }
-        const data = await res.json();
-        const items: ListingCard[] = data.items ?? [];
-        if (items.length === 0) { setDone(true); return; }
-        setExtra((prev) => [...prev, ...items]);
-        setPage(nextPage);
-        if (nextPage * limit >= (data.total ?? total)) setDone(true);
-      } catch {
-        setDone(true);
-      }
-    });
-  }, [isPending, done, page, basePath, limit, total, startTransition]);
+    try {
+      const sep = basePath.includes('?') ? '&' : '?';
+      const data = await apiGetJson<{ appliedMode?: string; items: ListingCard[]; total: number }>(`${basePath}${sep}page=${nextPage}`);
+      assertCatalogMode(data, mode);
+      if (!Array.isArray(data.items)) throw new Error('Invalid listing response');
+      const items = data.items.filter((item) => {
+        if (!item?.id || seen.current.has(item.id)) return false;
+        seen.current.add(item.id);
+        return true;
+      });
+      setExtra((prev) => [...prev, ...items]);
+      setPage(nextPage);
+      setDone(data.items.length === 0 || nextPage * limit >= (data.total ?? total));
+    } catch {
+      setError(true);
+    } finally {
+      inFlight.current = false;
+      setPending(false);
+    }
+  }, [done, page, basePath, limit, total, mode]);
 
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el || done) return;
+    if (!el || done || error || pending) return;
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0]?.isIntersecting) loadMore(); },
-      { rootMargin: '600px' },
+      (entries) => { if (entries[0]?.isIntersecting) void loadMore(); },
+      { rootMargin: '300px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [done, loadMore]);
+  }, [done, error, pending, loadMore]);
 
-  return (
-    <>
-      {extra.map((x) => (
-        <Link
-          key={x.id}
-          href={`/listing/${x.id}`}
-          className="group flex gap-2.5 rounded-2xl border border-border bg-card p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.18)] md:gap-3 md:p-3.5"
-        >
-          <div className="listing-thumb-wrap relative h-[5.5rem] w-28 flex-none overflow-hidden rounded-xl border border-border md:h-24 md:w-32">
-            {x.images && x.images.length > 0 ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={resolveAssetUrl(x.images[0].url, apiBase) ?? ''}
-                  alt={x.title}
-                  className="listing-thumb-img h-full w-full object-cover"
-                  loading="lazy"
-                />
-                {x.images.length > 2 ? (
-                  <span className="pointer-events-none absolute right-1.5 top-1.5 z-[3] rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white backdrop-blur-sm">
-                    {x.images.length} фото
-                  </span>
-                ) : null}
-              </>
-            ) : (
-              <div className="listing-placeholder-surface flex h-full w-full items-center justify-center text-[10px] font-semibold opacity-60">
-                Нет фото
-              </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="line-clamp-2 text-[14px] font-semibold leading-snug tracking-tight text-foreground group-hover:text-primary group-hover:underline md:text-[15px]">
-              {x.title}
-            </div>
-            <div className="mt-1.5 text-base font-bold tabular-nums tracking-tight text-foreground md:text-lg">
-              {formatPrice(x.priceRub, x.priceType)}
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-              <span>{x.city}</span>
-              <span className="text-foreground">·</span>
-              <span>{x.category.title}</span>
-              <span className="text-foreground">·</span>
-              <span className="text-muted-foreground">{timeAgo(x.createdAt)}</span>
-            </div>
-          </div>
-        </Link>
-      ))}
-      {!done ? (
-        <div ref={sentinelRef} className="col-span-full flex justify-center py-6">
-          {isPending ? (
-            <span
-              className="inline-block size-6 animate-spin rounded-full border-2 border-primary/30 border-t-transparent"
-            />
-          ) : null}
-        </div>
-      ) : null}
-    </>
-  );
+  return <>
+    {extra.map((item) => <ListingCardComponent key={item.id} data={item} apiBase={apiBase} />)}
+    {!done ? <div ref={sentinelRef} className="col-span-full flex flex-col items-center gap-3 py-6" aria-live="polite">
+      {error ? <p role="alert" className="text-sm text-muted-foreground">Не удалось загрузить ещё объявления. Попробуйте снова.</p> : null}
+      <button type="button" disabled={pending} onClick={() => void loadMore()} className="glass-panel min-h-11 rounded-full border border-border px-6 text-sm font-medium text-foreground disabled:opacity-60">
+        {pending ? 'Загружаем…' : error ? 'Повторить загрузку' : 'Показать ещё'}
+      </button>
+    </div> : null}
+  </>;
 }
