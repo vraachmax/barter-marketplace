@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { BARTER_CATEGORY_SLUGS, categoryAllowsBarter } from '../categories/barter-policy';
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
 import {
@@ -482,6 +483,13 @@ export class ListingsService {
   }
 
   async create(userId: string, dto: CreateListingDto) {
+    const category = await this.prisma.category.findUnique({
+      where: { id: dto.categoryId }, select: { slug: true },
+    });
+    if (!category) throw new NotFoundException('category_not_found');
+    if (dto.attributes?.isBarter === true && !categoryAllowsBarter(category.slug)) {
+      throw new BadRequestException('barter_not_available_for_category');
+    }
     await this.assertListingDailyLimit(userId);
     await this.assertActiveListingsLimit(userId);
     await this.assertNotDuplicateListingText(dto.title, dto.description);
@@ -692,7 +700,7 @@ export class ListingsService {
     const where: Prisma.ListingWhereInput = {
       status: 'ACTIVE',
       ...(params.mode === 'barter'
-        ? { attributes: { path: ['isBarter'], equals: true } }
+        ? { attributes: { path: ['isBarter'], equals: true }, category: { slug: { in: [...BARTER_CATEGORY_SLUGS] } } }
         : {}),
     };
     if (params.categoryId) where.categoryId = params.categoryId;
@@ -1240,6 +1248,8 @@ export class ListingsService {
         title: true,
         description: true,
         status: true,
+        categoryId: true,
+        attributes: true,
       },
     });
     if (!current) throw new NotFoundException('listing_not_found');
@@ -1247,12 +1257,13 @@ export class ListingsService {
       throw new ForbiddenException('listing_blocked');
     }
 
-    if (dto.categoryId) {
-      const category = await this.prisma.category.findUnique({
-        where: { id: dto.categoryId },
-        select: { id: true },
-      });
-      if (!category) throw new NotFoundException('category_not_found');
+    const category = await this.prisma.category.findUnique({
+      where: { id: dto.categoryId ?? current.categoryId }, select: { slug: true },
+    });
+    if (!category) throw new NotFoundException('category_not_found');
+    const barterAllowed = categoryAllowsBarter(category.slug);
+    if (!barterAllowed && dto.attributes?.isBarter === true) {
+      throw new BadRequestException('barter_not_available_for_category');
     }
 
     const nextTitle = dto.title ?? current.title;
@@ -1271,6 +1282,12 @@ export class ListingsService {
     if (typeof dto.priceRub === 'number') data.priceRub = dto.priceRub;
     if (dto.attributes !== undefined) {
       data.attributes = dto.attributes as Prisma.InputJsonValue;
+    }
+    // Category changes must also clear an old opt-in when attributes are omitted.
+    if (!barterAllowed && dto.attributes === undefined && current.attributes &&
+      typeof current.attributes === 'object' && !Array.isArray(current.attributes) &&
+      current.attributes.isBarter === true) {
+      data.attributes = { ...current.attributes, isBarter: false };
     }
 
     if (dto.publishFromModeration === true) {
