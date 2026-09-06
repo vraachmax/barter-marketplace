@@ -296,7 +296,7 @@ export class ListingsService {
           },
         ],
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
       take: Math.min(48, limit + 24),
       select: this.selectCard(now),
     });
@@ -737,9 +737,10 @@ export class ListingsService {
       return this.listNearbyPage({ where, geo, page, limit, skip, now, vipStrip, vipIds });
     }
 
-    // Until the index carries exchange eligibility, use the database filter
-    // before counting/pagination. Do not filter an already paginated Meili page.
-    if (params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled()) {
+    // Keep explicit sorts on the authoritative database path: index relevance
+    // and post-page promotion merging must not change their order or page size.
+    // Barter also requires eligibility filtering before counting/pagination.
+    if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled()) {
       const viaMeili = await this.tryListViaMeilisearch({
         q: qTrim,
         categoryId: params.categoryId,
@@ -760,43 +761,31 @@ export class ListingsService {
       }
     }
 
-    const orderBy =
-      sort === 'cheap'
-        ? [{ priceRub: 'asc' as const }, { createdAt: 'desc' as const }]
-        : sort === 'expensive'
-          ? [{ priceRub: 'desc' as const }, { createdAt: 'desc' as const }]
-          : [{ createdAt: 'desc' as const }];
-
-    const mergePriceNewPage = async () => {
-      const take = Math.min(skip + limit + 80, 400);
-      const [pool, total] = await Promise.all([
+    if (sort === 'new' || sort === 'cheap' || sort === 'expensive') {
+      // Explicit sorting must not be reordered by paid boosts. Exclude the
+      // separate VIP strip before both pagination and counting.
+      const mainWhere: Prisma.ListingWhereInput = vipIds.size
+        ? { AND: [where, { id: { notIn: [...vipIds] } }] }
+        : where;
+      const orderBy: Prisma.ListingOrderByWithRelationInput[] = [];
+      if (sort !== 'new') {
+        orderBy.push({
+          priceRub: { sort: sort === 'cheap' ? 'asc' : 'desc', nulls: 'last' },
+        });
+      }
+      orderBy.push({ createdAt: 'desc' }, { id: 'asc' });
+      const [rows, total] = await Promise.all([
         this.prisma.listing.findMany({
-          where,
+          where: mainWhere,
           orderBy,
-          skip: 0,
-          take,
+          skip,
+          take: limit,
           select: this.selectCard(now),
         }),
-        this.prisma.listing.count({ where }),
+        this.prisma.listing.count({ where: mainWhere }),
       ]);
-      const nonVip = pool.filter((x) => !vipIds.has(x.id));
-      const scored: ScoredRow<(typeof pool)[number]>[] = nonVip.map((raw) => ({ raw, finalScore: 0 }));
-      const organic = scored.filter((s) => !isBoostPromotionType(s.raw.promotions[0]?.type));
-      const boosted = scored.filter((s) => isBoostPromotionType(s.raw.promotions[0]?.type));
-      const merged = mergeOrganicAndBoostFeeds(organic, boosted, boostSlotsPerPage);
-      const pageSlice = slicePageWithBoostCap(
-        merged,
-        skip,
-        limit,
-        boostSlotsPerPage,
-        (raw) => isBoostPromotionType(raw.promotions[0]?.type),
-      );
-      const items = pageSlice.map((s) => this.toFeedCard(s.raw));
+      const items = rows.map((row) => this.toFeedCard(row));
       return { page, limit, total, vipStrip, items };
-    };
-
-    if (sort === 'new' || sort === 'cheap' || sort === 'expensive') {
-      return mergePriceNewPage();
     }
 
     if (sort === 'relevant') {
