@@ -1,18 +1,9 @@
 'use client';
 
-import { useId, useRef, useState, useSyncExternalStore } from 'react';
+import { useId, useRef, useState } from 'react';
 import { MapPin, SlidersHorizontal, X } from 'lucide-react';
 import type { Category } from '@/lib/api';
 import { ThemeQuickToggle } from '@/components/theme-quick-toggle';
-
-function subscribeMode(listener: () => void) {
-  window.addEventListener('barter:mode-change', listener);
-  window.addEventListener('storage', listener);
-  return () => {
-    window.removeEventListener('barter:mode-change', listener);
-    window.removeEventListener('storage', listener);
-  };
-}
 
 export function CatalogControls({ categories, cities, values, categoryId, trigger }: {
   categories: Category[];
@@ -23,19 +14,11 @@ export function CatalogControls({ categories, cities, values, categoryId, trigge
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [error, setError] = useState('');
-  const mode = useSyncExternalStore(subscribeMode,
-    () => document.documentElement.dataset.mode ?? 'barter', () => 'barter');
   const isCity = trigger === 'city';
   const title = isCity ? 'Где искать' : 'Фильтры';
   const instanceId = useId();
   const id = `catalog-${trigger}-${instanceId}`;
   const inputClass = 'mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-primary';
-
-  function changeMode(next: string) {
-    try { localStorage.setItem('barter_mode', next); } catch { /* Current session still works. */ }
-    document.documentElement.setAttribute('data-mode', next);
-    window.dispatchEvent(new CustomEvent('barter:mode-change', { detail: next }));
-  }
 
   return <>
     <button type="button" onClick={() => { setError(''); dialog.current?.showModal(); }}
@@ -92,11 +75,7 @@ export function CatalogControls({ categories, cities, values, categoryId, trigge
         </form>
         {!isCity ? <div className="mt-6 space-y-3 border-t border-border pt-4">
           <div className="flex items-center justify-between"><span className="text-sm font-medium">Светлая / тёмная тема</span><ThemeQuickToggle /></div>
-          <fieldset><legend className="mb-2 text-sm font-medium">Цвет оформления</legend>
-            <div className="glass-panel flex rounded-full p-1">
-              {([['barter', 'Оранжевый'], ['market', 'Синий']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={mode === value} onClick={() => changeMode(value)} className="min-h-11 flex-1 rounded-full text-sm text-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground">{label}</button>)}
-            </div>
-          </fieldset>
+          <p className="text-xs text-muted-foreground">Синий акцент: Маркет. Оранжевый: Бартер. Режим меняется над каталогом.</p>
         </div> : null}
       </div>
     </dialog>

@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiGetJson, type ListingCard } from '@/lib/api';
 import { ListingCardComponent } from '@/components/listing-card';
+import { assertCatalogMode, type CatalogMode } from '@/lib/catalog-mode';
 
 type Props = {
+  mode?: CatalogMode;
   initialPage: number;
   initialIds?: string[];
   total: number;
@@ -13,7 +15,7 @@ type Props = {
   apiBase: string;
 };
 
-export function FeedLoadMore({ initialPage, initialIds = [], total, limit, basePath, apiBase }: Props) {
+export function FeedLoadMore({ mode = 'market', initialPage, initialIds = [], total, limit, basePath, apiBase }: Props) {
   const [extra, setExtra] = useState<ListingCard[]>([]);
   const [page, setPage] = useState(initialPage);
   const [pending, setPending] = useState(false);
@@ -31,7 +33,8 @@ export function FeedLoadMore({ initialPage, initialIds = [], total, limit, baseP
     const nextPage = page + 1;
     try {
       const sep = basePath.includes('?') ? '&' : '?';
-      const data = await apiGetJson<{ items: ListingCard[]; total: number }>(`${basePath}${sep}page=${nextPage}`);
+      const data = await apiGetJson<{ appliedMode?: string; items: ListingCard[]; total: number }>(`${basePath}${sep}page=${nextPage}`);
+      assertCatalogMode(data, mode);
       if (!Array.isArray(data.items)) throw new Error('Invalid listing response');
       const items = data.items.filter((item) => {
         if (!item?.id || seen.current.has(item.id)) return false;
@@ -47,7 +50,7 @@ export function FeedLoadMore({ initialPage, initialIds = [], total, limit, baseP
       inFlight.current = false;
       setPending(false);
     }
-  }, [done, page, basePath, limit, total]);
+  }, [done, page, basePath, limit, total, mode]);
 
   useEffect(() => {
     const el = sentinelRef.current;

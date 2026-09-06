@@ -82,7 +82,7 @@ export default function RootLayout({
             мобильная шапка белая для обоих режимов. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=localStorage.getItem('barter_mode');if(m!=='barter'&&m!=='market')m='barter';document.documentElement.setAttribute('data-mode',m);var meta=document.querySelector('meta[name="theme-color"]:not([media])');if(!meta){meta=document.createElement('meta');meta.name='theme-color';document.head.appendChild(meta);}meta.content='#FFFFFF';}catch(e){}})();`,
+            __html: `(function(){try{var m=new URLSearchParams(location.search).get('mode');if(m===null){var c=document.cookie.split(';').map(function(x){return x.trim()}).find(function(x){return x.indexOf('barter_catalog_mode=')===0});m=c?c.split('=')[1]:'market'}if(m!=='barter')m='market';document.documentElement.setAttribute('data-mode',m);}catch(e){}})();`,
           }}
         />
       </head>

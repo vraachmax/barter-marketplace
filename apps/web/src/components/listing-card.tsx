@@ -6,6 +6,7 @@ import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import ListingPlaceholder from '@/components/listing-placeholder';
 import { cn } from '@/lib/utils';
 import type { ListingCard as ListingCardData } from '@/lib/api';
 
@@ -25,13 +26,7 @@ function formatRub(v: number | null | undefined, priceType?: string | null) {
   return suffix ? `${base} ${suffix}` : base;
 }
 
-/** Едва заметная цветная подсветка краёв для промо-карточек (Avito 2026).
- *
- * Промо-бейджи показываются только в режиме Маркет (см. CSS-фильтр
- * `html[data-mode="barter"] [data-promo-badge="true"] { display:none }`),
- * поэтому ring-цвет привязан к нейтральной палитре: TOP/VIP — мягкий акцент
- * primary-палитры бренда, XL — чуть ярче. Мы НЕ используем `--mode-accent`
- * здесь, так как оранжевая подсветка в Маркете была бы палитра-лик. */
+/** Промо-маркировка и нейтральная подсветка сохраняются в обоих режимах. */
 function promoRing(promo: ListingCardData['promoType']): string {
   switch (promo) {
     case 'TOP':
@@ -56,7 +51,7 @@ type Props = {
 };
 
 /**
- * Карточка объявления — Avito-стиль pixel-for-pixel 2026.
+ * Общая карточка объявления в выбранном дизайне каталога.
  * Используется в ленте главной, на /listings, в избранном и в кабинете продавца.
  *
  * Структура (см. `docs/design-system/project/ui_kits/web/ListingCard.jsx`):
@@ -95,20 +90,16 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
           images={data.images}
           title={data.title}
           apiBase={apiBase}
+          categoryTitle={data.category.title}
+          categorySlug={data.category.slug}
           thumbClassName={thumbClassName}
           imageClassName="w-full h-full object-cover"
           thumbStyle={thumbStyleProp}
           imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          placeholder={
-            <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground/60">
-              <Camera size={32} strokeWidth={1.4} aria-hidden />
-            </div>
-          }
+          placeholder={<ListingPlaceholder categoryTitle={data.category.title} categorySlug={data.category.slug} />}
           badges={
             <>
-              {/* Промо-бейджи TOP/XL/VIP — ТОЛЬКО в режиме Маркет.
-                  В режиме Бартер платное продвижение не предусмотрено и
-                  скрывается CSS-правилом `html[data-mode="barter"] [data-promo-badge="true"] { display:none }`. */}
+              {/* Продвижение обозначается независимо от режима каталога. */}
               {data.promoType === 'TOP' || data.isBoosted ? (
                 <Badge
                   data-promo-badge="true"
@@ -138,6 +129,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
           }
         />
         <div className="flex flex-col gap-1 px-0.5 pb-1 pt-2.5">
+          {data.isBarter ? <span className="text-xs font-medium text-primary">Возможен обмен</span> : null}
           <div className="text-[18px] leading-tight font-bold md:text-xl tracking-tight text-foreground">
             {formatRub(data.priceRub, data.priceType)}
           </div>

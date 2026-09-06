@@ -12,9 +12,12 @@ import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
+import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
+import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
 import { Heart, LayoutGrid, Search, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
+  appliedMode?: CatalogMode;
   page: number;
   limit: number;
   total: number;
@@ -46,6 +49,7 @@ const getRussianCities = cache(async () => {
 });
 
 type HomeSearchParams = {
+  mode?: CatalogMode;
   q?: string;
   city?: string;
   sort?: 'relevant' | 'new' | 'cheap' | 'expensive' | 'nearby';
@@ -115,6 +119,7 @@ function applyClientFiltersAndSort(
 
 function buildListingsPath(params: HomeSearchParams) {
   const qp = new URLSearchParams();
+  qp.set('mode', params.mode ?? 'market');
   qp.set('limit', '20');
   const sort = params.sort ?? 'relevant';
   qp.set('sort', sort);
@@ -174,6 +179,7 @@ export default async function Home({
 
 async function renderHome(sp: HomeSearchParams) {
   const cookieStore = await cookies();
+  const currentMode = parseCatalogMode(sp.mode ?? cookieStore.get(CATALOG_MODE_COOKIE)?.value);
   const prefCity = safeDecode(cookieStore.get('barter_pref_city')?.value);
   const viewedCookie = safeDecode(cookieStore.get('barter_viewed_listing_ids')?.value);
   const viewedIds = viewedCookie
@@ -200,7 +206,7 @@ async function renderHome(sp: HomeSearchParams) {
   const currentPriceMax = sp.priceMax ?? '';
   const recoMode = sp.reco === '1';
   const hasSearchQuery = currentQ.trim().length > 0;
-  const effectiveRecoMode = recoMode && !hasSearchQuery && !urlCategoryId && !currentPriceMin && !currentPriceMax && currentSort === 'relevant';
+  const effectiveRecoMode = currentMode === 'market' && recoMode && !hasSearchQuery && !urlCategoryId && !currentPriceMin && !currentPriceMax && currentSort === 'relevant';
   const recommendationCity = sp.city ?? prefCity;
   const recommendationCategoryId = urlCategoryId || undefined;
 
@@ -233,16 +239,18 @@ async function renderHome(sp: HomeSearchParams) {
       : apiGetJson<ListingsResponse>(
           buildListingsPath({
             ...sp,
+            mode: currentMode,
             sort: apiSort,
             city: sp.city ?? prefCity ?? undefined,
             categoryId: urlCategoryId || undefined,
             priceMin: sp.priceMin ?? undefined,
             priceMax: sp.priceMax ?? undefined,
           }),
-        );
+        ).then((data) => assertCatalogMode(data, currentMode));
 
   const feedApiPath = buildListingsPath({
     ...sp,
+    mode: currentMode,
     sort: apiSort,
     city: sp.city ?? prefCity ?? undefined,
     categoryId: urlCategoryId || undefined,
@@ -285,6 +293,7 @@ async function renderHome(sp: HomeSearchParams) {
 
   const apiBackendDown =
     listRes.status === 'rejected';
+  const feedError = listRes.status === 'rejected' ? catalogErrorMessage(listRes.reason) : '';
   const russianCities = russianCitiesRaw.includes(currentCity)
     ? russianCitiesRaw
     : [currentCity, ...russianCitiesRaw];
@@ -305,6 +314,7 @@ async function renderHome(sp: HomeSearchParams) {
   ) : null;
 
   const preservedListQuery: Record<string, string> = {
+    mode: currentMode,
     ...(currentQ ? { q: currentQ } : {}),
     ...(currentCity ? { city: currentCity } : {}),
     ...(currentPriceMin ? { priceMin: currentPriceMin } : {}),
@@ -341,7 +351,7 @@ async function renderHome(sp: HomeSearchParams) {
     <div className="min-h-screen bg-background antialiased">
       {apiBackendDown ? (
         <div role="alert" className="border-b border-accent/30 bg-accent/10 px-4 py-3 text-center text-sm text-accent">
-          <strong>Не удалось загрузить объявления.</strong> Обновите страницу чуть позже.
+          {feedError}
         </div>
       ) : null}
 
@@ -349,6 +359,7 @@ async function renderHome(sp: HomeSearchParams) {
       <div className="hidden md:block">
         <SiteHeader regionControl={<div className="flex shrink-0 items-center gap-1"><CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="city" /><CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="filters" /></div>}>
           <form action="/" method="GET" className="hidden min-w-0 flex-1 items-center md:flex">
+            <input type="hidden" name="mode" value={currentMode} />
             <input type="hidden" name="sort" value={currentSort} />
             {geoHidden}
             {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
@@ -398,6 +409,10 @@ async function renderHome(sp: HomeSearchParams) {
         </div>
       </header>
 
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 pt-4 md:px-6">
+        <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
+        <p className="text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Весь каталог: покупки и предложения обмена'}</p>
+      </div>
       <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
         <div className="grid grid-flow-col grid-rows-2 auto-cols-[88px] gap-2 overflow-x-auto pb-2 [scrollbar-width:thin] md:auto-cols-[112px] md:gap-3">
           {availableCategories.map((cat) => (
@@ -424,8 +439,7 @@ async function renderHome(sp: HomeSearchParams) {
         <div className="mx-auto max-w-7xl px-4 pt-1 pb-28 md:px-6 md:pb-10">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
-          {/* Real listings only. Demo clusters and the cosmetic mode toggle
-              stay out of the catalog until those actions work end to end. */}
+          {/* Exchange availability is a seller choice, not a cosmetic theme. */}
 
           {effectiveRecoMode ? (
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-primary/10 p-3.5 text-sm">
@@ -465,6 +479,7 @@ async function renderHome(sp: HomeSearchParams) {
                 {/* Desktop sort pills */}
                 <div className="hidden items-center gap-1.5 md:flex">
                   <form action="/" method="GET" style={{ display: 'contents' }}>
+                    <input type="hidden" name="mode" value={currentMode} />
                     {currentQ ? <input type="hidden" name="q" value={currentQ} /> : null}
                     {currentCity ? <input type="hidden" name="city" value={currentCity} /> : null}
             {currentPriceMin ? <input type="hidden" name="priceMin" value={currentPriceMin} /> : null}
@@ -499,7 +514,7 @@ async function renderHome(sp: HomeSearchParams) {
                   <Search size={36} className="mx-auto mb-4 text-muted-foreground" aria-hidden />
                   <p className="text-base font-semibold text-foreground">{apiBackendDown ? 'Объявления временно недоступны' : 'Ничего не нашлось'}</p>
                   <p className="mt-1.5 text-sm text-muted-foreground">
-                    {apiBackendDown ? 'Обновите страницу чуть позже.' : 'Попробуйте снять категорию или изменить город.'}
+                    {apiBackendDown ? feedError : currentMode === 'barter' ? 'Пока нет подходящих предложений обмена. Измените фильтры или добавьте своё объявление.' : 'Попробуйте снять категорию или изменить город.'}
                   </p>
                 </div>
               ) : null}
@@ -507,8 +522,8 @@ async function renderHome(sp: HomeSearchParams) {
                 <ListingCardComponent key={x.id} data={x} apiBase={API_URL} />
               ))}
 
-              {!effectiveRecoMode && listings.total > listings.items.length ? (
-                <FeedLoadMore key={feedApiPath} initialIds={[...mergedFeed, ...(listings.vipStrip ?? [])].map((item) => item.id)} initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
+              {!effectiveRecoMode && !apiBackendDown && listings.total > listings.items.length ? (
+                <FeedLoadMore key={feedApiPath} mode={currentMode} initialIds={[...mergedFeed, ...(listings.vipStrip ?? [])].map((item) => item.id)} initialPage={1} total={listings.total} limit={20} basePath={feedApiPath} apiBase={API_URL} />
               ) : null}
             </div>
           </section>

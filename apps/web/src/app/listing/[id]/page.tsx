@@ -197,6 +197,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             {/* Gallery */}
             <Card className="overflow-hidden p-0">
               <ListingGallery
+                categoryTitle={listing.category.title}
                 images={images}
                 title={listing.title}
                 apiBase={API_URL}

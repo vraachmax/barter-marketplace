@@ -206,7 +206,7 @@ function fuzzyMatchCategory(query: string, cats: Category[]): Category[] {
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
 const STEP_LABELS: Record<WizardStep, string> = {
-  1: 'Что продаёте?',
+  1: 'Что предлагаете?',
   2: 'Категория и описание',
   3: 'Фотографии',
   4: 'Где находится',
@@ -224,6 +224,7 @@ export default function NewListingPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<string>('');
+  const [isBarter, setIsBarter] = useState(false);
   const [city, setCity] = useState('Москва');
   const [categoryId, setCategoryId] = useState<string>('');
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
@@ -238,7 +239,7 @@ export default function NewListingPage() {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingRef = useRef(pendingPhotos);
-  pendingRef.current = pendingPhotos;
+  useEffect(() => { pendingRef.current = pendingPhotos; }, [pendingPhotos]);
 
   /* -------------------- data load -------------------- */
   useEffect(() => {
@@ -274,10 +275,6 @@ export default function NewListingPage() {
       pendingRef.current.forEach((p) => URL.revokeObjectURL(p.url));
     };
   }, []);
-
-  useEffect(() => {
-    setAttrValues({});
-  }, [categoryId]);
 
   /* -------------------- derived -------------------- */
   const selectedCategory = useMemo(
@@ -317,9 +314,9 @@ export default function NewListingPage() {
     };
     const pr = Number(price);
     if (price.trim().length > 0 && Number.isFinite(pr)) p.priceRub = pr;
-    if (serializedAttributes) p.attributes = serializedAttributes;
+    p.attributes = { ...serializedAttributes, isBarter };
     return p;
-  }, [title, description, city, categoryId, price, serializedAttributes]);
+  }, [title, description, city, categoryId, price, serializedAttributes, isBarter]);
 
   const titleLen = title.trim().length;
   const descLen = description.trim().length;
@@ -549,13 +546,15 @@ export default function NewListingPage() {
             suggestions={titleSuggestions}
             allCats={cats}
             categoryId={categoryId}
-            onCategoryPick={setCategoryId}
+            onCategoryPick={(id) => { setCategoryId(id); setAttrValues({}); }}
             loadingCats={loadingCats}
           />
         ) : null}
 
         {step === 2 ? (
           <Step2Description
+            isBarter={isBarter}
+            onIsBarterChange={setIsBarter}
             title={title}
             selectedCategory={selectedCategory}
             description={description}
@@ -854,6 +853,8 @@ function Step1WhatToSell(props: {
 }
 
 function Step2Description(props: {
+  isBarter: boolean;
+  onIsBarterChange: (value: boolean) => void;
   title: string;
   selectedCategory: Category | null;
   description: string;
@@ -907,6 +908,10 @@ function Step2Description(props: {
         </div>
       </div>
 
+      <label className="flex min-h-14 cursor-pointer items-start gap-3 rounded-2xl border border-border bg-primary/5 p-4 text-sm text-foreground">
+        <input type="checkbox" checked={props.isBarter} onChange={(event) => props.onIsBarterChange(event.target.checked)} className="mt-0.5 size-5 shrink-0 accent-primary" />
+        <span><strong className="block">Рассматриваю обмен</strong><span className="mt-1 block text-xs text-muted-foreground">Объявление также появится в «Бартере». Напишите в описании, что хотите получить взамен.</span></span>
+      </label>
       {/* Price */}
       <div>
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">

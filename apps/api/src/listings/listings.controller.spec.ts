@@ -47,7 +47,7 @@ describe('GET /listings query validation', () => {
         page: '2',
         limit: '20',
       })
-      .expect(200, { items: [] });
+      .expect(200, { items: [], appliedMode: 'market' });
 
     expect(list).toHaveBeenCalledTimes(1);
     expect(list).toHaveBeenCalledWith({
@@ -71,6 +71,18 @@ describe('GET /listings query validation', () => {
     });
   });
 
+  it('acknowledges the requested exchange filter for older-client compatibility', async () => {
+    await request(app.getHttpServer())
+      .get('/listings?mode=barter')
+      .expect(200, { items: [], appliedMode: 'barter' });
+    expect(list).toHaveBeenCalledWith({
+      mode: 'barter',
+      page: 1,
+      limit: 20,
+      sort: 'relevant',
+    });
+  });
+
   it.each([
     'priceMin=oops',
     'priceMin=5000&priceMax=1000',
@@ -78,6 +90,8 @@ describe('GET /listings query validation', () => {
     'sort=nearby',
     'q=iphone&q=samsung',
     'unrecognizedFilter=value',
+    'mode=unknown',
+    'mode=barter&mode=market',
   ])('rejects %s before calling the listings service', async (query) => {
     await request(app.getHttpServer()).get(`/listings?${query}`).expect(400);
     expect(list).not.toHaveBeenCalled();

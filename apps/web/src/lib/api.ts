@@ -42,13 +42,14 @@ export type Category = {
 export type ListingCard = {
   id: string;
   title: string;
+  isBarter?: boolean;
   priceRub: number | null;
   /** per_day, per_hour, per_service, per_sqm, per_month, negotiable, null = обычная */
   priceType?: string | null;
   city: string;
   createdAt: string;
   oauthAccounts?: Array<{ provider: string }>;
-  category: { id: string; title: string };
+  category: { id: string; title: string; slug?: string };
   owner?: { id: string; name: string | null };
   images?: ListingImage[];
   promoType?: 'TOP' | 'VIP' | 'XL' | null;

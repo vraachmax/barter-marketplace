@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
+import { CATALOG_MODE_EVENT, modeFromCookie } from '@/lib/catalog-mode';
 
 type Mode = 'barter' | 'market';
 
-const STORAGE_KEY = 'barter_mode';
-const EVENT = 'barter:mode-change';
+const EVENT = CATALOG_MODE_EVENT;
 
 /**
  * Цвет system-bar (Safari/Chrome top bar).
@@ -23,14 +23,13 @@ const COLOR_BY_MODE: Record<Mode, string> = {
 };
 
 /**
- * Синхронизирует <html data-mode="..."> и <meta name="theme-color"> с localStorage.
+ * Синхронизирует <html data-mode="..."> и <meta name="theme-color"> с режимом каталога.
  *
- * - При монтировании читает `barter_mode` из localStorage.
+ * - При монтировании читает URL и cookie `barter_catalog_mode`.
  * - Проставляет `data-mode` на <html>, чтобы CSS-токены переопределились.
  * - Обновляет (и при необходимости создаёт) <meta name="theme-color">, чтобы
  *   верхний system-status-bar в iOS Safari / Android Chrome окрашивался в цвет режима.
- * - Подписан на `barter:mode-change` CustomEvent, который диспатчит
- *   `MobileModeToggle`, — меняет цвета без перезагрузки.
+ * - Подписан на событие CatalogModeToggle, меняет цвета без перезагрузки.
  *
  * Пре-пейнт установка (до первого кадра, чтобы не было FOUC) делается
  * инлайновым `<script>` внутри <head> в layout.tsx.
@@ -58,10 +57,10 @@ export function ModeThemeSync() {
       applyMetaThemeColor(mode);
     };
 
-    // 1) Изначальный режим из localStorage (на случай, если пре-пейнт скрипт не отработал)
-    let initial: Mode = 'barter';
+    // Изначальный режим из URL/cookie, если пре-пейнт скрипт не отработал.
+    let initial: Mode = 'market';
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = new URLSearchParams(window.location.search).get('mode') ?? modeFromCookie(document.cookie);
       if (saved === 'barter' || saved === 'market') {
         initial = saved;
       }
@@ -70,7 +69,7 @@ export function ModeThemeSync() {
     }
     apply(initial);
 
-    // 2) Слушаем смену режима из MobileModeToggle
+    // Слушаем смену режима каталога.
     const onChange = (event: Event) => {
       const detail = (event as CustomEvent<Mode>).detail;
       if (detail === 'barter' || detail === 'market') {
@@ -79,17 +78,8 @@ export function ModeThemeSync() {
     };
     window.addEventListener(EVENT, onChange);
 
-    // 3) Синхронизация между вкладками (storage event)
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== STORAGE_KEY) return;
-      const v = event.newValue;
-      if (v === 'barter' || v === 'market') apply(v);
-    };
-    window.addEventListener('storage', onStorage);
-
     return () => {
       window.removeEventListener(EVENT, onChange);
-      window.removeEventListener('storage', onStorage);
     };
   }, []);
 

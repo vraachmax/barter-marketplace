@@ -197,7 +197,7 @@ html[data-mode="market"] {
 /* CSS-фильтры категорий и промо-бейджей по режиму (используются по data-атрибутам) */
 html[data-mode="barter"] [data-market-only="true"] { display: none !important; }
 html:not([data-mode="market"]) [data-market-only-strict="true"] { display: none !important; }
-html[data-mode="barter"] [data-promo-badge="true"] { display: none !important; }
+/* Paid placement must remain labelled in both catalogue modes. */
 
 /* Барter-only элементы (swap-badge на превью, "Хочу:" строка, CTA "Хочу обменять")
    показываем только в Бартере. Это спасает от визуального шума, когда пользователь

@@ -1,5 +1,17 @@
 # Crystal Catalog implementation QA • 2026-09-05
 
+## Update 2026-09-06
+
+The owner viewed the previous preview and liked the direction, requesting the
+Market/Barter control and image placeholders. Implemented both plus a shared
+mobile/desktop listing editor. 92 API tests and 15 web tests pass; Next production
+build and API TypeScript pass. Additional local HTTP SSR smoke was stopped
+without a result, and is NOT a passing check. No new browser screenshots or
+authenticated/mobile verification: preview protection remains unchanged (403).
+Barter filtering requires a separately authorized API release. With the old API,
+the new web displays an explicit unsupported message instead of unfiltered items.
+Final visual acceptance remains blocked, not pixel-perfect certified.
+
 **final result: blocked**
 
 ## Target and scope

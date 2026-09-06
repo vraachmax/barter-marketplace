@@ -63,8 +63,10 @@ export class ListingsController {
   }
 
   @Get()
-  list(@Query() query: ListListingsQueryDto) {
-    return this.listings.list(normalizeListingsQuery(query));
+  async list(@Query() query: ListListingsQueryDto) {
+    const params = normalizeListingsQuery(query);
+    const result = await this.listings.list(params);
+    return { ...result, appliedMode: params.mode ?? 'market' };
   }
 
   @UseGuards(AuthGuard('jwt'))

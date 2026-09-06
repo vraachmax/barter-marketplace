@@ -195,7 +195,8 @@ export class ListingsService {
       latitude: true,
       longitude: true,
       createdAt: true,
-      category: { select: { id: true, title: true } },
+      attributes: true,
+      category: { select: { id: true, title: true, slug: true } },
       owner: { select: { id: true, name: true } },
       images: {
         orderBy: { sortOrder: 'asc' as const },
@@ -234,6 +235,7 @@ export class ListingsService {
       latitude?: number | null;
       longitude?: number | null;
       createdAt: Date;
+      attributes?: Prisma.JsonValue;
       category: { id: string; title: string };
       owner: { id: string; name: string | null };
       images: Array<{ id: string; url: string; sortOrder: number }>;
@@ -242,9 +244,10 @@ export class ListingsService {
     opts?: { distanceKm?: number },
   ) {
     const promo = x.promotions[0];
-    const { promotions: _p, ...rest } = x;
+    const { promotions: _p, attributes, ...rest } = x;
     return {
       ...rest,
+      isBarter: attributes != null && typeof attributes === 'object' && !Array.isArray(attributes) && attributes.isBarter === true,
       images: x.images,
       promoType: promo?.type ?? null,
       promoEndsAt: promo?.endsAt ?? null,
@@ -656,6 +659,7 @@ export class ListingsService {
   }
 
   async list(params: {
+    mode?: 'market' | 'barter';
     q?: string;
     categoryId?: string;
     city?: string;
@@ -687,6 +691,9 @@ export class ListingsService {
 
     const where: Prisma.ListingWhereInput = {
       status: 'ACTIVE',
+      ...(params.mode === 'barter'
+        ? { attributes: { path: ['isBarter'], equals: true } }
+        : {}),
     };
     if (params.categoryId) where.categoryId = params.categoryId;
     if (params.city) where.city = { equals: params.city, mode: 'insensitive' };
@@ -722,7 +729,9 @@ export class ListingsService {
       return this.listNearbyPage({ where, geo, page, limit, skip, now, vipStrip, vipIds });
     }
 
-    if (qTrim.length > 0 && this.meili.isEnabled()) {
+    // Until the index carries exchange eligibility, use the database filter
+    // before counting/pagination. Do not filter an already paginated Meili page.
+    if (params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled()) {
       const viaMeili = await this.tryListViaMeilisearch({
         q: qTrim,
         categoryId: params.categoryId,
