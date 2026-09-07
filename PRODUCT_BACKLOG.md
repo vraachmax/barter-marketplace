@@ -2,6 +2,11 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+2026-09-07: базовая нормализация/контролируемые опечатки завершены в ветке,
+186 API tests, offline recall development 64% -> 86%, holdout 58% -> 67%, без
+роста forbidden matches. По согласованному бюджету далее подготовка выпуска PR #7
+и основной UI; семантика/персонализация не расширяют текущий блок.
+
 2026-09-07: isolated native PostgreSQL 16.15 rehearsal ПРОЙДЕН (Actions
 34090917000): 20 SQL migrations, backfill900, fingerprint, pg_dump/restore,
 GIN/count/deep page. Подробности docs/search-evaluation/README.md. Production

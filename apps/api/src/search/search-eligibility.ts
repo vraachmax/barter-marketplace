@@ -71,7 +71,7 @@ export function searchIndexFields(row: SearchText) {
 export function searchEligibility(query: string): (row: SearchText) => boolean {
   const groups = searchTermGroups(query.normalize('NFKC'));
   const protectedGroups = groups.filter((group) => /\d/u.test(group[0]));
-  const queryTokens = tokenize(query);
+  const queryTokens = groups.flat();
   const deviceQuery = queryTokens.some((word) => devices.has(word));
   const accessoryQuery =
     queryTokens.some((word) => accessories.has(word)) ||
@@ -96,7 +96,7 @@ export function searchEligibility(query: string): (row: SearchText) => boolean {
 export function searchDatabaseEligibility(
   query: string,
 ): Prisma.ListingWhereInput[] {
-  const tokens = tokenize(query);
+  const tokens = searchTermGroups(query).flat();
   const clauses: Prisma.ListingWhereInput[] = searchTermGroups(
     query.normalize('NFKC'),
   )
