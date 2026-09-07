@@ -1,5 +1,22 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-07 — PG16 full SQL chain и restore пройдены
+
+GitHub Actions run 34090917000 success, commit bd2dd23591a3e5f67eea54f4e7f6803caf53ffa0.
+Изолированный официальный postgres:16, фактически 16.15, en_US.utf8. Все 20 SQL
+миграций с нуля; отдельно 19 + 900 fixtures + pg_dump + новая миграция. Поля/даты
+объявлений сохранены по fingerprint. pg_restore в другую тестовую БД восстановил
+старую схему/данные. Нормализация, trigger/update/tamper, count450, offset400,
+20 результатов и GIN plan прошли. Время новой миграции на fixture 119.1ms,
+не оценка production locks/load. Первый прогон упал до миграций на SHOW lc_ctype,
+исправлен только запрос инспекции локали, повторный прогон полностью успешен.
+
+PG16 SQL-chain gate закрыт. Workflow и scripts/verify-pg16-chain.py сохранены.
+Это SQL rehearsal, не Prisma migration bookkeeping и не Render restore. Перед
+реальным выпуском проверить актуальный production backup/locale и порядок deploy.
+Основная БД и сайт не менялись. Следом нормализация ё/е/падежей и опечатки,
+масштабирование окна кандидатов остаётся отдельным пунктом.
+
 ## 2026-09-07 — DB guard во всех сортировках, миграция пока не применена
 
 Добавлены Listing.searchTokens/searchAccessory и GIN индекс, миграция

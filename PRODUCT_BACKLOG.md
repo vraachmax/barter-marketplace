@@ -2,6 +2,11 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+2026-09-07: isolated native PostgreSQL 16.15 rehearsal ПРОЙДЕН (Actions
+34090917000): 20 SQL migrations, backfill900, fingerprint, pg_dump/restore,
+GIN/count/deep page. Подробности docs/search-evaluation/README.md. Production
+не изменён; перед выпуском актуальная резервная копия рабочей БД и порядок deploy.
+
 2026-09-07: DB model/accessory guard теперь во всех сортировках. Новая миграция
 служебных полей/trigger/GIN проверена в isolated PGlite PG18.3, не в production.
 Перед выпуском обязательны PG16 full-chain/locale/lock/backup проверки. Новый

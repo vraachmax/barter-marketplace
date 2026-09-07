@@ -1,5 +1,32 @@
 # Search quality evaluation v1
 
+## Native PostgreSQL 16 rehearsal passed (2026-09-07)
+
+[GitHub Actions run 34090917000](https://github.com/vraachmax/barter-marketplace/actions/runs/34090917000)
+passed on code `bd2dd23591a3e5f67eea54f4e7f6803caf53ffa0`, isolated official
+`postgres:16` service, PostgreSQL **16.15**, locale `en_US.utf8`.
+
+- All 20 SQL migration files applied in order on a fresh database.
+- Existing-data path: 19 migrations, 900 fixtures, pg_dump backup, final migration.
+- Fingerprint of customer fields/timestamps unchanged by backfill.
+- pg_restore of the full pre-migration dump into another database restored the
+  original rows and schema; user/category checks also passed.
+- Token normalization, insert/update trigger logic, derived-field tampering,
+  count=450, page of 20 after offset 400 and GIN query plan passed.
+- Final migration wall time on this fixture: 119.1 ms. This includes client overhead
+  and is not a production lock-duration/concurrency benchmark.
+
+Workflow: `.github/workflows/postgres16-migrations.yml`; runner:
+`scripts/verify-pg16-chain.py`. No repo/deployment secrets or Render connection.
+The script only accepts its dedicated postgres:16 Docker service ID and checks
+the actual server major version. First run failed on the locale inspection query;
+it was corrected to use pg_database, then the complete rehearsal succeeded.
+
+This closes the isolated PG16 SQL-chain gate below. It does not exercise Prisma's
+migration bookkeeping, production-specific data/locale/traffic or actual Render
+backup restoration. Before release, verify a current production backup and deploy
+schema before the API requiring these columns. No live migration has run.
+
 ## Database guard migration validation (2026-09-07)
 
 `20260907090000_search_guard_fields` adds two derived fields and a GIN index.
