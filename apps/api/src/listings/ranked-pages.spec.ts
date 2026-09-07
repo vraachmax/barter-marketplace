@@ -143,6 +143,35 @@ describe('ranked database pages', () => {
     expect(result).toMatchObject({ total: 0, searchWindowLimited: true });
   });
 
+  it.each(['database', 'meili', 'nearby'] as const)(
+    'filters models/accessories before VIP allocation, counting and slicing: %s',
+    async (engine) => {
+      meiliEnabled = engine === 'meili';
+      const wrong = { ...row('wrong'), title: 'Samsung S240' };
+      const accessory = { ...row('case'), title: 'Чехол Samsung S24' };
+      const right = { ...row('right'), title: 'Samsung S24' };
+      findMany
+        .mockResolvedValueOnce([wrong, accessory])
+        .mockResolvedValueOnce([wrong, accessory, right]);
+      count.mockResolvedValue(3);
+      searchListings.mockResolvedValue({
+        hits: [{ id: 'wrong' }, { id: 'case' }, { id: 'right' }],
+        estimatedTotalHits: 3,
+      });
+      const result = await service.list({
+        q: 'samsung s24',
+        sort: engine === 'nearby' ? 'nearby' : 'relevant',
+        limit: 20,
+        lat: 0,
+        lon: 0,
+      });
+      expect(result.total).toBe(1);
+      expect(result.vipStrip).toEqual([]);
+      expect(result.items.map((x: { id: string }) => x.id)).toEqual(['right']);
+      expect(result.items[0]).not.toHaveProperty('description');
+    },
+  );
+
   it('requires every query group in SQL, including single-digit models', async () => {
     findMany.mockResolvedValue([]);
     count.mockResolvedValue(0);

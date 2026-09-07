@@ -2,6 +2,11 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+2026-09-07: protected model/accessory guard для relevant/Meili/nearby и их VIP
+до count/pagination. Offline forbiddenQueries 14 -> 1, recall не снизился,
+169 API tests + Nest build. Перед выпуском распространить на new/cheap/expensive
+через DB-level токены; не фильтровать готовые страницы. Production не менялся.
+
 2026-09-07: создан offline quality baseline, 60 запросов/30 synthetic fixtures,
 скрипт реального ListingsService с in-memory Prisma. Данные и ограничения:
 docs/search-evaluation/. Зафиксированы ложные модели/аксессуары, опечатки,

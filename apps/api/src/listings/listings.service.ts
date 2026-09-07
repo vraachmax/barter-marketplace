@@ -9,6 +9,7 @@ import { BARTER_CATEGORY_SLUGS, categoryAllowsBarter } from '../categories/barte
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
 import { searchTermGroups } from '../search/search-synonyms';
+import { searchEligibility } from '../search/search-eligibility';
 import {
   CreateListingDto,
   PromoteListingDto,
@@ -161,6 +162,7 @@ export class ListingsService {
 
   private selectCard(now: Date) {
     return {
+      description: true,
       id: true,
       title: true,
       priceRub: true,
@@ -204,6 +206,7 @@ export class ListingsService {
     x: {
       id: string;
       title: string;
+      description?: string;
       priceRub: number | null;
       city: string;
       latitude?: number | null;
@@ -218,7 +221,7 @@ export class ListingsService {
     opts?: { distanceKm?: number },
   ) {
     const promo = x.promotions[0];
-    const { promotions: _p, attributes, ...rest } = x;
+    const { promotions: _p, attributes, description: _description, ...rest } = x;
     return {
       ...rest,
       isBarter: attributes != null && typeof attributes === 'object' && !Array.isArray(attributes) && attributes.isBarter === true,
@@ -253,6 +256,7 @@ export class ListingsService {
     now: Date,
     limit: number,
     geo: GeoQuery | null,
+    eligible: (row: { title: string; description?: string }) => boolean = () => true,
   ): Promise<{ vipStrip: any[]; vipIds: Set<string>; boostSlotsPerPage: number }> {
     let vipCandidates = await this.prisma.listing.findMany({
       where: {
@@ -273,6 +277,7 @@ export class ListingsService {
       take: Math.min(48, limit + 24),
       select: this.selectCard(now),
     });
+    vipCandidates = vipCandidates.filter(eligible);
     if (geo) {
       vipCandidates = vipCandidates
         .filter((c) => c.latitude != null && c.longitude != null)
@@ -569,7 +574,8 @@ export class ListingsService {
     const ordered = ids
       .map((id) => byId.get(id))
       .filter((x): x is (typeof rows)[number] => x != null)
-      .filter((x) => !params.vipIds.has(x.id));
+      .filter((x) => !params.vipIds.has(x.id))
+      .filter(searchEligibility(params.q));
 
     const scored: ScoredRow<(typeof rows)[number]>[] = ordered.map((raw, i) => ({
       raw,
@@ -600,6 +606,7 @@ export class ListingsService {
    * Выдача «рядом»: только объявления с координатами, в пределах радиуса (Haversine), сортировка по расстоянию.
    */
   private async listNearbyPage(args: {
+    q: string;
     where: Prisma.ListingWhereInput;
     geo: GeoQuery;
     page: number;
@@ -617,6 +624,7 @@ export class ListingsService {
       select: this.selectCard(args.now),
     });
     const withDist = pool
+      .filter(searchEligibility(args.q))
       .filter((r) => r.latitude != null && r.longitude != null)
       .map((r) => ({
         raw: r,
@@ -714,10 +722,14 @@ export class ListingsService {
     }
 
     const geoForVip = sort === 'nearby' && geo ? geo : null;
-    const { vipStrip, vipIds, boostSlotsPerPage } = await this.loadVipStripAndBudget(where, now, limit, geoForVip);
+    const eligible = searchEligibility(qTrim);
+    const { vipStrip, vipIds, boostSlotsPerPage } = await this.loadVipStripAndBudget(
+      where, now, limit, geoForVip,
+      sort === 'relevant' || sort === 'nearby' ? eligible : undefined,
+    );
 
     if (sort === 'nearby' && geo) {
-      return this.listNearbyPage({ where, geo, page, limit, skip, now, vipStrip, vipIds });
+      return this.listNearbyPage({ q: qTrim, where, geo, page, limit, skip, now, vipStrip, vipIds });
     }
 
     // Keep explicit sorts on the authoritative database path: index relevance
@@ -790,7 +802,7 @@ export class ListingsService {
         this.prisma.listing.count({ where }),
       ]);
 
-      const nonVipPool = pool.filter((p) => !vipIds.has(p.id));
+      const nonVipPool = pool.filter((p) => !vipIds.has(p.id)).filter(eligible);
 
       const ownerIds = [...new Set(nonVipPool.map((x) => x.ownerId))];
       const ratingRows =
