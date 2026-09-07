@@ -2,6 +2,12 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+2026-09-07: создан offline quality baseline, 60 запросов/30 synthetic fixtures,
+скрипт реального ListingsService с in-memory Prisma. Данные и ограничения:
+docs/search-evaluation/. Зафиксированы ложные модели/аксессуары, опечатки,
+морфология и ё/е. Следом исправления с сравнением baseline, затем live-isolated
+DB/index QA. Production не менялся; baseline не означает хорошее качество.
+
 2026-09-06: обязательная основа поиска — первичные интернет-источники и измеримое
 удобство. Матрица Baymard/Meili/Elastic и критерии в SEARCH_AND_RECOMMENDATIONS.md.
 AND/all остаётся первым проходом; естественная речь, контрольный набор и явные
