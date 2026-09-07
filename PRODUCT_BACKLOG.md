@@ -2,6 +2,11 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+2026-09-07: DB model/accessory guard теперь во всех сортировках. Новая миграция
+служебных полей/trigger/GIN проверена в isolated PGlite PG18.3, не в production.
+Перед выпуском обязательны PG16 full-chain/locale/lock/backup проверки. Новый
+API зависит от новых колонок. Дальше нормализация/опечатки и масштабирование окна.
+
 2026-09-07: protected model/accessory guard для relevant/Meili/nearby и их VIP
 до count/pagination. Offline forbiddenQueries 14 -> 1, recall не снизился,
 169 API tests + Nest build. Перед выпуском распространить на new/cheap/expensive

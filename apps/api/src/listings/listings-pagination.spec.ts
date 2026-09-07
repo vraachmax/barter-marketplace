@@ -44,6 +44,26 @@ describe('explicit listing sort and pagination', () => {
     service = moduleRef.get(ListingsService);
   });
 
+  it.each(sorts)(
+    'applies model and accessory rules inside the database before %s pagination',
+    async (sort) => {
+      findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      count.mockResolvedValue(0);
+      await service.list({ q: 'samsung s24', sort, page: 21, limit: 20 });
+      const guard: unknown = expect.objectContaining({
+        AND: expect.arrayContaining([
+          { searchTokens: { hasSome: ['s24'] } },
+          { searchAccessory: false },
+        ]) as unknown,
+      });
+      expect(findMany).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ where: guard, skip: 400, take: 20 }),
+      );
+      expect(count).toHaveBeenCalledWith({ where: guard });
+    },
+  );
+
   describe.each(['market', 'barter'] as const)('%s', (mode) => {
     it.each(sorts)(
       'loads beyond 400 without truncation for %s',

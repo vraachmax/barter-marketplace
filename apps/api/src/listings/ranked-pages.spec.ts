@@ -188,6 +188,8 @@ describe('ranked database pages', () => {
         AND: [
           { OR: ['айфон', 'iphone', 'айфона', 'айфоне'].flatMap(match) },
           { OR: match('1') },
+          { searchTokens: { hasSome: ['1'] } },
+          { searchAccessory: false },
         ],
       },
     });

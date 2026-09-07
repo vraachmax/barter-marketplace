@@ -1,4 +1,5 @@
 import { searchTermGroups } from './search-synonyms';
+import type { Prisma } from '@prisma/client';
 
 type SearchText = { title: string; description?: string };
 const tokenize = (text: string): string[] =>
@@ -50,6 +51,20 @@ const modifiers = new Set([
   'защитный',
 ]);
 
+export function searchIndexFields(row: SearchText) {
+  const title = tokenize(row.title);
+  let start = 0;
+  while (modifiers.has(title[start])) start++;
+  return {
+    searchTokens: tokenize(`${row.title} ${row.description ?? ''}`),
+    searchAccessory:
+      accessories.has(title[start]) ||
+      (title[start] === 'стекло' &&
+        start > 0 &&
+        title[start - 1] === 'защитное'),
+  };
+}
+
 /** Conservative candidate guard, applied BEFORE counting and pagination.
  * Numeric/model tokens are exact, not fuzzy. Accessories are rejected only
  * for known device queries and clearly accessory-led titles, not bundles. */
@@ -62,25 +77,36 @@ export function searchEligibility(query: string): (row: SearchText) => boolean {
     queryTokens.some((word) => accessories.has(word)) ||
     /защитн\S*\s+стекл/u.test(query.toLowerCase());
   return (row) => {
+    const fields = searchIndexFields(row);
     if (protectedGroups.length) {
-      const terms = new Set(tokenize(`${row.title} ${row.description ?? ''}`));
+      const terms = new Set(fields.searchTokens);
       if (
         !protectedGroups.every((group) => group.some((term) => terms.has(term)))
       )
         return false;
     }
     if (deviceQuery && !accessoryQuery) {
-      const title = tokenize(row.title);
-      let start = 0;
-      while (modifiers.has(title[start])) start++;
-      if (accessories.has(title[start])) return false;
-      if (
-        title[start] === 'стекло' &&
-        start > 0 &&
-        title[start - 1] === 'защитное'
-      )
-        return false;
+      if (fields.searchAccessory) return false;
     }
     return true;
   };
+}
+
+/** Database counterpart: use on every listing sort, before count/skip/take. */
+export function searchDatabaseEligibility(
+  query: string,
+): Prisma.ListingWhereInput[] {
+  const tokens = tokenize(query);
+  const clauses: Prisma.ListingWhereInput[] = searchTermGroups(
+    query.normalize('NFKC'),
+  )
+    .filter((group) => /\d/u.test(group[0]))
+    .map((group) => ({ searchTokens: { hasSome: group } }));
+  const accessoryQuery =
+    tokens.some((word) => accessories.has(word)) ||
+    /защитн\S*\s+стекл/u.test(query.toLowerCase());
+  if (tokens.some((word) => devices.has(word)) && !accessoryQuery) {
+    clauses.push({ searchAccessory: false });
+  }
+  return clauses;
 }

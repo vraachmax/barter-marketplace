@@ -1,5 +1,23 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-07 — DB guard во всех сортировках, миграция пока не применена
+
+Добавлены Listing.searchTokens/searchAccessory и GIN индекс, миграция
+20260907090000_search_guard_fields. Trigger пересчитывает поля при insert/update
+title/description/служебных полей, backfill сохраняет timestamps. Query guard
+применяется до count/skip/take во ВСЕХ сортировках; Meili hydration сохраняет
+DB guard, снимая только текстовый AND. Дублирующий JS guard остаётся защитой.
+
+Prisma Client regenerated, Nest build и 3 harness tests проходят. SQL миграция
+проверена изолированно через PGlite 0.5.8/PostgreSQL 18.3: 36 примеров JS/SQL parity,
+insert/update/backfill/tamper, 450 из 900 совпадений, 20 строк после offset 400,
+индекс создан. Подробности/команда в docs/search-evaluation/README.md.
+
+ВНИМАНИЕ перед merge/release: нужен isolated PostgreSQL 16 прогон полной цепочки,
+проверка locale, времени lock/backfill и восстановления. Миграция не запускалась
+на Render, production не менялся. Новый API требует эти колонки. При откате кода
+добавленные поля можно оставить. Кандидатное окно 3000 и качество опечаток остаются.
+
 ## 2026-09-07 — защита моделей и аксессуаров в кандидатной выдаче
 
 search-eligibility.ts проверяет полные числовые/буквенно-числовые токены по

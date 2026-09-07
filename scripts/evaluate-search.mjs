@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { ListingsService } = require('../apps/api/dist/listings/listings.service.js');
+const { searchIndexFields } = require('../apps/api/dist/search/search-eligibility.js');
 const corpus = JSON.parse(readFileSync(new URL('../docs/search-evaluation/corpus.json', import.meta.url), 'utf8'));
 const fixedNow = new Date('2026-09-01T00:00:00Z');
 const NativeDate = Date;
@@ -16,6 +17,7 @@ function row(entry) {
   const categoryId = entry.category ?? 'electronics';
   return {
     id: entry.id, title: entry.title, description: '', priceRub: entry.price ?? 1000,
+    ...searchIndexFields({ title: entry.title, description: '' }),
     city: 'Краснодар', status: 'ACTIVE', categoryId,
     category: { id: categoryId, slug: categoryId, title: categoryId },
     ownerId: 'fixture-seller', owner: { id: 'fixture-seller', name: null, responseRate: 0 },
@@ -35,6 +37,7 @@ function condition(value, rule) {
     if (op === 'equals') return normalize(value) === normalize(operand);
     if (op === 'contains') return typeof value === 'string' && normalize(value).includes(normalize(operand));
     if (op === 'in') return operand.includes(value);
+    if (op === 'hasSome') return operand.some(x => value.includes(x));
     if (op === 'notIn') return !operand.includes(value);
     if (op === 'gte') return value != null && value >= operand;
     if (op === 'lte') return value != null && value <= operand;

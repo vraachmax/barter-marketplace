@@ -1,5 +1,36 @@
 # Search quality evaluation v1
 
+## Database guard migration validation (2026-09-07)
+
+`20260907090000_search_guard_fields` adds two derived fields and a GIN index.
+An INSERT/UPDATE trigger owns both fields, including when a caller tries to write
+them directly. Existing rows are backfilled without changing their timestamps.
+API filtering now uses these fields before count/skip/take for every sort.
+
+Validation uses a temporary PGlite installation outside the repository:
+
+```sh
+npm install --prefix /tmp/barter-pg-validation --ignore-scripts --no-audit --no-fund @electric-sql/pglite@0.5.8
+npm run build --workspace=@app/api
+BARTER_PGLITE_MODULE=/tmp/barter-pg-validation/node_modules/@electric-sql/pglite/dist/index.js node scripts/verify-search-migration.mjs
+```
+
+Passed on embedded PostgreSQL 18.3: migration/backfill, insert/update, derived-field
+tampering, JS/SQL parity on 36 examples, correct count of 450 matches among 900 rows,
+20 results at offset 400, GIN index existence. Not an EXPLAIN/load benchmark.
+The in-memory benchmark now models the derived fields with `searchIndexFields`;
+the separate SQL test checks parity against actual migration functions.
+
+**Release requirement:** rehearse on isolated PostgreSQL 16 with the existing full
+migration chain, check locale/tokenization and backup/rollback. No live migration
+has run. Migration takes a table lock and backfills all rows in one transaction;
+measure lock duration before release. Deploy schema before this API version.
+Previous API code can run with the added columns/trigger; a code rollback need not
+drop derived fields. Do not remove fields while this API version is running.
+
+Sources: [PostgreSQL 16 Unicode normalization](https://www.postgresql.org/docs/16/functions-string.html),
+[GIN array support](https://www.postgresql.org/docs/16/gin.html).
+
 Offline fixtures only. No real listings, users, secrets, network calls or database
 writes. Judgments are authored development hypotheses, not user research.
 

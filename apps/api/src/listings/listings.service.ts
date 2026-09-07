@@ -9,7 +9,7 @@ import { BARTER_CATEGORY_SLUGS, categoryAllowsBarter } from '../categories/barte
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
 import { searchTermGroups } from '../search/search-synonyms';
-import { searchEligibility } from '../search/search-eligibility';
+import { searchEligibility, searchDatabaseEligibility } from '../search/search-eligibility';
 import {
   CreateListingDto,
   PromoteListingDto,
@@ -721,6 +721,11 @@ export class ListingsService {
       where.longitude = { not: null };
     }
 
+    const databaseGuard = searchDatabaseEligibility(qTrim);
+    if (databaseGuard.length) {
+      where.AND = [...(Array.isArray(where.AND) ? where.AND : []), ...databaseGuard];
+    }
+
     const geoForVip = sort === 'nearby' && geo ? geo : null;
     const eligible = searchEligibility(qTrim);
     const { vipStrip, vipIds, boostSlotsPerPage } = await this.loadVipStripAndBudget(
@@ -740,6 +745,7 @@ export class ListingsService {
       // matching to Meili so typo matches are not lost to SQL substring rules.
       const eligibilityWhere = { ...where };
       delete eligibilityWhere.AND;
+      if (databaseGuard.length) eligibilityWhere.AND = databaseGuard;
       const viaMeili = await this.tryListViaMeilisearch({
         eligibilityWhere,
         q: qTrim,
