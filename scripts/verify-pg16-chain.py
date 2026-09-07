@@ -29,7 +29,7 @@ def sql(statement, database='barter_rehearsal'):
 
 version = sql('SHOW server_version_num;')
 assert 160000 <= int(version) < 170000, version
-locale = sql('SHOW lc_ctype;')
+locale = sql('SELECT datctype FROM pg_database WHERE datname=current_database();')
 migrations = sorted((Path(__file__).resolve().parents[1] / 'apps/api/prisma/migrations').glob('*/migration.sql'))
 assert migrations[-1].parent.name == '20260907090000_search_guard_fields'
 for migration in migrations[:-1]:
