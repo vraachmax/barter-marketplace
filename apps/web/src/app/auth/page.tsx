@@ -8,6 +8,7 @@ import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { authReturnPath } from '@/lib/auth-return';
 
 type Mode = 'login' | 'register';
 
@@ -73,7 +74,7 @@ export default function AuthPage() {
       await authLogin(data.token);
       setStatus({ kind: 'ok' });
       setTimeout(() => {
-        router.replace('/');
+        router.replace(authReturnPath(new URLSearchParams(window.location.search).get('next')));
       }, 300);
     } catch (e: unknown) {
       setBusy(false);

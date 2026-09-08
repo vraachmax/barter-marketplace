@@ -94,6 +94,9 @@ model Listing {
 
   title       String
   description String
+  /// Maintained by database trigger for exact model filtering before pagination.
+  searchTokens String[] @default([])
+  searchAccessory Boolean @default(false)
   priceRub    Int?
   /// Тип цены: null = обычная, per_day, per_hour, per_service, per_sqm, per_month, negotiable
   priceType   String?
@@ -131,6 +134,7 @@ model Listing {
   @@index([status])
   @@index([categoryId])
   @@index([latitude, longitude])
+  @@index([searchTokens], type: Gin)
 }
 
 model SellerReview {

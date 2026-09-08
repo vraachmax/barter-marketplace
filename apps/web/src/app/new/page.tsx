@@ -1,4 +1,5 @@
 'use client';
+import { canOfferBarter } from '@/lib/barter-category';
 
 /**
  * /new — Avito-style wizard для размещения объявления (Hotfix #13).
@@ -314,9 +315,9 @@ export default function NewListingPage() {
     };
     const pr = Number(price);
     if (price.trim().length > 0 && Number.isFinite(pr)) p.priceRub = pr;
-    p.attributes = { ...serializedAttributes, isBarter };
+    p.attributes = { ...serializedAttributes, isBarter: canOfferBarter(selectedCategory) && isBarter };
     return p;
-  }, [title, description, city, categoryId, price, serializedAttributes, isBarter]);
+  }, [title, description, city, categoryId, price, serializedAttributes, isBarter, selectedCategory]);
 
   const titleLen = title.trim().length;
   const descLen = description.trim().length;
@@ -546,7 +547,7 @@ export default function NewListingPage() {
             suggestions={titleSuggestions}
             allCats={cats}
             categoryId={categoryId}
-            onCategoryPick={(id) => { setCategoryId(id); setAttrValues({}); }}
+            onCategoryPick={(id) => { setCategoryId(id); setAttrValues({}); if (!canOfferBarter(cats.find((category) => category.id === id))) setIsBarter(false); }}
             loadingCats={loadingCats}
           />
         ) : null}
@@ -908,10 +909,10 @@ function Step2Description(props: {
         </div>
       </div>
 
-      <label className="flex min-h-14 cursor-pointer items-start gap-3 rounded-2xl border border-border bg-primary/5 p-4 text-sm text-foreground">
+      {canOfferBarter(selectedCategory) ? <label className="flex min-h-14 cursor-pointer items-start gap-3 rounded-2xl border border-border bg-primary/5 p-4 text-sm text-foreground">
         <input type="checkbox" checked={props.isBarter} onChange={(event) => props.onIsBarterChange(event.target.checked)} className="mt-0.5 size-5 shrink-0 accent-primary" />
         <span><strong className="block">Рассматриваю обмен</strong><span className="mt-1 block text-xs text-muted-foreground">Объявление также появится в «Бартере». Напишите в описании, что хотите получить взамен.</span></span>
-      </label>
+      </label> : <p className="text-sm text-muted-foreground">Для этой категории обмен недоступен.</p>}
       {/* Price */}
       <div>
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">

@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "description": "Synthetic offline fixtures, authored judgments, not real listings or user logs. Never import into production.",
+  "families": [
+    { "id": "iphone14", "title": "Apple iPhone 14 Pro 256 ГБ", "category": "electronics", "price": 50000, "queries": ["iphone 14 pro", "айфон 14 pro", "айфно 14 pro"], "forbidden": ["iphone140", "case14", "iphone15"] },
+    { "id": "s24", "title": "Samsung Galaxy S24 256 ГБ", "category": "electronics", "price": 45000, "queries": ["samsung s24", "самсунг s24", "samsun s24"], "forbidden": ["s240", "s25"] },
+    { "id": "ps5", "title": "Sony PS5 игровая консоль", "category": "electronics", "price": 35000, "queries": ["sony ps5", "пс5", "soni ps5"], "forbidden": ["ps50", "ps4"] },
+    { "id": "macbook", "title": "Apple MacBook Air M2 16 ГБ", "category": "electronics", "price": 75000, "queries": ["macbook air m2", "макбук air m2", "macbok air m2"], "forbidden": ["m20"] },
+    { "id": "ipad", "title": "Apple iPad Air 64 ГБ", "category": "electronics", "price": 30000, "queries": ["ipad air", "айпад air", "ipda air"] },
+    { "id": "bike", "title": "Горный велосипед Stels 26", "category": "hobby", "price": 15000, "queries": ["велосипед stels", "велик stels", "веласипед stels"] },
+    { "id": "laptop", "title": "Ноутбук Lenovo ThinkPad T14", "category": "electronics", "price": 40000, "queries": ["ноутбук lenovo", "laptop lenovo", "нотебук lenovo"] },
+    { "id": "car", "title": "Автомобиль Kia Rio 2019", "category": "auto", "price": 900000, "queries": ["автомобиль kia", "машина kia", "машига kia"] },
+    { "id": "sofa", "title": "Компактный раскладной диван", "category": "home", "price": 12000, "queries": ["компактный диван", "диван для маленькой комнаты", "деван"] },
+    { "id": "excavator", "title": "Аренда экскаватора XCMG XE150", "category": "services", "price": 2500, "queries": ["аренда экскаватора", "экскаватор в аренду", "аренда экскаватра"] },
+    { "id": "flat", "title": "Продажа квартиры Краснодар 2 комнаты", "category": "realty", "price": 6500000, "queries": ["продажа квартиры", "двухкомнатная квартира", "продажа квартры"], "forbidden": ["rentflat"] },
+    { "id": "drill", "title": "Шуруповерт Makita DDF484", "category": "home", "price": 9000, "queries": ["makita ddf484", "шуруповёрт makita", "makta ddf484"] },
+    { "id": "stroller", "title": "Детская коляска прогулочная", "category": "kids", "price": 6000, "queries": ["коляска прогулочная", "прогулочная коляска", "каляска прогулочная"] },
+    { "id": "guitar", "title": "Акустическая гитара Yamaha F310", "category": "hobby", "price": 8000, "queries": ["yamaha f310", "гитара yamaha", "yamha f310"] },
+    { "id": "camera", "title": "Фотоаппарат Canon EOS R6", "category": "electronics", "price": 110000, "split": "holdout", "queries": ["canon r6", "фотоаппарат canon", "cannon r6"], "forbidden": ["r60"] },
+    { "id": "crane", "title": "Аренда автокрана 80 тонн", "category": "services", "price": 6000, "split": "holdout", "queries": ["автокран 80", "кран 80 тонн", "автокарн 80"], "forbidden": ["crane800"] },
+    { "id": "tyres", "title": "Зимние шины 205 55 R16", "category": "auto", "price": 18000, "split": "holdout", "queries": ["шины 205 55 r16", "зимняя резина 205 55 r16", "шыны 205 55 r16"], "forbidden": ["r160"] },
+    { "id": "scooter", "title": "Электросамокат Ninebot G30", "category": "hobby", "price": 27000, "split": "holdout", "queries": ["ninebot g30", "самокат ninebot", "ninebt g30"] }
+  ],
+  "distractors": [
+    { "id": "iphone140", "title": "Apple iPhone 140 Pro учебный муляж" },
+    { "id": "case14", "title": "Чехол для Apple iPhone 14 Pro" },
+    { "id": "iphone15", "title": "Apple iPhone 15 Pro" },
+    { "id": "s240", "title": "Samsung Galaxy S240 демонстрационная модель" },
+    { "id": "s25", "title": "Samsung Galaxy S25" },
+    { "id": "ps50", "title": "Sony PS50 демонстрационная модель" },
+    { "id": "ps4", "title": "Sony PS4" },
+    { "id": "m20", "title": "Apple MacBook Air M20 демонстрационная модель" },
+    { "id": "r60", "title": "Фотоаппарат Canon EOS R60 макет" },
+    { "id": "crane800", "title": "Аренда автокрана 800 тонн", "category": "services" },
+    { "id": "r160", "title": "Зимние шины 205 55 R160 макет", "category": "auto" },
+    { "id": "rentflat", "title": "Аренда квартиры Краснодар 2 комнаты", "category": "realty" }
+  ],
+  "additionalQueries": [
+    { "id": "empty-model", "query": "iphone 99 pro", "grades": {} },
+    { "id": "empty-brand", "query": "несуществующийбренд 999", "grades": {} },
+    { "id": "category-filter", "query": "iphone", "filters": { "categoryId": "home" }, "grades": {} },
+    { "id": "price-filter", "query": "iphone 14", "filters": { "priceMax": 100 }, "grades": {} },
+    { "id": "city-filter", "query": "велосипед", "filters": { "city": "Москва" }, "grades": {} },
+    { "id": "barter-filter", "query": "велосипед", "filters": { "mode": "barter" }, "grades": {} }
+  ]
+}

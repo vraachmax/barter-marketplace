@@ -95,7 +95,8 @@ export function ProfileContent() {
   const [publicProfile, setPublicProfile] = useState<SellerProfileResponse | null>(null);
   const [chatCount, setChatCount] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeTab, setActiveTab] = useState<ListingTab>('ACTIVE');
+  const tabParam = searchParams.get('tab');
+  const activeTab: ListingTab = tabParam === 'ALL' || tabParam === 'SOLD' || tabParam === 'ARCHIVED' ? tabParam : 'ACTIVE';
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{
     title: string;
@@ -110,17 +111,13 @@ export function ProfileContent() {
     categoryId: '',
     priceRub: '',
   });
-  const [showTopUp, setShowTopUp] = useState(false);
-  const [topUpAmount, setTopUpAmount] = useState<number | null>(null);
   const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
 
   function setListingTab(tab: ListingTab) {
-    setActiveTab(tab);
     router.push(`/profile?tab=${tab}`, { scroll: false });
   }
 
   async function loadMe() {
-    setStatus('loading');
     const [res, cats] = await Promise.all([
       apiFetchJson<AuthMe>('/auth/me'),
       apiGetJson<Category[]>('/categories').catch(() => [] as Category[]),
@@ -208,15 +205,8 @@ export function ProfileContent() {
   }
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'ACTIVE' || tab === 'ARCHIVED' || tab === 'SOLD' || tab === 'ALL') {
-      setActiveTab(tab);
-      return;
-    }
-    setActiveTab('ACTIVE');
-  }, [searchParams]);
-
-  useEffect(() => {
+    // loadMe updates state only after awaiting the initial API requests.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMe();
   }, []);
 
@@ -529,29 +519,18 @@ export function ProfileContent() {
                   </div>
                 </div>
 
-                {/* Wallet Balance Card */}
-                <div
-                  className="mt-4 rounded-xl p-4 text-white"
-                  style={{
-                    backgroundColor: 'var(--mode-accent)',
-                    boxShadow: '0 6px 18px var(--mode-accent-ring)',
-                  }}
+                <Link
+                  href="/wallet"
+                  className="mt-4 flex min-h-11 items-center gap-3 rounded-2xl border border-border bg-background p-4 text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="text-left">
-                      <div className="text-xs font-medium opacity-80">Баланс кошелька</div>
-                      <div className="mt-1 text-xl font-bold">1,500 ₽</div>
-                    </div>
-                    <Wallet size={24} strokeWidth={s} aria-hidden />
+                  <Wallet size={24} strokeWidth={s} aria-hidden />
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">Кошелёк</div>
+                    <p className="mt-1 text-xs text-muted-foreground">Баланс и история операций</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Пополнение пока недоступно</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowTopUp(true)}
-                    className="mt-3 w-full rounded-lg bg-card px-3 py-2 text-xs font-semibold [color:var(--mode-accent)] transition hover:bg-muted"
-                  >
-                    Пополнить
-                  </button>
-                </div>
+                  <ChevronRight size={20} aria-hidden />
+                </Link>
               </div>
 
               {/* Menu Items */}
@@ -1133,69 +1112,6 @@ export function ProfileContent() {
           </>
         ) : null}
       </div>
-
-      {/* Top-Up Modal */}
-      {showTopUp ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowTopUp(false)} />
-          {/*
-            На мобилке bottom-sheet прижимается к низу viewport'а. Чтобы
-            кнопка «Пополнить на N ₽» не уезжала под bottom-nav v3.1
-            (pill 76px от низа + bubble торчит ещё ~25px = 101px), даём
-            нижний padding 116px (108 nav-clearance + 8 воздух). На md+
-            модалка центрирована — стандартный pb-6.
-            Через arbitrary-значение Tailwind, чтобы `md:pb-6` мог его
-            переопределить (inline-style бы md:-override не поборол).
-          */}
-          <div className="relative w-full max-w-md rounded-t-3xl bg-card p-6 pb-[calc(env(safe-area-inset-bottom,0px)+116px)] shadow-xl md:rounded-3xl md:pb-6">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted-foreground/30 md:hidden" />
-            <h2 className="text-lg font-bold text-[#1a1a1a]">Пополнить кошелёк</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Выберите сумму или введите свою</p>
-
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              {[100, 300, 500, 1000, 2000, 5000].map((amt) => (
-                <button
-                  key={amt}
-                  type="button"
-                  onClick={() => setTopUpAmount(amt)}
-                  className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${
- topUpAmount === amt
- ? '[border-color:var(--mode-accent-ring)] [background-color:var(--mode-accent-soft)] [color:var(--mode-accent)]'
- : 'border-border bg-muted/50 text-[#1a1a1a] hover:border-border'
- }`}
-                >
-                  {amt.toLocaleString('ru-RU')} ₽
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-4">
-              <input
-                type="number"
-                placeholder="Другая сумма"
-                min={1}
-                value={topUpAmount && ![100, 300, 500, 1000, 2000, 5000].includes(topUpAmount) ? topUpAmount : ''}
-                onChange={(e) => setTopUpAmount(e.target.value ? Number(e.target.value) : null)}
-                className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-[#1a1a1a] placeholder:text-muted-foreground outline-none transition focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (topUpAmount && topUpAmount > 0) {
-                  // Handle top-up logic here
-                  setShowTopUp(false);
-                }
-              }}
-              disabled={!topUpAmount || topUpAmount <= 0}
-              className="mt-6 w-full rounded-lg [background-color:var(--mode-accent)] px-4 py-3 text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)] disabled:bg-muted-foreground/30 disabled:text-muted-foreground"
-            >
-              Пополнить на {topUpAmount?.toLocaleString('ru-RU') ?? '—'} ₽
-            </button>
-          </div>
-        </div>
-      ) : null}
 
       <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
 

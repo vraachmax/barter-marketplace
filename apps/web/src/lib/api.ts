@@ -33,6 +33,7 @@ export function resolveAssetUrl(
 }
 
 export type Category = {
+  barterAllowed?: boolean;
   id: string;
   slug: string;
   title: string;

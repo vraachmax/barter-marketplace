@@ -2,6 +2,86 @@
 
 ## Статус: ALPHA | Дизайн-система: shadcn/ui
 
+2026-09-08: владелец подтвердил локальный backup и явно разрешил merge/release
+PR #7 вместе с текущими UI-правками. Backup самим агентом не проверен. Прежняя
+пауза снята; остаются актуальные CI и post-deploy проверки. Интеграции отложены.
+
+2026-09-08: профиль/кошелёк без фиктивных 1,500 ₽, no-op пополнения и mock-topup
+формы; сохранены реальные разделы/чтение данных. Ошибки истории и подписки явные,
+вход с возвратом и повтор при сетевом сбое. 28 web tests, focused lint/build.
+Локальная ветка, не опубликовано. Browser QA заблокирован ERR_BLOCKED_BY_CLIENT
+при открытии локального приложения; не считать дизайн визуально принятым.
+
+2026-09-08: UI продолжается отдельно от заблокированного выпуска. Локальная
+feat/favorites-ui-reliability: избранное loading/empty/401/error+retry,
+подтверждённое удаление с pending/error/retry, отмена запросов/смена аккаунта,
+44px controls и безопасный возврат после входа. 25 web tests, lint и Next build
+прошли. Не опубликовано; browser/authenticated QA ещё не пройден. Далее профиль,
+страница объявления и проверка основных действий. Рабочую БД/сайт не менять.
+
+2026-09-07: базовая нормализация/контролируемые опечатки завершены в ветке,
+186 API tests, offline recall development 64% -> 86%, holdout 58% -> 67%, без
+роста forbidden matches. По согласованному бюджету далее подготовка выпуска PR #7
+и основной UI; семантика/персонализация не расширяют текущий блок.
+
+2026-09-07: isolated native PostgreSQL 16.15 rehearsal ПРОЙДЕН (Actions
+34090917000): 20 SQL migrations, backfill900, fingerprint, pg_dump/restore,
+GIN/count/deep page. Подробности docs/search-evaluation/README.md. Production
+не изменён; перед выпуском актуальная резервная копия рабочей БД и порядок deploy.
+
+2026-09-07: DB model/accessory guard теперь во всех сортировках. Новая миграция
+служебных полей/trigger/GIN проверена в isolated PGlite PG18.3, не в production.
+Перед выпуском обязательны PG16 full-chain/locale/lock/backup проверки. Новый
+API зависит от новых колонок. Дальше нормализация/опечатки и масштабирование окна.
+
+2026-09-07: protected model/accessory guard для relevant/Meili/nearby и их VIP
+до count/pagination. Offline forbiddenQueries 14 -> 1, recall не снизился,
+169 API tests + Nest build. Перед выпуском распространить на new/cheap/expensive
+через DB-level токены; не фильтровать готовые страницы. Production не менялся.
+
+2026-09-07: создан offline quality baseline, 60 запросов/30 synthetic fixtures,
+скрипт реального ListingsService с in-memory Prisma. Данные и ограничения:
+docs/search-evaluation/. Зафиксированы ложные модели/аксессуары, опечатки,
+морфология и ё/е. Следом исправления с сравнением baseline, затем live-isolated
+DB/index QA. Production не менялся; baseline не означает хорошее качество.
+
+2026-09-06: обязательная основа поиска — первичные интернет-источники и измеримое
+удобство. Матрица Baymard/Meili/Elastic и критерии в SEARCH_AND_RECOMMENDATIONS.md.
+AND/all остаётся первым проходом; естественная речь, контрольный набор и явные
+подсказки/исправления входят в дальнейший план. Это документация, не новый релиз.
+
+S2 2026-09-06, PR #7: общий консервативный словарь, SQL AND по словам,
+Meili matchingStrategy=all. 147 API-тестов и Nest build. Защита точных
+моделей/чисел, общий typo fallback и live top-5 evaluation ещё не реализованы.
+Изменения не выпущены; окно кандидатов и масштабирование остаются в очереди.
+
+S1 Meili 2026-09-06, PR #7: устранён overfetch со смещением, hydration проверяет
+актуальные status/city/category/price до пагинации и count, ID уникальны, VIP
+исключён. 132 API-теста и Nest build. Окно до 3000/index maxTotalHits остаётся;
+live index QA, snapshot и поиск за пределами окна ещё не выполнены.
+
+S1 продолжение 2026-09-06, PR #7: устранены повторы/пропуски в boost-pagination,
+DB relevant имеет фиксированный пул 3000 и честный total окна; tie-break для
+rank/nearby, общий isBarter mapper. 129 API-тестов и Nest build прошли.
+Остаются глобальная выдача за пределами окна, Meili hydration/overfetch,
+геовыборка за пределами 3000 и cursor/snapshot. Production не обновлён.
+
+S1, 2026-09-06: в PR #7 исправлены new/cheap/expensive: прямая DB-пагинация
+без потолка 400, сохранение порядка при продвижении, null-цена в конце,
+id tie-break, VIP исключается до count/skip/take. 120 API-тестов.
+Следом: стабильный пул relevant, nearby и контракт Meili; snapshot/cursor
+при изменяющейся выдаче. Текущий блок не выпущен в production.
+
+Текущий блок: выбор обмена по категориям в новой ветке feat/category-barter-selection.
+Товары/авто/недвижимость/услуги допускаются, Работа и неизвестные категории нет.
+UI создания/редактирования, серверная защита и фильтр выдачи подготовлены;
+production ещё не обновлён. Следом остаются сортировка/пагинация S1.
+
+Выпуск 2026-09-06 завершён: PR #6 merged, Render live, Vercel success.
+HTTP production: health 200, mode/appliedMode подтверждены, неверные цены 400.
+Market total=24, Barter total=0 (opt-in продавцов пока нет). OSV зелёный.
+Теперь активный блок: сортировка/пагинация S1 в отдельной ветке, затем опечатки.
+
 Подготовка выпуска 2026-09-06: владелец согласовал master release. Перед merge
 устраняются 3 OSV-находки в ajv/picomatch dev-зависимостях; нужен зелёный OSV,
 затем выпуск и HTTP-проверка контракта каталога. Защитные проверки не обходить.

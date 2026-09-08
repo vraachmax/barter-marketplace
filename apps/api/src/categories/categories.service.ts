@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { categoryAllowsBarter } from './barter-policy';
 
 @Injectable()
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
   async list() {
-    return this.prisma.category.findMany({
+    const categories = await this.prisma.category.findMany({
       orderBy: [{ title: 'asc' }],
       select: { id: true, slug: true, title: true, parentId: true },
     });
+    return categories.map((category) => ({
+      ...category,
+      barterAllowed: categoryAllowsBarter(category.slug),
+    }));
   }
 
   async ensureSeed() {
@@ -31,4 +36,3 @@ export class CategoriesService {
     });
   }
 }
-

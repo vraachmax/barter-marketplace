@@ -304,6 +304,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       offset: params.offset,
       limit: params.limit,
       attributesToRetrieve: ['id'],
+      matchingStrategy: 'all',
     };
     if (params.sort === 'new') {
       searchParams.sort = ['createdAtTs:desc'];

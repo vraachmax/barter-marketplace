@@ -1,0 +1,32 @@
+name: PostgreSQL 16 migration rehearsal
+on:
+  pull_request:
+    paths:
+      - 'apps/api/prisma/**'
+      - 'scripts/verify-pg16-chain.py'
+      - '.github/workflows/postgres16-migrations.yml'
+permissions:
+  contents: read
+jobs:
+  migration-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-ci-fixture-only
+          POSTGRES_DB: barter_rehearsal
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Rehearse full SQL chain, backfill and backup restore
+        env:
+          BARTER_PG16_CONTAINER: ${{ job.services.postgres.id }}
+        run: python3 scripts/verify-pg16-chain.py
