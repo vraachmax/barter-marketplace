@@ -1,14 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   ArrowDownLeft,
   ArrowUpRight,
   Crown,
   Gift,
   History,
-  Loader2,
   RefreshCw,
   Rocket,
   Wallet as WalletIcon,
@@ -23,11 +22,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const TOPUP_PRESETS = [100, 300, 500, 1000, 2000, 5000];
 
 function formatRub(v: number): string {
   return `${Math.round(v).toLocaleString('ru-RU')} ₽`;
@@ -58,31 +55,30 @@ export default function WalletPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [topupAmount, setTopupAmount] = useState<number>(500);
-  const [customAmount, setCustomAmount] = useState<string>('');
-  const [topupBusy, setTopupBusy] = useState(false);
-  const [topupOk, setTopupOk] = useState<string | null>(null);
-
-  const effectiveAmount = useMemo(() => {
-    const custom = Number(customAmount);
-    if (custom > 0 && Number.isFinite(custom)) return Math.floor(custom);
-    return topupAmount;
-  }, [customAmount, topupAmount]);
+  const [needsLogin, setNeedsLogin] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState(false);
 
   async function load() {
-    setLoading(true);
-    setError(null);
     const [bal, tx, sub] = await Promise.all([
       apiFetchJson<WalletBalance>('/wallet/balance'),
       apiFetchJson<WalletTransaction[]>('/wallet/transactions?limit=50'),
       apiFetchJson<ProSubscription | null>('/wallet/pro/subscription'),
     ]);
     setLoading(false);
+    setError(null);
+    setNeedsLogin(false);
+    setHistoryError(!tx.ok);
+    setSubscriptionError(!sub.ok);
     if (!bal.ok) {
       if (bal.status === 401) {
+        setNeedsLogin(true);
+        setBalance(null);
+        setTxns([]);
+        setSubscription(null);
         setError('Войдите в аккаунт, чтобы открыть кошелёк.');
       } else {
-        setError(bal.message);
+        setError('Не удалось обновить баланс. Попробуйте ещё раз.');
       }
       return;
     }
@@ -92,28 +88,15 @@ export default function WalletPage() {
   }
 
   useEffect(() => {
+    // load updates state only after awaiting the API responses.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, []);
 
-  async function topup() {
-    if (effectiveAmount < 1) return;
-    setTopupBusy(true);
-    setTopupOk(null);
-    const res = await apiFetchJson<{ ok: true; balanceRub: number }>(
-      '/wallet/topup',
-      {
-        method: 'POST',
-        body: JSON.stringify({ amountRub: effectiveAmount }),
-      },
-    );
-    setTopupBusy(false);
-    if (!res.ok) {
-      setError(res.message);
-      return;
-    }
-    setTopupOk(`Зачислено ${formatRub(effectiveAmount)} на баланс.`);
-    setCustomAmount('');
-    await load();
+  function refresh() {
+    setLoading(true);
+    setError(null);
+    void load();
   }
 
   if (error && !balance) {
@@ -123,7 +106,7 @@ export default function WalletPage() {
           <div className="text-base font-semibold text-foreground">Кошелёк недоступен</div>
           <p className="text-sm text-muted-foreground">{error}</p>
           <div className="flex gap-2">
-            <Button render={<Link href="/auth" />}>Войти</Button>
+            {needsLogin ? <Button render={<Link href="/auth?next=%2Fwallet" />}>Войти</Button> : <Button onClick={refresh} disabled={loading}>Попробовать снова</Button>}
             <Button variant="outline" render={<Link href="/" />}>
               На главную
             </Button>
@@ -144,7 +127,7 @@ export default function WalletPage() {
             Баланс для продвижения объявлений и подписки Barter Pro
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => void load()} disabled={loading}>
+        <Button variant="ghost" size="sm" onClick={refresh} disabled={loading}>
           <RefreshCw size={16} strokeWidth={1.8} />
           Обновить
         </Button>
@@ -179,64 +162,11 @@ export default function WalletPage() {
           <Separator />
 
           <div className="space-y-3">
-            <div className="text-sm font-semibold text-foreground">Пополнить</div>
-            <div className="flex flex-wrap gap-2">
-              {TOPUP_PRESETS.map((amt) => {
-                const active = effectiveAmount === amt && !customAmount;
-                return (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => {
-                      setTopupAmount(amt);
-                      setCustomAmount('');
-                    }}
-                    className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                      active
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-background text-foreground hover:border-primary/40'
-                    }`}
-                  >
-                    {amt.toLocaleString('ru-RU')} ₽
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input
-                value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value.replace(/\D+/g, ''))}
-                inputMode="numeric"
-                placeholder="Своя сумма, ₽"
-                className="h-11 max-w-[220px] rounded-xl"
-              />
-              <Button
-                size="lg"
-                disabled={topupBusy || effectiveAmount < 1}
-                onClick={() => void topup()}
-                className="h-11 rounded-xl"
-              >
-                {topupBusy ? (
-                  <Loader2 size={18} strokeWidth={1.8} className="animate-spin" />
-                ) : (
-                  `Пополнить на ${formatRub(effectiveAmount)}`
-                )}
-              </Button>
-            </div>
-            {topupOk ? (
-              <div className="rounded-xl border border-secondary/30 bg-secondary/10 px-3 py-2 text-sm text-secondary">
-                {topupOk}
-              </div>
-            ) : null}
-            {error ? (
-              <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </div>
-            ) : null}
-            <p className="text-xs text-muted-foreground">
-              Платежи в alpha-режиме мокаются — на баланс зачислится мгновенно. Реальная
-              эквайринг-интеграция появится в Phase 10.
+            <h2 className="text-sm font-semibold">Пополнение пока недоступно</h2>
+            <p className="text-sm text-muted-foreground">
+              Платёжная система ещё не подключена. Сейчас здесь можно посмотреть баланс и историю операций.
             </p>
+            {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
           </div>
         </Card>
 
@@ -252,7 +182,7 @@ export default function WalletPage() {
                 <div className="text-xs text-muted-foreground">Подписка для активных продавцов</div>
               </div>
             </div>
-            {subscription && subscription.status === 'ACTIVE' ? (
+            {subscriptionError ? <p role="alert" className="text-sm text-destructive">Не удалось загрузить подписку. Нажмите «Обновить».</p> : loading ? <Skeleton className="h-6 w-40" /> : subscription && subscription.status === 'ACTIVE' ? (
               <>
                 <div className="text-sm text-foreground">
                   Тариф: <span className="font-semibold">{subscription.plan.title}</span>
@@ -306,9 +236,11 @@ export default function WalletPage() {
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
             </div>
+          ) : historyError ? (
+            <p role="alert" className="p-5 text-sm text-destructive">Не удалось загрузить историю. Нажмите «Обновить».</p>
           ) : txns.length === 0 ? (
             <div className="px-5 py-12 text-center text-sm text-muted-foreground">
-              Операций пока нет. Пополните баланс, чтобы начать продвижение.
+              Операций пока нет.
             </div>
           ) : (
             <ul className="divide-y divide-border">
