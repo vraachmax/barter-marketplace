@@ -1,5 +1,16 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-09 — PR #8: устранение security blocker перед выпуском
+
+PR #8 head 139c8d6, Vercel preview success, OSV full scan failed на вложенном
+multer 2.2.0 в @nestjs/platform-express 11.2.3 (4 advisory, 3 high + 1 low).
+Прямой multer уже 2.3.0. Добавлен override multer@2.2.0 -> 2.3.0; устаревшая
+вложенная lock-запись удалена и npm install пересобрал resolution. Проверено
+через createRequire от NestJS: реально загружается 2.3.0. Политика OSV не ослаблена.
+Источник исправлений: https://github.com/expressjs/multer/releases/tag/v2.3.0
+Миграций нет. Повторные API/web tests и сборки выполняются перед публикацией
+исправления; дальнейший статус CI/deploy фиксируется в PR #8.
+
 ## 2026-09-09 — публикация профиля разрешена
 
 Максим: «Проверяй и публикуй». Повторно прошли 32 web tests, Next production

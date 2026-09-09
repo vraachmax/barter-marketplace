@@ -1,5 +1,11 @@
 # Product Backlog — Barter Marketplace
 
+## 2026-09-09 — security blocker PR #8
+
+Убираем вложенный multer 2.2.0 в NestJS через override на 2.3.0 и обновление lock.
+OSV сообщил 4 уязвимости; проверку не отключаем. Повторные API/web проверки и
+зелёный CI требуются до merge. Подробности и статус выпуска в HANDOFF и PR #8.
+
 ## 2026-09-09 — профиль и мои объявления: единый дизайн
 
 В feat/listing-actions-reliability обновлены profile-content, /listings,
