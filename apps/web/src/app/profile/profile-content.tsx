@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { createActionGate, actionErrorMessage } from '@/lib/action-gate';
+import { useListingActions } from '@/lib/use-listing-actions';
 import { Card } from '@/components/ui/card';
 import { ListingEditorDialog } from '@/components/listing-editor-dialog';
 import { canOfferBarter } from '@/lib/barter-category';
@@ -65,11 +65,7 @@ function formatPromoEndsAt(iso: string) {
 }
 
 export function ProfileContent() {
-  const [actionGate] = useState(createActionGate);
-  const [actionBusy, setActionBusy] = useState(false);
-  const [actionNotice, setActionNotice] = useState('');
-  const [actionError, setActionError] = useState(false);
-  const [actionNeedsLogin, setActionNeedsLogin] = useState(false);
+  const { busy: actionBusy, notice: actionNotice, error: actionError, needsLogin: actionNeedsLogin, performAction } = useListingActions(loadMe);
   const [supportSheetOpen, setSupportSheetOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,66 +99,38 @@ export function ProfileContent() {
     router.push(`/profile?tab=${tab}`, { scroll: false });
   }
 
-  async function loadMe() {
+  async function loadMe(): Promise<boolean> {
+    const signal = AbortSignal.timeout(20000);
     const [res, cats] = await Promise.all([
-      apiFetchJson<AuthMe>('/auth/me'),
-      apiGetJson<Category[]>('/categories').catch(() => [] as Category[]),
+      apiFetchJson<AuthMe>('/auth/me', { signal }),
+      apiGetJson<Category[]>('/categories', { signal }).catch(() => [] as Category[]),
     ]);
     if (!res.ok) {
       if (res.status === 401) {
         setStatus('need_auth');
-        return;
+        return false;
       }
       setStatus('error');
-      return;
+      return false;
     }
     setMe(res.data);
     setCategories(cats);
     const [myListings, profile, chats] = await Promise.all([
-      apiFetchJson<MyListing[]>('/listings/my'),
-      apiGetJson<SellerProfileResponse>(`/users/${res.data.id}/profile`).catch(
+      apiFetchJson<MyListing[]>('/listings/my', { signal }),
+      apiGetJson<SellerProfileResponse>(`/users/${res.data.id}/profile`, { signal }).catch(
         () => null as SellerProfileResponse | null,
       ),
-      apiFetchJson<ChatSummary[]>('/chats'),
+      apiFetchJson<ChatSummary[]>('/chats', { signal }),
     ]);
     if (myListings.ok) setListings(myListings.data);
     else {
       setStatus(myListings.status === 401 ? 'need_auth' : 'error');
-      return;
+      return false;
     }
     if (chats.ok) setChatCount(chats.data.length);
     setPublicProfile(profile);
     setStatus('ready');
-  }
-
-  async function performAction(path: string, init: RequestInit, onSuccess?: () => void) {
-    let saved = false;
-    await actionGate.run(async () => {
-      setActionBusy(true);
-      setActionError(false);
-      setActionNeedsLogin(false);
-      setActionNotice('Сохраняем изменения…');
-      try {
-        const res = await apiFetchJson(path, { ...init, signal: AbortSignal.timeout(20000) });
-        if (!res.ok) {
-          setActionError(true);
-          setActionNeedsLogin(res.status === 401);
-          setActionNotice(actionErrorMessage(res.status));
-          return;
-        }
-        saved = true;
-        onSuccess?.();
-        setActionNotice('Изменения сохранены. Обновляем список…');
-        await loadMe();
-        setActionNotice('Изменения сохранены.');
-      } catch {
-        setActionError(true);
-        setActionNotice('Действие могло выполниться, но список не обновился. Обновите страницу.');
-      } finally {
-        setActionBusy(false);
-      }
-    });
-    return saved;
+    return true;
   }
 
   async function setListingStatus(id: string, nextStatus: 'ACTIVE' | 'SOLD' | 'ARCHIVED') {
@@ -220,7 +188,6 @@ export function ProfileContent() {
 
   useEffect(() => {
     // loadMe updates state only after awaiting the initial API requests.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMe();
   }, []);
 
@@ -1078,7 +1045,7 @@ export function ProfileContent() {
         ) : null}
       </div>
 
-      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} /> : null}
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={actionError ? actionNotice : undefined} authHref={actionNeedsLogin ? '/auth?next=%2Fprofile' : undefined} /> : null}
       <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
 
       {promoteTarget ? (

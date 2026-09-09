@@ -1,5 +1,13 @@
 # Product Backlog — Barter Marketplace
 
+## 2026-09-09 — единые действия /listings и /profile
+
+Реализован общий runner: ошибки и ожидание видимы, повторные запросы заблокированы,
+подтверждённое сохранение отличается от ошибки refresh. Ошибка/вход отображаются
+в редакторе; busy передан архиву. 37 web tests, focused lint и webpack production
+build/TypeScript проходят. Browser E2E остаётся неподтверждённым. Выпуск отдельно
+от уже merged PR #8 (9020c874). Платежи, Яндекс и БД не менялись.
+
 ## 2026-09-09 — security blocker PR #8
 
 Убираем вложенный multer 2.2.0 в NestJS через override на 2.3.0 и обновление lock.
