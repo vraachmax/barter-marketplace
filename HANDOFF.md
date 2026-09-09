@@ -1,5 +1,25 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-09 — единый стандарт, кнопки, тема и вакансии
+
+После PR #10 (master 569b02b3) ветка feat/design-system-forms-theme.
+Зафиксирован docs/DESIGN_STANDARD.md: Apple как основной визуальный ориентир,
+Material для состояний/list-detail, Fluent для общих токенов. Контраст CTA
+рассчитан; общая библиотека кнопок/полей теперь mobile-first (44/48/52 px).
+Исправлено сжатие Save в flex-column, удалены лишние значки основных действий.
+Orders без старого ProfileSidebar, общий AccountScreenHeader с reviews.
+Theme: немедленный preview в настройках, общие события, доступность без storage,
+сервер не блокирует быстрый toggle, последовательные записи, dark theme-color.
+Вакансии получили отдельные релевантные поля, salary range и shift validation;
+job/services/realty исключены из товарных common fields. Авто и услуги дополнены.
+Дробные attributes сохраняются без округления. API и БД не менялись.
+
+Unit tests проверяют theme и attributes; полный build/lint перед PR.
+Гостевой Orders доступен, личный UI требует авторизации; screenshot-аудит личных
+сценариев и iPhone keyboard не подтверждены. Не заявлять весь сайт принятым.
+Статусы CI, merge и production фиксируются в PR. Следующие отдельные legacy
+экраны для миграции перечислены в DESIGN_STANDARD.md.
+
 ## 2026-09-09 — нативные экраны кабинета и сообщений
 
 Следующий этап после merged PR #9 (d4393f2): feat/native-account-messages.

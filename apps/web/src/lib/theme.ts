@@ -1,41 +1,47 @@
 export type ThemePreference = 'SYSTEM' | 'LIGHT' | 'DARK';
 export type AppliedTheme = 'light' | 'dark';
-
+export const THEME_EVENT = 'barter-theme-change';
 const STORAGE_KEY = 'barter_theme_pref';
-
-function systemTheme(): AppliedTheme {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
 
 export function resolveTheme(preference: ThemePreference): AppliedTheme {
   if (preference === 'LIGHT') return 'light';
   if (preference === 'DARK') return 'dark';
-  return systemTheme();
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 export function getStoredThemePreference(): ThemePreference | null {
   if (typeof window === 'undefined') return null;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (raw === 'SYSTEM' || raw === 'LIGHT' || raw === 'DARK') return raw;
-  return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw === 'SYSTEM' || raw === 'LIGHT' || raw === 'DARK' ? raw : null;
+  } catch { return null; }
 }
 
-export function applyThemePreference(preference: ThemePreference) {
+export function getCurrentThemePreference(): ThemePreference {
+  if (typeof document === 'undefined') return 'LIGHT';
+  const value = document.documentElement.getAttribute('data-theme-pref');
+  return value === 'SYSTEM' || value === 'DARK' || value === 'LIGHT' ? value : 'LIGHT';
+}
+
+export function applyThemePreference(preference: ThemePreference, persist = true) {
   if (typeof window === 'undefined') return;
   const resolved = resolveTheme(preference);
   const root = document.documentElement;
   root.setAttribute('data-theme', resolved);
   root.classList.toggle('dark', resolved === 'dark');
   root.setAttribute('data-theme-pref', preference);
-  window.localStorage.setItem(STORAGE_KEY, preference);
+  if (persist) {
+    try { window.localStorage.setItem(STORAGE_KEY, preference); } catch { /* The current page still switches when storage is unavailable. */ }
+  }
+  window.dispatchEvent(new Event(THEME_EVENT));
+}
+
+export function subscribeTheme(listener: () => void) {
+  window.addEventListener(THEME_EVENT, listener);
+  return () => window.removeEventListener(THEME_EVENT, listener);
 }
 
 export function reapplyCurrentTheme() {
-  if (typeof window === 'undefined') return;
-  const prefAttr = document.documentElement.getAttribute('data-theme-pref');
-  const pref: ThemePreference =
-    prefAttr === 'LIGHT' || prefAttr === 'DARK' || prefAttr === 'SYSTEM' ? prefAttr : 'SYSTEM';
-  applyThemePreference(pref);
+  applyThemePreference(getCurrentThemePreference(), false);
 }
 

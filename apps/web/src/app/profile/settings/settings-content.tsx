@@ -34,7 +34,8 @@ import {
   type MyListing,
   type SellerProfileResponse,
 } from '@/lib/api';
-import { applyThemePreference } from '@/lib/theme';
+import { Button } from '@/components/ui/button';
+import { applyThemePreference, getStoredThemePreference, getCurrentThemePreference, subscribeTheme } from '@/lib/theme';
 import ProfileSidebar from '@/components/profile-sidebar';
 import { PasswordSettings } from '@/components/password-settings';
 
@@ -189,7 +190,7 @@ export function ProfileSettingsContent() {
       about: res.data.about ?? '',
       companyName: res.data.companyName ?? '',
       companyInfo: res.data.companyInfo ?? '',
-      appTheme: res.data.appTheme ?? 'SYSTEM',
+      appTheme: getStoredThemePreference() ?? res.data.appTheme ?? 'LIGHT',
       notificationsEnabled: res.data.notificationsEnabled ?? true,
       marketingEnabled: res.data.marketingEnabled ?? false,
       showEmailPublic: res.data.showEmailPublic ?? false,
@@ -252,6 +253,8 @@ export function ProfileSettingsContent() {
     void load();
   }, []);
 
+
+  useEffect(() => subscribeTheme(() => setForm(previous => ({ ...previous, appTheme: getCurrentThemePreference() }))), []);
 
   const currentMeta = SECTIONS.find((x) => x.id === section);
   const SectionHeroIcon = currentMeta?.icon ?? Settings;
@@ -621,9 +624,9 @@ export function ProfileSettingsContent() {
                         {section === 'appearance' ? (
                           <div className="space-y-4">
                             <p className="text-sm text-muted-foreground">
-                              Тема сохраняется в аккаунте и применяется на всех устройствах после входа.
+                              Тема меняется сразу. Нажмите «Сохранить», чтобы записать выбор в аккаунт.
                             </p>
-                            <div className="grid gap-3 sm:grid-cols-3">
+                            <div className="grid grid-cols-3 gap-2">
                               {(
                                 [
                                   {
@@ -642,7 +645,8 @@ export function ProfileSettingsContent() {
                                   <button
                                     key={id}
                                     type="button"
-                                    onClick={() => setForm((p) => ({ ...p, appTheme: id }))}
+                                    onClick={() => { setForm((p) => ({ ...p, appTheme: id })); applyThemePreference(id); }}
+                                    aria-pressed={active}
                                     className={`flex flex-col items-center rounded-2xl border-2 px-4 py-5 text-center transition ${
  active
  ? 'border-primary bg-primary/10 shadow-md shadow-primary/10'
@@ -736,27 +740,9 @@ export function ProfileSettingsContent() {
                         ) : null}
 
                         <div className={`flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center ${section === 'security' ? 'hidden' : ''}`}>
-                          <button
-                            type="button"
-                            onClick={() => void save()}
-                            disabled={busy}
-                            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/25 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 sm:max-w-xs"
-                          >
-                            {busy ? (
-                              <>
-                                <span
-                                  className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
-                                  aria-hidden
-                                />
-                                Сохранение…
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle size={18} strokeWidth={stroke} aria-hidden />
-                                Сохранить
-                              </>
-                            )}
-                          </button>
+                          <Button type="button" size="lg" onClick={() => void save()} disabled={busy} aria-busy={busy} className="w-full shrink-0 sm:max-w-xs">
+                            {busy ? 'Сохраняем…' : 'Сохранить'}
+                          </Button>
                         </div>
                       </div>
                     </div>

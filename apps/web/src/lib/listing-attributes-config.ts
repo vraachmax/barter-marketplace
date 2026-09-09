@@ -3,7 +3,7 @@
  * Секции и поля характеристик при создании объявления.
  */
 
-export type ListingAttrFieldType = 'select' | 'text' | 'number';
+export type ListingAttrFieldType = 'select' | 'text' | 'number' | 'textarea';
 
 export type ListingAttrField = {
   key: string;
@@ -73,6 +73,9 @@ const AUTO: ListingAttrSection[] = [
     title: 'Автомобиль',
     subtitle: 'Год, пробег, топливо — ключевые характеристики для поиска',
     fields: [
+      { key: 'auto_make', label: 'Марка', type: 'text', placeholder: 'Toyota, Lada, BMW…' },
+      { key: 'auto_model', label: 'Модель', type: 'text', placeholder: 'Camry, Vesta…' },
+      { key: 'engine_volume', label: 'Объём двигателя, л', type: 'number', placeholder: '2.0' },
       { key: 'auto_year', label: 'Год выпуска', type: 'number', placeholder: '2018' },
       { key: 'mileage_km', label: 'Пробег, км', type: 'number', placeholder: '87000' },
       {
@@ -175,44 +178,57 @@ const REALTY: ListingAttrSection[] = [
 
 const JOB: ListingAttrSection[] = [
   {
-    id: 'job_main',
-    title: 'Вакансия',
-    subtitle: 'Формат работы и занятость',
+    id: 'job_employer', title: 'Вакансия и работодатель', subtitle: 'Должность укажите в названии объявления.',
     fields: [
-      {
-        key: 'employment_type',
-        label: 'Занятость',
-        type: 'select',
-        options: [
-          { value: 'full', label: 'Полная' },
-          { value: 'part', label: 'Частичная' },
-          { value: 'project', label: 'Проект / разовая' },
-          { value: 'internship', label: 'Стажировка' },
-        ],
-      },
-      {
-        key: 'work_format',
-        label: 'Формат',
-        type: 'select',
-        options: [
-          { value: 'office', label: 'Офис' },
-          { value: 'hybrid', label: 'Гибрид' },
-          { value: 'remote', label: 'Удалённо' },
-        ],
-      },
-      {
-        key: 'experience_level',
-        label: 'Опыт',
-        type: 'select',
-        options: [
-          { value: 'no_matter', label: 'Не важен' },
-          { value: 'junior', label: 'Junior' },
-          { value: 'middle', label: 'Middle' },
-          { value: 'senior', label: 'Senior' },
-          { value: 'lead', label: 'Lead / руководитель' },
-        ],
-      },
-      { key: 'salary_hint', label: 'Зарплата в тексте', type: 'text', placeholder: 'от 180 000 ₽ на руки' },
+      { key: 'company_name', label: 'Название работодателя', type: 'text', placeholder: 'Компания или ИП' },
+      { key: 'job_sphere', label: 'Сфера работы', type: 'text', placeholder: 'Строительство, транспорт, продажи…' },
+      { key: 'work_address', label: 'Место работы', type: 'text', placeholder: 'Район, улица или название объекта' },
+    ],
+  },
+  {
+    id: 'job_pay', title: 'Оплата', subtitle: 'Нижнюю границу укажите в поле «Зарплата от».',
+    fields: [
+      { key: 'salary_to', label: 'Зарплата до, ₽', type: 'number', placeholder: '150000' },
+      { key: 'salary_period', label: 'Период оплаты', type: 'select', options: [
+        { value: 'month', label: 'За месяц' }, { value: 'shift', label: 'За смену' }, { value: 'hour', label: 'За час' }, { value: 'project', label: 'За проект' },
+      ] },
+      { key: 'salary_tax', label: 'Как указана сумма', type: 'select', options: [{ value: 'net', label: 'На руки' }, { value: 'gross', label: 'До вычета налогов' }] },
+      { key: 'pay_frequency', label: 'Частота выплат', type: 'select', options: [
+        { value: 'daily', label: 'Ежедневно' }, { value: 'weekly', label: 'Еженедельно' }, { value: 'twice_month', label: 'Дважды в месяц' }, { value: 'monthly', label: 'Раз в месяц' }, { value: 'completion', label: 'После выполнения работ' },
+      ] },
+    ],
+  },
+  {
+    id: 'job_schedule', title: 'Занятость и график',
+    fields: [
+      { key: 'employment', label: 'Занятость', type: 'select', options: [
+        { value: 'full', label: 'Полная' }, { value: 'part', label: 'Частичная' }, { value: 'project', label: 'Проектная' }, { value: 'internship', label: 'Стажировка' }, { value: 'temporary', label: 'Временная' },
+      ] },
+      { key: 'work_format', label: 'Формат работы', type: 'select', options: [
+        { value: 'onsite', label: 'На территории работодателя' }, { value: 'office', label: 'В офисе' }, { value: 'remote', label: 'Удалённо' }, { value: 'hybrid', label: 'Гибрид' }, { value: 'travel', label: 'Разъездная работа' },
+      ] },
+      { key: 'work_schedule', label: 'График', type: 'select', options: [
+        { value: '5_2', label: '5/2' }, { value: '2_2', label: '2/2' }, { value: '6_1', label: '6/1' }, { value: 'shift', label: 'Сменный' }, { value: 'rotation', label: 'Вахта' }, { value: 'flexible', label: 'Гибкий' },
+      ] },
+      { key: 'shift_hours', label: 'Часов в смене', type: 'number', placeholder: '8 или 12' },
+      { key: 'rotation_schedule', label: 'Уточнение графика / вахты', type: 'text', placeholder: 'Например: 30/30, дневные и ночные смены' },
+      { key: 'contract_type', label: 'Оформление', type: 'select', options: [
+        { value: 'employment', label: 'Трудовой договор' }, { value: 'civil', label: 'ГПХ' }, { value: 'self_employed', label: 'Самозанятость / ИП' }, { value: 'discuss', label: 'Обсуждается' },
+      ] },
+    ],
+  },
+  {
+    id: 'job_requirements', title: 'Требования и условия',
+    fields: [
+      { key: 'experience_years_required', label: 'Требуемый опыт', type: 'select', options: [
+        { value: 'none', label: 'Без опыта' }, { value: 'under_1', label: 'До года' }, { value: '1_3', label: '1–3 года' }, { value: '3_6', label: '3–6 лет' }, { value: 'over_6', label: 'Более 6 лет' },
+      ] },
+      { key: 'education', label: 'Образование', type: 'select', options: [
+        { value: 'any', label: 'Не имеет значения' }, { value: 'secondary', label: 'Среднее' }, { value: 'vocational', label: 'Среднее профессиональное' }, { value: 'higher', label: 'Высшее' },
+      ] },
+      { key: 'responsibilities', label: 'Обязанности', type: 'textarea', placeholder: 'Что предстоит делать сотруднику' },
+      { key: 'requirements', label: 'Навыки и допуски', type: 'textarea', placeholder: 'Удостоверения, водительская категория, знание техники…' },
+      { key: 'benefits', label: 'Что предоставляет работодатель', type: 'textarea', placeholder: 'Проживание, питание, проезд, спецодежда, обучение…' },
     ],
   },
 ];
@@ -235,6 +251,8 @@ const SERVICES: ListingAttrSection[] = [
       },
       { key: 'service_sphere', label: 'Сфера', type: 'text', placeholder: 'Ремонт техники, уборка, дизайн…' },
       { key: 'experience_years', label: 'Опыт, лет', type: 'number', placeholder: '5' },
+      { key: 'service_price_unit', label: 'Единица оплаты', type: 'select', options: [{ value: 'hour', label: 'За час' }, { value: 'visit', label: 'За выезд' }, { value: 'work', label: 'За работу' }, { value: 'm2', label: 'За м²' }] },
+      { key: 'service_included', label: 'Что входит в стоимость', type: 'textarea', placeholder: 'Работы, материалы, выезд…' },
     ],
   },
 ];
@@ -381,10 +399,14 @@ export const LISTING_ATTR_BY_CATEGORY_SLUG: Record<string, ListingAttrSection[]>
 
 export function getListingAttrSectionsForCategorySlug(slug: string): ListingAttrSection[] {
   const extra = LISTING_ATTR_BY_CATEGORY_SLUG[slug] ?? [];
+  if (['job', 'services', 'realty'].includes(slug)) return extra;
   return [...LISTING_ATTR_COMMON_SECTIONS, ...extra];
 }
 
 export function getListingAttrFieldMeta(key: string): ListingAttrField | undefined {
+  // Retain labels for previously published job attributes.
+  if (key === 'salary_hint') return { key, label: 'Условия оплаты', type: 'text' };
+  if (key === 'experience_level') return { key, label: 'Уровень специалиста', type: 'select', options: [{ value: 'no_matter', label: 'Не важен' }, { value: 'junior', label: 'Junior' }, { value: 'middle', label: 'Middle' }, { value: 'senior', label: 'Senior' }, { value: 'lead', label: 'Руководитель' }] };
   for (const s of LISTING_ATTR_COMMON_SECTIONS) {
     const f = s.fields.find((x) => x.key === key);
     if (f) return f;
@@ -426,11 +448,32 @@ export function serializeListingAttributes(
       if (!raw) continue;
       if (f.type === 'number') {
         const n = Number(raw.replace(/\s/g, '').replace(',', '.'));
-        if (Number.isFinite(n)) out[f.key] = Math.round(n);
+        if (Number.isFinite(n)) out[f.key] = n;
       } else {
         out[f.key] = raw;
       }
     }
   }
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export function validateListingAttributes(sections: ListingAttrSection[], values: Record<string, string>, price = ''): string | null {
+  for (const section of sections) {
+    for (const field of section.fields) {
+      const raw = (values[field.key] ?? '').trim();
+      if (!raw) continue;
+      if (raw.length > 500) return `«${field.label}»: не больше 500 символов.`;
+      if (field.type === 'number') {
+        const number = Number(raw.replace(/\s/g, '').replace(',', '.'));
+        if (!Number.isFinite(number) || number < 0) return `«${field.label}»: укажите число не меньше нуля.`;
+        if (field.key === 'shift_hours' && (number < 1 || number > 24)) return 'Продолжительность смены: от 1 до 24 часов.';
+      }
+    }
+  }
+  const isJob = sections.some(section => section.id === 'job_pay');
+  if (isJob && price.trim() && values.salary_to?.trim()) {
+    const upper = Number(values.salary_to.replace(/\s/g, '').replace(',', '.'));
+    if (upper < Number(price)) return 'Зарплата «до» не должна быть меньше зарплаты «от».';
+  }
+  return null;
 }

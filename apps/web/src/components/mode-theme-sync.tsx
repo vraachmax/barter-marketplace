@@ -1,5 +1,6 @@
 'use client';
 
+import { THEME_EVENT } from '@/lib/theme';
 import { useEffect } from 'react';
 import { CATALOG_MODE_EVENT, modeFromCookie } from '@/lib/catalog-mode';
 
@@ -39,7 +40,7 @@ export function ModeThemeSync() {
     const html = document.documentElement;
 
     const applyMetaThemeColor = (mode: Mode) => {
-      const color = COLOR_BY_MODE[mode];
+      const color = html.getAttribute('data-theme') === 'dark' ? '#10131b' : COLOR_BY_MODE[mode];
       // Основной meta[name="theme-color"]
       let meta = document.querySelector<HTMLMetaElement>(
         'meta[name="theme-color"]:not([media])'
@@ -77,9 +78,12 @@ export function ModeThemeSync() {
       }
     };
     window.addEventListener(EVENT, onChange);
+    const onTheme = () => applyMetaThemeColor(html.getAttribute('data-mode') === 'barter' ? 'barter' : 'market');
+    window.addEventListener(THEME_EVENT, onTheme);
 
     return () => {
       window.removeEventListener(EVENT, onChange);
+      window.removeEventListener(THEME_EVENT, onTheme);
     };
   }, []);
 

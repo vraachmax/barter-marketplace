@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import type { Category } from '@/lib/api';
@@ -55,7 +56,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
       </fieldset>
       {saveError || error ? <p role="alert" className="text-sm text-destructive">{saveError || error}</p> : null}
       {authHref ? <Link href={authHref} className="inline-flex min-h-11 items-center text-primary underline">Войти снова</Link> : null}
-      <button type="submit" disabled={busy} className="min-h-12 w-full rounded-full bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-60">{busy ? 'Сохраняем…' : 'Сохранить'}</button>
+      <Button type="submit" size="lg" disabled={busy} className="w-full">{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
     </form>
   </dialog>;
 }
