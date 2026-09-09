@@ -1,26 +1,8 @@
 'use client';
 import { canOfferBarter } from '@/lib/barter-category';
 
-/**
- * /listings — «Мои объявления» в Avito-стиле (Hotfix #12).
- *
- * Три таба:
- *   1. «Активные» — опубликованные и полноценные (есть цена и фото).
- *   2. «Требуют действия» — PENDING (модерация), BLOCKED (скрыто),
- *      duplicateImageFlag, либо ACTIVE без цены или без фото.
- *   3. «Завершённые» — SOLD + ARCHIVED.
- *
- * На мобильном — sticky bottom CTA «Разместить объявление» на `--mode-cta`
- * (лаймовый = Маркет, оранжевый = Бартер). На desktop — та же CTA в шапке.
- *
- * Палитра унифицирована: все хардкод-хексы и brand-токены (`bg-primary`,
- * `text-primary`, `bg-accent`, `text-accent`) заменены на CSS-vars
- * `--mode-accent*` / `--mode-cta` или семантические токены (`success`,
- * `destructive`, `muted`) — чтобы не было синих пятен в режиме Бартер
- * и оранжевых в режиме Маркет.
- */
-
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
@@ -121,7 +103,8 @@ function ListingsContent() {
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
   const [listings, setListings] = useState<MyListing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [activeTab, setActiveTab] = useState<ListingTab>('ACTIVE');
+  const tabParam = searchParams.get('tab');
+  const activeTab: ListingTab = tabParam === 'NEEDS_ACTION' ? 'NEEDS_ACTION' : tabParam === 'COMPLETED' || tabParam === 'ARCHIVED' || tabParam === 'SOLD' ? 'COMPLETED' : 'ACTIVE';
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     title: '',
@@ -133,12 +116,10 @@ function ListingsContent() {
   });
 
   function setListingTab(tab: ListingTab) {
-    setActiveTab(tab);
     router.push(`/listings?tab=${tab}`, { scroll: false });
   }
 
   async function loadData() {
-    setStatus('loading');
     const [res, cats] = await Promise.all([
       apiFetchJson<AuthMe>('/auth/me'),
       apiGetJson<Category[]>('/categories').catch(() => [] as Category[]),
@@ -151,7 +132,11 @@ function ListingsContent() {
     setMe(res.data);
     setCategories(cats);
     const myListings = await apiFetchJson<MyListing[]>('/listings/my');
-    if (myListings.ok) setListings(myListings.data);
+    if (!myListings.ok) {
+      setStatus(myListings.status === 401 ? 'need_auth' : 'error');
+      return;
+    }
+    setListings(myListings.data);
     setStatus('ready');
   }
 
@@ -221,24 +206,8 @@ function ListingsContent() {
   }
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'ACTIVE' || tab === 'NEEDS_ACTION' || tab === 'COMPLETED') {
-      setActiveTab(tab);
-      return;
-    }
-    // Совместимость со старыми ссылками
-    if (tab === 'ALL') {
-      setActiveTab('ACTIVE');
-      return;
-    }
-    if (tab === 'ARCHIVED' || tab === 'SOLD') {
-      setActiveTab('COMPLETED');
-      return;
-    }
-    setActiveTab('ACTIVE');
-  }, [searchParams]);
-
-  useEffect(() => {
+    // loadData updates state only after awaiting the API responses.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadData();
   }, []);
 
@@ -292,25 +261,25 @@ function ListingsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-muted text-foreground antialiased">
+    <div className="min-h-screen bg-background text-foreground antialiased">
       {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} /> : null}
       {/* Mobile header — Avito-стиль: back / заголовок / поиск. */}
       <header className="glass-panel sticky top-0 z-20 md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <span className="size-11" aria-hidden />
           <h1 className="text-base font-bold text-foreground">Мои объявления</h1>
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => router.push('/search')}
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-muted"
+            className="inline-flex size-11 items-center justify-center rounded-full transition hover:bg-muted"
             aria-label="Поиск"
           >
             <Search size={24} strokeWidth={s} className="shrink-0 text-foreground" aria-hidden />
-          </button>
+          </Button>
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-6xl px-4 pt-6 pb-32 lg:px-8 lg:py-8">
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
             <span
@@ -343,7 +312,7 @@ function ListingsContent() {
               </div>
               <div className="p-6">
                 <Link
-                  href="/auth"
+                  href="/auth?next=%2Flistings"
                   className="flex h-12 w-full items-center justify-center rounded-xl text-sm font-semibold text-white transition"
                   style={{ backgroundColor: 'var(--mode-accent)' }}
                 >
@@ -356,16 +325,17 @@ function ListingsContent() {
 
         {status === 'error' ? (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-5 py-4 text-sm text-destructive">
-            Не удалось загрузить данные. Попробуйте обновить страницу.
+            <p>Не удалось загрузить данные.</p>
+            <Button variant="outline" className="mt-3 min-h-11" onClick={() => void loadData()}>Повторить</Button>
           </div>
         ) : null}
 
         {status === 'ready' && me ? (
           <>
             {/* ===== MOBILE VIEW ===== */}
-            <div className="md:hidden pb-28">
+            <div className="md:hidden">
               {/* Tabs — Avito-стиль: 3 пилюли, активная подчёркнута brand-цветом mode-accent. */}
-              <div className="flex items-baseline gap-5 border-b border-border bg-card px-4 pt-3">
+              <div className="glass-panel flex flex-wrap gap-2 rounded-2xl border border-border p-2">
                 {(
                   [
                     { tab: 'ACTIVE' as ListingTab, label: 'Активные', count: activeCount },
@@ -375,12 +345,13 @@ function ListingsContent() {
                 ).map((t) => {
                   const isActive = activeTab === t.tab;
                   return (
-                    <button
+                    <Button variant="ghost"
                       key={t.tab}
                       type="button"
                       onClick={() => setListingTab(t.tab)}
-                      className={`relative pb-3 text-[13px] transition ${
- isActive ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'
+                      aria-pressed={isActive}
+                      className={`min-h-11 relative rounded-xl px-2 text-[13px] transition-colors ${
+ isActive ? 'bg-card shadow-sm font-bold text-foreground' : 'font-medium text-muted-foreground'
  }`}
                     >
                       {t.label}
@@ -393,13 +364,13 @@ function ListingsContent() {
                           style={{ background: 'var(--mode-accent)' }}
                         />
                       ) : null}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
 
               {/* Listings list */}
-              <div className="bg-card">
+              <div className="mt-4 space-y-3">
                 {visibleListings.length === 0 ? (
                   <div className="px-4 py-16 text-center">
                     <p className="text-sm text-muted-foreground">
@@ -416,9 +387,9 @@ function ListingsContent() {
                     const thumbUrl = resolveAssetUrl(thumbImg?.url);
                     const action = needsAction(x);
                     return (
-                      <div key={x.id} className="flex gap-3 border-b border-border px-4 py-3">
+                      <div key={x.id} className="flex gap-3 rounded-3xl border border-border bg-card p-4 shadow-sm">
                         <Link href={`/listing/${x.id}`} className="shrink-0">
-                          <div className="h-[80px] w-[80px] overflow-hidden rounded-lg bg-muted">
+                          <div className="h-24 w-24 overflow-hidden rounded-2xl bg-muted">
                             {thumbUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
@@ -427,7 +398,7 @@ function ListingsContent() {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <ListingPlaceholder />
+                              <ListingPlaceholder title={x.title} categoryTitle={x.category.title} className="h-full w-full rounded-none border-0" />
                             )}
                           </div>
                         </Link>
@@ -450,14 +421,14 @@ function ListingsContent() {
                             <span>{statusLabel(x.status).text}</span>
                           </div>
                           {action.is ? (
-                            <button
+                            <Button variant="ghost"
                               type="button"
                               onClick={() => startEdit(x)}
-                              className="mt-1 inline-flex items-center gap-1.5 self-start rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-200"
+                              className="mt-2 h-auto min-h-11 whitespace-normal text-left inline-flex items-center gap-1.5 self-start rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-500/15 dark:text-amber-200"
                             >
                               <AlertTriangle size={11} strokeWidth={2} className="shrink-0" aria-hidden />
                               {action.reason}
-                            </button>
+                            </Button>
                           ) : null}
                           {x.activePromotion ? (
                             <div
@@ -468,31 +439,22 @@ function ListingsContent() {
                             </div>
                           ) : null}
                         </div>
-                        <button
+                        <Button variant="ghost"
                           type="button"
                           onClick={() => startEdit(x)}
-                          className="shrink-0 self-start p-1 text-muted-foreground hover:text-foreground"
+                          className="inline-flex size-11 shrink-0 items-center justify-center self-start rounded-full bg-muted text-muted-foreground hover:text-foreground"
                           aria-label="Редактировать"
                         >
                           <FileText size={18} strokeWidth={1.5} className="shrink-0" aria-hidden />
-                        </button>
+                        </Button>
                       </div>
                     );
                   })
                 )}
               </div>
 
-              {/* Sticky bottom CTA — Avito-стиль: лаймовый mode-cta (Маркет) /
-                  оранжевый (Бартер). Над bottom-nav v3.1: pill занимает
-                  низ 12-76px, bubble активного раздела торчит до ~101px
-                  от низа. Зазор 108px = CTA чуть выше bubble, не
-                  задевает. Через env(safe-area) учитываем «уши» iOS. */}
-              <div
-                className="fixed left-0 right-0 z-50 border-t border-border bg-card px-4 py-3"
-                style={{
-                  bottom: 'calc(env(safe-area-inset-bottom, 0px) + 108px)',
-                }}
-              >
+              {/* Creation stays in the page flow, above the mobile hub. */}
+              <div className="mt-5">
                 <Link
                   href="/new"
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition active:scale-[0.99]"
@@ -547,11 +509,11 @@ function ListingsContent() {
                   ).map(([tab, label, count]) => {
                     const isActive = activeTab === tab;
                     return (
-                      <button
+                      <Button variant="ghost"
                         key={tab}
                         type="button"
                         onClick={() => setListingTab(tab)}
-                        className={`min-w-[100px] flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                        className={`min-h-11 min-w-[100px] flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
  isActive ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
  }`}
                         style={
@@ -562,7 +524,7 @@ function ListingsContent() {
                       >
                         {label}
                         <span className="ml-1 opacity-70">({count})</span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -656,11 +618,11 @@ function ListingsContent() {
                                     PROMO_TIERS.map((tier) => {
                                       const TierIcon = tier.icon;
                                       return (
-                                        <button
+                                        <Button variant="ghost"
                                           key={tier.type}
                                           type="button"
                                           onClick={() => void promote(x.id, tier.type)}
-                                          className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition ${tier.shell}`}
+                                          className={`h-auto min-h-11 flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition ${tier.shell}`}
                                         >
                                           <TierIcon size={22} strokeWidth={1.8} className="shrink-0" aria-hidden />
                                           <span className="min-w-0">
@@ -671,7 +633,7 @@ function ListingsContent() {
                                               {tier.blurb}
                                             </span>
                                           </span>
-                                        </button>
+                                        </Button>
                                       );
                                     })
                                   ) : (
@@ -685,47 +647,47 @@ function ListingsContent() {
                                   )}
                                 </div>
                                 {x.status === 'PENDING' ? (
-                                  <button
+                                  <Button variant="ghost"
                                     type="button"
                                     onClick={() => void publishAfterImageReview(x.id)}
-                                    className="w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
+                                    className="min-h-11 w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
                                   >
                                     Подтвердить публикацию в ленте
-                                  </button>
+                                  </Button>
                                 ) : null}
-                                <button
+                                <Button variant="ghost"
                                   type="button"
                                   onClick={() => startEdit(x)}
-                                  className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
+                                  className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
                                 >
                                   Редактировать
-                                </button>
-                                <button
+                                </Button>
+                                <Button variant="ghost"
                                   type="button"
                                   disabled={x.status === 'BLOCKED'}
                                   onClick={() => void setListingStatus(x.id, x.status === 'SOLD' ? 'ACTIVE' : 'SOLD')}
-                                  className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {x.status === 'SOLD' ? 'Вернуть в активные' : 'Отметить проданным'}
-                                </button>
-                                <button
+                                </Button>
+                                <Button variant="ghost"
                                   type="button"
                                   disabled={x.status === 'BLOCKED'}
                                   onClick={() =>
                                     void setListingStatus(x.id, x.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED')
                                   }
-                                  className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {x.status === 'ARCHIVED' ? 'Из архива' : 'В архив'}
-                                </button>
-                                <button
+                                </Button>
+                                <Button variant="ghost"
                                   type="button"
                                   onClick={() => void removeListing(x.id)}
-                                  className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
+                                  className="min-h-11 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
                                 >
                                   <Trash2 size={16} strokeWidth={1.8} aria-hidden />
                                   Удалить
-                                </button>
+                                </Button>
                               </div>
                             </div>
 

@@ -1,4 +1,5 @@
 import { behaviorRequestHeaders } from './behavior-context';
+import { ApiRequestError } from './api-error';
 
 /** Нормализация localhost → 127.0.0.1 (Windows / IPv6). */
 function normalizeApiOrigin(url: string | undefined): string | undefined {
@@ -332,7 +333,7 @@ export async function apiGetJson<T>(path: string, init?: RequestInit): Promise<T
     const msg = e instanceof Error ? e.message : String(e);
     throw new Error(`Сеть: не удалось запросить ${url}. ${msg}.${hint}`);
   }
-  if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
+  if (!res.ok) throw new ApiRequestError(res.status, path);
   return (await res.json()) as T;
 }
 

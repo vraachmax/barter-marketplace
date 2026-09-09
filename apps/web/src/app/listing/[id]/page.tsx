@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import { notFound } from 'next/navigation';
+import { ApiRequestError } from '@/lib/api-error';
 import {
   AlertTriangle,
   Calendar,
@@ -97,22 +99,14 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   const [listing, similar] = await Promise.all([
     apiGetJson<Listing>(`/listings/${id}`, {
       headers: cookieHeader ? { cookie: cookieHeader } : {},
+    }).catch((error: unknown) => {
+      if (error instanceof ApiRequestError && error.status === 404) return null;
+      throw error;
     }),
     apiGetJson<ListingCard[]>(`/listings/${id}/similar?limit=10`).catch(() => [] as ListingCard[]),
   ]);
 
-  if (!listing) {
-    return (
-      <div className="min-h-screen bg-muted px-4 py-10">
-        <Card className="mx-auto max-w-3xl p-8">
-          <div className="text-lg font-bold text-foreground">Объявление не найдено</div>
-          <Button render={<Link href="/" />} className="mt-4">
-            На главную
-          </Button>
-        </Card>
-      </div>
-    );
-  }
+  if (!listing) notFound();
 
   const images = listing.images ?? [];
   const galleryPlaceholder = (
