@@ -10,10 +10,7 @@ import {
   Building2,
   Camera,
   CheckCircle,
-  ChevronLeft,
   ChevronRight,
-  Eye,
-  Globe,
   Lock,
   Mail,
   MessageSquare,
@@ -21,16 +18,11 @@ import {
   Moon,
   Palette,
   Phone,
-  Search,
   Settings,
   Shield,
-  Smartphone,
-  Sparkles,
   Store,
   Sun,
-  Trash2,
   User,
-  Wifi,
 } from 'lucide-react';
 
 const stroke = 1.8;
@@ -44,6 +36,7 @@ import {
 } from '@/lib/api';
 import { applyThemePreference } from '@/lib/theme';
 import ProfileSidebar from '@/components/profile-sidebar';
+import { PasswordSettings } from '@/components/password-settings';
 
 type Section = 'account' | 'storefront' | 'appearance' | 'notifications' | 'privacy' | 'security';
 
@@ -93,6 +86,7 @@ function SettingsToggleRow({
       role="switch"
       tabIndex={0}
       aria-checked={checked}
+      aria-label={title}
       onClick={() => onChange(!checked)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -100,7 +94,7 @@ function SettingsToggleRow({
           onChange(!checked);
         }
       }}
-      className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border bg-muted/50 px-4 py-3.5 outline-none transition hover:border-primary/40 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/20500/40"
+      className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-border bg-muted/50 px-4 py-3.5 outline-none transition hover:border-primary/40 hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       <div className="min-w-0">
         <div className="text-sm font-semibold text-foreground">{title}</div>
@@ -121,51 +115,6 @@ function SettingsToggleRow({
   );
 }
 
-// Mobile-only toggle row - simpler single-line layout
-function MobileSettingsToggle({
-  checked,
-  onChange,
-  title,
-  icon: Icon,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  title: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <div
-      role="switch"
-      tabIndex={0}
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onChange(!checked);
-        }
-      }}
-      className="flex cursor-pointer items-center justify-between gap-3 py-3.5 px-4 outline-none transition hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary/20500/40"
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <Icon size={18} strokeWidth={stroke} className="shrink-0 text-muted-foreground" aria-hidden />
-        <span className="text-sm font-medium text-foreground">{title}</span>
-      </div>
-      <div
-        className={`pointer-events-none relative h-6 w-11 shrink-0 rounded-full transition ${
- checked ? 'bg-primary' : 'bg-muted-foreground/30'
- }`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-card shadow-sm transition-transform ${
- checked ? 'translate-x-5' : 'translate-x-0'
- }`}
-        />
-      </div>
-    </div>
-  );
-}
-
 export function ProfileSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -173,7 +122,8 @@ export function ProfileSettingsContent() {
   const [counts, setCounts] = useState({ active: 0, archived: 0, chats: 0 });
   const [me, setMe] = useState<AuthMe | null>(null);
   const [rating, setRating] = useState<{ avg: number | null; count: number }>({ avg: null, count: 0 });
-  const [section, setSection] = useState<Section>('account');
+  const requestedSection = searchParams.get('section');
+  const section: Section = isSection(requestedSection) ? requestedSection : 'account';
   const [form, setForm] = useState({
     email: '',
     phone: '',
@@ -197,12 +147,10 @@ export function ProfileSettingsContent() {
   });
 
   function goToSection(s: Section) {
-    setSection(s);
     router.push(`/profile/settings?section=${s}`, { scroll: false });
   }
 
   async function load() {
-    setStatus('loading');
     const [res, myListings, chats] = await Promise.all([
       apiFetchJson<AuthMe>('/auth/me'),
       apiFetchJson<MyListing[]>('/listings/my'),
@@ -217,10 +165,6 @@ export function ProfileSettingsContent() {
       return;
     }
     setMe(res.data);
-    const requestedSection = new URLSearchParams(window.location.search).get('section');
-    if (isSection(requestedSection)) {
-      setSection(requestedSection);
-    }
     const profile = await apiGetJson<SellerProfileResponse>(`/users/${res.data.id}/profile`).catch(
       () => null as SellerProfileResponse | null,
     );
@@ -294,41 +238,44 @@ export function ProfileSettingsContent() {
         text: arRes.data.text ?? autoReply.text,
       });
     }
+    if (!arRes.ok) {
+      setError('Основные настройки сохранены, но автоответ не удалось обновить. Попробуйте сохранить ещё раз.');
+      return;
+    }
     setSaved(true);
     window.setTimeout(() => setSaved(false), 4000);
   }
 
   useEffect(() => {
+    // load updates state only after awaiting the account API response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, []);
 
-  useEffect(() => {
-    const s = searchParams.get('section');
-    if (isSection(s)) setSection(s);
-  }, [searchParams]);
 
   const currentMeta = SECTIONS.find((x) => x.id === section);
   const SectionHeroIcon = currentMeta?.icon ?? Settings;
 
   return (
-    <div className="min-h-screen bg-muted text-foreground antialiased">
+    <div className="min-h-screen bg-background text-foreground antialiased">
       {/* Mobile Header */}
-      <header className="sticky top-0 z-20 border-b border-border bg-card/95 backdrop-blur-md md:hidden">
-        <div className="flex h-14 items-center gap-3 px-4">
+      <header className="glass-panel sticky top-0 z-20 border-b border-border md:hidden">
+        <div className="flex min-h-16 items-center gap-3 px-4">
           <Link
             href="/profile"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground"
+            aria-label="Назад в профиль"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border text-foreground"
           >
             <ArrowLeft size={20} strokeWidth={stroke} aria-hidden />
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="truncate text-sm font-bold">Настройки</div>
+            <div className="truncate text-lg font-bold">Настройки</div>
             <div className="text-xs text-muted-foreground">Аккаунт и приложение</div>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-6xl px-4 pt-6 pb-32 lg:px-8 lg:pt-8">
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
             <div
@@ -343,7 +290,7 @@ export function ProfileSettingsContent() {
         {status === 'need_auth' ? (
           <div className="mx-auto max-w-md py-10">
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-              <div className="border-b border-border bg-primary px-6 py-10 text-center">
+              <div className="border-b border-border bg-muted/40 px-6 py-10 text-center">
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-card shadow-md ring-1 ring-primary/20">
                   <Settings size={28} strokeWidth={stroke} className="text-primary" aria-hidden />
                 </div>
@@ -370,240 +317,9 @@ export function ProfileSettingsContent() {
 
         {status === 'ready' ? (
           <>
-            {/* Mobile View: Avito-style settings matching profile card design */}
-            <div className="md:hidden space-y-3 pb-24">
-              {/* ACCOUNT Section */}
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Аккаунт
-                </p>
-                {me?.avatarUrl ? (
-                  <div className="flex items-center gap-3 rounded-2xl bg-card p-4">
-                    <img src={me.avatarUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-[#1a1a1a] truncate">
-                        {form.name || me.name || me.email}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {form.email || me.email}
-                      </div>
-                      {form.phone ? (
-                        <div className="text-xs text-muted-foreground truncate mt-0.5">
-                          {form.phone}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/60"
-                  onClick={() => {/* TODO: password change modal */}}
-                >
-                  <Lock size={24} strokeWidth={1.5} className="text-[#0088FF]" aria-hidden />
-                  <span className="flex-1 text-left text-sm font-semibold text-[#1a1a1a]">Сменить пароль</span>
-                  <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
-                </button>
-              </div>
-
-              {/* NOTIFICATIONS Section */}
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Уведомления
-                </p>
-                <div className="rounded-2xl bg-card divide-y divide-border overflow-hidden">
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Bell size={24} strokeWidth={1.5} className="shrink-0 text-[#0088FF]" aria-hidden />
-                      <span className="text-sm font-semibold text-[#1a1a1a]">Push-уведомления</span>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.notificationsEnabled}
-                      onClick={() => setForm((p) => ({ ...p, notificationsEnabled: !p.notificationsEnabled }))}
-                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${form.notificationsEnabled ? 'bg-[#0088FF]' : 'bg-muted-foreground/30'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow-sm transition-transform ${form.notificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Mail size={24} strokeWidth={1.5} className="shrink-0 text-[#0088FF]" aria-hidden />
-                      <span className="text-sm font-semibold text-[#1a1a1a]">Email-рассылка</span>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.marketingEnabled}
-                      onClick={() => setForm((p) => ({ ...p, marketingEnabled: !p.marketingEnabled }))}
-                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${form.marketingEnabled ? 'bg-[#0088FF]' : 'bg-muted-foreground/30'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow-sm transition-transform ${form.marketingEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <MessageSquare size={24} strokeWidth={1.5} className="shrink-0 text-[#0088FF]" aria-hidden />
-                      <span className="text-sm font-semibold text-[#1a1a1a]">SMS-уведомления</span>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.notificationsEnabled}
-                      onClick={() => setForm((p) => ({ ...p, notificationsEnabled: !p.notificationsEnabled }))}
-                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${form.notificationsEnabled ? 'bg-[#0088FF]' : 'bg-muted-foreground/30'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow-sm transition-transform ${form.notificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* PRIVACY Section */}
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Приватность
-                </p>
-                <div className="rounded-2xl bg-card divide-y divide-border overflow-hidden">
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Phone size={24} strokeWidth={1.5} className="shrink-0 text-[#0088FF]" aria-hidden />
-                      <span className="text-sm font-semibold text-[#1a1a1a]">Показывать телефон</span>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.showPhonePublic}
-                      onClick={() => setForm((p) => ({ ...p, showPhonePublic: !p.showPhonePublic }))}
-                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${form.showPhonePublic ? 'bg-[#0088FF]' : 'bg-muted-foreground/30'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow-sm transition-transform ${form.showPhonePublic ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Eye size={24} strokeWidth={1.5} className="shrink-0 text-[#0088FF]" aria-hidden />
-                      <span className="text-sm font-semibold text-[#1a1a1a]">Показывать email</span>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.showEmailPublic}
-                      onClick={() => setForm((p) => ({ ...p, showEmailPublic: !p.showEmailPublic }))}
-                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${form.showEmailPublic ? 'bg-[#0088FF]' : 'bg-muted-foreground/30'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow-sm transition-transform ${form.showEmailPublic ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* APP Section */}
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                  Приложение
-                </p>
-                <div className="rounded-2xl bg-card divide-y divide-border overflow-hidden">
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Moon size={24} strokeWidth={1.5} className="shrink-0 text-[#0088FF]" aria-hidden />
-                      <span className="text-sm font-semibold text-[#1a1a1a]">Ночной режим</span>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.appTheme === 'DARK'}
-                      onClick={() => setForm((p) => ({ ...p, appTheme: p.appTheme === 'DARK' ? 'LIGHT' : 'DARK' }))}
-                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${form.appTheme === 'DARK' ? 'bg-[#0088FF]' : 'bg-muted-foreground/30'}`}
-                    >
-                      <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-card shadow-sm transition-transform ${form.appTheme === 'DARK' ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Globe size={24} strokeWidth={1.5} className="shrink-0 text-[#0088FF]" aria-hidden />
-                      <span className="text-sm font-semibold text-[#1a1a1a]">Язык</span>
-                    </div>
-                    <div className="flex gap-1.5">
-                      {(['RU', 'EN'] as const).map((lang) => (
-                        <button
-                          key={lang}
-                          type="button"
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
- lang === 'RU'
- ? 'bg-[#0088FF] text-white'
- : 'bg-muted text-muted-foreground'
- }`}
-                        >
-                          {lang}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* DANGER ZONE Section */}
-              <div className="space-y-2">
-                <p className="px-1 text-xs font-bold uppercase tracking-wide text-destructive">
-                  Опасная зона
-                </p>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-destructive/10"
-                >
-                  <Trash2 size={24} strokeWidth={1.5} className="text-destructive" aria-hidden />
-                  <span className="flex-1 text-left text-sm font-semibold text-destructive">Удалить аккаунт</span>
-                  <ChevronRight size={20} strokeWidth={1.5} className="text-destructive" aria-hidden />
-                </button>
-                <p className="px-1 text-xs text-muted-foreground">
-                  Удаление аккаунта необратимо. Все объявления и сообщения будут потеряны.
-                </p>
-              </div>
-
-              {/* Status Messages */}
-              {error ? (
-                <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                  {error}
-                </div>
-              ) : null}
-              {saved ? (
-                <div className="flex items-center gap-2 rounded-2xl border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">
-                  <CheckCircle size={18} strokeWidth={stroke} aria-hidden />
-                  Настройки сохранены
-                </div>
-              ) : null}
-
-              {/* Save Button - fixed at bottom like Avito */}
-              <div className="fixed bottom-16 left-0 right-0 z-30 px-4 pb-3 pt-2 bg-primary">
-                <button
-                  type="button"
-                  onClick={() => void save()}
-                  disabled={busy}
-                  className="w-full inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/25 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {busy ? (
-                    <>
-                      <span
-                        className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
-                        aria-hidden
-                      />
-                      Сохранение…
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle size={18} strokeWidth={stroke} aria-hidden />
-                      Сохранить
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
             {/* Desktop View: Tabbed layout with sidebar (original) */}
-            <div className="hidden md:grid gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
-              <ProfileSidebar
+            <div className="grid gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
+              <div className="hidden lg:block"><ProfileSidebar
                 active="settings"
                 activeCount={counts.active}
                 archivedCount={counts.archived}
@@ -612,11 +328,11 @@ export function ProfileSettingsContent() {
                 ratingAvg={rating.avg}
                 ratingCount={rating.count}
                 sellerUserId={me?.id ?? null}
-              />
+              /></div>
 
               <div className="min-w-0 space-y-6">
                 {/* Desktop header */}
-                <div className="flex items-start justify-between gap-4">
+                <div className="hidden items-start justify-between gap-4 md:flex">
                   <div>
                     <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
                       <Settings size={14} strokeWidth={stroke} aria-hidden />
@@ -626,7 +342,7 @@ export function ProfileSettingsContent() {
                       Настройки приложения
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Разделы слева, формы справа. Изменения применяются по кнопке «Сохранить».
+                      Оформление, контакты и приватность. Всё важное для вашего аккаунта.
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
@@ -643,8 +359,8 @@ export function ProfileSettingsContent() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:shadow-md">
-                  <div className="border-b border-border bg-primary px-4 py-4 md:px-6 md:py-5">
+                <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+                  <div className="border-b border-border bg-muted/40 px-4 py-4 md:px-6 md:py-5">
                     <div className="flex items-center gap-3">
                       <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-card shadow-sm ring-1 ring-primary/20">
                         <SectionHeroIcon size={22} strokeWidth={stroke} aria-hidden />
@@ -662,7 +378,7 @@ export function ProfileSettingsContent() {
                       <p className="hidden px-2 pb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground lg:block">
                         Разделы
                       </p>
-                      <div className="flex gap-1 overflow-x-auto p-2 lg:flex-col lg:gap-0.5 lg:p-0 lg:overflow-visible">
+                      <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-1 lg:p-0">
                         {SECTIONS.map((sec) => {
                           const active = section === sec.id;
                           const NavIcon = sec.icon;
@@ -671,7 +387,8 @@ export function ProfileSettingsContent() {
                               key={sec.id}
                               type="button"
                               onClick={() => goToSection(sec.id)}
-                              className={`flex min-w-[120px] items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition lg:min-w-0 ${
+                              aria-pressed={active}
+                              className={`flex min-h-16 min-w-0 items-center gap-2 rounded-2xl px-2.5 py-3 text-left text-xs transition sm:text-sm ${
  active
  ? 'bg-card font-semibold text-primary shadow-sm ring-1 ring-primary/20 lg:ring-primary/20'
  : 'text-muted-foreground hover:bg-card/80 hover:text-foreground'
@@ -680,13 +397,13 @@ export function ProfileSettingsContent() {
                               <span
                                 className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
  active
- ? 'bg-primary text-primary'
+ ? 'bg-primary/10 text-primary'
  : 'bg-muted text-muted-foreground'
  }`}
                               >
                                 <NavIcon size={16} strokeWidth={stroke} aria-hidden />
                               </span>
-                              <span className="truncate">{sec.label}</span>
+                              <span className="break-words">{sec.label}</span>
                             </button>
                           );
                         })}
@@ -694,7 +411,7 @@ export function ProfileSettingsContent() {
                     </nav>
 
                     {/* Content */}
-                    <div className="flex-1 p-4 md:p-6">
+                    <div className="min-w-0 flex-1 p-4 md:p-6">
                       <div className={`mx-auto space-y-6 ${section === 'storefront' ? 'max-w-2xl' : 'max-w-xl'}`}>
                         {section === 'account' ? (
                           <div className="space-y-4">
@@ -710,7 +427,7 @@ export function ProfileSettingsContent() {
                               <input
                                 value={form.email}
                                 onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-sm outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20500/15"
+                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-base outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/15"
                                 placeholder="user@example.com"
                                 autoComplete="email"
                               />
@@ -723,7 +440,7 @@ export function ProfileSettingsContent() {
                               <input
                                 value={form.phone}
                                 onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-sm outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20500/15"
+                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-base outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/15"
                                 placeholder="+7 999 123-45-67"
                                 autoComplete="tel"
                               />
@@ -759,7 +476,7 @@ export function ProfileSettingsContent() {
                               <input
                                 value={form.name}
                                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-sm outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20500/15"
+                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-base outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/15"
                                 placeholder="Как вас увидят покупатели: Иван или «Магазин электроники»"
                                 autoComplete="name"
                               />
@@ -776,7 +493,7 @@ export function ProfileSettingsContent() {
                               <input
                                 value={form.avatarUrl}
                                 onChange={(e) => setForm((p) => ({ ...p, avatarUrl: e.target.value }))}
-                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-sm outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20500/15"
+                                className="h-12 w-full rounded-xl border border-border bg-muted/50 px-4 text-base outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/15"
                                 placeholder="https://… — прямая ссылка на изображение"
                                 autoComplete="off"
                               />
@@ -799,7 +516,7 @@ export function ProfileSettingsContent() {
                                 value={form.about}
                                 onChange={(e) => setForm((p) => ({ ...p, about: e.target.value }))}
                                 rows={6}
-                                className="min-h-[140px] w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20500/15"
+                                className="min-h-[140px] w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm leading-relaxed outline-none transition focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/15"
                                 placeholder="Расскажите о себе: чем торгуете, как долго на площадке, как быстро отвечаете в чате, условия возврата или самовывоза."
                               />
                             </label>
@@ -826,7 +543,7 @@ export function ProfileSettingsContent() {
                                 <input
                                   value={form.companyName}
                                   onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
-                                  className="h-12 w-full rounded-xl border border-border bg-card px-4 text-sm outline-none transition focus:border-accent/30 focus:ring-2 focus:ring-accent/20"
+                                  className="h-12 w-full rounded-xl border border-border bg-card px-4 text-base outline-none transition focus:border-accent/30 focus:ring-2 focus:ring-accent/20"
                                   placeholder="ООО «Ромашка», ИП Иванов…"
                                 />
                               </label>
@@ -1004,38 +721,21 @@ export function ProfileSettingsContent() {
                           </div>
                         ) : null}
 
-                        {section === 'security' ? (
-                          <div className="space-y-4">
-                            <div className="rounded-2xl border border-accent/30 bg-accent/10 px-4 py-4">
-                              <div className="flex items-start gap-3">
-                                <Sparkles size={20} strokeWidth={stroke} className="mt-0.5 shrink-0 text-accent" aria-hidden />
-                                <div>
-                                  <p className="text-sm font-semibold text-accent">Скоро здесь будет больше</p>
-                                  <p className="mt-1 text-sm text-accent">
-                                    Планируем смену пароля, список активных сессий и выход со всех устройств.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-                              Сейчас вход защищён cookie-сессией: без авторизации изменить чужой аккаунт нельзя.
-                            </div>
-                          </div>
-                        ) : null}
+                        {section === 'security' ? <PasswordSettings /> : null}
 
                         {error ? (
-                          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                          <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                             {error}
                           </div>
                         ) : null}
                         {saved ? (
-                          <div className="flex items-center gap-2 rounded-xl border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">
+                          <div role="status" className="flex items-center gap-2 rounded-xl border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm font-medium text-secondary">
                             <CheckCircle size={18} strokeWidth={stroke} aria-hidden />
                             Настройки сохранены
                           </div>
                         ) : null}
 
-                        <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center">
+                        <div className={`flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center ${section === 'security' ? 'hidden' : ''}`}>
                           <button
                             type="button"
                             onClick={() => void save()}

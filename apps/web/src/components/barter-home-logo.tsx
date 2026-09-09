@@ -34,7 +34,7 @@ export function BarterHomeLogo() {
     <Link
       href="/"
       onClick={onLogoClick}
-      className="inline-flex items-center"
+      className="inline-flex w-[120px] shrink-0 items-center sm:w-[148px] md:w-auto"
       title="Главная — сбросить фильтры и поиск"
       aria-label="Бартер — на главную"
     >
@@ -42,13 +42,13 @@ export function BarterHomeLogo() {
       <img
         src="/brand/logo_light.svg"
         alt="Бартер"
-        className="brand-logo-light h-9 w-auto max-w-[180px] object-contain md:h-10 md:max-w-[200px]"
+        className="brand-logo-light h-9 w-full max-w-full object-contain md:h-10 md:w-auto md:max-w-[200px]"
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/brand/logo_dark.svg"
         alt="Бартер"
-        className="brand-logo-dark h-9 w-auto max-w-[180px] object-contain md:h-10 md:max-w-[200px]"
+        className="brand-logo-dark h-9 w-full max-w-full object-contain md:h-10 md:w-auto md:max-w-[200px]"
       />
     </Link>
   );

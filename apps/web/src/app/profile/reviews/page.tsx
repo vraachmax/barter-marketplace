@@ -2,174 +2,61 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Star } from 'lucide-react';
-import {
-  apiFetchJson,
-  apiGetJson,
-  type AuthMe,
-  type ChatSummary,
-  type MyListing,
-  type MyReviewsResponse,
-  type SellerProfileResponse,
-} from '@/lib/api';
-import ProfileSidebar from '@/components/profile-sidebar';
+import { ArrowLeft, ArrowUpRight, MessageSquare, Settings, Star } from 'lucide-react';
+import { apiFetchJson, type MyReviewsResponse } from '@/lib/api';
 
 export default function MyReviewsPage() {
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
   const [data, setData] = useState<MyReviewsResponse>({ given: [], received: [] });
-  const [counts, setCounts] = useState({ active: 0, archived: 0, chats: 0 });
-  const [me, setMe] = useState<AuthMe | null>(null);
-  const [rating, setRating] = useState<{ avg: number | null; count: number }>({ avg: null, count: 0 });
-
+  const [tab, setTab] = useState<'received' | 'given'>('received');
   async function load() {
-    setStatus('loading');
-    const [res, myListings, chats, meRes] = await Promise.all([
-      apiFetchJson<MyReviewsResponse>('/reviews/my'),
-      apiFetchJson<MyListing[]>('/listings/my'),
-      apiFetchJson<ChatSummary[]>('/chats'),
-      apiFetchJson<AuthMe>('/auth/me'),
-    ]);
-    if (!res.ok) {
-      if (res.status === 401) {
-        setStatus('need_auth');
-        return;
-      }
-      setStatus('error');
-      return;
-    }
+    const res = await apiFetchJson<MyReviewsResponse>('/reviews/my', { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) { setStatus(res.status === 401 ? 'need_auth' : 'error'); return; }
     setData(res.data);
-    if (meRes.ok) {
-      setMe(meRes.data);
-      const profile = await apiGetJson<SellerProfileResponse>(`/users/${meRes.data.id}/profile`).catch(
-        () => null as SellerProfileResponse | null,
-      );
-      if (profile?.rating) {
-        setRating({
-          avg: profile.rating.avg ?? null,
-          count: profile.rating.count ?? 0,
-        });
-      }
-    }
-    if (myListings.ok) {
-      setCounts({
-        active: myListings.data.filter((x) => x.status === 'ACTIVE').length,
-        archived: myListings.data.filter((x) => x.status === 'ARCHIVED').length,
-        chats: chats.ok ? chats.data.length : 0,
-      });
-    }
     setStatus('ready');
   }
-
   useEffect(() => {
+    // load updates state only after awaiting the API response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, []);
+  const average = data.received.length ? data.received.reduce((sum, r) => sum + r.rating, 0) / data.received.length : null;
+  const reviews = tab === 'received' ? data.received : data.given;
 
-  return (
-    <div className="min-h-screen bg-muted px-4 py-8 text-foreground antialiased md:py-10">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-3xl border border-border bg-card shadow-lg">
-          <div className="flex items-center gap-3 border-b border-border bg-primary px-5 py-4 sm:border-b-0 sm:bg-transparent">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-white shadow-md">
-              <Star size={22} strokeWidth={1.8} className="text-white" aria-hidden />
-            </span>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-foreground md:text-xl">Мои отзывы</h1>
-              <p className="text-xs font-medium text-muted-foreground">Что вы написали и что вам написали</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 px-5 pb-4 sm:pb-0 sm:pr-5">
-            <Link
-              href="/profile/settings"
-              className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
-            >
-              Настройки
-            </Link>
-            <Link
-              href="/profile"
-              className="rounded-xl bg-primary px-3 py-2 text-sm font-bold text-white shadow-md shadow-primary/20"
-            >
-              В кабинет
-            </Link>
-          </div>
-        </div>
-
-        {status === 'loading' ? (
-          <div className="text-sm text-muted-foreground">Загрузка…</div>
-        ) : null}
-        {status === 'need_auth' ? (
-          <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm">
-            Нужно войти.{' '}
-            <Link href="/auth" className="font-semibold text-primary underline">
-              Войти
-            </Link>
-          </div>
-        ) : null}
-        {status === 'error' ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Не удалось загрузить отзывы.
-          </div>
-        ) : null}
-
-        {status === 'ready' ? (
-          <div className="grid gap-5 md:grid-cols-[260px_1fr] lg:gap-6">
-            <ProfileSidebar
-              active="reviews"
-              activeCount={counts.active}
-              archivedCount={counts.archived}
-              profileName={me?.name ?? me?.email ?? 'Профиль'}
-              profileAvatarUrl={me?.avatarUrl ?? null}
-              ratingAvg={rating.avg}
-              ratingCount={rating.count}
-              sellerUserId={me?.id ?? null}
-            />
-            <div className="overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-md md:p-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-border bg-muted/50 p-4">
-                  <div className="mb-3 text-sm font-bold text-foreground">Вы оставили</div>
-                  {data.given.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">Пока вы не оставляли отзывы.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {data.given.map((r) => (
-                        <div
-                          key={r.id}
-                          className="rounded-xl border border-border bg-card p-3 text-xs"
-                        >
-                          <div className="font-bold text-foreground">{r.listing.title}</div>
-                          <div className="text-muted-foreground">Продавец: {r.seller.name ?? 'Пользователь'}</div>
-                          <div className="mt-1 font-semibold text-accent">Оценка: {r.rating}/5</div>
-                          {r.text ? <div className="mt-2 text-foreground">{r.text}</div> : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-2xl border border-border bg-muted/50 p-4">
-                  <div className="mb-3 text-sm font-bold text-foreground">Обо мне</div>
-                  {data.received.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">Пока вам не оставляли отзывы.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {data.received.map((r) => (
-                        <div
-                          key={r.id}
-                          className="rounded-xl border border-border bg-card p-3 text-xs"
-                        >
-                          <div className="font-bold text-foreground">{r.listing.title}</div>
-                          <div className="text-muted-foreground">Автор: {r.author.name ?? 'Покупатель'}</div>
-                          <div className="mt-1 font-semibold text-accent">Оценка: {r.rating}/5</div>
-                          {r.text ? <div className="mt-2 text-foreground">{r.text}</div> : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
+  return <div className="min-h-screen bg-background text-foreground">
+    <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
+      <div className="mx-auto flex min-h-16 max-w-3xl items-center gap-3 px-4 py-2 md:px-6">
+        <Link href="/profile" aria-label="Назад в профиль" className="grid size-11 shrink-0 place-items-center rounded-full border border-border/60 bg-card/80 hover:bg-muted"><ArrowLeft size={21} strokeWidth={1.8} /></Link>
+        <div className="min-w-0 flex-1"><h1 className="text-lg font-bold tracking-tight">Отзывы</h1><p className="truncate text-xs text-muted-foreground">Репутация складывается из сделок</p></div>
+        <Link href="/profile/settings" aria-label="Настройки" className="grid size-11 shrink-0 place-items-center rounded-full bg-muted/60 hover:bg-muted"><Settings size={21} strokeWidth={1.8} /></Link>
       </div>
-    </div>
-  );
+    </header>
+    <main className="mx-auto max-w-3xl px-4 pb-32 pt-6 md:px-6 md:pt-8">
+      {status === 'loading' ? <div role="status" aria-label="Загружаем отзывы" className="space-y-4 animate-pulse motion-reduce:animate-none"><div className="h-44 rounded-3xl bg-muted" /><div className="h-14 rounded-2xl bg-muted" /><div className="h-36 rounded-3xl bg-muted" /></div> : null}
+      {status === 'need_auth' ? <div className="rounded-3xl border border-border bg-card p-8 text-center"><MessageSquare className="mx-auto mb-4 text-primary" size={36} /><h2 className="text-xl font-bold">Ваши отзывы будут здесь</h2><p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы увидеть оценки и отзывы о сделках.</p><Link href="/auth?next=%2Fprofile%2Freviews" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-7 font-semibold text-primary-foreground">Войти</Link></div> : null}
+      {status === 'error' ? <div role="alert" className="rounded-3xl border border-border bg-card p-6"><p>Не удалось загрузить отзывы.</p><button onClick={() => { setStatus('loading'); void load(); }} className="mt-4 min-h-11 rounded-full bg-primary px-5 font-semibold text-primary-foreground">Повторить</button></div> : null}
+      {status === 'ready' ? <>
+        <section aria-label="Ваш рейтинг" className="relative overflow-hidden rounded-[28px] border border-border/70 bg-card p-6 shadow-sm md:p-8">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-44 rounded-full bg-primary/5" aria-hidden />
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Ваша репутация</p>
+          <div className="mt-5 flex items-end gap-4">
+            <span className="text-6xl font-semibold tracking-tighter">{average === null ? '—' : average.toFixed(1)}</span>
+            <div className="pb-1"><div aria-label={average === null ? 'Пока нет оценок' : `Оценка ${average.toFixed(1)} из 5`} className="flex gap-1">{[1, 2, 3, 4, 5].map(value => <Star key={value} size={20} aria-hidden className={average !== null && value <= Math.round(average) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/25'} />)}</div><p className="mt-2 text-sm text-muted-foreground">{data.received.length ? `Получено отзывов: ${data.received.length}` : 'Первая оценка ещё впереди'}</p></div>
+          </div>
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground">Договаривайтесь о деталях, будьте на связи и оставляйте честные отзывы после сделки.</p>
+        </section>
+        <div role="group" aria-label="Какие отзывы показать" className="glass-panel mt-6 grid grid-cols-2 gap-1 rounded-2xl border border-border p-1">
+          {([{ id: 'received', label: 'Обо мне' }, { id: 'given', label: 'Мои отзывы' }] as const).map(item => <button key={item.id} type="button" aria-pressed={tab === item.id} onClick={() => setTab(item.id)} className={`min-h-12 min-w-0 rounded-xl px-3 text-sm font-semibold transition ${tab === item.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>{item.label}<span className="ml-2 text-xs text-muted-foreground">{data[item.id].length}</span></button>)}
+        </div>
+        {reviews.length === 0 ? <div className="px-6 py-16 text-center"><div className="mx-auto grid size-16 place-items-center rounded-3xl bg-muted"><MessageSquare size={29} strokeWidth={1.5} className="text-muted-foreground" /></div><h2 className="mt-5 text-lg font-bold">{tab === 'received' ? 'Здесь будут отзывы о вас' : 'Вы ещё не оставляли отзывы'}</h2><p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">{tab === 'received' ? 'После сделки покупатель сможет поделиться впечатлениями.' : 'Отзыв можно оставить на странице продавца после покупки.'}</p><Link href={tab === 'received' ? '/listings' : '/messages'} className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-primary">{tab === 'received' ? 'К моим объявлениям' : 'К сообщениям'}<ArrowUpRight size={17} /></Link></div> : <ul className="mt-5 space-y-3">{reviews.map(review => {
+          const person = 'author' in review ? review.author : review.seller;
+          return <li key={review.id} className="rounded-3xl border border-border/70 bg-card p-5">
+            <div className="flex items-center gap-3"><div className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-sm font-bold">{person.name?.[0]?.toUpperCase() ?? 'П'}</div><div className="min-w-0 flex-1"><Link href={`/seller/${person.id}`} className="block truncate font-semibold hover:text-primary">{person.name ?? 'Пользователь'}</Link><time dateTime={review.createdAt} className="text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</time></div><span aria-label={`Оценка ${review.rating} из 5`} className="flex items-center gap-1 text-sm font-semibold"><Star size={15} className="fill-amber-400 text-amber-400" />{review.rating}</span></div>
+            {review.text ? <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed [overflow-wrap:anywhere]">{review.text}</p> : null}
+            <Link href={`/listing/${review.listing.id}`} className="mt-4 flex min-h-11 items-center justify-between gap-3 rounded-xl bg-muted/60 px-3 py-2 text-xs text-muted-foreground"><span className="truncate">{review.listing.title}</span><ArrowUpRight size={16} className="shrink-0" /></Link>
+          </li>;
+        })}</ul>}
+      </> : null}
+    </main>
+  </div>;
 }
