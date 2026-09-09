@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useMemo, useState } from 'react';
 import { Archive, Folder, Link2, Package, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { resolveAssetUrl, type MyListing } from '@/lib/api';
@@ -12,9 +14,10 @@ type Props = {
   items: MyListing[];
   onRestore: (id: string) => void;
   onRemove: (id: string) => void;
+  busy?: boolean;
 };
 
-export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
+export function ProfileArchivedSection({ items, onRestore, onRemove, busy = false }: Props) {
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
@@ -31,9 +34,9 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
   if (items.length === 0) {
     return (
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="border-b border-accent/30 bg-primary px-6 py-10 text-center md:px-10">
+        <div className="border-b border-border bg-muted/50 px-6 py-10 text-center md:px-10">
           <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-card shadow-md ring-1 ring-accent/30">
-            <Folder size={40} strokeWidth={s} className="text-accent" aria-hidden />
+            <Folder size={40} strokeWidth={s} className="[color:var(--mode-accent)]" aria-hidden />
           </div>
           <h2 className="mt-5 text-xl font-bold tracking-tight text-foreground md:text-2xl">Архив пуст</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
@@ -54,16 +57,15 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
   return (
     <div className="space-y-4">
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-border bg-primary px-5 py-5 md:flex-row md:items-center md:justify-between md:px-6">
+        <div className="flex flex-col gap-4 border-b border-border bg-muted/50 px-5 py-5 md:flex-row md:items-center md:justify-between md:px-6">
           <div className="flex items-start gap-4">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-card shadow-sm ring-1 ring-accent/30">
-              <Archive size={26} strokeWidth={s} className="text-accent" aria-hidden />
+              <Archive size={26} strokeWidth={s} className="[color:var(--mode-accent)]" aria-hidden />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground md:text-xl">Архив объявлений</h2>
               <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-                Не отображаются в поиске и на главной. Восстановите в один клик или удалите навсегда — по аналогии с
-                архивом на Facebook Marketplace и завершёнными лотами на eBay.
+                Не отображаются в поиске и на главной. Верните объявление в продажу, когда будете готовы, или удалите его.
               </p>
               <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border">
                 <Package size={14} strokeWidth={s} aria-hidden />
@@ -78,7 +80,7 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
             <span className="pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2 text-muted-foreground">
               <Search size={16} strokeWidth={s} className="opacity-60" aria-hidden />
             </span>
-            <input
+            <Input aria-label="Поиск по архиву"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -127,7 +129,7 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent ring-1 ring-accent/30">
+                  <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide [color:var(--mode-accent)] ring-1 ring-accent/30">
                     <Folder size={12} strokeWidth={s} aria-hidden />
                     В архиве
                   </div>
@@ -144,14 +146,14 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
                     {x.city} · {x.category.title}
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 md:hidden">
-                    <button
+                    <Button variant="outline" disabled={busy}
                       type="button"
                       onClick={() => onRestore(x.id)}
-                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm"
+                      className="min-h-11 inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm"
                     >
                       <RefreshCw size={16} strokeWidth={s} aria-hidden />
                       Вернуть
-                    </button>
+                    </Button>
                     <Link
                       href={`/listing/${x.id}`}
                       className="inline-flex items-center justify-center gap-1 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
@@ -159,14 +161,14 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
                       <Link2 size={16} strokeWidth={s} aria-hidden />
                       Открыть
                     </Link>
-                    <button
+                    <Button variant="outline" disabled={busy}
                       type="button"
                       onClick={() => onRemove(x.id)}
-                      className="inline-flex items-center justify-center gap-1 rounded-xl border border-destructive/30 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
+                      className="min-h-11 inline-flex items-center justify-center gap-1 rounded-xl border border-destructive/30 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 size={16} strokeWidth={s} aria-hidden />
                       Удалить
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -176,14 +178,14 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
                 </div>
 
                 <div className="hidden flex-col items-end gap-2 md:flex">
-                  <button
+                  <Button variant="outline" disabled={busy}
                     type="button"
                     onClick={() => onRestore(x.id)}
-                    className="inline-flex w-full max-w-[180px] items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm"
+                    className="min-h-11 inline-flex w-full max-w-[180px] items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm"
                   >
                     <RefreshCw size={16} strokeWidth={s} aria-hidden />
                     Вернуть в продажу
-                  </button>
+                  </Button>
                   <Link
                     href={`/listing/${x.id}`}
                     className="inline-flex w-full max-w-[180px] items-center justify-center gap-1 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
@@ -191,14 +193,14 @@ export function ProfileArchivedSection({ items, onRestore, onRemove }: Props) {
                     <Link2 size={16} strokeWidth={s} aria-hidden />
                     Просмотр
                   </Link>
-                  <button
+                  <Button variant="outline" disabled={busy}
                     type="button"
                     onClick={() => onRemove(x.id)}
-                    className="inline-flex w-full max-w-[180px] items-center justify-center gap-1 rounded-xl border border-destructive/30 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
+                    className="min-h-11 inline-flex w-full max-w-[180px] items-center justify-center gap-1 rounded-xl border border-destructive/30 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 size={16} strokeWidth={s} aria-hidden />
                     Удалить навсегда
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

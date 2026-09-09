@@ -1,31 +1,11 @@
 'use client';
 
-/**
- * /profile — Hotfix #10 palette + font audit (2026-04-19).
- *
- * До фикса страница была утыкана хардкод-хексами небесно-голубой Avito-палитры
- * (`#007AFF`, `#0088FF`, `#00AAFF`, `#0099EE`, `#0066DD`, `#0077DD`, `#E8F2FF`,
- * `#f0f9ff`), брендовыми Tailwind-токенами (`bg-primary`, `text-primary`,
- * `text-accent`, `bg-accent/10`, `text-secondary`, `bg-secondary/10`), а также
- * единичным оранжевым спарклом (`text-[#FF6F00]`). В режиме Бартер (бренд
- * `#E85D26`) это давало синие заплатки поверх оранжевой темы и наоборот —
- * точно то, на что жаловался Максим («моментами… на синем фоне оранжевый
- * шрифт, так не надо»).
- *
- * Теперь вся цветная семантика идёт через CSS-переменные режима:
- *  — `--mode-accent`        → primary action цвет (синий/оранжевый)
- *  — `--mode-accent-hover`  → hover-вариант
- *  — `--mode-accent-soft`   → пастельная плашка (bg)
- *  — `--mode-accent-ring`   → рамка / ring / shadow
- *  — status-чипы → success/destructive/muted + mode-accent (PENDING/SOLD)
- *  — звёзды рейтинга → гвоздевой «рейтинговый» #FFB800 (нейтрально, как у
- *    Google/Yandex), чтобы не конфликтовать ни с синим, ни с оранжевым.
- *
- * Шрифт: профиль не оверрайдит `font-*` — inherits `--font-sans`
- * (Golos Text, из `apps/web/src/app/layout.tsx`). Font audit ✅.
- */
-
 import Link from 'next/link';
+import { createActionGate, actionErrorMessage } from '@/lib/action-gate';
+import { Card } from '@/components/ui/card';
+import { ListingEditorDialog } from '@/components/listing-editor-dialog';
+import { canOfferBarter } from '@/lib/barter-category';
+import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -65,7 +45,6 @@ import {
 import ListingPlaceholder from '@/components/listing-placeholder';
 import { ProfileArchivedSection } from '@/components/profile-archived-section';
 import ProfileSidebar from '@/components/profile-sidebar';
-import { UiSelect } from '@/components/ui-select';
 import { listingThumbPromoExtraClass } from '@/lib/listing-card-visuals';
 import { PromoteDialog } from '@/components/promote-dialog';
 import { SupportSheet } from '@/components/support-sheet';
@@ -86,6 +65,11 @@ function formatPromoEndsAt(iso: string) {
 }
 
 export function ProfileContent() {
+  const [actionGate] = useState(createActionGate);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionNotice, setActionNotice] = useState('');
+  const [actionError, setActionError] = useState(false);
+  const [actionNeedsLogin, setActionNeedsLogin] = useState(false);
   const [supportSheetOpen, setSupportSheetOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -104,12 +88,14 @@ export function ProfileContent() {
     city: string;
     categoryId: string;
     priceRub: string;
+    isBarter: boolean;
   }>({
     title: '',
     description: '',
     city: '',
     categoryId: '',
     priceRub: '',
+    isBarter: false,
   });
   const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
 
@@ -140,32 +126,60 @@ export function ProfileContent() {
       apiFetchJson<ChatSummary[]>('/chats'),
     ]);
     if (myListings.ok) setListings(myListings.data);
+    else {
+      setStatus(myListings.status === 401 ? 'need_auth' : 'error');
+      return;
+    }
     if (chats.ok) setChatCount(chats.data.length);
     setPublicProfile(profile);
     setStatus('ready');
   }
 
-  async function setListingStatus(id: string, nextStatus: 'ACTIVE' | 'SOLD' | 'ARCHIVED') {
-    const res = await apiFetchJson<{ id: string; status: string }>(`/listings/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status: nextStatus }),
+  async function performAction(path: string, init: RequestInit, onSuccess?: () => void) {
+    let saved = false;
+    await actionGate.run(async () => {
+      setActionBusy(true);
+      setActionError(false);
+      setActionNeedsLogin(false);
+      setActionNotice('Сохраняем изменения…');
+      try {
+        const res = await apiFetchJson(path, { ...init, signal: AbortSignal.timeout(20000) });
+        if (!res.ok) {
+          setActionError(true);
+          setActionNeedsLogin(res.status === 401);
+          setActionNotice(actionErrorMessage(res.status));
+          return;
+        }
+        saved = true;
+        onSuccess?.();
+        setActionNotice('Изменения сохранены. Обновляем список…');
+        await loadMe();
+        setActionNotice('Изменения сохранены.');
+      } catch {
+        setActionError(true);
+        setActionNotice('Действие могло выполниться, но список не обновился. Обновите страницу.');
+      } finally {
+        setActionBusy(false);
+      }
     });
-    if (res.ok) await loadMe();
+    return saved;
+  }
+
+  async function setListingStatus(id: string, nextStatus: 'ACTIVE' | 'SOLD' | 'ARCHIVED') {
+    await performAction(`/listings/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH', body: JSON.stringify({ status: nextStatus }),
+    });
   }
 
   async function publishAfterImageReview(id: string) {
-    const res = await apiFetchJson(`/listings/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ publishFromModeration: true }),
+    await performAction(`/listings/${encodeURIComponent(id)}`, {
+      method: 'PATCH', body: JSON.stringify({ publishFromModeration: true }),
     });
-    if (res.ok) await loadMe();
   }
 
   async function removeListing(id: string) {
-    const ok = window.confirm('Удалить объявление безвозвратно?');
-    if (!ok) return;
-    const res = await apiFetchJson<{ ok: true }>(`/listings/${id}`, { method: 'DELETE' });
-    if (res.ok) await loadMe();
+    if (actionBusy || !window.confirm('Удалить объявление безвозвратно?')) return;
+    await performAction(`/listings/${encodeURIComponent(id)}`, { method: 'DELETE' });
   }
 
   function startEdit(x: MyListing) {
@@ -176,29 +190,29 @@ export function ProfileContent() {
       city: x.city,
       categoryId: x.category.id,
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
+      isBarter: x.attributes?.isBarter === true,
     });
   }
 
   async function saveEdit(id: string) {
+    const category = categories.find((item) => item.id === editForm.categoryId);
+    if (!category) return false;
     const payload: Record<string, unknown> = {
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
+      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: canOfferBarter(category) && editForm.isBarter },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
-    if (editForm.priceRub.trim().length > 0) payload.priceRub = Number(editForm.priceRub);
+    payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
 
-    const res = await apiFetchJson(`/listings/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) {
-      setEditingId(null);
-      await loadMe();
-    }
+    return performAction(`/listings/${encodeURIComponent(id)}`, {
+      method: 'PATCH', body: JSON.stringify(payload),
+    }, () => setEditingId(null));
   }
 
   async function logout() {
+    if (actionBusy) return;
     await apiFetchJson<{ ok: true }>('/auth/logout', { method: 'POST' });
     setMe(null);
     setStatus('need_auth');
@@ -272,9 +286,9 @@ export function ProfileContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] text-[#1a1a1a] antialiased">
+    <div className="min-h-screen bg-background text-foreground antialiased">
       {/* Mobile header */}
-      <header className="sticky top-0 z-20 bg-card shadow-[0_1px_4px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden">
+      <header className="glass-panel sticky top-0 z-20 border-b border-border md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           {showListingsView ? (
             <Link
@@ -287,24 +301,30 @@ export function ProfileContent() {
           ) : (
             <span className="size-11" aria-hidden />
           )}
-          <h1 className="text-base font-bold text-[#1a1a1a]">Профиль</h1>
-          <button
+          <h1 className="text-base font-bold text-foreground">{showListingsView ? 'Мои объявления' : 'Профиль'}</h1>
+          <Button variant="ghost"
             type="button"
             onClick={() => router.push('/search')}
             aria-label="Открыть поиск"
-            className="inline-flex items-center justify-center rounded-lg p-2 transition hover:bg-[#f4f4f4]"
+            className="inline-flex size-11 items-center justify-center rounded-full transition hover:bg-muted"
           >
-            <Search size={24} strokeWidth={s} className="text-[#1a1a1a]" aria-hidden />
-          </button>
+            <Search size={24} strokeWidth={s} className="text-foreground" aria-hidden />
+          </Button>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-7xl px-4 pt-6 pb-32 lg:px-8 lg:py-8">
+        {actionNotice ? (
+          <div role={actionError ? 'alert' : 'status'} aria-live="polite" className="sticky top-16 z-30 mb-4 rounded-2xl border border-border bg-card p-4 text-sm text-foreground shadow-sm">
+            <p>{actionNotice}</p>
+            {actionNeedsLogin ? <Link href="/auth?next=%2Fprofile" className="mt-2 inline-flex min-h-11 items-center text-primary underline">Войти снова</Link> : null}
+            {actionError && !actionNeedsLogin ? <Button variant="outline" className="mt-2 min-h-11" disabled={actionBusy} onClick={() => void loadMe()}>Обновить список</Button> : null}
+          </div>
+        ) : null}
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
             <span
-              className="inline-block size-10 animate-spin rounded-full border-2 border-t-transparent"
-              style={{ borderColor: 'var(--mode-accent-ring)', borderTopColor: 'transparent' }}
+              className="inline-block size-10 animate-spin rounded-full border-2 [border-color:var(--mode-accent-ring)] !border-t-transparent motion-reduce:animate-none"
               aria-hidden
             />
             <p className="text-sm text-muted-foreground">Загружаем кабинет…</p>
@@ -313,17 +333,17 @@ export function ProfileContent() {
 
         {status === 'need_auth' ? (
           <div className="mx-auto max-w-md py-10">
-            <div className="overflow-hidden rounded-lg bg-card">
+            <div className="overflow-hidden rounded-3xl border border-border bg-card">
               <div className="[background-color:var(--mode-accent-soft)] px-6 py-10 text-center">
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg bg-card">
                   <Sparkles size={32} strokeWidth={s} className="[color:var(--mode-accent)]" aria-hidden />
                 </div>
-                <h1 className="mt-4 text-xl font-bold text-[#1a1a1a]">Кабинет продавца</h1>
-                <p className="mt-2 text-sm text-[#6b7280]">Войдите, чтобы управлять объявлениями и заказами.</p>
+                <h1 className="mt-4 text-xl font-bold text-foreground">Кабинет продавца</h1>
+                <p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы управлять объявлениями и заказами.</p>
               </div>
               <div className="p-6">
                 <Link
-                  href="/auth"
+                  href="/auth?next=%2Fprofile"
                   className="flex h-12 w-full items-center justify-center rounded-lg [background-color:var(--mode-accent)] text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
                 >
                   Войти или зарегистрироваться
@@ -335,7 +355,8 @@ export function ProfileContent() {
 
         {status === 'error' ? (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-5 py-4 text-sm text-destructive">
-            Не удалось загрузить данные. Попробуйте обновить страницу.
+            <p>Не удалось загрузить данные.</p>
+            <Button variant="outline" className="mt-3 min-h-11" onClick={() => void loadMe()}>Повторить</Button>
           </div>
         ) : null}
 
@@ -347,19 +368,20 @@ export function ProfileContent() {
                 /* ===== AVITO-STYLE LISTINGS VIEW ===== */
                 <div className="pb-28">
                   {/* Tabs: Активные / Продано / Архив */}
-                  <div className="flex items-baseline gap-4 border-b border-[#E8E8E8] bg-card px-4 pt-3">
+                  <div className="glass-panel flex flex-wrap gap-3 rounded-2xl border border-border px-4 pt-3">
                     {([
                       { tab: 'ACTIVE' as ListingTab, label: 'Активные', count: activeCount },
                       { tab: 'SOLD' as ListingTab, label: 'Продано', count: soldCount },
                       { tab: 'ARCHIVED' as ListingTab, label: 'Архив', count: archivedCount },
                     ] as const).map((t) => (
-                      <button
+                      <Button variant="ghost"
                         key={t.tab}
                         type="button"
                         onClick={() => setListingTab(t.tab)}
-                        className={`relative pb-3 text-base transition ${
+                        aria-pressed={activeTab === t.tab}
+                        className={`min-h-11 relative pb-3 text-base transition ${
  activeTab === t.tab
- ? 'font-bold text-[#1a1a1a]'
+ ? 'font-bold text-foreground'
  : 'font-medium text-muted-foreground'
  }`}
                       >
@@ -368,14 +390,14 @@ export function ProfileContent() {
                           <sup className="ml-0.5 text-[11px] font-semibold">{t.count}</sup>
                         ) : null}
                         {activeTab === t.tab ? (
-                          <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-[#1a1a1a]" />
+                          <span className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full [background-color:var(--mode-accent)]" />
                         ) : null}
-                      </button>
+                      </Button>
                     ))}
                   </div>
 
                   {/* Listings list */}
-                  <div className="bg-card">
+                  <div className="mt-4 space-y-3">
                     {visibleListings.length === 0 ? (
                       <div className="px-4 py-16 text-center">
                         <p className="text-sm text-muted-foreground">
@@ -387,15 +409,15 @@ export function ProfileContent() {
                         const thumbImg = x.images?.[0];
                         const thumbUrl = resolveAssetUrl(thumbImg?.url);
                         return (
-                          <div key={x.id} className="flex gap-3 border-b border-[#F0F0F0] px-4 py-3">
+                          <div key={x.id} className="flex gap-3 rounded-3xl border border-border bg-card p-4 shadow-sm">
                             {/* Thumbnail */}
                             <Link href={`/listing/${x.id}`} className="flex-shrink-0">
-                              <div className="h-[80px] w-[80px] overflow-hidden rounded-lg bg-[#f4f4f4]">
+                              <div className="h-24 w-24 overflow-hidden rounded-2xl bg-muted">
                                 {thumbUrl ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img src={thumbUrl} alt={x.title} className="h-full w-full object-cover" />
                                 ) : (
-                                  <ListingPlaceholder />
+                                  <ListingPlaceholder title={x.title} categoryTitle={x.category.title} className="h-full w-full rounded-none border-0" />
                                 )}
                               </div>
                             </Link>
@@ -403,10 +425,10 @@ export function ProfileContent() {
                             {/* Info */}
                             <div className="flex min-w-0 flex-1 flex-col justify-between">
                               <div>
-                                <Link href={`/listing/${x.id}`} className="text-sm font-medium text-[#1a1a1a] line-clamp-2 hover:underline">
+                                <Link href={`/listing/${x.id}`} className="text-sm font-medium text-foreground line-clamp-2 hover:underline">
                                   {x.title}
                                 </Link>
-                                <div className="mt-0.5 text-sm font-bold text-[#1a1a1a]">
+                                <div className="mt-0.5 text-sm font-bold text-foreground">
                                   {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} \u20BD` : 'Цена не указана'}
                                 </div>
                               </div>
@@ -422,21 +444,22 @@ export function ProfileContent() {
                             </div>
 
                             {/* Edit button */}
-                            <button
+                            <Button variant="ghost"
                               type="button"
                               onClick={() => startEdit(x)}
-                              className="flex-shrink-0 self-start p-1 text-muted-foreground hover:text-muted-foreground"
+                              aria-label={`Редактировать: ${x.title}`}
+                              className="inline-flex size-11 shrink-0 items-center justify-center self-start rounded-full bg-muted text-muted-foreground hover:text-foreground"
                             >
                               <FileText size={18} strokeWidth={1.5} aria-hidden />
-                            </button>
+                            </Button>
                           </div>
                         );
                       })
                     )}
                   </div>
 
-                  {/* Sticky bottom: Разместить объявление */}
-                  <div className="fixed bottom-[72px] left-0 right-0 z-50 border-t border-[#E8E8E8] bg-card px-4 py-3">
+                  {/* Create listing */}
+                  <div className="mt-5">
                     <Link
                       href="/new"
                       className="flex h-12 w-full items-center justify-center rounded-xl [background-color:var(--mode-accent)] text-sm font-bold text-white transition hover:[background-color:var(--mode-accent-hover)]"
@@ -449,12 +472,11 @@ export function ProfileContent() {
                 /* ===== PROFILE MENU VIEW ===== */
                 <>
               {/* Profile Card Section */}
-              <div className="rounded-2xl bg-card p-6 text-center">
-                {/* Avatar with verified badge */}
-                <div className="relative mb-4 inline-block">
+              <Card className="gap-0 rounded-3xl p-6 text-center shadow-sm">
+                {/* Avatar */}
+                <div className="relative mx-auto mb-4 w-fit">
                   <div
-                    className="h-20 w-20 overflow-hidden rounded-full border-2 border-[#f4f4f4]"
-                    style={{ backgroundColor: 'var(--mode-accent-soft)' }}
+                    className="h-20 w-20 overflow-hidden rounded-3xl border-2 border-border [background-color:var(--mode-accent-soft)]"
                   >
                     {avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -465,22 +487,17 @@ export function ProfileContent() {
                       />
                     ) : (
                       <div
-                        className="flex h-full w-full items-center justify-center text-2xl font-bold"
-                        style={{ color: 'var(--mode-accent)' }}
+                        className="flex h-full w-full items-center justify-center text-2xl font-bold [color:var(--mode-accent)]"
                       >
                         {me.name?.charAt(0)?.toUpperCase() ?? 'P'}
                       </div>
                     )}
                   </div>
-                  <div
-                    className="absolute bottom-0 right-0 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-success"
-                  >
-                    <CheckCircle size={14} strokeWidth={2.4} className="text-white" aria-hidden />
-                  </div>
+
                 </div>
 
                 {/* Name */}
-                <h2 className="text-lg font-bold text-[#1a1a1a]">
+                <h2 className="text-lg font-bold text-foreground">
                   {me.name ?? me.email ?? 'Профиль'}
                 </h2>
 
@@ -492,9 +509,9 @@ export function ProfileContent() {
                         <Star
                           size={16}
                           aria-hidden
-                          style={{ color: '#FFB800', fill: '#FFB800' }}
+                          className="text-amber-500 fill-current"
                         />
-                        <span className="text-sm font-semibold text-[#1a1a1a]">
+                        <span className="text-sm font-semibold text-foreground">
                           {publicProfile.rating.avg.toFixed(1)}
                         </span>
                       </>
@@ -509,14 +526,14 @@ export function ProfileContent() {
 
                 {/* Stats boxes */}
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-[#f4f4f4] px-3 py-3">
+                  <Link href="/profile?tab=ACTIVE" className="rounded-2xl bg-muted/60 px-3 py-4 focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="text-xs font-medium text-muted-foreground">Активные</div>
-                    <div className="mt-1 text-xl font-bold text-[#1a1a1a]">{activeCount}</div>
-                  </div>
-                  <div className="rounded-xl bg-[#f4f4f4] px-3 py-3">
+                    <div className="mt-1 text-xl font-bold text-foreground">{activeCount}</div>
+                  </Link>
+                  <Link href="/profile?tab=SOLD" className="rounded-2xl bg-muted/60 px-3 py-4 focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="text-xs font-medium text-muted-foreground">Продано</div>
-                    <div className="mt-1 text-xl font-bold text-[#1a1a1a]">{soldCount}</div>
-                  </div>
+                    <div className="mt-1 text-xl font-bold text-foreground">{soldCount}</div>
+                  </Link>
                 </div>
 
                 <Link
@@ -531,65 +548,65 @@ export function ProfileContent() {
                   </div>
                   <ChevronRight size={20} aria-hidden />
                 </Link>
-              </div>
+              </Card>
 
               {/* Menu Items */}
               <div className="mt-5 space-y-2">
                 <Link
                   href="/listings"
-                  className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
                 >
                   <Grid3x3 size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
-                  <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Мои объявления</span>
+                  <span className="flex-1 text-sm font-semibold text-foreground">Мои объявления</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
 
                 <Link
                   href="/profile/orders"
-                  className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
                 >
                   <ShoppingBag size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
-                  <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Заказы</span>
+                  <span className="flex-1 text-sm font-semibold text-foreground">Заказы</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
 
                 <Link
                   href="/profile/reviews"
-                  className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
                 >
                   <Star size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
-                  <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Отзывы</span>
+                  <span className="flex-1 text-sm font-semibold text-foreground">Отзывы</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
 
                 <Link
                   href="/profile/settings"
-                  className="flex items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
                 >
                   <Settings size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
-                  <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Настройки</span>
+                  <span className="flex-1 text-sm font-semibold text-foreground">Настройки</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
 
-                <button
+                <Button variant="ghost"
                   type="button"
                   onClick={() => setSupportSheetOpen(true)}
-                  className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-muted/50"
+                  className="h-auto min-h-14 flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
                 >
                   <Headphones size={24} strokeWidth={1.5} className="[color:var(--mode-accent)]" aria-hidden />
-                  <span className="flex-1 text-sm font-semibold text-[#1a1a1a]">Поддержка</span>
+                  <span className="flex-1 text-sm font-semibold text-foreground">Поддержка</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
-                </button>
+                </Button>
 
-                <button
+                <Button variant="ghost"
                   type="button"
                   onClick={() => void logout()}
-                  className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 transition hover:bg-destructive/10"
+                  className="h-auto min-h-14 flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-destructive/10"
                 >
                   <LogOut size={24} strokeWidth={1.5} className="text-destructive" aria-hidden />
                   <span className="flex-1 text-sm font-semibold text-destructive">Выйти</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
-                </button>
+                </Button>
               </div>
                 </>
               )}
@@ -631,42 +648,42 @@ export function ProfileContent() {
                   </div>
 
                   {/* KPI strip — Seller Hub */}
-                  <div className="overflow-hidden rounded-lg bg-card">
-                    <div className="[background-color:var(--mode-accent)] px-5 py-4 text-white">
-                      <p className="text-xs font-medium uppercase tracking-wide text-white/80">Сводка</p>
+                  <div className="overflow-hidden rounded-3xl border border-border bg-card">
+                    <div className="[background-color:var(--mode-accent-soft)] px-5 py-5 text-foreground">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Сводка</p>
                       <p className="mt-1 text-lg font-bold">Здравствуйте, {me.name?.split(' ')[0] ?? 'продавец'}</p>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4">
-                      <button
+                      <Button variant="ghost"
                         type="button"
                         onClick={() => setListingTab('ACTIVE')}
-                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:[background-color:var(--mode-accent-soft)] ${
+                        className={`h-auto min-h-20 flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:[background-color:var(--mode-accent-soft)] ${
  activeTab === 'ACTIVE' ? '[background-color:var(--mode-accent-soft)]' : ''
  }`}
                       >
                         <span className="text-2xl font-bold text-foreground">{activeCount}</span>
                         <span className="text-xs font-medium text-muted-foreground">Активные</span>
-                      </button>
-                      <button
+                      </Button>
+                      <Button variant="ghost"
                         type="button"
                         onClick={() => setListingTab('SOLD')}
-                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:[background-color:var(--mode-accent-soft)] ${
+                        className={`h-auto min-h-20 flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:[background-color:var(--mode-accent-soft)] ${
  activeTab === 'SOLD' ? '[background-color:var(--mode-accent-soft)]' : ''
  }`}
                       >
                         <span className="text-2xl font-bold text-foreground">{soldCount}</span>
                         <span className="text-xs font-medium text-muted-foreground">Продано</span>
-                      </button>
-                      <button
+                      </Button>
+                      <Button variant="ghost"
                         type="button"
                         onClick={() => setListingTab('ARCHIVED')}
-                        className={`flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:bg-muted ${
+                        className={`h-auto min-h-20 flex flex-col items-start gap-1 px-4 py-4 text-left transition hover:bg-muted ${
  activeTab === 'ARCHIVED' ? 'bg-muted' : ''
  }`}
                       >
                         <span className="text-2xl font-bold text-foreground">{archivedCount}</span>
                         <span className="text-xs font-medium text-muted-foreground">В архиве</span>
-                      </button>
+                      </Button>
                       <Link
                         href="/messages"
                         className="flex flex-col items-start gap-1 px-4 py-4 transition hover:[background-color:var(--mode-accent-soft)]"
@@ -679,7 +696,7 @@ export function ProfileContent() {
                       </Link>
                     </div>
                     <div className="grid gap-3 p-4 sm:grid-cols-3">
-                      <div className="rounded-lg bg-[#f7f7f7] px-4 py-3">
+                      <div className="rounded-lg bg-muted/60 px-4 py-3">
                         <div className="text-xs font-medium text-muted-foreground">Профиль заполнен</div>
                         <div className="mt-1 flex items-baseline gap-2">
                           <span className="text-xl font-bold text-foreground">{profileCompletion}%</span>
@@ -688,12 +705,12 @@ export function ProfileContent() {
                           </Link>
                         </div>
                       </div>
-                      <div className="rounded-lg bg-[#f7f7f7] px-4 py-3">
-                        <div className="text-xs font-medium text-muted-foreground">Качество карточек</div>
+                      <div className="rounded-lg bg-muted/60 px-4 py-3">
+                        <div className="text-xs font-medium text-muted-foreground">Объявления с фото</div>
                         <div className="mt-1 text-xl font-bold text-foreground">{listingQuality}%</div>
                         <div className="text-[11px] text-muted-foreground">Доля объявлений с фото</div>
                       </div>
-                      <div className="rounded-lg bg-[#f7f7f7] px-4 py-3">
+                      <div className="rounded-lg bg-muted/60 px-4 py-3">
                         <div className="text-xs font-medium text-muted-foreground">Рейтинг</div>
                         <div className="mt-1 text-xl font-bold text-foreground">
                           {publicProfile?.rating.avg ? publicProfile.rating.avg.toFixed(1) : '—'}
@@ -708,9 +725,9 @@ export function ProfileContent() {
 
                   {/* Tasks */}
                   {actionItems.length > 0 ? (
-                    <div className="rounded-lg bg-[#f0fdf9] p-4">
-                      <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[#1a1a1a]">
-                        <Sparkles size={20} strokeWidth={s} style={{ color: 'var(--mode-accent)' }} aria-hidden />
+                    <div className="rounded-lg [background-color:var(--mode-accent-soft)] p-4">
+                      <div className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
+                        <Sparkles size={20} strokeWidth={s} className="[color:var(--mode-accent)]" aria-hidden />
                         Рекомендуем сделать
                       </div>
                       <div className="grid gap-2 sm:grid-cols-3">
@@ -736,8 +753,8 @@ export function ProfileContent() {
                   )}
 
                   {/* Trust badges */}
-                  <div className="rounded-lg bg-card p-4">
-                    <div className="mb-3 text-xs font-bold uppercase tracking-wide text-[#6b7280]">Доверие покупателей</div>
+                  <div className="rounded-3xl border border-border bg-card p-5">
+                    <div className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">Доверие покупателей</div>
                     <div className="flex flex-wrap gap-2">
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
@@ -757,13 +774,13 @@ export function ProfileContent() {
  }`}
                       >
                         <Clock size={16} strokeWidth={s} aria-hidden />
-                        Ответы в чате
+                        Есть диалоги
                       </span>
                       <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
  hasTopRated
- ? 'bg-[#FFD166] text-[#1a1a1a]'
- : 'bg-[#f0f0f0] text-[#6b7280]'
+ ? 'bg-[#FFD166] text-foreground'
+ : 'bg-muted text-muted-foreground'
  }`}
                       >
                         <Star size={16} strokeWidth={s} fill="currentColor" aria-hidden />
@@ -822,7 +839,7 @@ export function ProfileContent() {
                                     <span className="font-medium text-foreground">{r.author.name ?? 'Покупатель'}</span>
                                     <span>{new Date(r.createdAt).toLocaleDateString('ru-RU')}</span>
                                   </div>
-                                  <div className="mt-1 font-semibold" style={{ color: '#FFB800' }}>★ {r.rating}/5</div>
+                                  <div className="mt-1 font-semibold" >★ {r.rating}/5</div>
                                   {r.text ? <p className="mt-1 text-foreground">{r.text}</p> : null}
                                 </li>
                               ))}
@@ -873,11 +890,12 @@ export function ProfileContent() {
                           ['ALL', 'Все', listings.length],
                         ] as const
                       ).map(([tab, label, count]) => (
-                        <button
+                        <Button variant="ghost"
                           key={tab}
                           type="button"
                           onClick={() => setListingTab(tab)}
-                          className={`flex-1 min-w-[100px] rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                          aria-pressed={activeTab === tab}
+                          className={`min-h-11 flex-1 min-w-[100px] rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
  activeTab === tab
  ? tab === 'ARCHIVED'
  ? 'bg-muted text-foreground shadow-sm'
@@ -887,12 +905,13 @@ export function ProfileContent() {
                         >
                           {label}
                           <span className="ml-1 opacity-70">({count})</span>
-                        </button>
+                        </Button>
                       ))}
                     </div>
 
                     {activeTab === 'ARCHIVED' ? (
                       <ProfileArchivedSection
+                        busy={actionBusy}
                         items={visibleListings}
                         onRestore={(id) => void setListingStatus(id, 'ACTIVE')}
                         onRemove={removeListing}
@@ -973,14 +992,14 @@ export function ProfileContent() {
                                     </p>
                                     <div className="flex flex-col gap-2">
                                       {x.status === 'ACTIVE' ? (
-                                        <button
+                                        <Button variant="ghost"
                                           type="button"
                                           onClick={() => setPromoteTarget({ id: x.id, title: x.title })}
-                                          className="group flex w-full items-center justify-center gap-2 rounded-xl [background-color:var(--mode-accent)] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:[background-color:var(--mode-accent-hover)]"
+                                          className="min-h-11 group flex w-full items-center justify-center gap-2 rounded-xl [background-color:var(--mode-accent)] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:[background-color:var(--mode-accent-hover)]"
                                         >
                                           <Sparkles size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
                                           <span>{x.activePromotion ? 'Продлить продвижение' : 'Продвинуть'}</span>
-                                        </button>
+                                        </Button>
                                       ) : (
                                         <p className="rounded-xl border border-border bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
                                           {x.status === 'PENDING'
@@ -998,107 +1017,53 @@ export function ProfileContent() {
                                       </Link>
                                     </div>
                                     {x.status === 'PENDING' ? (
-                                      <button
+                                      <Button variant="ghost"
                                         type="button"
-                                        onClick={() => void publishAfterImageReview(x.id)}
-                                        className="w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
+                                        disabled={actionBusy}
+                                      onClick={() => void publishAfterImageReview(x.id)}
+                                        className="min-h-11 w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
                                       >
                                         Подтвердить публикацию в ленте
-                                      </button>
+                                      </Button>
                                     ) : null}
-                                    <button
+                                    <Button variant="ghost"
                                       type="button"
                                       onClick={() => startEdit(x)}
-                                      className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
+                                      className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
                                     >
                                       Редактировать
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button variant="ghost"
                                       type="button"
-                                      disabled={x.status === 'BLOCKED'}
+                                      disabled={actionBusy || x.status === 'BLOCKED'}
                                       onClick={() => void setListingStatus(x.id, x.status === 'SOLD' ? 'ACTIVE' : 'SOLD')}
-                                      className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       {x.status === 'SOLD' ? 'Вернуть в активные' : 'Отметить проданным'}
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button variant="ghost"
                                       type="button"
-                                      disabled={x.status === 'BLOCKED'}
+                                      disabled={actionBusy || x.status === 'BLOCKED'}
                                       onClick={() =>
                                         void setListingStatus(x.id, x.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED')
                                       }
-                                      className="w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       {x.status === 'ARCHIVED' ? 'Из архива' : 'В архив'}
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button variant="ghost"
                                       type="button"
+                                      disabled={actionBusy}
                                       onClick={() => void removeListing(x.id)}
-                                      className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
+                                      className="min-h-11 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
                                     >
                                       <Trash2 size={16} strokeWidth={1.8} aria-hidden />
                                       Удалить
-                                    </button>
+                                    </Button>
                                   </div>
                                 </div>
 
-                                {editingId === x.id ? (
-                                  <div className="border-t border-border bg-card p-4">
-                                    <div className="mx-auto max-w-3xl space-y-3">
-                                      <input
-                                        value={editForm.title}
-                                        onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
-                                        className="h-11 w-full rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
-                                        placeholder="Название"
-                                      />
-                                      <textarea
-                                        value={editForm.description}
-                                        onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-                                        className="min-h-24 w-full rounded-xl border border-border bg-muted/50 px-3 py-2 text-sm outline-none focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
-                                        placeholder="Описание (необязательно, от 10 символов)"
-                                      />
-                                      <div className="grid gap-2 sm:grid-cols-3">
-                                        <input
-                                          value={editForm.city}
-                                          onChange={(e) => setEditForm((p) => ({ ...p, city: e.target.value }))}
-                                          className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
-                                          placeholder="Город"
-                                        />
-                                        <UiSelect
-                                          value={editForm.categoryId}
-                                          onChange={(v) => setEditForm((p) => ({ ...p, categoryId: v }))}
-                                          options={categories.map((c) => ({ value: c.id, label: c.title }))}
-                                          className="h-11 rounded-xl border-border bg-muted/50 px-2 text-sm"
-                                          menuClassName="text-sm"
-                                        />
-                                        <input
-                                          value={editForm.priceRub}
-                                          onChange={(e) =>
-                                            setEditForm((p) => ({ ...p, priceRub: e.target.value.replace(/[^\d]/g, '') }))
-                                          }
-                                          className="h-11 rounded-xl border border-border bg-muted/50 px-3 text-sm outline-none focus:[border-color:var(--mode-accent-ring)]"
-                                          placeholder="Цена ₽"
-                                        />
-                                      </div>
-                                      <div className="flex flex-wrap gap-2">
-                                        <button
-                                          type="button"
-                                          onClick={() => void saveEdit(x.id)}
-                                          className="rounded-xl [background-color:var(--mode-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
-                                        >
-                                          Сохранить
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => setEditingId(null)}
-                                          className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/50"
-                                        >
-                                          Отмена
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ) : null}
+
                               </li>
                             );
                           })}
@@ -1113,6 +1078,7 @@ export function ProfileContent() {
         ) : null}
       </div>
 
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} /> : null}
       <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
 
       {promoteTarget ? (
