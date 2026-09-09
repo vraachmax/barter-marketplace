@@ -1,18 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Camera,
   CheckCircle,
   ChevronLeft,
   Lightbulb,
   Link2,
-  Mail,
   MessageCircle,
   Search,
   Send,
-  SlidersHorizontal,
+  CircleHelp,
   Sparkles,
   Store,
   Wand2,
@@ -20,7 +19,6 @@ import {
 } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
 import {
-  API_URL,
   apiFetchJson,
   apiUploadFile,
   resolveAssetUrl,
@@ -30,6 +28,7 @@ import {
   type SupportTemplate,
   SOCKET_URL,
 } from '@/lib/api';
+import { filterChatList, type ChatListFilter } from '@/lib/chat-list';
 import { SupportSheet } from '@/components/support-sheet';
 
 function peerInitials(peer: ChatSummary['peer']): string {
@@ -52,8 +51,8 @@ function getChatMode(listing: ChatSummary['listing']): 'barter' | 'market' {
 }
 
 const MODE_COLOR: Record<'barter' | 'market', string> = {
-  barter: '#E85D26', // Бартер — оранжевый
-  market: '#00AAFF', // Маркет — синий (Avito 2026)
+  barter: '#b84617', // Бартер — оранжевый
+  market: '#006bd6', // Маркет — синий
 };
 
 const MODE_LABEL: Record<'barter' | 'market', string> = {
@@ -73,9 +72,16 @@ function formatListTime(iso: string | undefined): string {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
 }
 
+function subscribeLocation(listener: () => void) {
+  window.addEventListener('popstate', listener);
+  return () => window.removeEventListener('popstate', listener);
+}
+
 export default function MessagesPage() {
-  const [listingId, setListingId] = useState<string | null>(null);
-  const [preferredChatId, setPreferredChatId] = useState<string | null>(null);
+  const query = useSyncExternalStore(subscribeLocation, () => window.location.search, () => '');
+  const params = new URLSearchParams(query);
+  const listingId = params.get('listingId');
+  const preferredChatId = params.get('chatId');
 
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string>('');
@@ -88,6 +94,7 @@ export default function MessagesPage() {
   const [lastSeenByUserId, setLastSeenByUserId] = useState<Record<string, string>>({});
   const [peerTyping, setPeerTyping] = useState(false);
   const [listQuery, setListQuery] = useState('');
+  const [listFilter, setListFilter] = useState<ChatListFilter>('all');
   const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
   const [quickRepliesBuyer, setQuickRepliesBuyer] = useState<SupportTemplate[]>([]);
   const [quickRepliesSeller, setQuickRepliesSeller] = useState<SupportTemplate[]>([]);
@@ -102,7 +109,7 @@ export default function MessagesPage() {
   const typingStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const peerTypingResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const composerRef = useRef<HTMLInputElement | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   function joinLoadedChats(list: ChatSummary[]) {
     const socket = socketRef.current;
@@ -120,17 +127,7 @@ export default function MessagesPage() {
   const myRole: 'buyer' | 'seller' | 'neutral' = selectedChat?.myRole ?? 'neutral';
   const quickReplies = myRole === 'seller' ? quickRepliesSeller : quickRepliesBuyer;
 
-  const filteredChats = useMemo(() => {
-    const q = listQuery.trim().toLowerCase();
-    if (!q) return chats;
-    return chats.filter((c) => {
-      const title = (c.listing?.title ?? '').toLowerCase();
-      const peer =
-        `${c.peer?.name ?? ''} ${c.peer?.email ?? ''} ${c.peer?.phone ?? ''}`.toLowerCase();
-      const last = (c.lastMessage?.text ?? '').toLowerCase();
-      return title.includes(q) || peer.includes(q) || last.includes(q);
-    });
-  }, [chats, listQuery]);
+  const filteredChats = useMemo(() => filterChatList(chats, listQuery, listFilter), [chats, listQuery, listFilter]);
 
   const totalUnread = useMemo(() => chats.reduce((acc, c) => acc + (c.unreadCount ?? 0), 0), [chats]);
 
@@ -165,20 +162,22 @@ export default function MessagesPage() {
     chatsRef.current = chats;
   }, [chats]);
 
-  useEffect(() => {
-    setPeerTyping(false);
-  }, [selectedChatId]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, selectedChatId, scrollToBottom]);
+
+  function stopTypingTimers() {
+    if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
+    if (peerTypingResetTimerRef.current) clearTimeout(peerTypingResetTimerRef.current);
+  }
 
   function emitTyping(isTyping: boolean) {
     if (!selectedChatIdRef.current) return;
     socketRef.current?.emit('typing', { chatId: selectedChatIdRef.current, isTyping });
   }
 
-  async function loadChats() {
+  const loadChats = useCallback(async () => {
     const res = await apiFetchJson<ChatSummary[]>('/chats');
     if (!res.ok) {
       if (res.status === 401) {
@@ -192,7 +191,7 @@ export default function MessagesPage() {
     joinLoadedChats(res.data);
     setStatus('ready');
     return res.data;
-  }
+  }, []);
 
   async function openByListing(maybeListingId: string) {
     const res = await apiFetchJson<{ id: string }>(`/chats/by-listing/${maybeListingId}`, {
@@ -224,7 +223,7 @@ export default function MessagesPage() {
     }
     const updated = await loadChats();
     if (updated.length > 0 && !updated.some((c) => c.id === selectedChatId)) {
-      setSelectedChatId(updated[0].id);
+      activateChat(updated[0].id);
     }
   }
 
@@ -244,17 +243,19 @@ export default function MessagesPage() {
     await Promise.all([loadMessages(selectedChatId), loadChats()]);
   }
 
-  function selectChat(id: string) {
+  const activateChat = useCallback((id: string) => {
     setSelectedChatId(id);
+    setPeerTyping(false);
+    setAdvise(null);
+    setAdviseDismissed(false);
+    setAdviseBusy(true);
+  }, []);
+
+  function selectChat(id: string) {
+    activateChat(id);
     setMobileThreadOpen(true);
   }
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const qp = new URLSearchParams(window.location.search);
-    setListingId(qp.get('listingId'));
-    setPreferredChatId(qp.get('chatId'));
-  }, []);
 
   useEffect(() => {
     const socket = io(SOCKET_URL, {
@@ -304,8 +305,7 @@ export default function MessagesPage() {
     });
 
     return () => {
-      if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
-      if (peerTypingResetTimerRef.current) clearTimeout(peerTypingResetTimerRef.current);
+      stopTypingTimers();
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -329,7 +329,7 @@ export default function MessagesPage() {
         }
       }
       if (targetChatId) {
-        setSelectedChatId(targetChatId);
+        activateChat(targetChatId);
         await loadMessages(targetChatId);
         if (listingId || preferredChatId) {
           setMobileThreadOpen(true);
@@ -340,7 +340,7 @@ export default function MessagesPage() {
     return () => {
       alive = false;
     };
-  }, [listingId, preferredChatId]);
+  }, [listingId, preferredChatId, loadChats, activateChat]);
 
   useEffect(() => {
     if (!selectedChatId) return;
@@ -352,9 +352,9 @@ export default function MessagesPage() {
     socketRef.current?.emit('read-chat', { chatId: selectedChatId });
     return () => {
       emitTyping(false);
-      if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
+      stopTypingTimers();
     };
-  }, [selectedChatId]);
+  }, [selectedChatId, loadChats]);
 
   // Загрузка шаблонов быстрых ответов (одноразово — они редко меняются)
   useEffect(() => {
@@ -375,14 +375,9 @@ export default function MessagesPage() {
 
   // AI-ассистент: при смене чата запрашиваем подсказку
   useEffect(() => {
-    if (!selectedChatId || !selectedChat) {
-      setAdvise(null);
-      return;
-    }
-    setAdviseDismissed(false);
+    if (!selectedChatId || !selectedChat) return;
     let alive = true;
     (async () => {
-      setAdviseBusy(true);
       const res = await apiFetchJson<AdviseResponse>('/support/advise', {
         method: 'POST',
         body: JSON.stringify({
@@ -473,16 +468,8 @@ export default function MessagesPage() {
   const previewSrc = resolveAssetUrl(selectedChat?.listing?.previewImageUrl ?? null);
 
   return (
-    /*
-      Фон страницы `bg-card` (белый в light / тёмный в dark) — и
-      messages-area, и strip под composer'ом theme-aware.
-      pb на мобилке. Итерация:
-        +96 (воздух 168px) · +8 (перекрывало Send) · +40 (воздух)
-        +20 · +12 (впритык) · +20 (+3мм над bubble — текущее).
-      На md+ bottom-nav нет — pb обнуляем.
-    */
     <div
-      className="flex min-h-[100dvh] flex-col bg-card text-foreground antialiased pb-[calc(env(safe-area-inset-bottom,0px)+20px)] md:pb-0"
+      className="flex h-[calc(100dvh-112px-env(safe-area-inset-bottom,0px))] min-h-0 flex-col bg-background text-foreground antialiased md:h-dvh"
     >
       {/* Top bar — desktop */}
       <header className="hidden shrink-0 border-b border-border bg-card md:block">
@@ -509,36 +496,31 @@ export default function MessagesPage() {
       </header>
 
       {/* Main split */}
-      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col md:my-4 md:min-h-[calc(100dvh-4.5rem)] md:max-h-[calc(100dvh-4.5rem)] md:flex-row md:gap-0 md:overflow-hidden md:rounded-2xl md:border md:border-border md:bg-card md:shadow-xl">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col md:my-4 md:flex-row md:gap-0 md:overflow-hidden md:rounded-3xl md:border md:border-border md:bg-card md:shadow-sm">
         {/* Sidebar — chat list */}
         <aside
-          className={`flex min-h-0 w-full flex-col border-border bg-card md:w-[min(100%,380px)] md:shrink-0 md:border-r ${
+          className={`flex min-h-0 w-full flex-col border-border bg-card md:w-[340px] lg:w-[380px] md:shrink-0 md:border-r ${
  mobileThreadOpen ? 'hidden md:flex' : 'flex flex-1 md:flex-none'
  }`}
         >
-          {/*
-            Мобильная мини-шапка списка. Убрали кнопку «Главная» — туда и так
-            ведёт bottom-nav. Оставили только заголовок + счётчик непрочитанных.
-          */}
-          <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border px-4 md:hidden">
-            <span className="text-[15px] font-bold tracking-tight text-foreground">Сообщения</span>
-            {totalUnread > 0 ? (
-              <span className="rounded-full bg-primary px-1.5 text-[11px] font-bold text-white">{totalUnread}</span>
-            ) : null}
+          <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-5 pb-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="text-2xl font-bold tracking-tight md:text-lg">Сообщения</h2>
+              {totalUnread > 0 ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{totalUnread}</span> : null}
+            </div>
+            <button type="button" onClick={() => setSupportSheetOpen(true)} aria-label="Помощь и поддержка" className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"><CircleHelp size={21} aria-hidden /></button>
           </div>
-
-          <div className="border-b border-border px-3 py-2">
+          <div className="shrink-0 px-4 pb-3">
             <div className="relative">
-              <span className="pointer-events-none absolute left-2.5 top-1/2 z-[1] -translate-y-1/2">
-                <Search size={15} strokeWidth={1.8} className="opacity-60" aria-hidden />
-              </span>
-              <input
-                type="search"
-                value={listQuery}
-                onChange={(e) => setListQuery(e.target.value)}
-                placeholder="Поиск по чатам…"
-                className="h-9 w-full rounded-lg border border-border bg-muted/50 pl-8 pr-3 text-[13px] outline-none transition focus:border-primary/30 focus:bg-card focus:ring-2 focus:ring-primary/30"
-              />
+              <Search size={19} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <input type="search" value={listQuery} onChange={(e) => setListQuery(e.target.value)} aria-label="Поиск по диалогам" placeholder="Имя, объявление или сообщение"
+                className="h-12 w-full min-w-0 rounded-2xl border border-transparent bg-muted/60 pr-4 pl-11 text-base outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/15" />
+            </div>
+            <div aria-label="Фильтр диалогов" className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {([{ id: 'all', label: 'Все' }, { id: 'buyer', label: 'Покупаю' }, { id: 'seller', label: 'Продаю' }, { id: 'unread', label: 'Непрочитанные' }] as const).map((filter) => (
+                <button key={filter.id} type="button" aria-pressed={listFilter === filter.id} onClick={() => setListFilter(filter.id)}
+                  className="min-h-11 shrink-0 rounded-full bg-muted/50 px-3 text-xs font-semibold text-muted-foreground transition-colors aria-pressed:bg-primary/10 aria-pressed:text-primary">{filter.label}</button>
+              ))}
             </div>
           </div>
 
@@ -552,53 +534,6 @@ export default function MessagesPage() {
             {status === 'error' ? (
               <div className="p-4 text-center text-sm text-destructive">Не удалось загрузить чаты</div>
             ) : null}
-
-            {/*
-              Pinned support card — закреплён всегда сверху списка чатов.
-              Не входит в общий <ul>, чтобы:
-                • не зависеть от фильтра поиска (его нельзя «отфильтровать»);
-                • визуально отделяться от обычных чатов чёткой полосой/фоном;
-                • оставаться видимым даже когда `chats.length === 0`
-                  (empty-state сместится ниже).
-            */}
-            <div className="px-2 pt-1.5">
-              <button
-                type="button"
-                onClick={() => setSupportSheetOpen(true)}
-                className="group flex w-full items-center gap-2.5 rounded-xl border border-accent/30 bg-gradient-to-br from-primary/8 via-card to-accent/8 p-2 text-left shadow-sm transition hover:border-accent/60 hover:shadow-md"
-                aria-label="Открыть чат с поддержкой Бартера"
-              >
-                <div className="relative shrink-0">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-primary to-accent text-white shadow-sm shadow-primary/30">
-                    <Sparkles size={20} strokeWidth={2} aria-hidden />
-                  </div>
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-success text-[7px] font-bold text-white ring-2 ring-card"
-                    aria-hidden
-                  >
-                    ✓
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="line-clamp-1 text-[13px] font-bold text-foreground">
-                      Бартер · Поддержка
-                    </span>
-                    <span className="shrink-0 rounded bg-primary/10 px-1 text-[9px] font-bold uppercase tracking-wide text-primary">
-                      AI 24/7
-                    </span>
-                  </div>
-                  <div className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
-                    Помогу разместить, продвинуть или решить спор.
-                  </div>
-                </div>
-              </button>
-              <div className="mx-1 mt-2 mb-0.5 flex items-center gap-2 text-[9px] font-bold uppercase tracking-wide text-muted-foreground">
-                <span className="h-px flex-1 bg-border" aria-hidden />
-                Ваши диалоги
-                <span className="h-px flex-1 bg-border" aria-hidden />
-              </div>
-            </div>
 
             <ul className="p-2 pt-0">
               {filteredChats.map((c) => {
@@ -614,10 +549,10 @@ export default function MessagesPage() {
                     <button
                       type="button"
                       onClick={() => selectChat(c.id)}
-                      style={{ borderLeft: `3px solid ${chatColor}` }}
-                      className={`flex w-full gap-2.5 rounded-lg p-1.5 pl-2.5 text-left transition ${
+                      aria-pressed={active}
+                      className={`flex min-h-24 w-full items-center gap-3 rounded-2xl p-3 text-left transition ${
  active
- ? 'bg-muted ring-1 ring-border'
+ ? 'bg-primary/8 ring-1 ring-primary/15'
  : 'hover:bg-muted/60'
  }`}
                     >
@@ -630,7 +565,7 @@ export default function MessagesPage() {
                           вытянутую пилюлю 44×140. Поэтому здесь plain div
                           с обычным `h-11 w-11`.
                         */}
-                        <div className="h-11 w-11 overflow-hidden rounded-lg border border-border bg-muted">
+                        <div className="h-14 w-14 overflow-hidden rounded-2xl border border-border bg-muted">
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={img} alt="" className="h-full w-full object-cover" />
@@ -652,15 +587,15 @@ export default function MessagesPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <span
-                            className={`line-clamp-1 text-[13px] leading-tight ${
+                            className={`line-clamp-1 text-[15px] leading-snug ${
  unread
  ? 'font-bold text-foreground'
  : 'font-semibold text-foreground'
  }`}
                           >
-                            {c.listing?.title ?? 'Без объявления'}
+                            {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
                           </span>
-                          <span className="shrink-0 text-[10px] text-muted-foreground">
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
                             {formatListTime(c.lastMessage?.createdAt ?? c.updatedAt)}
                           </span>
                         </div>
@@ -674,12 +609,12 @@ export default function MessagesPage() {
                           >
                             {MODE_LABEL[chatMode]}
                           </span>
-                          <span className="truncate text-[11px] text-muted-foreground">
-                            {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
+                          <span className="truncate text-xs text-muted-foreground">
+                            {c.listing?.title ?? 'Без объявления'}
                           </span>
                         </div>
                         <div
-                          className={`mt-0.5 line-clamp-1 text-[11px] leading-snug ${
+                          className={`mt-1 line-clamp-1 text-[13px] leading-snug ${
  unread ? 'font-medium text-foreground' : 'text-muted-foreground'
  }`}
                         >
@@ -700,7 +635,7 @@ export default function MessagesPage() {
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Откройте объявление и нажмите «Написать в чат», чтобы начать переписку. Если есть
-                  вопрос к площадке — напишите в закреплённый чат поддержки выше.
+                  вопрос к площадке, нажмите кнопку помощи рядом с заголовком.
                 </p>
                 <Link
                   href="/"
@@ -734,10 +669,10 @@ export default function MessagesPage() {
           ) : (
             <>
               {/* Thread header — компактный для мобилки */}
-              <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card/90 px-2 py-1.5 backdrop-blur-md md:gap-3 md:px-4 md:py-2.5">
+              <div className="glass-panel flex min-h-20 shrink-0 items-center gap-3 border-b border-border px-3 py-3 md:px-5">
                 <button
                   type="button"
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition active:bg-muted md:hidden"
+                  className="grid size-11 shrink-0 place-items-center rounded-full text-foreground transition active:bg-muted md:hidden"
                   onClick={() => setMobileThreadOpen(false)}
                   aria-label="Назад к списку"
                 >
@@ -760,7 +695,7 @@ export default function MessagesPage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] font-bold leading-tight text-foreground md:text-sm">
+                  <div className="truncate text-base font-semibold leading-tight text-foreground">
                     {selectedChat.listing?.title ?? 'Диалог'}
                   </div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
@@ -791,10 +726,11 @@ export default function MessagesPage() {
                 ) : null}
                 <button
                   type="button"
-                  className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground md:grid"
-                  aria-label="Меню"
+                  className="grid size-11 shrink-0 place-items-center rounded-full bg-muted/60 text-muted-foreground"
+                  onClick={() => setSupportSheetOpen(true)}
+                  aria-label="Помощь и поддержка"
                 >
-                  <SlidersHorizontal size={20} strokeWidth={1.8} aria-hidden />
+                  <CircleHelp size={20} strokeWidth={1.8} aria-hidden />
                 </button>
               </div>
 
@@ -809,7 +745,7 @@ export default function MessagesPage() {
               ) : null}
 
               {/* Messages */}
-              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-5">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-muted/30 px-3 py-5 md:px-5">
                 <div className="mx-auto max-w-3xl space-y-3">
                   {messages.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-border bg-card/60 py-12 text-center text-sm text-muted-foreground">
@@ -820,7 +756,7 @@ export default function MessagesPage() {
                     if (m.isAssistant) {
                       return (
                         <div key={m.id} className="flex justify-center px-1">
-                          <div className="max-w-[min(100%,560px)] rounded-2xl border border-accent/30 bg-primary px-4 py-3 text-sm text-accent shadow-sm">
+                          <div className="max-w-[min(100%,560px)] rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[15px] text-foreground">
                             <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-accent">
                               <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent/10 text-white shadow-sm">
                                 <Sparkles size={16} strokeWidth={1.8} aria-hidden />
@@ -828,7 +764,7 @@ export default function MessagesPage() {
                               Помощник площадки
                             </div>
                             {m.text ? (
-                              <div className="whitespace-pre-wrap leading-relaxed text-accent/95">
+                              <div className="whitespace-pre-wrap leading-relaxed text-foreground [overflow-wrap:anywhere]">
                                 {m.text}
                               </div>
                             ) : null}
@@ -850,7 +786,7 @@ export default function MessagesPage() {
                     return (
                       <div key={m.id} className={`flex ${isPeer ? 'justify-start' : 'justify-end'}`}>
                         <div
-                          className={`flex max-w-[min(100%,520px)] gap-2 ${isPeer ? 'flex-row' : 'flex-row-reverse'}`}
+                          className={`flex max-w-[88%] md:max-w-[min(80%,520px)] gap-2 ${isPeer ? 'flex-row' : 'flex-row-reverse'}`}
                         >
                           {/*
                             Для peer-сообщений — аватар с инициалами слева.
@@ -866,10 +802,10 @@ export default function MessagesPage() {
                           ) : null}
                           <div
                             style={isPeer ? undefined : { background: myBubbleColor }}
-                            className={`min-w-0 rounded-2xl px-3.5 py-2.5 text-sm shadow-sm ${
+                            className={`min-w-0 rounded-[22px] px-4 py-3 text-[15px] shadow-sm ${
  isPeer
- ? 'rounded-tl-md border border-border bg-muted text-foreground'
- : 'rounded-tr-md text-white'
+ ? 'rounded-bl-md border border-border/60 bg-card text-foreground'
+ : 'rounded-br-md text-white'
  }`}
                           >
                             {mediaFull ? (
@@ -884,7 +820,7 @@ export default function MessagesPage() {
                                 )}
                               </div>
                             ) : null}
-                            {m.text ? <div className="break-words whitespace-pre-wrap leading-relaxed">{m.text}</div> : null}
+                            {m.text ? <div className="whitespace-pre-wrap leading-relaxed [overflow-wrap:anywhere]">{m.text}</div> : null}
                             <div
                               className={`mt-1.5 flex items-center gap-2 text-[10px] ${
  isPeer ? 'justify-end text-muted-foreground' : 'justify-end text-white/80'
@@ -898,7 +834,7 @@ export default function MessagesPage() {
                               </span>
                               {!isPeer ? (
                                 m.isReadByPeer ? (
-                                  <CheckCircle size={14} strokeWidth={1.8} className="shrink-0 text-primary" aria-hidden />
+                                  <CheckCircle size={14} strokeWidth={1.8} className="shrink-0 text-white" aria-hidden />
                                 ) : (
                                   <CheckCircle size={14} strokeWidth={1.8} className="shrink-0 opacity-70" aria-hidden />
                                 )
@@ -977,14 +913,8 @@ export default function MessagesPage() {
                 </div>
               ) : null}
 
-              {/*
-                Composer. На мобилке — кнопка отправки иконочная (квадрат
-                40×40 с Send), чтобы не обрезалась и не съедала ширину поля
-                ввода. На десктопе — текстовая «Отправить». Padding-bottom
-                здесь НЕ добавляем: воздух над bottom-nav обеспечивается
-                через `pb-[…]` на корневом контейнере страницы (см. ниже).
-              */}
-              <div className="shrink-0 border-t border-border bg-card px-2 py-2 md:p-4">
+              {/* Composer stays above the existing mobile navigation. */}
+              <div className="glass-panel shrink-0 border-t border-border px-3 py-3 md:p-4">
                 {/* Quick replies chips */}
                 {quickReplies.length > 0 ? (
                   <div className="mx-auto mb-1.5 flex max-w-3xl items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -996,7 +926,7 @@ export default function MessagesPage() {
                         key={t.code}
                         type="button"
                         onClick={() => insertQuickReply(t)}
-                        className="shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-0.5 text-[11px] font-medium text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                        className="min-h-11 shrink-0 rounded-full border border-border bg-muted/50 px-3 py-2 text-xs font-medium text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                         title={t.text}
                       >
                         {t.title}
@@ -1018,12 +948,13 @@ export default function MessagesPage() {
                     </button>
                   </div>
                 ) : null}
-                <div className="mx-auto flex max-w-3xl items-center gap-1.5 md:gap-2">
-                  <label className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-xl border border-border bg-muted/50 text-muted-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary md:h-11 md:w-11">
+                <div className="mx-auto flex max-w-3xl items-end gap-2">
+                  <label className="relative grid size-11 shrink-0 cursor-pointer place-items-center rounded-full bg-muted/60 text-muted-foreground transition focus-within:ring-2 focus-within:ring-primary hover:text-primary">
                     <Camera size={18} strokeWidth={1.8} aria-hidden />
                     <input
                       type="file"
-                      className="hidden"
+                      aria-label="Прикрепить фото или видео"
+                      className="absolute inset-0 w-full cursor-pointer opacity-0"
                       onChange={(e) => {
                         const file = e.currentTarget.files?.[0];
                         if (file) setSelectedFile(file);
@@ -1031,10 +962,11 @@ export default function MessagesPage() {
                       accept="image/*,video/*"
                     />
                   </label>
-                  <input
+                  <textarea
                     ref={composerRef}
-                    type="text"
-                    className="min-w-0 flex-1 rounded-xl border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground shadow-sm transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/30 md:px-4 md:py-2.5"
+                    rows={2}
+                    aria-label="Сообщение"
+                    className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-2.5 text-base leading-6 placeholder:text-muted-foreground transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Сообщение…"
                     value={text}
                     onChange={(e) => {
@@ -1042,7 +974,7 @@ export default function MessagesPage() {
                       emitTyping(e.target.value.length > 0);
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                         e.preventDefault();
                         if (selectedFile) {
                           sendAttachment();
@@ -1064,7 +996,7 @@ export default function MessagesPage() {
                     }}
                     disabled={busy || (text.trim().length === 0 && !selectedFile)}
                     aria-label="Отправить"
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-white shadow-md shadow-primary/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 md:h-11 md:w-auto md:px-4"
+                    className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 md:w-auto md:px-4"
                   >
                     {busy ? (
                       <span className="inline-block size-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" aria-hidden />

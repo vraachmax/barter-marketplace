@@ -18,7 +18,7 @@ export function CatalogControls({ categories, cities, values, categoryId, trigge
   const title = isCity ? 'Где искать' : 'Фильтры';
   const instanceId = useId();
   const id = `catalog-${trigger}-${instanceId}`;
-  const inputClass = 'mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-primary';
+  const inputClass = 'mt-2 h-12 w-full min-w-0 max-w-full rounded-xl border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-primary';
 
   return <>
     <button type="button" onClick={() => { setError(''); dialog.current?.showModal(); }}
@@ -57,9 +57,9 @@ export function CatalogControls({ categories, cities, values, categoryId, trigge
               </select>
             </label>
             <fieldset><legend className="text-sm font-medium">Цена, ₽</legend>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="text-sm text-muted-foreground">От<input name="priceMin" type="number" min="0" step="1" defaultValue={values.priceMin} inputMode="numeric" className={inputClass} /></label>
-                <label className="text-sm text-muted-foreground">До<input name="priceMax" type="number" min="0" step="1" defaultValue={values.priceMax} inputMode="numeric" className={inputClass} /></label>
+              <div className="grid min-w-0 grid-cols-2 gap-3">
+                <label className="min-w-0 text-sm text-muted-foreground">От<input name="priceMin" type="number" min="0" step="1" defaultValue={values.priceMin} inputMode="numeric" className={inputClass} /></label>
+                <label className="min-w-0 text-sm text-muted-foreground">До<input name="priceMax" type="number" min="0" step="1" defaultValue={values.priceMax} inputMode="numeric" className={inputClass} /></label>
               </div>
             </fieldset>
             <label className="block text-sm font-medium">Сортировка

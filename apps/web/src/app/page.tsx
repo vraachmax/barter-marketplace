@@ -409,24 +409,25 @@ async function renderHome(sp: HomeSearchParams) {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 pt-4 md:px-6">
+      <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-start gap-2 px-4 pt-4 md:flex-row md:items-center md:justify-between md:px-6">
         <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
         <p className="text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Весь каталог: покупки и предложения обмена'}</p>
       </div>
       <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
-        <div className="grid grid-flow-col grid-rows-2 auto-cols-[88px] gap-2 overflow-x-auto pb-2 [scrollbar-width:thin] md:auto-cols-[112px] md:gap-3">
+        <div className="grid min-w-0 max-w-full grid-flow-col grid-rows-2 auto-cols-[88px] gap-2 overflow-x-auto pb-2 [scrollbar-width:thin] md:auto-cols-[112px] md:gap-3">
           {availableCategories.map((cat) => (
             <Link
               key={cat.slug}
+              scroll={false}
               href={{ pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
               aria-current={urlCategoryId === cat.categoryId ? 'true' : undefined}
-              className="group flex min-h-[98px] flex-col items-center justify-center gap-1 rounded-2xl border border-border/50 bg-muted/40 p-2 text-center text-xs text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary aria-[current=true]:border-primary aria-[current=true]:bg-primary/5 md:min-h-[110px] md:text-[13px]"
+              className="group flex min-w-0 min-h-[108px] flex-col items-center justify-center gap-1 rounded-2xl border border-border/50 bg-muted/40 p-2 text-center text-xs text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary aria-[current=true]:border-primary aria-[current=true]:bg-primary/5 md:min-h-[110px] md:text-[13px]"
             >
               {cat.slug === 'all' ? <LayoutGrid size={40} strokeWidth={1.5} className="my-1 text-muted-foreground" aria-hidden /> : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={`/categories/${cat.slug}.webp`} alt="" width={56} height={56} className="size-14 rounded-xl object-contain md:size-16" />
               )}
-              <span className="leading-snug">{cat.name}</span>
+              <span className="line-clamp-2 h-8 w-full break-words leading-4">{cat.name}</span>
             </Link>
           ))}
         </div>
