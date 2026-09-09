@@ -30,6 +30,7 @@ import ListingPlaceholder from '@/components/listing-placeholder';
 import { ProfileArchivedSection } from '@/components/profile-archived-section';
 import { ListingEditorDialog } from '@/components/listing-editor-dialog';
 import { listingThumbPromoExtraClass } from '@/lib/listing-card-visuals';
+import { useListingActions } from '@/lib/use-listing-actions';
 
 type ListingTab = 'ACTIVE' | 'NEEDS_ACTION' | 'COMPLETED';
 
@@ -103,6 +104,7 @@ function ListingsContent() {
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
   const [listings, setListings] = useState<MyListing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const { busy: actionBusy, notice: actionNotice, error: actionError, needsLogin: actionNeedsLogin, performAction } = useListingActions(loadData);
   const tabParam = searchParams.get('tab');
   const activeTab: ListingTab = tabParam === 'NEEDS_ACTION' ? 'NEEDS_ACTION' : tabParam === 'COMPLETED' || tabParam === 'ARCHIVED' || tabParam === 'SOLD' ? 'COMPLETED' : 'ACTIVE';
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -119,59 +121,59 @@ function ListingsContent() {
     router.push(`/listings?tab=${tab}`, { scroll: false });
   }
 
-  async function loadData() {
+  async function loadData(): Promise<boolean> {
+    const signal = AbortSignal.timeout(20000);
     const [res, cats] = await Promise.all([
-      apiFetchJson<AuthMe>('/auth/me'),
-      apiGetJson<Category[]>('/categories').catch(() => [] as Category[]),
+      apiFetchJson<AuthMe>('/auth/me', { signal }),
+      apiGetJson<Category[]>('/categories', { signal }).catch(() => [] as Category[]),
     ]);
     if (!res.ok) {
-      if (res.status === 401) { setStatus('need_auth'); return; }
+      if (res.status === 401) { setStatus('need_auth'); return false; }
       setStatus('error');
-      return;
+      return false;
     }
     setMe(res.data);
     setCategories(cats);
-    const myListings = await apiFetchJson<MyListing[]>('/listings/my');
+    const myListings = await apiFetchJson<MyListing[]>('/listings/my', { signal });
     if (!myListings.ok) {
       setStatus(myListings.status === 401 ? 'need_auth' : 'error');
-      return;
+      return false;
     }
     setListings(myListings.data);
     setStatus('ready');
+    return true;
   }
 
   async function promote(id: string, type: 'TOP' | 'VIP' | 'XL') {
-    const res = await apiFetchJson<{ ok: true }>(`/listings/${id}/promote`, {
+    await performAction(`/listings/${encodeURIComponent(id)}/promote`, {
       method: 'POST',
       body: JSON.stringify({ type, days: 3 }),
     });
-    if (res.ok) await loadData();
   }
 
   async function setListingStatus(id: string, nextStatus: 'ACTIVE' | 'SOLD' | 'ARCHIVED') {
-    const res = await apiFetchJson<{ id: string; status: string }>(`/listings/${id}/status`, {
+    await performAction(`/listings/${encodeURIComponent(id)}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status: nextStatus }),
     });
-    if (res.ok) await loadData();
   }
 
   async function publishAfterImageReview(id: string) {
-    const res = await apiFetchJson(`/listings/${id}`, {
+    await performAction(`/listings/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       body: JSON.stringify({ publishFromModeration: true }),
     });
-    if (res.ok) await loadData();
   }
 
   async function removeListing(id: string) {
+    if (actionBusy) return;
     const ok = window.confirm('Удалить объявление безвозвратно?');
     if (!ok) return;
-    const res = await apiFetchJson<{ ok: true }>(`/listings/${id}`, { method: 'DELETE' });
-    if (res.ok) await loadData();
+    await performAction(`/listings/${encodeURIComponent(id)}`, { method: 'DELETE' });
   }
 
   function startEdit(x: MyListing) {
+    if (actionBusy) return;
     setEditingId(x.id);
     setEditForm({
       title: x.title,
@@ -194,20 +196,14 @@ function ListingsContent() {
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
     payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
-    const res = await apiFetchJson(`/listings/${id}`, {
+    return performAction(`/listings/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
-    });
-    if (res.ok) {
-      setEditingId(null);
-      await loadData();
-    }
-    return res.ok;
+    }, () => setEditingId(null));
   }
 
   useEffect(() => {
     // loadData updates state only after awaiting the API responses.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadData();
   }, []);
 
@@ -262,7 +258,7 @@ function ListingsContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} /> : null}
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={actionError ? actionNotice : undefined} authHref={actionNeedsLogin ? '/auth?next=%2Flistings' : undefined} /> : null}
       {/* Mobile header — Avito-стиль: back / заголовок / поиск. */}
       <header className="glass-panel sticky top-0 z-20 md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
@@ -280,6 +276,13 @@ function ListingsContent() {
       </header>
 
       <div className="mx-auto max-w-6xl px-4 pt-6 pb-32 lg:px-8 lg:py-8">
+        {actionNotice ? (
+          <div role={actionError ? 'alert' : 'status'} className="sticky top-16 z-30 mb-4 rounded-2xl border border-border bg-card p-4 text-sm text-foreground shadow-sm">
+            <p>{actionNotice}</p>
+            {actionNeedsLogin ? <Link href="/auth?next=%2Flistings" className="mt-2 inline-flex min-h-11 items-center text-primary underline">Войти снова</Link> : null}
+            {actionError && !actionNeedsLogin ? <Button variant="outline" className="mt-2 min-h-11" disabled={actionBusy} onClick={() => void loadData()}>Обновить список</Button> : null}
+          </div>
+        ) : null}
         {status === 'loading' ? (
           <div className="flex flex-col items-center justify-center gap-3 py-24">
             <span
@@ -531,6 +534,7 @@ function ListingsContent() {
 
                 {activeTab === 'COMPLETED' ? (
                   <ProfileArchivedSection
+                    busy={actionBusy}
                     items={visibleListings}
                     onRestore={(id) => void setListingStatus(id, 'ACTIVE')}
                     onRemove={removeListing}
@@ -620,6 +624,7 @@ function ListingsContent() {
                                       return (
                                         <Button variant="ghost"
                                           key={tier.type}
+                                          disabled={actionBusy}
                                           type="button"
                                           onClick={() => void promote(x.id, tier.type)}
                                           className={`h-auto min-h-11 flex w-full items-center gap-2.5 rounded-xl border px-3 py-2.5 text-left transition ${tier.shell}`}
@@ -650,6 +655,7 @@ function ListingsContent() {
                                   <Button variant="ghost"
                                     type="button"
                                     onClick={() => void publishAfterImageReview(x.id)}
+                                    disabled={actionBusy}
                                     className="min-h-11 w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
                                   >
                                     Подтвердить публикацию в ленте
@@ -664,7 +670,7 @@ function ListingsContent() {
                                 </Button>
                                 <Button variant="ghost"
                                   type="button"
-                                  disabled={x.status === 'BLOCKED'}
+                                  disabled={actionBusy || x.status === 'BLOCKED'}
                                   onClick={() => void setListingStatus(x.id, x.status === 'SOLD' ? 'ACTIVE' : 'SOLD')}
                                   className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
@@ -672,7 +678,7 @@ function ListingsContent() {
                                 </Button>
                                 <Button variant="ghost"
                                   type="button"
-                                  disabled={x.status === 'BLOCKED'}
+                                  disabled={actionBusy || x.status === 'BLOCKED'}
                                   onClick={() =>
                                     void setListingStatus(x.id, x.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED')
                                   }
@@ -683,6 +689,7 @@ function ListingsContent() {
                                 <Button variant="ghost"
                                   type="button"
                                   onClick={() => void removeListing(x.id)}
+                                  disabled={actionBusy}
                                   className="min-h-11 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
                                 >
                                   <Trash2 size={16} strokeWidth={1.8} aria-hidden />

@@ -2,20 +2,24 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import Link from 'next/link';
 import type { Category } from '@/lib/api';
 import { canOfferBarter } from '@/lib/barter-category';
 
 type Fields = { title: string; description: string; city: string; categoryId: string; priceRub: string; isBarter: boolean };
 
 /** Shared editor outside the desktop/mobile wrappers, with native modal focus. */
-export function ListingEditorDialog({ values, onChange, categories, onSave, onClose }: {
+export function ListingEditorDialog({ values, onChange, categories, onSave, onClose, saveError, authHref }: {
   values: Fields;
   onChange: (values: Fields) => void;
   categories: Category[];
   onSave: () => Promise<boolean>;
   onClose: () => void;
+  saveError?: string;
+  authHref?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const submitting = useRef(false);
   const id = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -31,11 +35,12 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
     </div>
     <form className="space-y-3" onSubmit={async (event) => {
       event.preventDefault();
-      if (busy) return;
+      if (submitting.current) return;
+      submitting.current = true;
       setBusy(true); setError('');
       try { if (!await onSave()) setError('Не удалось сохранить изменения. Проверьте поля и повторите.'); }
-      catch { setError('Ошибка соединения. Изменения не сохранены, попробуйте снова.'); }
-      finally { setBusy(false); }
+      catch { setError('Не удалось подтвердить сохранение. Обновите список перед повторной попыткой.'); }
+      finally { submitting.current = false; setBusy(false); }
     }}>
       <fieldset disabled={busy} className="space-y-3 disabled:opacity-60">
         <label className="block text-sm font-medium">Название<input required minLength={3} maxLength={120} value={values.title} onChange={(e) => change('title', e.target.value)} className={inputClass} /></label>
@@ -48,7 +53,8 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
         <label className="block text-sm font-medium">Цена, ₽<input type="number" min="0" max="2147483647" step="1" value={values.priceRub} onChange={(e) => change('priceRub', e.target.value)} className={inputClass} /></label>
         {canOfferBarter(categories.find((category) => category.id === values.categoryId)) ? <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={values.isBarter} onChange={(e) => change('isBarter', e.target.checked)} className="size-5 accent-primary" />Рассматриваю обмен</label> : <p className="text-sm text-muted-foreground">Для этой категории обмен недоступен.</p>}
       </fieldset>
-      {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
+      {saveError || error ? <p role="alert" className="text-sm text-destructive">{saveError || error}</p> : null}
+      {authHref ? <Link href={authHref} className="inline-flex min-h-11 items-center text-primary underline">Войти снова</Link> : null}
       <button type="submit" disabled={busy} className="min-h-12 w-full rounded-full bg-primary px-5 font-semibold text-primary-foreground disabled:opacity-60">{busy ? 'Сохраняем…' : 'Сохранить'}</button>
     </form>
   </dialog>;

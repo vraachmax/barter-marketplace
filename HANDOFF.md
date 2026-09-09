@@ -1,5 +1,24 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-09 — завершение обработки действий кабинета
+
+PR #8 merged: master 9020c874, Vercel production status success.
+Продолжение в fix/listings-action-feedback: /listings и /profile используют один
+useListingActions и проверяемый runner. Общая синхронная защита от повторов,
+20s timeout, pending/error/login/success, ожидание обновления списка. Ошибка
+refresh после успешного PATCH не превращает сохранение в неуспех и не предлагает
+повторять мутацию. /listings больше не молчит при ошибках удаления, статуса,
+подтверждения публикации и существующего продвижения. Архив получает busy.
+Редактор показывает конкретную ошибку и вход при 401 внутри диалога, сохраняет
+поля при отказе; повтор submit блокируется синхронно. Новые платежи не включались.
+
+37 web tests проходят (5 новых сценариев runner), focused ESLint и diff check,
+Next production build --webpack/TypeScript успешны. API/БД/миграции не менялись.
+Это unit/compile QA, не подтверждение авторизованного browser E2E: preview PR #8
+запросил Vercel login, live-каталог в браузере остался на skeleton. Не обходили
+защиту и не выполняли мутаций на production. Новая ветка выпускается отдельным PR
+после проверок; текущие CI/merge/deploy фиксируются в PR.
+
 ## 2026-09-09 — PR #8: устранение security blocker перед выпуском
 
 PR #8 head 139c8d6, Vercel preview success, OSV full scan failed на вложенном
