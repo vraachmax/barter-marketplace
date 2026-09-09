@@ -894,3 +894,27 @@ html[data-theme="dark"] { --mode-primary: #176cd1; }
 html[data-theme="dark"][data-mode="barter"] { --mode-primary: #b84617; }
 
 .magic-nav__text { color: var(--mode-primary); }
+
+/* Barter interface standard v1: roles shared by all screens. */
+:root {
+  --action-height: 52px;
+  --control-height: 48px;
+  --touch-target: 44px;
+  --radius-control: 16px;
+  --radius-surface: 24px;
+  --mode-primary-soft: #eaf3ff;
+}
+html[data-mode="barter"] { --mode-primary-soft: #fff1e9; }
+html[data-theme="dark"] { --mode-primary-soft: #1c304c; }
+html[data-theme="dark"][data-mode="barter"] { --mode-primary-soft: #39261f; }
+@theme inline {
+  --color-primary-hover: var(--mode-primary-hover);
+}
+
+/* Primary actions use the same role; bright brand colors belong to the hub. */
+:root, html[data-mode="market"], html[data-mode="barter"] {
+  --mode-cta: var(--mode-primary);
+  --mode-cta-hover: var(--mode-primary-hover);
+}
+.btn-show-phone { color: #ffffff; }
+.btn-swap { color: var(--mode-primary); }

@@ -1,154 +1,41 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { Package } from 'lucide-react';
-import {
-  apiFetchJson,
-  apiGetJson,
-  type AuthMe,
-  type MyListing,
-  type SellerProfileResponse,
-} from '@/lib/api';
-import ProfileSidebar from '@/components/profile-sidebar';
+import { useEffect, useState } from 'react';
+import { ArrowUpRight, Package } from 'lucide-react';
+import { apiFetchJson, type MyListing } from '@/lib/api';
+import { AccountScreenHeader } from '@/components/account-screen-header';
+import { Button } from '@/components/ui/button';
 
 export default function MyOrdersPage() {
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
-  const [myListings, setMyListings] = useState<MyListing[]>([]);
-  const [me, setMe] = useState<AuthMe | null>(null);
-  const [rating, setRating] = useState<{ avg: number | null; count: number }>({ avg: null, count: 0 });
-
+  const [listings, setListings] = useState<MyListing[]>([]);
+  const [tab, setTab] = useState<'sales' | 'purchases'>('sales');
   async function load() {
-    setStatus('loading');
-    const [res, meRes] = await Promise.all([
-      apiFetchJson<MyListing[]>('/listings/my'),
-      apiFetchJson<AuthMe>('/auth/me'),
-    ]);
-    if (!res.ok) {
-      if (res.status === 401) {
-        setStatus('need_auth');
-        return;
-      }
-      setStatus('error');
-      return;
-    }
-    setMyListings(res.data);
-    if (meRes.ok) {
-      setMe(meRes.data);
-      const profile = await apiGetJson<SellerProfileResponse>(`/users/${meRes.data.id}/profile`).catch(
-        () => null as SellerProfileResponse | null,
-      );
-      if (profile?.rating) {
-        setRating({
-          avg: profile.rating.avg ?? null,
-          count: profile.rating.count ?? 0,
-        });
-      }
-    }
+    const result = await apiFetchJson<MyListing[]>('/listings/my', { signal: AbortSignal.timeout(15000) });
+    if (!result.ok) { setStatus(result.status === 401 ? 'need_auth' : 'error'); return; }
+    setListings(result.data);
     setStatus('ready');
   }
-
   useEffect(() => {
+    // All updates happen after the API response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, []);
-
-  const sold = useMemo(() => myListings.filter((x) => x.status === 'SOLD'), [myListings]);
-  const active = useMemo(() => myListings.filter((x) => x.status === 'ACTIVE').length, [myListings]);
-  const archived = useMemo(() => myListings.filter((x) => x.status === 'ARCHIVED').length, [myListings]);
-
-  return (
-    <div className="min-h-screen bg-muted px-4 py-8 text-foreground antialiased md:py-10">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-3xl border border-border bg-card shadow-lg">
-          <div className="flex items-center gap-3 border-b border-border bg-primary px-5 py-4 sm:border-b-0 sm:bg-transparent">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-white shadow-md">
-              <Package size={22} strokeWidth={1.8} className="text-white" aria-hidden />
-            </span>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-foreground md:text-xl">Заказы</h1>
-              <p className="text-xs font-medium text-muted-foreground">Продажи и задел под покупки</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 px-5 pb-4 sm:pb-0 sm:pr-5">
-            <Link
-              href="/profile/settings"
-              className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
-            >
-              Настройки
-            </Link>
-            <Link
-              href="/profile"
-              className="rounded-xl bg-primary px-3 py-2 text-sm font-bold text-white shadow-md shadow-primary/20"
-            >
-              В кабинет
-            </Link>
-          </div>
+  const sold = listings.filter(item => item.status === 'SOLD');
+  return <div className="min-h-screen bg-background text-foreground">
+    <AccountScreenHeader title="Заказы" subtitle="Ваши покупки и завершённые продажи" />
+    <main className="mx-auto max-w-3xl px-4 pt-6 pb-32 md:px-6">
+      {status === 'loading' ? <div role="status" aria-label="Загружаем заказы" className="h-56 animate-pulse rounded-3xl bg-muted motion-reduce:animate-none" /> : null}
+      {status === 'need_auth' ? <section className="rounded-3xl border border-border bg-card p-8 text-center"><Package size={36} className="mx-auto text-primary" aria-hidden /><h2 className="mt-4 text-xl font-semibold">Ваши сделки будут здесь</h2><p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы посмотреть завершённые продажи.</p><Link href="/auth?next=%2Fprofile%2Forders" className="mt-6 inline-flex min-h-13 items-center justify-center rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground">Войти</Link></section> : null}
+      {status === 'error' ? <section role="alert" className="rounded-3xl border border-border p-6"><p>Не удалось загрузить заказы.</p><Button className="mt-4" onClick={() => { setStatus('loading'); void load(); }}>Повторить</Button></section> : null}
+      {status === 'ready' ? <>
+        <div role="group" aria-label="Тип заказов" className="glass-panel grid grid-cols-2 gap-1 rounded-2xl border border-border p-1">
+          {([{ id: 'sales', label: 'Продажи' }, { id: 'purchases', label: 'Покупки' }] as const).map(item => <button type="button" key={item.id} aria-pressed={tab === item.id} onClick={() => setTab(item.id)} className="min-h-12 rounded-xl px-3 text-sm font-semibold text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-sm">{item.label}{item.id === 'sales' ? ` · ${sold.length}` : ''}</button>)}
         </div>
-
-        {status === 'loading' ? (
-          <div className="text-sm text-muted-foreground">Загрузка…</div>
-        ) : null}
-        {status === 'need_auth' ? (
-          <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm">
-            Нужно войти.{' '}
-            <Link href="/auth" className="font-semibold text-primary underline">
-              Войти
-            </Link>
-          </div>
-        ) : null}
-        {status === 'error' ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            Не удалось загрузить заказы.
-          </div>
-        ) : null}
-
-        {status === 'ready' ? (
-          <div className="grid gap-5 md:grid-cols-[260px_1fr] lg:gap-6">
-            <ProfileSidebar
-              active="orders"
-              activeCount={active}
-              archivedCount={archived}
-              profileName={me?.name ?? me?.email ?? 'Профиль'}
-              profileAvatarUrl={me?.avatarUrl ?? null}
-              ratingAvg={rating.avg}
-              ratingCount={rating.count}
-              sellerUserId={me?.id ?? null}
-            />
-            <div className="overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-md md:p-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-border bg-muted/50 p-4">
-                  <div className="mb-3 text-sm font-bold text-foreground">Продажи</div>
-                  {sold.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">Пока нет завершённых продаж.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {sold.map((x) => (
-                        <Link
-                          key={x.id}
-                          href={`/listing/${x.id}`}
-                          className="block rounded-xl border border-border bg-card p-3 text-sm shadow-sm transition hover:border-primary/30 hover:shadow-md"
-                        >
-                          <div className="font-bold text-foreground">{x.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {x.city} • {x.category.title}
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-2xl border border-dashed border-border bg-muted/50 p-4">
-                  <div className="mb-3 text-sm font-bold text-foreground">Покупки</div>
-                  <div className="text-sm leading-relaxed text-muted-foreground">
-                    Раздел заготовлен. Полный сценарий покупок добавим с модулем безопасной сделки.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
+        {tab === 'sales' && sold.length > 0 ? <ul className="mt-5 space-y-3">{sold.map(item => <li key={item.id}><Link href={`/listing/${item.id}`} className="flex min-h-24 items-center gap-4 rounded-3xl border border-border bg-card p-5"><span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-muted"><Package size={23} aria-hidden /></span><div className="min-w-0 flex-1"><p className="truncate font-semibold">{item.title}</p><p className="mt-1 truncate text-sm text-muted-foreground">{item.city} · {item.category.title}</p><p className="mt-2 text-xs font-medium text-primary">Продано</p></div><ArrowUpRight size={19} className="shrink-0 text-muted-foreground" aria-hidden /></Link></li>)}</ul> :
+          <section className="px-5 py-16 text-center"><span className="mx-auto grid size-16 place-items-center rounded-3xl bg-muted"><Package size={29} className="text-muted-foreground" aria-hidden /></span><h2 className="mt-5 text-xl font-semibold">{tab === 'sales' ? 'Пока нет завершённых продаж' : 'Договорённости о покупках в чатах'}</h2><p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">{tab === 'sales' ? 'Объявления, которые вы отметите как проданные, появятся здесь.' : 'Автоматическая история покупок пока недоступна. Детали ваших договорённостей остаются в переписке.'}</p><Link href={tab === 'sales' ? '/listings' : '/messages'} className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-full bg-muted px-6 font-semibold">{tab === 'sales' ? 'Мои объявления' : 'К сообщениям'}<ArrowUpRight size={17} aria-hidden /></Link></section>}
+      </> : null}
+    </main>
+  </div>;
 }

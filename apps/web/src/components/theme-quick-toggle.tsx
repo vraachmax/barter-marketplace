@@ -1,69 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { apiFetchJson } from '@/lib/api';
-import {
-  applyThemePreference,
-  getStoredThemePreference,
-  type ThemePreference,
-} from '@/lib/theme';
+import { applyThemePreference, subscribeTheme, type ThemePreference } from '@/lib/theme';
 
+// Serialize account writes so rapid taps cannot persist responses out of order.
+let pendingSave: Promise<unknown> = Promise.resolve();
 export function ThemeQuickToggle() {
-  const [theme, setTheme] = useState<ThemePreference>('SYSTEM');
-  const [systemDark, setSystemDark] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const displayDark = useSyncExternalStore(subscribeTheme,
+    () => document.documentElement.getAttribute('data-theme') === 'dark', () => false);
 
-  useEffect(() => {
-    const stored = getStoredThemePreference();
-    if (stored) setTheme(stored);
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const sync = () => setSystemDark(mql.matches);
-    sync();
-    mql.addEventListener('change', sync);
-    return () => mql.removeEventListener('change', sync);
-  }, []);
-
-  const displayDark = theme === 'DARK' || (theme === 'SYSTEM' && systemDark);
-
-  async function toggleTheme() {
-    if (busy) return;
-    const next: ThemePreference = displayDark ? 'LIGHT' : 'DARK';
-    setTheme(next);
+  function toggleTheme() {
+    const next: ThemePreference = document.documentElement.getAttribute('data-theme') === 'dark' ? 'LIGHT' : 'DARK';
     applyThemePreference(next);
-    setBusy(true);
-    try {
-      await apiFetchJson('/auth/me', {
-        method: 'PATCH',
-        body: JSON.stringify({ appTheme: next }),
-      });
-    } catch {
-      // Not logged in — theme still saved locally
-    }
-    setBusy(false);
+    pendingSave = pendingSave.catch(() => undefined).then(() => apiFetchJson('/auth/me', {
+      method: 'PATCH', body: JSON.stringify({ appTheme: next }), signal: AbortSignal.timeout(8000),
+    }));
   }
 
-  return (
-    <button
-      type="button"
-      onClick={() => void toggleTheme()}
-      disabled={busy}
-      className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-colors disabled:opacity-60 ${
- displayDark
- ? 'border-primary/30 bg-primary'
- : 'border-border bg-muted'
- }`}
-      title="Сменить тему"
-      aria-label={displayDark ? 'Включена тёмная тема' : 'Включена светлая тема'}
-      aria-pressed={displayDark}
-    >
-      <span
-        className={`absolute inline-flex h-5 w-5 items-center justify-center rounded-full bg-card text-foreground shadow-sm transition-transform ${
- displayDark ? 'translate-x-6' : 'translate-x-1'
- }`}
-      >
-        {displayDark ? <Moon size={14} strokeWidth={1.8} aria-hidden /> : <Sun size={14} strokeWidth={1.8} aria-hidden />}
+  return <button type="button" role="switch" aria-checked={displayDark} aria-label="Тёмная тема"
+    onClick={toggleTheme} className="inline-flex min-h-11 min-w-14 shrink-0 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
+    <span aria-hidden className={`relative inline-flex h-8 w-14 items-center rounded-full border transition-colors ${displayDark ? 'border-primary bg-primary' : 'border-border bg-muted'}`}>
+      <span className={`absolute left-0.5 grid size-7 place-items-center rounded-full bg-white text-slate-700 shadow-sm transition-transform motion-reduce:transition-none ${displayDark ? 'translate-x-6' : ''}`}>
+        {displayDark ? <Moon size={16} /> : <Sun size={16} />}
       </span>
-    </button>
-  );
+    </span>
+  </button>;
 }

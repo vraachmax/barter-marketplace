@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { CheckCircle, Lock } from 'lucide-react';
 import { apiFetchJson } from '@/lib/api';
@@ -70,7 +71,7 @@ export function PasswordSettings() {
       ))}
       {error ? <p role="alert" className="rounded-2xl bg-destructive/10 p-4 text-sm text-destructive">{error}</p> : null}
       {saved ? <p role="status" className="flex items-center gap-2 rounded-2xl bg-primary/10 p-4 text-sm"><CheckCircle size={18} aria-hidden />Пароль изменён</p> : null}
-      <button disabled={busy} type="submit" className="min-h-12 w-full rounded-2xl bg-primary px-5 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Меняем пароль…' : 'Изменить пароль'}</button>
+      <Button disabled={busy} type="submit" size="lg" className="w-full">{busy ? 'Меняем пароль…' : 'Изменить пароль'}</Button>
     </form>
   );
 }

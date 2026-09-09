@@ -2,40 +2,32 @@
 
 import { useEffect } from 'react';
 import { apiFetchJson, type AuthMe } from '@/lib/api';
-import {
-  applyThemePreference,
-  getStoredThemePreference,
-  reapplyCurrentTheme,
-  type ThemePreference,
-} from '@/lib/theme';
+import { applyThemePreference, getStoredThemePreference, reapplyCurrentTheme } from '@/lib/theme';
 
 export function ThemeSync() {
   useEffect(() => {
-    // Apply stored local preference first (defaults to LIGHT if none)
     const stored = getStoredThemePreference();
-    applyThemePreference(stored ?? 'LIGHT');
-
-    // Only sync from API if user has NO local preference saved yet
-    // This prevents the API from overriding the user's explicit local choice
+    applyThemePreference(stored ?? 'LIGHT', false);
     let cancelled = false;
     if (!stored) {
-      (async () => {
-        const me = await apiFetchJson<AuthMe>('/auth/me');
-        if (cancelled || !me.ok) return;
-        const apiTheme = (me.data.appTheme ?? 'LIGHT') as ThemePreference;
-        applyThemePreference(apiTheme);
-      })();
+      void apiFetchJson<AuthMe>('/auth/me', { signal: AbortSignal.timeout(10000) }).then((me) => {
+        // A late account response must never undo a choice made while loading.
+        if (cancelled || !me.ok || getStoredThemePreference()) return;
+        applyThemePreference(me.data.appTheme ?? 'LIGHT', false);
+      });
     }
-
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const onMedia = () => reapplyCurrentTheme();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === 'barter_theme_pref') applyThemePreference(getStoredThemePreference() ?? 'LIGHT', false);
+    };
     media.addEventListener('change', onMedia);
-
+    window.addEventListener('storage', onStorage);
     return () => {
       cancelled = true;
       media.removeEventListener('change', onMedia);
+      window.removeEventListener('storage', onStorage);
     };
   }, []);
-
   return null;
 }

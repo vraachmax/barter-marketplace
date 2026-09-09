@@ -54,6 +54,7 @@ import ListingCategoryAttributesForm from '@/components/listing-category-attribu
 import {
   getListingAttrSectionsForCategorySlug,
   serializeListingAttributes,
+  validateListingAttributes,
 } from '@/lib/listing-attributes-config';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -319,13 +320,15 @@ export default function NewListingPage() {
     return p;
   }, [title, description, city, categoryId, price, serializedAttributes, isBarter, selectedCategory]);
 
+  const attributeError = validateListingAttributes(attrSections, attrValues, price);
+
   const titleLen = title.trim().length;
   const descLen = description.trim().length;
 
   /** Проверка можно ли нажать «Далее» на текущем шаге. */
   function canGoNext(s: WizardStep): boolean {
     if (s === 1) return titleLen >= 3 && categoryId.length > 0;
-    if (s === 2) return descLen >= 10;
+    if (s === 2) return descLen >= 10 && !attributeError;
     if (s === 3) return true; // фото — необязательно
     if (s === 4) return city.trim().length >= 2;
     if (s === 5) return me !== 'loading' && me !== null;
@@ -335,6 +338,7 @@ export default function NewListingPage() {
   function nextStepHint(s: WizardStep): string {
     if (s === 1 && titleLen < 3) return 'Введите хотя бы 3 символа';
     if (s === 1 && !categoryId) return 'Выберите категорию из подсказок';
+    if (s === 2 && attributeError) return attributeError;
     if (s === 2 && descLen < 10) return 'Описание: минимум 10 символов';
     if (s === 4 && city.trim().length < 2) return 'Укажите город';
     if (s === 5 && me === null) return 'Войдите, чтобы опубликовать';
@@ -404,7 +408,7 @@ export default function NewListingPage() {
   }
 
   async function submit() {
-    const validationError = validate();
+    const validationError = attributeError ?? validate();
     if (validationError) {
       setSubmitStatus({ kind: 'error', msg: validationError });
       return;
@@ -613,7 +617,7 @@ export default function NewListingPage() {
            остаётся единственной фиксированной плашкой и не уходит под
            навигацию. paddingBottom учитывает safe-area для iPhone X+. */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background"
+        className="glass-panel fixed bottom-0 left-0 right-0 z-40 border-t border-border"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
@@ -622,36 +626,28 @@ export default function NewListingPage() {
               type="button"
               variant="outline"
               onClick={goBack}
-              className="h-12 rounded-xl px-4 text-sm font-semibold"
+              size="lg" className="px-5"
             >
               Назад
             </Button>
           ) : null}
           <div className="min-w-0 flex-1">
             {step < TOTAL_STEPS ? (
-              <button
+              <Button size="lg"
                 type="button"
                 onClick={goNext}
                 disabled={!canGoNext(step)}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
-                style={{
-                  backgroundColor: 'var(--mode-accent)',
-                  boxShadow: canGoNext(step) ? '0 4px 14px var(--mode-accent-ring)' : 'none',
-                }}
+                className="w-full"
               >
                 Далее
                 <ChevronRight size={18} strokeWidth={2} className="shrink-0" aria-hidden />
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button size="lg"
                 type="button"
                 onClick={() => void submit()}
                 disabled={busy || uploading || !canGoNext(5)}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
-                style={{
-                  backgroundColor: 'var(--mode-cta)',
-                  boxShadow: '0 4px 14px var(--mode-accent-ring)',
-                }}
+                className="w-full"
               >
                 {busy || uploading ? (
                   <>
@@ -664,11 +660,10 @@ export default function NewListingPage() {
                   </>
                 ) : (
                   <>
-                    <Check size={18} strokeWidth={2.2} className="shrink-0" aria-hidden />
                     Опубликовать
                   </>
                 )}
-              </button>
+              </Button>
             )}
             {nextStepHint(step) ? (
               <p className="mt-1 text-center text-[11px] text-muted-foreground">
@@ -917,7 +912,7 @@ function Step2Description(props: {
       <div>
         <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
           <Wallet size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground" aria-hidden />
-          Цена (₽)
+          {selectedCategory?.slug === 'job' ? 'Зарплата от, ₽' : 'Цена, ₽'}
         </label>
         <Input
           value={price}
@@ -927,7 +922,7 @@ function Step2Description(props: {
           className="h-12 rounded-xl px-4 text-base"
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          Оставьте пустым, если цена договорная
+          {selectedCategory?.slug === 'job' ? 'Период оплаты и верхнюю границу укажите в условиях вакансии ниже.' : 'Оставьте пустым, если цена договорная'}
         </p>
       </div>
 
@@ -952,7 +947,7 @@ function Step2Description(props: {
         <Textarea
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Состояние, комплект, дефекты, история покупки, способ передачи…"
+          placeholder={selectedCategory?.slug === 'job' ? 'Расскажите о работе, команде и главных условиях вакансии…' : selectedCategory?.slug === 'services' ? 'Какие работы выполняете, что входит в стоимость и сколько времени потребуется…' : 'Состояние, комплект, дефекты, история покупки, способ передачи…'}
           className="min-h-32 rounded-xl px-4 py-3 text-base leading-relaxed"
         />
         <div
@@ -960,7 +955,7 @@ function Step2Description(props: {
           style={{ backgroundColor: 'var(--mode-accent-soft)' }}
         >
           <span className="font-semibold">Совет: </span>
-          укажите состояние и комплектацию — меньше вопросов в чате.
+          {selectedCategory?.slug === 'job' ? 'укажите обязанности, график и оплату. Соискателю будет проще понять, подходит ли вакансия.' : selectedCategory?.slug === 'services' ? 'опишите состав работ и сроки, чтобы клиент понимал условия.' : 'укажите состояние и комплектацию, чтобы было меньше вопросов в чате.'}
         </div>
       </div>
 
@@ -975,7 +970,7 @@ function Step2Description(props: {
               <LayoutGrid size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
             </span>
             <div>
-              <h2 className="text-sm font-bold text-foreground">Характеристики</h2>
+              <h2 className="text-sm font-bold text-foreground">{selectedCategory?.slug === 'job' ? 'Условия вакансии' : 'Характеристики'}</h2>
               <p className="text-[11px] text-muted-foreground">
                 Помогает быстрее найти ваше объявление в поиске
               </p>

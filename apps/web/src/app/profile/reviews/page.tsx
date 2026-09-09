@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, MessageSquare, Settings, Star } from 'lucide-react';
+import { ArrowUpRight, MessageSquare, Star } from 'lucide-react';
+import { AccountScreenHeader } from '@/components/account-screen-header';
 import { apiFetchJson, type MyReviewsResponse } from '@/lib/api';
 
 export default function MyReviewsPage() {
@@ -24,13 +25,8 @@ export default function MyReviewsPage() {
   const reviews = tab === 'received' ? data.received : data.given;
 
   return <div className="min-h-screen bg-background text-foreground">
-    <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto flex min-h-16 max-w-3xl items-center gap-3 px-4 py-2 md:px-6">
-        <Link href="/profile" aria-label="Назад в профиль" className="grid size-11 shrink-0 place-items-center rounded-full border border-border/60 bg-card/80 hover:bg-muted"><ArrowLeft size={21} strokeWidth={1.8} /></Link>
-        <div className="min-w-0 flex-1"><h1 className="text-lg font-bold tracking-tight">Отзывы</h1><p className="truncate text-xs text-muted-foreground">Репутация складывается из сделок</p></div>
-        <Link href="/profile/settings" aria-label="Настройки" className="grid size-11 shrink-0 place-items-center rounded-full bg-muted/60 hover:bg-muted"><Settings size={21} strokeWidth={1.8} /></Link>
-      </div>
-    </header>
+    <AccountScreenHeader title="Отзывы" subtitle="Репутация складывается из сделок" />
+
     <main className="mx-auto max-w-3xl px-4 pb-32 pt-6 md:px-6 md:pt-8">
       {status === 'loading' ? <div role="status" aria-label="Загружаем отзывы" className="space-y-4 animate-pulse motion-reduce:animate-none"><div className="h-44 rounded-3xl bg-muted" /><div className="h-14 rounded-2xl bg-muted" /><div className="h-36 rounded-3xl bg-muted" /></div> : null}
       {status === 'need_auth' ? <div className="rounded-3xl border border-border bg-card p-8 text-center"><MessageSquare className="mx-auto mb-4 text-primary" size={36} /><h2 className="text-xl font-bold">Ваши отзывы будут здесь</h2><p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы увидеть оценки и отзывы о сделках.</p><Link href="/auth?next=%2Fprofile%2Freviews" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-7 font-semibold text-primary-foreground">Войти</Link></div> : null}
