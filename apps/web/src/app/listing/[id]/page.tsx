@@ -118,10 +118,10 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   );
 
   return (
-    <div className="min-h-screen bg-muted text-foreground antialiased">
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
+    <div className="min-h-screen bg-background text-foreground antialiased">
+      <header className="glass-panel sticky top-0 z-50 border-b border-border">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-          <Button render={<Link href="/" />} variant="ghost" size="sm" className="h-9 gap-1.5 px-3 text-sm">
+          <Button render={<Link href="/" />} variant="ghost" size="sm" className="gap-2 px-4">
             <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
             Назад в ленту
           </Button>
@@ -202,7 +202,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             {/* Description + attributes */}
             <Card className="gap-3 px-5 py-5">
               <h2 className="text-lg font-semibold text-foreground">Описание</h2>
-              <div className="overflow-hidden break-words text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+              <div className="overflow-hidden break-words text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
                 {listing.description}
               </div>
               <ListingAttributesDisplay attributes={listing.attributes} />
@@ -227,7 +227,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               style={{
                 borderColor: 'var(--mode-accent-ring)',
                 backgroundColor: 'var(--mode-accent-soft)',
-                color: 'var(--mode-accent)',
+                color: 'var(--fg-default)',
               }}
             >
               <AlertTriangle
@@ -238,7 +238,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                 aria-hidden
               />
               <div>
-                <p className="font-bold">Безопасная сделка</p>
+                <p className="font-semibold">Перед договорённостью</p>
                 <p className="mt-1 text-xs leading-relaxed opacity-95">
                   Не переходите в WhatsApp, Telegram и другие мессенджеры по просьбе продавцов и
                   покупателей — так действуют мошенники. Договаривайтесь и переписывайтесь здесь, как
@@ -266,7 +266,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <div className="text-[28px] leading-tight font-bold tracking-tight text-foreground tabular-nums">
                 {formatRub(listing.priceRub)}
               </div>
-              <p className="text-xs text-muted-foreground">Включая торг — уточняйте в чате</p>
+              <p className="text-xs text-muted-foreground">Условия уточняйте в переписке</p>
 
               <div className="mt-1 space-y-2">
                 {/* CTA «Написать сообщение» — основной бренд-CTA режима.
@@ -278,11 +278,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                 <Button
                   render={<Link href={`/messages?listingId=${listing.id}`} />}
                   size="lg"
-                  className="h-11 w-full rounded-xl text-[15px] font-semibold"
-                  style={{
-                    backgroundColor: 'var(--mode-accent)',
-                    color: '#ffffff',
-                  }}
+                  className="w-full"
                 >
                   Написать сообщение
                 </Button>
@@ -292,7 +288,6 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                   sellerId={listing.owner.id}
                 />
               </div>
-              <p className="text-center text-xs text-muted-foreground">Отвечает за несколько часов</p>
 
               <Separator />
 

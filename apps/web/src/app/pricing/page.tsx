@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   BadgeCheck,
@@ -26,6 +26,8 @@ import {
   type PromotionPackage,
   type PromotionTypeCode,
 } from '@/lib/api';
+import { AccountScreenHeader } from '@/components/account-screen-header';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -88,6 +90,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function PricingPage() {
+  const subscribing = useRef(false);
   const [audience, setAudience] = useState<PromotionAudience>('PERSONAL');
   const [personal, setPersonal] = useState<PromotionPackage[] | null>(null);
   const [business, setBusiness] = useState<PromotionPackage[] | null>(null);
@@ -125,13 +128,17 @@ export default function PricingPage() {
   const pkgs = audience === 'PERSONAL' ? personal : business;
 
   async function subscribe(planCode: string) {
+    if (subscribing.current) return;
+    subscribing.current = true;
     setBusyPlan(planCode);
     setError(null);
     setInfo(null);
     const res = await apiFetchJson<ProSubscription>('/wallet/pro/subscribe', {
       method: 'POST',
       body: JSON.stringify({ planCode }),
+      signal: AbortSignal.timeout(15000),
     });
+    subscribing.current = false;
     setBusyPlan(null);
     if (res.ok) {
       setActiveSub(res.data);
@@ -142,19 +149,18 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:py-14">
+    <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Тарифы" subtitle="Продвижение и подписка" /><div className="mx-auto max-w-6xl px-4 pt-6 pb-32 sm:pt-8">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
         <Badge variant="outline" className="mb-3 border-primary/30 text-primary">
-          Размещение всегда бесплатно
+          Возможности для продавцов
         </Badge>
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
           Тарифы и продвижение Бартера
         </h1>
         <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-          Платите только за дополнительные показы и подписки бизнеса.
-          Все цены — в&nbsp;
-          <span className="font-semibold text-foreground">2 раза дешевле, чем у конкурентов</span>.
+          Выберите продвижение для объявления или подходящий лимит размещений.
+          Стоимость и срок действия указаны в каждом предложении.
         </p>
       </div>
 
@@ -168,12 +174,12 @@ export default function PricingPage() {
             </p>
           </div>
           <Tabs value={audience} onValueChange={(v) => setAudience(v as PromotionAudience)}>
-            <TabsList>
-              <TabsTrigger value="PERSONAL" className="gap-2">
+            <TabsList className="min-h-13 rounded-2xl p-1">
+              <TabsTrigger value="PERSONAL" className="min-h-11 gap-2 rounded-xl">
                 <UserIcon size={14} strokeWidth={1.8} />
                 Частное лицо
               </TabsTrigger>
-              <TabsTrigger value="BUSINESS" className="gap-2">
+              <TabsTrigger value="BUSINESS" className="min-h-11 gap-2 rounded-xl">
                 <Building2 size={14} strokeWidth={1.8} />
                 Бизнес
               </TabsTrigger>
@@ -197,7 +203,7 @@ export default function PricingPage() {
               return (
                 <Card
                   key={pkg.id}
-                  className={`group relative flex flex-col gap-3 rounded-2xl border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-md ${pkg.isBundle ? 'ring-1 ring-accent/40' : ''}`}
+                  className={`group relative flex flex-col gap-3 rounded-3xl border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-md ${pkg.isBundle ? 'ring-1 ring-accent/40' : ''}`}
                 >
                   {pkg.isBundle ? (
                     <Badge className="absolute right-3 top-3 bg-accent/90 text-white">Пакет</Badge>
@@ -234,7 +240,7 @@ export default function PricingPage() {
                     </div>
                     <Link
                       href="/profile/listings"
-                      className="inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-primary hover:text-white"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-primary hover:text-white"
                     >
                       Применить
                       <ArrowRight size={12} strokeWidth={2} />
@@ -284,7 +290,7 @@ export default function PricingPage() {
               return (
                 <Card
                   key={plan.id}
-                  className={`relative flex flex-col gap-4 rounded-2xl border-border bg-card p-5 ring-1 ${tone.ring} ${tone.popular ? 'shadow-lg' : ''}`}
+                  className={`relative flex flex-col gap-4 rounded-3xl border-border bg-card p-5 ring-1 ${tone.ring} ${tone.popular ? 'shadow-sm' : ''}`}
                 >
                   {tone.popular ? (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white shadow">
@@ -295,7 +301,7 @@ export default function PricingPage() {
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="text-lg font-bold text-foreground">{plan.title}</p>
                     <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${tone.badge}`}>
-                      {plan.code === 'business' ? 'Без лимитов' : plan.code === 'pro' ? 'Топ-выбор' : 'Базовый'}
+                      {plan.listingsLimit == null ? 'Без лимита' : `До ${plan.listingsLimit}`}
                     </span>
                   </div>
 
@@ -303,7 +309,7 @@ export default function PricingPage() {
                     <p className="text-3xl font-extrabold tracking-tight text-foreground">
                       {formatRub(plan.priceRubPerMonth)}
                     </p>
-                    <p className="text-xs text-muted-foreground">в месяц, без скрытых платежей</p>
+                    <p className="text-xs text-muted-foreground">за месяц подписки</p>
                   </div>
 
                   <ul className="space-y-2 text-sm text-foreground">
@@ -315,11 +321,11 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  <button
+                  <Button size="lg"
                     type="button"
-                    disabled={busyPlan === plan.code}
+                    disabled={busyPlan !== null}
                     onClick={() => void subscribe(plan.code)}
-                    className={`mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition disabled:opacity-60 ${tone.cta}`}
+                    className="mt-auto w-full"
                   >
                     {busyPlan === plan.code ? (
                       <Loader2 size={16} strokeWidth={2} className="animate-spin" />
@@ -327,7 +333,7 @@ export default function PricingPage() {
                       <BadgeCheck size={16} strokeWidth={2} />
                     ) : null}
                     {isCurrent ? 'Продлить подписку' : 'Подключить'}
-                  </button>
+                  </Button>
 
                   {isCurrent && activeSub ? (
                     <p className="text-center text-[11px] text-muted-foreground">
@@ -344,40 +350,17 @@ export default function PricingPage() {
       {/* Footer note */}
       <section className="mt-14 rounded-2xl border border-border bg-muted/40 p-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Списание с кошелька — мгновенно. Пополняйте на странице{' '}
+          Подписка оплачивается с баланса. Баланс и доступность пополнения смотрите в{' '}
           <Link href="/wallet" className="font-semibold text-primary underline-offset-2 hover:underline">
-            /wallet
+            кошельке
           </Link>
           . Возникли вопросы? Напишите в чат поддержки.
         </p>
       </section>
-    </div>
+    </div></div>
   );
 }
 
 function featuresForPlan(plan: ProPlan): string[] {
-  const limit =
-    plan.listingsLimit == null ? 'Без лимита объявлений' : `До ${plan.listingsLimit} активных объявлений`;
-  if (plan.code === 'business') {
-    return [
-      limit,
-      'Магазин на Бартере + витрина',
-      'Расширенная статистика и экспорт',
-      'Приоритетная модерация и поддержка',
-      'Скидки до 30% на пакеты продвижения',
-    ];
-  }
-  if (plan.code === 'pro') {
-    return [
-      limit,
-      'Аналитика просмотров и контактов',
-      'Кросс-постинг во все категории',
-      'Скидка 15% на пакеты продвижения',
-    ];
-  }
-  return [
-    limit,
-    'Базовая статистика',
-    'Без рекламы в кабинете',
-  ];
+  return [plan.listingsLimit == null ? 'Без лимита активных объявлений' : `До ${plan.listingsLimit} активных объявлений`];
 }

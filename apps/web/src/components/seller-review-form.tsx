@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { MessageCircle, Star } from 'lucide-react';
 import { apiFetchJson, type ReviewEligibility } from '@/lib/api';
@@ -86,12 +87,12 @@ export default function SellerReviewForm({ sellerId, listingId }: Props) {
       <div className="flex items-center gap-2">
         <span
           className="grid h-8 w-8 place-items-center rounded-lg"
-          style={{ backgroundColor: 'var(--mode-accent-soft)', color: 'var(--mode-accent)' }}
+          style={{ backgroundColor: 'var(--mode-accent-soft)', color: 'var(--fg-default)' }}
         >
           <Star
             size={16}
             strokeWidth={1.8}
-            style={{ color: 'var(--mode-accent)' }}
+            style={{ color: 'var(--fg-default)' }}
             aria-hidden
           />
         </span>
@@ -109,14 +110,14 @@ export default function SellerReviewForm({ sellerId, listingId }: Props) {
           style={{
             borderColor: 'var(--mode-accent-ring)',
             backgroundColor: 'var(--mode-accent-soft)',
-            color: 'var(--mode-accent)',
+            color: 'var(--fg-default)',
           }}
         >
           <p>Войдите, чтобы увидеть, можете ли вы оставить отзыв по этой сделке.</p>
           <Link
             href={`/auth?next=${encodeURIComponent(`/listing/${listingId}#listing-review`)}`}
             className="mt-2 inline-flex text-sm font-bold underline"
-            style={{ color: 'var(--mode-accent)' }}
+            style={{ color: 'var(--fg-default)' }}
           >
             Войти или зарегистрироваться
           </Link>
@@ -135,23 +136,19 @@ export default function SellerReviewForm({ sellerId, listingId }: Props) {
             />
           </div>
           <textarea
-            className="mt-3 min-h-[5rem] w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
+            className="mt-3 min-h-28 w-full rounded-2xl border border-border bg-card px-4 py-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
             placeholder="Коротко о встрече, комплекте, общении (по желанию)"
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-          <button
+          <Button size="lg"
             type="button"
             onClick={() => void submit()}
             disabled={busy}
-            className="mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
-            style={{
-              backgroundColor: 'var(--mode-accent)',
-              boxShadow: '0 4px 12px var(--mode-accent-ring)',
-            }}
+            className="mt-3 w-full"
           >
-            {busy ? 'Сохраняю…' : 'Опубликовать отзыв'}
-          </button>
+            {busy ? 'Сохраняем…' : 'Опубликовать отзыв'}
+          </Button>
         </>
       ) : elig?.reason === 'already_reviewed' ? (
         <p className="mt-3 text-sm font-medium text-success">Вы уже оставили отзыв по этому объявлению.</p>
@@ -161,7 +158,7 @@ export default function SellerReviewForm({ sellerId, listingId }: Props) {
           style={{
             borderColor: 'var(--mode-accent-ring)',
             backgroundColor: 'var(--mode-accent-soft)',
-            color: 'var(--mode-accent)',
+            color: 'var(--fg-default)',
           }}
         >
           <p className="font-medium">
@@ -176,9 +173,9 @@ export default function SellerReviewForm({ sellerId, listingId }: Props) {
           </p>
           <Link
             href={chatHref}
-            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white"
+            className="inline-flex min-h-12 items-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white"
             style={{
-              backgroundColor: 'var(--mode-accent)',
+              backgroundColor: 'var(--mode-primary)',
               boxShadow: '0 4px 12px var(--mode-accent-ring)',
             }}
           >

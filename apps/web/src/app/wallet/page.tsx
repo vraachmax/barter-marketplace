@@ -19,6 +19,7 @@ import {
   type WalletTransaction,
   type WalletTxnType,
 } from '@/lib/api';
+import { AccountScreenHeader } from '@/components/account-screen-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -101,28 +102,28 @@ export default function WalletPage() {
 
   if (error && !balance) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10">
+      <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Кошелёк" subtitle="Баланс и история операций" /><div className="mx-auto max-w-3xl px-4 pt-6 pb-32">
         <Card className="gap-3 p-6">
           <div className="text-base font-semibold text-foreground">Кошелёк недоступен</div>
           <p className="text-sm text-muted-foreground">{error}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row">
             {needsLogin ? <Button render={<Link href="/auth?next=%2Fwallet" />}>Войти</Button> : <Button onClick={refresh} disabled={loading}>Попробовать снова</Button>}
             <Button variant="outline" render={<Link href="/" />}>
               На главную
             </Button>
           </div>
         </Card>
-      </div>
+      </div></div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 pb-24 md:py-10">
-      <div className="mb-5 flex items-end justify-between gap-3">
+    <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Кошелёк" subtitle="Баланс и история операций" /><div className="mx-auto max-w-5xl px-4 pt-6 pb-32 md:pt-8">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Кошелёк
-          </h1>
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Баланс для продвижения объявлений и подписки Barter Pro
           </p>
@@ -301,6 +302,6 @@ export default function WalletPage() {
           )}
         </Card>
       </div>
-    </div>
+    </div></div>
   );
 }

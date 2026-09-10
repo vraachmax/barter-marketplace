@@ -29,7 +29,7 @@ export function ListingShareButton({ title }: { title: string }) {
   return (
     <button
       onClick={share}
-      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/50"
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/50"
     >
       {copied ? <Link2 size={16} strokeWidth={s} aria-hidden /> : <Mail size={16} strokeWidth={s} aria-hidden />}
       {copied ? 'Скопировано!' : 'Поделиться'}
@@ -55,7 +55,7 @@ export function ListingReportButton({ listingId }: Props) {
 
   if (state === 'done') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-xl border border-secondary/30 bg-secondary/10 px-3 py-2 text-xs font-semibold text-secondary">
+      <span className="inline-flex min-h-11 items-center gap-2 rounded-full border border-secondary/30 bg-secondary/10 px-3 py-2 text-xs font-semibold text-secondary">
         Жалоба отправлена
       </span>
     );
@@ -68,13 +68,13 @@ export function ListingReportButton({ listingId }: Props) {
         <button
           disabled={state === 'sending'}
           onClick={send}
-          className="rounded-xl bg-destructive/10 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+          className="min-h-11 rounded-full bg-destructive px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {state === 'sending' ? '…' : 'Да'}
         </button>
         <button
           onClick={() => setState('idle')}
-          className="rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground"
+          className="min-h-11 rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted-foreground"
         >
           Нет
         </button>
@@ -85,7 +85,7 @@ export function ListingReportButton({ listingId }: Props) {
   return (
     <button
       onClick={() => setState('confirm')}
-      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
     >
       <Flag size={16} strokeWidth={s} aria-hidden />
       Пожаловаться
