@@ -1,9 +1,10 @@
 'use client';
 
 import { Phone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
-import { getToken } from '@/lib/auth-store';
+import { Button } from '@/components/ui/button';
 
 type Props = {
   phone: string | null;
@@ -23,7 +24,8 @@ function maskEmail(email: string): string {
   return `${visible}***@${domain}`;
 }
 
-export function ShowPhoneButton({ phone, email, sellerId }: Props) {
+export function ShowPhoneButton({ phone, email }: Props) {
+  const router = useRouter();
   const { user } = useAuth();
   const [revealed, setRevealed] = useState(false);
   const [contactData, setContactData] = useState<{ phone?: string | null; email?: string | null } | null>(null);
@@ -31,25 +33,16 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
   const hasContact = phone || email;
   const maskedDisplay = phone ? maskPhone(phone) : email ? maskEmail(email) : null;
 
-  const reveal = useCallback(async () => {
+  const reveal = useCallback(() => {
     if (revealed) return;
     if (!user) {
-      window.location.href = '/auth?mode=login';
+      router.push('/auth?mode=login');
       return;
     }
-    const token = getToken();
-    try {
-      const res = await fetch(`/users/${sellerId}/profile`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const u = data.user;
-        setContactData({ phone: u?.phone, email: u?.email });
-      }
-    } catch {}
+    // Only reveal the contact already supplied by the listing API.
+    setContactData({ phone, email });
     setRevealed(true);
-  }, [revealed, user, sellerId]);
+  }, [revealed, user, phone, email, router]);
 
   if (!hasContact) return null;
 
@@ -59,7 +52,7 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
         {contactData.phone ? (
           <a
             href={`tel:${contactData.phone}`}
-            className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition"
+            className="flex items-center gap-2 min-h-12 rounded-2xl px-4 py-3 text-base font-bold transition"
             style={{
               backgroundColor: 'var(--mode-accent-soft)',
               color: 'var(--mode-accent)',
@@ -73,7 +66,7 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
         {contactData.email ? (
           <a
             href={`mailto:${contactData.email}`}
-            className="block truncate rounded-xl bg-muted/50 px-4 py-2 text-xs text-muted-foreground ring-1 ring-border"
+            className="flex min-h-11 items-center truncate rounded-2xl bg-muted/50 px-4 py-2 text-xs text-muted-foreground ring-1 ring-border"
           >
             {contactData.email}
           </a>
@@ -82,22 +75,19 @@ export function ShowPhoneButton({ phone, email, sellerId }: Props) {
     );
   }
 
-  // Кнопка «Показать контакт» — `.btn-show-phone` даёт зелёный CTA (#87D32C)
-  // в Маркете и оранжевый (--mode-accent) в Бартере. Блок `h-auto` + `py-3`
-  // снимает фиксированную высоту 34px, чтобы лейбл «Показать контакт» с
-  // маской номера вмещался без обрезания.
   return (
-    <button
+    <Button
+      variant="outline"
+      size="lg"
       type="button"
       onClick={reveal}
-      className="btn-show-phone flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
-      style={{ height: 'auto' }}
+      className="w-full flex-wrap gap-2"
     >
       <Phone size={18} strokeWidth={1.8} aria-hidden />
       <span>Показать контакт</span>
       {maskedDisplay ? (
         <span className="ml-auto font-mono text-xs opacity-90">{maskedDisplay}</span>
       ) : null}
-    </button>
+    </Button>
   );
 }

@@ -95,13 +95,13 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
   });
 
   return (
-    <div className="min-h-screen bg-muted text-foreground antialiased">
+    <div className="min-h-screen bg-background text-foreground antialiased">
       {/* Top bar */}
-      <header className="border-b border-border bg-card">
+      <header className="glass-panel sticky top-0 z-30 border-b border-border">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:h-16 lg:px-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition hover:text-primary"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-muted-foreground transition hover:text-primary"
           >
             <ChevronLeft size={22} strokeWidth={1.8} aria-hidden />
             На главную
@@ -114,12 +114,12 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-7xl px-4 pt-6 pb-32 lg:px-8 lg:pt-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_1fr] lg:items-start">
           {/* Seller card — Vinted / eBay public profile style */}
-          <aside className="lg:sticky lg:top-6">
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
-              <div className="h-24 bg-primary" aria-hidden />
+          <aside className="lg:sticky lg:top-24">
+            <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+              <div className="h-24 bg-primary/10" aria-hidden />
               <div className="relative px-5 pb-5 pt-0">
                 <div className="-mt-12 flex justify-center lg:justify-start">
                   {avatarSrc ? (
@@ -127,10 +127,10 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                     <img
                       src={avatarSrc}
                       alt=""
-                      className="h-24 w-24 rounded-2xl border-4 border-white object-cover shadow-md ring-1 ring-border"
+                      className="h-24 w-24 rounded-2xl border-4 border-background object-cover shadow-md ring-1 ring-border"
                     />
                   ) : (
-                    <div className="grid h-24 w-24 place-items-center rounded-2xl border-4 border-white bg-muted text-muted-foreground shadow-md ring-1 ring-border">
+                    <div className="grid h-24 w-24 place-items-center rounded-2xl border-4 border-background bg-muted text-muted-foreground shadow-md ring-1 ring-border">
                       <UserCircle size={44} strokeWidth={1.8} aria-hidden />
                     </div>
                   )}
@@ -206,8 +206,8 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
 
           <div className="min-w-0 space-y-6">
             {/* Listings */}
-            <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <div className="flex flex-col gap-2 border-b border-border bg-primary px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+              <div className="flex flex-col gap-2 border-b border-border bg-muted/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-xl bg-card shadow-sm ring-1 ring-primary/30">
                     <Store size={22} strokeWidth={1.8} className="text-primary" aria-hidden />
@@ -217,7 +217,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                     <p className="text-xs text-muted-foreground">Товары и услуги этого продавца</p>
                   </div>
                 </div>
-                <span className="inline-flex w-fit items-center rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary">
+                <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                   {profile.activeListings.length}
                 </span>
               </div>
@@ -230,7 +230,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                     <p className="mt-1 text-xs text-muted-foreground">Загляните позже или посмотрите похожие лоты на главной.</p>
                     <Link
                       href="/"
-                      className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary/20"
+                      className="mt-4 inline-flex items-center justify-center min-h-12 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-md shadow-primary/20"
                     >
                       К объявлениям
                     </Link>
@@ -243,7 +243,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                         <li key={x.id}>
                           <Link
                             href={`/listing/${x.id}`}
-                            className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-muted/50 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                            className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-muted/50 shadow-sm transition hover:border-primary/30 hover:shadow-md"
                           >
                             <div className="listing-thumb-wrap relative aspect-[16/10] w-full overflow-hidden border-b border-border">
                               {img ? (
@@ -265,7 +265,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                               <p className="line-clamp-2 text-sm font-bold leading-snug text-foreground group-hover:text-primary">
                                 {x.title}
                               </p>
-                              <p className="mt-2 text-lg font-black text-primary">{formatRub(x.priceRub)}</p>
+                              <p className="mt-2 text-lg font-semibold text-foreground">{formatRub(x.priceRub)}</p>
                               <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                                 <MapPin size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
                                 {x.city} · {x.category.title}
@@ -285,8 +285,8 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
             </section>
 
             {/* Reviews */}
-            <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <div className="flex flex-col gap-2 border-b border-border bg-primary px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+              <div className="flex flex-col gap-2 border-b border-border bg-muted/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-xl bg-card shadow-sm ring-1 ring-accent/30">
                     <MessageCircle size={22} strokeWidth={1.8} className="text-accent" aria-hidden />
@@ -314,7 +314,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                           className="rounded-2xl border border-border bg-muted/50 p-4 transition hover:border-border hover:bg-card sm:p-5"
                         >
                           <div className="flex gap-3">
-                            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-primary ring-1 ring-primary/30">
+                            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary ring-1 ring-primary/30">
                               {initial}
                             </div>
                             <div className="min-w-0 flex-1">
