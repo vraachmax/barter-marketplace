@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { ListingEditorDialog } from '@/components/listing-editor-dialog';
 import { canOfferBarter } from '@/lib/barter-category';
 import { Button } from '@/components/ui/button';
+import { ListingManagementActions } from '@/components/listing-management-actions';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -26,7 +27,6 @@ import {
   ShoppingBag,
   Sparkles,
   Star,
-  Trash2,
   Wallet,
   ArrowLeft,
 } from 'lucide-react';
@@ -96,7 +96,7 @@ export function ProfileContent() {
   const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
 
   function setListingTab(tab: ListingTab) {
-    router.push(`/profile?tab=${tab}`, { scroll: false });
+    router.push(`/profile/listings?tab=${tab}`, { scroll: false });
   }
 
   async function loadMe(): Promise<boolean> {
@@ -255,7 +255,7 @@ export function ProfileContent() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       {/* Mobile header */}
-      <header className="glass-panel sticky top-0 z-20 border-b border-border md:hidden">
+      <header className="glass-panel sticky top-0 z-20 border-b border-border pt-[env(safe-area-inset-top)] md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           {showListingsView ? (
             <Link
@@ -269,7 +269,7 @@ export function ProfileContent() {
             <span className="size-11" aria-hidden />
           )}
           <h1 className="text-base font-bold text-foreground">{showListingsView ? 'Мои объявления' : 'Профиль'}</h1>
-          <Button variant="ghost"
+          <Button variant="ghost" size="icon"
             type="button"
             onClick={() => router.push('/search')}
             aria-label="Открыть поиск"
@@ -310,8 +310,8 @@ export function ProfileContent() {
               </div>
               <div className="p-6">
                 <Link
-                  href="/auth?next=%2Fprofile"
-                  className="flex h-12 w-full items-center justify-center rounded-lg [background-color:var(--mode-accent)] text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
+                  href={`/auth?next=${encodeURIComponent(showListingsView ? `/profile/listings?tab=${activeTab}` : '/profile')}`}
+                  className="flex min-h-13 w-full items-center justify-center rounded-full bg-primary px-4 text-center text-base font-semibold text-primary-foreground transition hover:bg-primary-hover"
                 >
                   Войти или зарегистрироваться
                 </Link>
@@ -376,7 +376,7 @@ export function ProfileContent() {
                         const thumbImg = x.images?.[0];
                         const thumbUrl = resolveAssetUrl(thumbImg?.url);
                         return (
-                          <div key={x.id} className="flex gap-3 rounded-3xl border border-border bg-card p-4 shadow-sm">
+                          <div key={x.id} className="flex flex-wrap gap-3 rounded-3xl border border-border bg-card p-4 shadow-sm">
                             {/* Thumbnail */}
                             <Link href={`/listing/${x.id}`} className="flex-shrink-0">
                               <div className="h-24 w-24 overflow-hidden rounded-2xl bg-muted">
@@ -411,7 +411,7 @@ export function ProfileContent() {
                             </div>
 
                             {/* Edit button */}
-                            <Button variant="ghost"
+                            <Button variant="ghost" size="icon"
                               type="button"
                               onClick={() => startEdit(x)}
                               aria-label={`Редактировать: ${x.title}`}
@@ -419,6 +419,14 @@ export function ProfileContent() {
                             >
                               <FileText size={18} strokeWidth={1.5} aria-hidden />
                             </Button>
+                            <details className="basis-full border-t border-border pt-2">
+                              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-full px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring">
+                                Действия с объявлением<ChevronDown size={18} aria-hidden />
+                              </summary>
+                              <div className="pt-2">
+                                <ListingManagementActions listing={x} busy={actionBusy} onEdit={() => startEdit(x)} onPromote={() => setPromoteTarget({ id: x.id, title: x.title })} onPublish={() => void publishAfterImageReview(x.id)} onStatus={(next) => void setListingStatus(x.id, next)} onRemove={() => void removeListing(x.id)} />
+                              </div>
+                            </details>
                           </div>
                         );
                       })
@@ -429,7 +437,7 @@ export function ProfileContent() {
                   <div className="mt-5">
                     <Link
                       href="/new"
-                      className="flex h-12 w-full items-center justify-center rounded-xl [background-color:var(--mode-accent)] text-sm font-bold text-white transition hover:[background-color:var(--mode-accent-hover)]"
+                      className="flex min-h-13 w-full items-center justify-center rounded-full bg-primary px-5 text-base font-semibold text-primary-foreground transition hover:bg-primary-hover"
                     >
                       Разместить объявление
                     </Link>
@@ -953,80 +961,8 @@ export function ProfileContent() {
                                     ) : null}
                                   </div>
 
-                                  <div className="flex flex-col gap-2 lg:w-56 lg:shrink-0">
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                                      Продвижение
-                                    </p>
-                                    <div className="flex flex-col gap-2">
-                                      {x.status === 'ACTIVE' ? (
-                                        <Button variant="ghost"
-                                          type="button"
-                                          onClick={() => setPromoteTarget({ id: x.id, title: x.title })}
-                                          className="min-h-11 group flex w-full items-center justify-center gap-2 rounded-xl [background-color:var(--mode-accent)] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:[background-color:var(--mode-accent-hover)]"
-                                        >
-                                          <Sparkles size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
-                                          <span>{x.activePromotion ? 'Продлить продвижение' : 'Продвинуть'}</span>
-                                        </Button>
-                                      ) : (
-                                        <p className="rounded-xl border border-border bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
-                                          {x.status === 'PENDING'
-                                            ? 'Продвижение доступно после публикации в ленте.'
-                                            : x.status === 'BLOCKED'
-                                              ? 'Объявление скрыто — продвижение недоступно.'
-                                              : 'Продвижение только для активных лотов.'}
-                                        </p>
-                                      )}
-                                      <Link
-                                        href="/pricing"
-                                        className="inline-flex w-full items-center justify-center gap-1 rounded-xl border border-border bg-card px-3 py-2 text-[11px] font-semibold text-muted-foreground transition hover:[border-color:var(--mode-accent-ring)] hover:[color:var(--mode-accent)]"
-                                      >
-                                        Все пакеты и подписка
-                                      </Link>
-                                    </div>
-                                    {x.status === 'PENDING' ? (
-                                      <Button variant="ghost"
-                                        type="button"
-                                        disabled={actionBusy}
-                                      onClick={() => void publishAfterImageReview(x.id)}
-                                        className="min-h-11 w-full rounded-xl border border-success/30 bg-success/10 py-2 text-xs font-bold text-success hover:bg-success/20"
-                                      >
-                                        Подтвердить публикацию в ленте
-                                      </Button>
-                                    ) : null}
-                                    <Button variant="ghost"
-                                      type="button"
-                                      onClick={() => startEdit(x)}
-                                      className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50"
-                                    >
-                                      Редактировать
-                                    </Button>
-                                    <Button variant="ghost"
-                                      type="button"
-                                      disabled={actionBusy || x.status === 'BLOCKED'}
-                                      onClick={() => void setListingStatus(x.id, x.status === 'SOLD' ? 'ACTIVE' : 'SOLD')}
-                                      className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                      {x.status === 'SOLD' ? 'Вернуть в активные' : 'Отметить проданным'}
-                                    </Button>
-                                    <Button variant="ghost"
-                                      type="button"
-                                      disabled={actionBusy || x.status === 'BLOCKED'}
-                                      onClick={() =>
-                                        void setListingStatus(x.id, x.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED')
-                                      }
-                                      className="min-h-11 w-full rounded-xl border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                      {x.status === 'ARCHIVED' ? 'Из архива' : 'В архив'}
-                                    </Button>
-                                    <Button variant="ghost"
-                                      type="button"
-                                      disabled={actionBusy}
-                                      onClick={() => void removeListing(x.id)}
-                                      className="min-h-11 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-destructive/30 bg-destructive/10 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
-                                    >
-                                      <Trash2 size={16} strokeWidth={1.8} aria-hidden />
-                                      Удалить
-                                    </Button>
+                                  <div className="lg:w-56 lg:shrink-0">
+                                    <ListingManagementActions listing={x} busy={actionBusy} onEdit={() => startEdit(x)} onPromote={() => setPromoteTarget({ id: x.id, title: x.title })} onPublish={() => void publishAfterImageReview(x.id)} onStatus={(next) => void setListingStatus(x.id, next)} onRemove={() => void removeListing(x.id)} />
                                   </div>
                                 </div>
 

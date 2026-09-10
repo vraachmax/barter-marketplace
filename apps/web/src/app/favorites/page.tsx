@@ -10,17 +10,17 @@ import { ListingCardComponent, ListingCardSkeleton } from '@/components/listing-
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
-const linkClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const linkClass = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-border bg-card px-5 text-base font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export default function FavoritesPage() {
   const { ready, token } = useAuth();
   const [attempt, setAttempt] = useState(0);
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-md">
+      <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-[var(--mode-accent-soft)] text-[var(--mode-accent)]">
+            <span className="grid size-11 place-items-center rounded-2xl bg-muted text-foreground">
               <Heart size={22} aria-hidden />
             </span>
             <div>
@@ -33,7 +33,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-3 pb-32 pt-5 md:px-4 md:pb-12">
+      <main className="mx-auto max-w-6xl px-4 pb-32 pt-5 md:pb-12">
         {ready ? (
           <FavoritesContent key={`${token ?? 'guest'}:${attempt}`} onRetry={() => setAttempt((value) => value + 1)} />
         ) : <FavoritesLoading />}
@@ -102,7 +102,7 @@ function FavoritesContent({ onRetry }: { onRetry: () => void }) {
           {needsLogin ? 'Войдите в аккаунт, чтобы увидеть сохранённые объявления. После входа вернём вас сюда.' : 'Проверьте подключение и попробуйте ещё раз.'}
         </p>
         {needsLogin ? <Link href="/auth?next=%2Ffavorites" className={linkClass}>Войти в аккаунт</Link> : (
-          <Button onClick={onRetry} className="min-h-11 rounded-xl"><RefreshCw size={18} aria-hidden />Попробовать снова</Button>
+          <Button onClick={onRetry} size="lg"><RefreshCw size={18} aria-hidden />Попробовать снова</Button>
         )}
         <Link href="/" className={linkClass}>Посмотреть объявления</Link>
       </Card>
