@@ -5,7 +5,7 @@ import { ProfileContent } from '../profile-content';
 
 function ListingsFallback() {
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 bg-muted">
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 bg-background">
       <div
         className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-transparent"
         role="status"
