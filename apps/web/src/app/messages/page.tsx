@@ -453,7 +453,7 @@ export default function MessagesPage() {
             <div className="p-6">
               <Link
                 href="/auth"
-                className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white shadow-lg shadow-primary/20"
+                className="flex min-h-13 w-full items-center justify-center rounded-full bg-primary px-4 text-base font-semibold text-primary-foreground hover:bg-primary-hover"
               >
                 Войти или зарегистрироваться
               </Link>
@@ -639,7 +639,7 @@ export default function MessagesPage() {
                 </p>
                 <Link
                   href="/"
-                  className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary/20"
+                  className="mt-4 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-5 py-3 text-base font-semibold text-primary-foreground hover:bg-primary-hover"
                 >
                   К объявлениям
                 </Link>
@@ -718,7 +718,7 @@ export default function MessagesPage() {
                 {listingHref ? (
                   <Link
                     href={listingHref}
-                    className="hidden shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-primary shadow-sm transition hover:bg-primary/10 sm:inline-flex"
+                    className="hidden min-h-11 shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted sm:inline-flex"
                   >
                     <Link2 size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
                     Объявление

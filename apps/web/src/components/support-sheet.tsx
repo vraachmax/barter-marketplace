@@ -199,30 +199,29 @@ export function SupportSheet({ open, onClose }: Props) {
       <div
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl md:max-h-[620px] md:w-[520px] md:rounded-3xl"
-        style={{ animation: 'support-sheet-in 0.28s cubic-bezier(.34,1.56,.64,1)' }}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center gap-3 bg-gradient-to-br from-primary to-accent px-4 py-3 text-white">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/15 shadow-inner backdrop-blur-sm">
+        <div className="flex shrink-0 items-center gap-3 glass-panel border-b border-border px-4 py-3 text-foreground">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-muted text-foreground">
             <Sparkles size={22} strokeWidth={2} aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="truncate text-[15px] font-bold leading-tight">Бартер · Ассистент</span>
               <span className="shrink-0 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold tracking-wide">
-                24/7
+                Ассистент
               </span>
             </div>
-            <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/85">
+            <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
               <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden />
-              Отвечаю мгновенно
+              Помощь по работе с площадкой
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Закрыть"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/85 transition hover:bg-white/15 hover:text-white"
+            className="grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
             <X size={20} strokeWidth={2} aria-hidden />
           </button>
@@ -236,11 +235,11 @@ export function SupportSheet({ open, onClose }: Props) {
           {messages.map((m) =>
             m.kind === 'bot' ? (
               <div key={m.id} className="flex max-w-[88%] items-start gap-2 self-start">
-                <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-white shadow-md">
+                <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-foreground">
                   <Sparkles size={15} strokeWidth={2} aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="rounded-2xl rounded-tl-md border border-border bg-card px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground shadow-sm">
+                  <div className="rounded-2xl rounded-tl-md border border-border bg-card px-3.5 py-2.5 text-base leading-relaxed text-foreground shadow-sm">
                     {m.text}
                   </div>
                   {m.suggestions && m.suggestions.length > 0 ? (
@@ -251,7 +250,7 @@ export function SupportSheet({ open, onClose }: Props) {
                           type="button"
                           onClick={() => void sendPrompt(s.text)}
                           disabled={busy}
-                          className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-card px-2.5 py-1 text-[11px] font-semibold text-accent shadow-sm transition hover:bg-accent/10 disabled:opacity-50"
+                          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent/10 disabled:opacity-50"
                           title={s.text}
                         >
                           <Wand2 size={11} strokeWidth={2} className="shrink-0" aria-hidden />
@@ -264,7 +263,7 @@ export function SupportSheet({ open, onClose }: Props) {
               </div>
             ) : (
               <div key={m.id} className="flex max-w-[88%] flex-col items-end self-end">
-                <div className="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2.5 text-[13px] leading-relaxed text-white shadow-sm">
+                <div className="rounded-2xl rounded-tr-md bg-primary px-3.5 py-2.5 text-base leading-relaxed text-white shadow-sm">
                   {m.text}
                 </div>
                 <div className="mt-0.5 text-[10px] text-muted-foreground">
@@ -279,7 +278,7 @@ export function SupportSheet({ open, onClose }: Props) {
 
           {busy ? (
             <div className="flex max-w-[88%] items-start gap-2 self-start">
-              <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary to-accent text-white shadow-md">
+              <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-foreground">
                 <Sparkles size={15} strokeWidth={2} aria-hidden />
               </div>
               <div className="flex items-center gap-1 rounded-2xl rounded-tl-md border border-border bg-card px-3.5 py-3 shadow-sm">
@@ -293,7 +292,7 @@ export function SupportSheet({ open, onClose }: Props) {
           {needAuth ? (
             <a
               href="/auth"
-              className="mt-1 inline-flex items-center justify-center gap-2 self-stretch rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-[13px] font-semibold text-primary transition hover:bg-primary/15"
+              className="mt-1 inline-flex items-center justify-center gap-2 self-stretch rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-base font-semibold text-primary transition hover:bg-primary/15"
             >
               <HelpCircle size={16} strokeWidth={2} aria-hidden />
               Войти, чтобы продолжить диалог
@@ -314,7 +313,7 @@ export function SupportSheet({ open, onClose }: Props) {
                   type="button"
                   disabled={busy}
                   onClick={() => void sendPrompt(c.text)}
-                  className="shrink-0 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-semibold text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                  className="min-h-11 shrink-0 rounded-full border border-border bg-muted/50 px-3 py-2 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:bg-primary/10 hover:text-primary disabled:opacity-50"
                 >
                   {c.title}
                 </button>
@@ -324,7 +323,7 @@ export function SupportSheet({ open, onClose }: Props) {
         ) : null}
 
         {/* Composer */}
-        <div className="shrink-0 border-t border-border bg-card px-3 py-3">
+        <div className="glass-panel shrink-0 border-t border-border px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -333,19 +332,20 @@ export function SupportSheet({ open, onClose }: Props) {
             className="flex items-center gap-2"
           >
             <input
+              aria-label="Вопрос ассистенту"
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Опишите вопрос…"
-              className="flex-1 rounded-xl border border-border bg-muted/40 px-3.5 py-2.5 text-sm outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/25"
+              className="min-h-12 min-w-0 flex-1 rounded-2xl border border-border bg-muted/40 px-4 py-3 text-base outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/25"
               maxLength={2000}
               disabled={busy}
             />
             <button
               type="submit"
               disabled={busy || input.trim().length === 0}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary text-white shadow-lg shadow-primary/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Отправить"
             >
               {busy ? (
