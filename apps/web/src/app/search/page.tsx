@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useEffect, useId, useMemo, useRef, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { searchFilterHref, type SearchFilterChanges } from '@/lib/search-navigation';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Clock,
@@ -141,17 +142,18 @@ function SearchContent() {
   const city = searchParams.get('city') ?? '';
 
   const initialQ = searchParams.get('q') ?? '';
-  const initialSort = (searchParams.get('sort') as SortMode | null) ?? 'relevant';
+  const sortParam = searchParams.get('sort');
+  const initialSort: SortMode = sortParam === 'new' || sortParam === 'cheap' || sortParam === 'expensive' ? sortParam : 'relevant';
   const initialPriceMin = searchParams.get('priceMin') ?? '';
   const initialPriceMax = searchParams.get('priceMax') ?? '';
   const initialCategoryId = searchParams.get('categoryId') ?? '';
 
   const [draftQuery, setDraftQuery] = useState(initialQ);
-  const [activeQuery, setActiveQuery] = useState(initialQ);
-  const [sort, setSort] = useState<SortMode>(initialSort);
-  const [priceMin, setPriceMin] = useState(initialPriceMin);
-  const [priceMax, setPriceMax] = useState(initialPriceMax);
-  const [categoryId, setCategoryId] = useState(initialCategoryId);
+  const activeQuery = initialQ;
+  const sort = initialSort;
+  const priceMin = initialPriceMin;
+  const priceMax = initialPriceMax;
+  const categoryId = initialCategoryId;
 
   const [cats, setCats] = useState<Category[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
@@ -170,8 +172,8 @@ function SearchContent() {
     setRecent(loadRecent());
     void apiGetJson<Category[]>('/categories').then(setCats).catch(() => {});
     // Авто-фокус на input если запрос пустой
-    if (!initialQ && inputRef.current) inputRef.current.focus();
-  }, [initialQ]);
+    if (!initialQ && !initialCategoryId && !initialPriceMin && !initialPriceMax && inputRef.current) inputRef.current.focus();
+  }, [initialQ, initialCategoryId, initialPriceMin, initialPriceMax]);
 
   /* -------------------- live suggestions (debounced) -------------------- */
   useEffect(() => {
@@ -181,19 +183,21 @@ function SearchContent() {
       setSuggestions([]);
       return;
     }
+    const controller = new AbortController();
     const handle = window.setTimeout(() => {
       void apiGetJson<SuggestionsResponse>(
         `/search/suggestions?q=${encodeURIComponent(q)}&limit=6`,
+        { signal: controller.signal },
       )
-        .then((res) => setSuggestions(res.suggestions ?? []))
-        .catch(() => setSuggestions([]));
+        .then((res) => { if (!controller.signal.aborted) setSuggestions(res.suggestions ?? []); })
+        .catch(() => { if (!controller.signal.aborted) setSuggestions([]); });
     }, 180);
-    return () => window.clearTimeout(handle);
+    return () => { window.clearTimeout(handle); controller.abort(); };
   }, [draftQuery]);
 
   /* -------------------- результаты -------------------- */
   useEffect(() => {
-    if (!activeQuery && !categoryId && mode !== 'barter') {
+    if (!activeQuery && !categoryId && !priceMin && !priceMax && mode !== 'barter') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults(null);
       return;
@@ -229,28 +233,25 @@ function SearchContent() {
   );
 
   /* -------------------- helpers -------------------- */
+  function navigateFilters(changes: SearchFilterChanges) {
+    router.push(searchFilterHref(searchParams.toString(), changes, mode), { scroll: false });
+  }
+  function setCategoryId(value: string) { navigateFilters({ categoryId: value }); }
+  function setSort(value: SortMode) { navigateFilters({ sort: value }); }
+  function setPriceMin(value: string) { navigateFilters({ priceMin: value }); }
+  function setPriceMax(value: string) { navigateFilters({ priceMax: value }); }
   function commitQuery(q: string) {
     const trimmed = q.trim();
     setDraftQuery(trimmed);
-    setActiveQuery(trimmed);
     if (trimmed) setRecent(saveRecent(trimmed));
-    const params = new URLSearchParams();
-    params.set('mode', mode);
-    if (city) params.set('city', city);
-    if (trimmed) params.set('q', trimmed);
-    if (categoryId) params.set('categoryId', categoryId);
-    if (sort !== 'relevant') params.set('sort', sort);
-    if (priceMin) params.set('priceMin', priceMin);
-    if (priceMax) params.set('priceMax', priceMax);
-    router.push(`/search${params.size > 0 ? `?${params.toString()}` : ''}`, { scroll: false });
+    navigateFilters({ q: trimmed });
   }
 
   function pickCategory(id: string) {
-    setCategoryId(id);
-    setActiveQuery(draftQuery.trim()); // commit-режим без перезагрузки query
+    navigateFilters({ categoryId: id, q: draftQuery.trim() });
   }
 
-  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || mode === 'barter';
+  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || Boolean(priceMin || priceMax) || mode === 'barter';
   const selectedCategory = useMemo(
     () => cats.find((c) => c.id === categoryId) ?? null,
     [cats, categoryId],
@@ -401,17 +402,11 @@ function SearchContent() {
           priceMin={priceMin}
           priceMax={priceMax}
           onApply={(next) => {
-            setCategoryId(next.categoryId);
-            setSort(next.sort);
-            setPriceMin(next.priceMin);
-            setPriceMax(next.priceMax);
+            navigateFilters(next);
             setFiltersOpen(false);
           }}
           onReset={() => {
-            setCategoryId('');
-            setSort('relevant');
-            setPriceMin('');
-            setPriceMax('');
+            navigateFilters({ categoryId: '', sort: 'relevant', priceMin: '', priceMax: '' });
             setFiltersOpen(false);
           }}
           onClose={() => setFiltersOpen(false)}
@@ -919,6 +914,11 @@ function pluralizeFound(n: number): string {
 /* ============================================================================
  *  EXPORT
  * ========================================================================== */
+function SearchRoute() {
+  const params = useSearchParams();
+  return <SearchContent key={params.toString()} />;
+}
+
 export default function SearchPage() {
   return (
     <Suspense
@@ -934,7 +934,7 @@ export default function SearchPage() {
         </div>
       }
     >
-      <SearchContent />
+      <SearchRoute />
     </Suspense>
   );
 }
