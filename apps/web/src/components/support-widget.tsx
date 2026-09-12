@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   ChevronDown,
@@ -35,18 +35,16 @@ export function SupportWidget() {
   const [sentOk, setSentOk] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
-  const loadFaq = useCallback(async () => {
-    const res = await apiFetchJson<SupportTemplate[]>('/support/faq');
-    if (res.ok) {
-      setFaq(res.data);
-    }
-    setFaqLoaded(true);
-  }, []);
-
   useEffect(() => {
     if (!open || faqLoaded) return;
-    void loadFaq();
-  }, [open, faqLoaded, loadFaq]);
+    let cancelled = false;
+    void apiFetchJson<SupportTemplate[]>('/support/faq').then((res) => {
+      if (cancelled) return;
+      if (res.ok) setFaq(res.data);
+      setFaqLoaded(true);
+    });
+    return () => { cancelled = true; };
+  }, [open, faqLoaded]);
 
   // Скрываем виджет на страницах, где он мешает (например, в /messages)
   if (pathname?.startsWith('/messages')) return null;
@@ -97,14 +95,16 @@ export function SupportWidget() {
       <div
         role="dialog"
         aria-label="Поддержка"
-        className={`fixed z-[9998] hidden flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl transition md:flex ${
+        aria-hidden={!open}
+        inert={!open}
+        className={`fixed z-[9998] hidden flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-lg transition md:flex ${
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         style={{
           bottom: 142,
           left: 16,
           width: 360,
-          maxHeight: 520,
+          maxHeight: 'min(520px, calc(100dvh - 160px))',
           transform: open ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(20px)',
           transformOrigin: 'bottom left',
           transitionProperty: 'opacity, transform',
@@ -113,20 +113,20 @@ export function SupportWidget() {
         }}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between gap-2 bg-gradient-to-br from-primary to-accent px-4 py-3 text-white">
+        <div className="flex shrink-0 items-center justify-between gap-2 glass-panel border-b border-border px-4 py-3 text-foreground">
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/15 backdrop-blur-sm">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-muted text-foreground">
               <LifeBuoy size={18} strokeWidth={2} aria-hidden />
             </div>
             <div>
               <div className="text-sm font-bold leading-tight">Поддержка Бартер</div>
-              <div className="text-[11px] text-white/80">Поможем за пару минут</div>
+              <div className="text-[11px] text-muted-foreground">Вопросы и обращения</div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="rounded-lg p-1.5 text-white/80 transition hover:bg-white/10 hover:text-white"
+            className="grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
             aria-label="Закрыть"
           >
             <X size={18} strokeWidth={2} aria-hidden />
@@ -138,7 +138,7 @@ export function SupportWidget() {
           <button
             type="button"
             onClick={() => setTab('faq')}
-            className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-semibold transition ${
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 py-3 text-base font-semibold transition ${
               tab === 'faq'
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-muted/50'
@@ -153,7 +153,7 @@ export function SupportWidget() {
               setTab('ticket');
               setSentOk(false);
             }}
-            className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-semibold transition ${
+            className={`flex min-h-12 flex-1 items-center justify-center gap-2 py-3 text-base font-semibold transition ${
               tab === 'ticket'
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-muted/50'
@@ -185,7 +185,7 @@ export function SupportWidget() {
                         <button
                           type="button"
                           onClick={() => setExpanded((prev) => (prev === item.code ? null : item.code))}
-                          className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-[13px] font-semibold text-foreground transition hover:bg-muted/50"
+                          className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-base font-semibold text-foreground transition hover:bg-muted/50"
                         >
                           <span className="flex-1">{item.title}</span>
                           {isExp ? (
@@ -195,7 +195,7 @@ export function SupportWidget() {
                           )}
                         </button>
                         {isExp ? (
-                          <div className="border-t border-border bg-card px-3 py-2.5 text-[12px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                          <div className="border-t border-border bg-card px-3 py-2.5 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
                             {item.text}
                           </div>
                         ) : null}
@@ -205,7 +205,7 @@ export function SupportWidget() {
                 </ul>
               )}
               <div className="mt-4 rounded-xl bg-primary/5 p-3 text-center">
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Не нашли ответ?
                 </p>
                 <button
@@ -214,7 +214,7 @@ export function SupportWidget() {
                     setTab('ticket');
                     setSentOk(false);
                   }}
-                  className="mt-1.5 text-[12px] font-semibold text-primary hover:underline"
+                  className="mt-1.5 text-sm font-semibold text-primary hover:underline"
                 >
                   Написать в поддержку →
                 </button>
@@ -226,7 +226,7 @@ export function SupportWidget() {
                 <div className="rounded-xl border border-accent/40 bg-accent/10 p-4 text-center">
                   <div className="text-sm font-bold text-accent">Обращение отправлено</div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Ответим в течение рабочего дня. Проверьте указанный контакт.
+                    Ответ на обращение придёт на указанный контакт.
                   </p>
                   <button
                     type="button"
@@ -248,12 +248,12 @@ export function SupportWidget() {
                     <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Тема
                     </label>
-                    <input
+                    <input aria-label="Тема обращения"
                       type="text"
                       value={ticket.topic}
                       onChange={(e) => setTicket((p) => ({ ...p, topic: e.target.value }))}
                       placeholder="Коротко, в чём вопрос"
-                      className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2 text-[13px] outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/20"
+                      className="w-full min-h-12 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-base outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/20"
                       maxLength={120}
                     />
                   </div>
@@ -261,12 +261,12 @@ export function SupportWidget() {
                     <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Сообщение
                     </label>
-                    <textarea
+                    <textarea aria-label="Сообщение обращения"
                       value={ticket.message}
                       onChange={(e) => setTicket((p) => ({ ...p, message: e.target.value }))}
                       placeholder="Опишите ситуацию подробнее"
                       rows={5}
-                      className="w-full resize-none rounded-xl border border-border bg-muted/30 px-3 py-2 text-[13px] outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/20"
+                      className="w-full resize-none min-h-12 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-base outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/20"
                       maxLength={2000}
                     />
                   </div>
@@ -275,24 +275,24 @@ export function SupportWidget() {
                       Контакт для ответа{' '}
                       <span className="font-normal normal-case text-muted-foreground/60">(email / телефон)</span>
                     </label>
-                    <input
+                    <input aria-label="Контакт для ответа"
                       type="text"
                       value={ticket.contact}
                       onChange={(e) => setTicket((p) => ({ ...p, contact: e.target.value }))}
                       placeholder="Необязательно, если вы вошли"
-                      className="w-full rounded-xl border border-border bg-muted/30 px-3 py-2 text-[13px] outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/20"
+                      className="w-full min-h-12 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-base outline-none transition focus:border-primary/40 focus:bg-card focus:ring-2 focus:ring-primary/20"
                       maxLength={160}
                     />
                   </div>
                   {sendError ? (
-                    <div className="rounded-lg bg-destructive/10 px-3 py-2 text-[12px] text-destructive">
+                    <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
                       {sendError}
                     </div>
                   ) : null}
                   <button
                     type="submit"
                     disabled={sending}
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white shadow-md shadow-primary/20 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-primary text-base font-semibold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {sending ? (
                       <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden />
