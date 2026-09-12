@@ -19,7 +19,9 @@
  */
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, Suspense } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Clock,
@@ -261,9 +263,9 @@ function SearchContent() {
     (categoryId ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-muted text-foreground antialiased">
+    <div className="min-h-screen bg-background text-foreground antialiased">
       {/* ===== STICKY HEADER ===== */}
-      <header className="glass-panel sticky top-0 z-30 border-b border-border">
+      <header className="glass-panel sticky top-0 z-30 border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2.5">
           <h1 className="sr-only">Поиск</h1>
           <form
@@ -285,7 +287,8 @@ function SearchContent() {
               value={draftQuery}
               onChange={(e) => setDraftQuery(e.target.value)}
               placeholder="Что ищем?"
-              className="h-10 w-full rounded-xl bg-muted pl-10 pr-9 text-[15px] outline-none transition focus:[--tw-ring-color:var(--mode-accent-ring)] focus:bg-background focus:ring-2"
+              aria-label="Поиск объявлений"
+              className="min-h-12 w-full rounded-2xl bg-muted pl-10 pr-12 text-base outline-none transition focus:bg-background focus:ring-2 focus:ring-ring"
               type="search"
               autoComplete="off"
               enterKeyHint="search"
@@ -297,7 +300,7 @@ function SearchContent() {
                   setDraftQuery('');
                   inputRef.current?.focus();
                 }}
-                className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-background"
+                className="absolute right-1 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-background"
                 aria-label="Очистить"
               >
                 <X size={14} strokeWidth={2} className="shrink-0" aria-hidden />
@@ -688,25 +691,28 @@ function FiltersSheet(props: {
   const [draftSort, setDraftSort] = useState<SortMode>(props.sort);
   const [draftPriceMin, setDraftPriceMin] = useState(props.priceMin);
   const [draftPriceMax, setDraftPriceMax] = useState(props.priceMax);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const invalidRange = Boolean(draftPriceMin && draftPriceMax && Number(draftPriceMin) > Number(draftPriceMax));
+  useEffect(() => { dialog.current?.showModal(); }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm md:items-center"
-      onClick={onClose}
+    <dialog ref={dialog} aria-labelledby={titleId}
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
+      className="fixed inset-0 m-auto max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-3xl overflow-y-auto overscroll-contain rounded-3xl border border-border bg-background p-0 text-foreground backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div
-        className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-t-3xl bg-background md:rounded-3xl"
-        onClick={(e) => e.stopPropagation()}
+        className="w-full"
       >
-        <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-border bg-background px-4 py-3">
+        <div className="glass-panel sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div className="inline-flex items-center gap-2">
             <Filter size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
-            <h2 className="text-base font-bold text-foreground">Фильтры</h2>
+            <h2 id={titleId} className="text-lg font-semibold text-foreground">Фильтры</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid size-9 shrink-0 place-items-center rounded-xl transition hover:bg-muted"
+            className="grid size-11 shrink-0 place-items-center rounded-full transition hover:bg-muted"
             aria-label="Закрыть"
           >
             <X size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
@@ -723,7 +729,8 @@ function FiltersSheet(props: {
               <button
                 type="button"
                 onClick={() => setDraftCategory('')}
-                className="rounded-xl border px-3 py-2 text-left text-sm font-semibold transition"
+                aria-pressed={draftCategory === ''}
+                className="min-h-12 min-w-0 rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition"
                 style={
                   draftCategory === ''
                     ? {
@@ -743,7 +750,8 @@ function FiltersSheet(props: {
                     key={c.id}
                     type="button"
                     onClick={() => setDraftCategory(c.id)}
-                    className="rounded-xl border px-3 py-2 text-left text-sm font-semibold transition"
+                    aria-pressed={isPicked}
+                    className="min-h-12 min-w-0 rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition"
                     style={
                       isPicked
                         ? {
@@ -774,6 +782,7 @@ function FiltersSheet(props: {
                     key={opt}
                     type="button"
                     onClick={() => setDraftSort(opt)}
+                    aria-pressed={isPicked}
                     className="flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-semibold transition"
                     style={
                       isPicked
@@ -805,34 +814,36 @@ function FiltersSheet(props: {
               Цена, ₽
             </p>
             <div className="grid grid-cols-2 gap-2">
-              <input
+              <Input aria-label="Цена от, рублей" aria-invalid={invalidRange} aria-describedby={invalidRange ? `${titleId}-price-error` : undefined}
                 value={draftPriceMin}
                 onChange={(e) => setDraftPriceMin(e.target.value.replace(/[^\d]/g, ''))}
                 placeholder="от"
                 inputMode="numeric"
-                className="h-11 rounded-xl border border-border bg-card px-3 text-sm outline-none transition focus:[border-color:var(--mode-accent-ring)]"
+                className="min-w-0"
               />
-              <input
+              <Input aria-label="Цена до, рублей" aria-invalid={invalidRange} aria-describedby={invalidRange ? `${titleId}-price-error` : undefined}
                 value={draftPriceMax}
                 onChange={(e) => setDraftPriceMax(e.target.value.replace(/[^\d]/g, ''))}
                 placeholder="до"
                 inputMode="numeric"
-                className="h-11 rounded-xl border border-border bg-card px-3 text-sm outline-none transition focus:[border-color:var(--mode-accent-ring)]"
+                className="min-w-0"
               />
             </div>
           </div>
         </div>
 
         {/* Sticky footer */}
-        <div className="sticky bottom-0 flex gap-2 border-t border-border bg-background px-4 py-3">
-          <button
+        <div className="glass-panel sticky bottom-0 space-y-3 border-t border-border px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {invalidRange ? <p id={`${titleId}-price-error`} role="alert" className="text-sm text-destructive">Цена «от» не должна быть больше цены «до».</p> : null}
+          <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="secondary" size="lg"
             type="button"
             onClick={onReset}
-            className="h-12 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="w-full sm:w-auto"
           >
             Сбросить
-          </button>
-          <button
+          </Button>
+          <Button size="lg" disabled={invalidRange}
             type="button"
             onClick={() =>
               onApply({
@@ -842,17 +853,14 @@ function FiltersSheet(props: {
                 priceMax: draftPriceMax,
               })
             }
-            className="flex h-12 flex-1 items-center justify-center rounded-xl text-sm font-bold text-white transition active:scale-[0.99]"
-            style={{
-              backgroundColor: 'var(--mode-cta)',
-              boxShadow: '0 4px 14px var(--mode-accent-ring)',
-            }}
+            className="w-full sm:flex-1"
           >
             Показать результаты
-          </button>
+          </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 
@@ -873,8 +881,8 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
       <button
         type="button"
         onClick={onRemove}
-        className="grid size-4 place-items-center rounded-full hover:bg-background"
-        aria-label="Убрать фильтр"
+        className="grid size-11 place-items-center rounded-full hover:bg-background"
+        aria-label={`Убрать фильтр: ${label}`}
       >
         <X size={10} strokeWidth={2.4} className="shrink-0" aria-hidden />
       </button>

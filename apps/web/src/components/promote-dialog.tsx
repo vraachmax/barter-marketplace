@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { Camera, Check, Crown, Loader2, Palette, Rocket, Sparkles, Star, TrendingUp } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Camera, Check, Crown, Loader2, Palette, Star, TrendingUp } from 'lucide-react';
 import {
   apiFetchJson,
   type PromotionAudience,
@@ -20,7 +20,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 
 type Props = {
   open: boolean;
@@ -89,6 +88,7 @@ export function PromoteDialog({
   audience = 'PERSONAL',
   onSuccess,
 }: Props) {
+  const submitting = useRef(false);
   const [packages, setPackages] = useState<PromotionPackage[] | null>(null);
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -96,34 +96,43 @@ export function PromoteDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     (async () => {
       setLoading(true);
       setError(null);
       setSuccess(null);
+      setPackages(null);
+      setBalance(null);
+      setSelected(null);
       const [pkgRes, balRes] = await Promise.all([
-        apiFetchJson<PromotionPackage[]>(`/wallet/packages?audience=${audience}`),
-        apiFetchJson<WalletBalance>('/wallet/balance'),
+        apiFetchJson<PromotionPackage[]>(`/wallet/packages?audience=${audience}`, { signal: controller.signal }),
+        apiFetchJson<WalletBalance>('/wallet/balance', { signal: controller.signal }),
       ]);
+      clearTimeout(timeout);
       if (cancelled) return;
       if (pkgRes.ok) {
         setPackages(pkgRes.data);
         // авто-выбор первого по умолчанию
-        if (pkgRes.data.length > 0 && !selected) setSelected(pkgRes.data[0].code);
+        setSelected(pkgRes.data[0]?.code ?? null);
       } else {
         setError(pkgRes.message);
       }
       if (balRes.ok) setBalance(balRes.data);
+      else if (pkgRes.ok) setError(balRes.message || 'Не удалось загрузить баланс');
       setLoading(false);
     })();
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
+      controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, audience]);
+  }, [open, audience, attempt]);
 
   const selectedPkg = useMemo(
     () => packages?.find((p) => p.code === selected) ?? null,
@@ -136,34 +145,32 @@ export function PromoteDialog({
   }, [selectedPkg, balance]);
 
   async function applyPromotion() {
-    if (!selectedPkg) return;
+    if (!selectedPkg || !enoughMoney || submitting.current || success) return;
+    submitting.current = true;
     setBusy(true);
     setError(null);
     setSuccess(null);
     const res = await apiFetchJson<{ ok: true }>('/wallet/promote', {
       method: 'POST',
       body: JSON.stringify({ packageCode: selectedPkg.code, listingId }),
+      signal: AbortSignal.timeout(15000),
     });
+    submitting.current = false;
     setBusy(false);
     if (res.ok) {
       setSuccess(`Продвижение «${selectedPkg.title}» активировано`);
       // обновим баланс
-      const balRes = await apiFetchJson<WalletBalance>('/wallet/balance');
+      const balRes = await apiFetchJson<WalletBalance>('/wallet/balance', { signal: AbortSignal.timeout(15000) });
       if (balRes.ok) setBalance(balRes.data);
       onSuccess?.();
-      // закроем через короткую паузу
-      setTimeout(() => {
-        onOpenChange(false);
-        setSuccess(null);
-      }, 1100);
     } else {
       setError(res.message || 'Не удалось применить продвижение');
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg sm:max-w-lg">
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (!submitting.current) onOpenChange(nextOpen); }}>
+      <DialogContent showCloseButton={!busy} className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">Продвинуть объявление</DialogTitle>
           <DialogDescription>
@@ -178,7 +185,7 @@ export function PromoteDialog({
           </span>
         </div>
 
-        <div className="max-h-[52vh] space-y-2 overflow-y-auto pr-1">
+        <div className="space-y-2" role="group" aria-label="Пакеты продвижения" aria-busy={loading}>
           {loading ? (
             <>
               <Skeleton className="h-16 w-full rounded-xl" />
@@ -195,14 +202,16 @@ export function PromoteDialog({
                   key={pkg.id}
                   type="button"
                   data-active={isActive}
+                  aria-pressed={isActive}
+                  disabled={busy || Boolean(success)}
                   onClick={() => setSelected(pkg.code)}
-                  className={`flex w-full items-start gap-3 rounded-xl border border-border bg-card p-3 text-left transition data-[active=true]:ring-2 ${meta.ring} hover:border-primary/40`}
+                  className="flex min-h-16 w-full items-start gap-3 rounded-2xl border border-border bg-card p-4 text-left transition data-[active=true]:border-primary data-[active=true]:bg-primary/5 data-[active=true]:ring-1 data-[active=true]:ring-primary hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-60"
                 >
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${meta.tone}`}>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
                     <Icon size={20} strokeWidth={1.8} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <span className="text-sm font-bold text-foreground">{pkg.title}</span>
                       <span className="shrink-0 text-sm font-bold text-foreground">
                         {formatRub(pkg.priceRub)}
@@ -213,12 +222,6 @@ export function PromoteDialog({
                         {meta.label}
                       </Badge>
                       <span>{formatDuration(pkg.durationSec)}</span>
-                      {pkg.weightMultiplier !== 1 ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Rocket size={11} strokeWidth={1.8} />
-                          ×{pkg.weightMultiplier} вес
-                        </span>
-                      ) : null}
                       {pkg.isBundle ? <Badge variant="secondary" className="text-[10px]">Пакет</Badge> : null}
                     </div>
                     {pkg.description ? (
@@ -239,19 +242,18 @@ export function PromoteDialog({
         </div>
 
         {error ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300">
+          <p role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {error}
           </p>
         ) : null}
+        {error && !busy && !loading && (!packages || !balance) ? <Button variant="outline" onClick={() => setAttempt((value) => value + 1)}>Повторить загрузку</Button> : null}
         {success ? (
-          <p className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700 dark:border-green-900/40 dark:bg-green-950/40 dark:text-green-300">
+          <p role="status" className="rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground">
             {success}
           </p>
         ) : null}
 
-        <Separator />
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="glass-panel sticky -bottom-4 -mx-4 -mb-4 flex flex-col gap-3 border-t border-border p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="text-xs text-muted-foreground">
             {selectedPkg ? (
               <>
@@ -261,21 +263,23 @@ export function PromoteDialog({
               <>Выберите пакет</>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
+            {success ? <Button variant="secondary" size="lg" onClick={() => onOpenChange(false)}>Готово</Button> : null}
             {!enoughMoney && selectedPkg && balance ? (
               <Link
                 href="/wallet"
-                className="inline-flex h-7 items-center rounded-[12px] border border-border bg-background px-2.5 text-[0.8rem] font-medium text-foreground transition hover:bg-muted"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-border bg-background px-5 text-base font-medium text-foreground transition hover:bg-muted"
               >
-                Пополнить
+                Открыть кошелёк
               </Link>
             ) : null}
             <Button
               type="button"
-              size="sm"
+              size="lg"
               onClick={applyPromotion}
-              disabled={!selectedPkg || !enoughMoney || busy}
-              className="bg-primary hover:bg-primary/90"
+              disabled={loading || !selectedPkg || !enoughMoney || busy || Boolean(success)}
+              aria-busy={busy}
+              className="w-full"
             >
               {busy ? (
                 <>
@@ -284,8 +288,7 @@ export function PromoteDialog({
                 </>
               ) : (
                 <>
-                  <Sparkles size={14} strokeWidth={1.8} />
-                  Продвинуть
+                  {success ? 'Продвижение включено' : 'Продвинуть'}
                 </>
               )}
             </Button>
