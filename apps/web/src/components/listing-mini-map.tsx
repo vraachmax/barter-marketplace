@@ -1,65 +1,14 @@
-'use client';
+import { ArrowUpRight, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-import { MapPin } from 'lucide-react';
-
-type Props = {
-  latitude: number;
-  longitude: number;
-  city: string;
-};
-
-/**
- * Мини-карта — статичное превью через Яндекс Static Maps API (бесплатно, РФ-совместимо).
- * При клике открывает Яндекс.Карты.
- */
-export function ListingMiniMap({ latitude, longitude, city }: Props) {
-  const zoom = 14;
-  const staticUrl = `https://static-maps.yandex.ru/v1?ll=${longitude},${latitude}&z=${zoom}&size=400,200&l=map&pt=${longitude},${latitude},pm2blm`;
-  const yandexUrl = `https://yandex.ru/maps/?pt=${longitude},${latitude}&z=${zoom}&l=map`;
-
+export function ListingMiniMap({ latitude, longitude, city }: { latitude: number; longitude: number; city: string }) {
+  const href = `https://yandex.ru/maps/?pt=${longitude},${latitude}&z=14&l=map`;
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <a
-        href={yandexUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group relative block aspect-[2/1] w-full overflow-hidden bg-muted"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={staticUrl}
-          alt={`Карта: ${city}`}
-          className="h-full w-full object-cover opacity-90 transition group-hover:opacity-100"
-          loading="lazy"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className="grid h-10 w-10 place-items-center rounded-full text-white ring-4 ring-white/80"
-            style={{
-              backgroundColor: 'var(--mode-accent)',
-              boxShadow: '0 8px 16px var(--mode-accent-ring)',
-            }}
-          >
-            <MapPin size={22} strokeWidth={1.8} className="text-white" aria-hidden />
-          </span>
-        </div>
-        <span className="absolute bottom-2 right-2 rounded-lg bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-          Открыть на Яндекс.Картах
-        </span>
-      </a>
-      <div className="flex items-center gap-2 px-3 py-2.5">
-        <MapPin
-          size={14}
-          strokeWidth={1.8}
-          className="shrink-0"
-          style={{ color: 'var(--mode-accent)' }}
-          aria-hidden
-        />
-        <span className="text-sm font-medium text-foreground">{city}</span>
-      </div>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted/50 p-4">
+      <p className="flex items-center gap-2 text-base"><MapPin size={20} className="shrink-0 text-muted-foreground" aria-hidden />{city}</p>
+      <Button render={<a href={href} target="_blank" rel="noopener noreferrer" />} variant="outline" size="sm">
+        Открыть карту<ArrowUpRight size={18} aria-hidden /><span className="sr-only">в новой вкладке</span>
+      </Button>
     </div>
   );
 }
