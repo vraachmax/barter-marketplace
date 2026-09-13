@@ -1,61 +1,61 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Heart } from 'lucide-react';
-import { apiFetchJson } from '@/lib/api';
+import { apiFetchJson, type FavoriteItem } from '@/lib/api';
+import { listingLoginHref } from '@/lib/listing-presentation';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 
-type Props = {
-  listingId: string;
-};
+export default function FavoriteToggle({ listingId }: { listingId: string }) {
+  const { user, ready } = useAuth();
+  if (!ready) return <Button variant="secondary" size="lg" className="w-full" disabled>Избранное</Button>;
+  if (!user) return <Button render={<Link href={listingLoginHref(listingId)} />} variant="secondary" size="lg" className="w-full"><Heart size={20} aria-hidden />В избранное</Button>;
+  return <FavoriteControl key={`${user.id}:${listingId}`} listingId={listingId} />;
+}
 
-export default function FavoriteToggle({ listingId }: Props) {
-  const [status, setStatus] = useState<'idle' | 'added' | 'error' | 'unauthorized'>('idle');
+function FavoriteControl({ listingId }: { listingId: string }) {
+  const [saved, setSaved] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
-  const inFlight = useRef(false);
-
-  async function addToFavorites() {
-    if (inFlight.current || status === 'added') return;
-    inFlight.current = true;
-    setBusy(true);
-    setStatus('idle');
-    const res = await apiFetchJson<{ ok: true }>(`/favorites/${listingId}`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(15000),
+  const [error, setError] = useState(false);
+  const [unauthorized, setUnauthorized] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const lock = useRef(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void apiFetchJson<FavoriteItem[]>('/favorites', { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]) }).then((result) => {
+      if (controller.signal.aborted) return;
+      if (result.ok) {
+        setSaved(result.data.some((item) => item.listing.id === listingId));
+        setError(false);
+      } else {
+        setError(true);
+        setUnauthorized(result.status === 401);
+      }
     });
-    inFlight.current = false;
-    setBusy(false);
-    if (!res.ok) {
-      setStatus(res.status === 401 ? 'unauthorized' : 'error');
-      return;
-    }
-    setStatus('added');
-  }
+    return () => controller.abort();
+  }, [listingId, attempt]);
 
+  async function toggle() {
+    if (lock.current || saved === null) return;
+    lock.current = true;
+    setBusy(true);
+    setError(false);
+    try {
+      const result = await apiFetchJson(`/favorites/${listingId}`, { method: saved ? 'DELETE' : 'POST', signal: AbortSignal.timeout(15000) });
+      if (result.ok) setSaved(!saved);
+      else { setError(true); setUnauthorized(result.status === 401); }
+    } finally { lock.current = false; setBusy(false); }
+  }
+  if (unauthorized) return <Button variant="secondary" size="lg" className="w-full" render={<Link href={listingLoginHref(listingId)} />}>Войти для сохранения</Button>;
   return (
-    <div className="mt-1">
-      <Button variant="secondary" size="lg"
-        type="button"
-        className="w-full"
-        aria-busy={busy}
-        onClick={addToFavorites}
-        disabled={busy || status === 'added'}
-      >
-        <Heart
-          size={22}
-          strokeWidth={1.8}
-          className={status === 'added' ? 'text-primary' : 'text-muted-foreground'}
-          fill={status === 'added' ? 'currentColor' : 'none'}
-          aria-hidden
-        />
-        {busy ? 'Добавляю…' : status === 'added' ? 'В избранном' : 'Добавить в избранное'}
+    <div className="space-y-2">
+      <Button variant="secondary" size="lg" className="w-full" aria-pressed={saved ?? undefined} aria-busy={busy || (saved === null && !error)} disabled={busy || (saved === null && !error)} onClick={() => { if (saved === null) { setError(false); setAttempt((n) => n + 1); } else void toggle(); }}>
+        <Heart size={20} fill={saved ? 'currentColor' : 'none'} aria-hidden />
+        {saved === null ? error ? 'Повторить загрузку' : 'Проверяем избранное…' : busy ? 'Сохраняем…' : saved ? 'Убрать из избранного' : 'В избранное'}
       </Button>
-      {status === 'error' || status === 'unauthorized' ? (
-        <div role="alert" className="mt-2 text-sm text-destructive">
-          {status === 'unauthorized' ? <Link className="inline-flex min-h-11 items-center underline" href={`/auth?next=${encodeURIComponent(`/listing/${listingId}`)}`}>Войдите, чтобы сохранить объявление</Link> : 'Не удалось сохранить. Попробуйте ещё раз.'}
-        </div>
-      ) : null}
+      {error ? <p role="alert" className="text-sm text-destructive">{saved === null ? 'Не удалось проверить избранное.' : 'Изменение не сохранено. Попробуйте ещё раз.'}</p> : null}
     </div>
   );
 }

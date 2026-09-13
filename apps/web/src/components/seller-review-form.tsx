@@ -1,196 +1,70 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
-import { useEffect, useState } from 'react';
-import { MessageCircle, Star } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { apiFetchJson, type ReviewEligibility } from '@/lib/api';
-import { UiSelect } from '@/components/ui-select';
+import { listingLoginHref } from '@/lib/listing-presentation';
 
-type Props = {
-  sellerId: string;
-  listingId: string;
-};
+export default function SellerReviewForm({ sellerId, listingId }: { sellerId: string; listingId: string }) {
+  const { user, ready } = useAuth();
+  if (!ready) return <p role="status" className="pt-3 text-sm text-muted-foreground">Проверяем вход…</p>;
+  if (!user) return <div className="space-y-3 pt-3"><p className="text-sm leading-6 text-muted-foreground">Отзыв доступен после переписки с продавцом. Войдите, чтобы проверить возможность его оставить.</p><Button render={<Link href={listingLoginHref(listingId)} />} variant="secondary">Войти</Button></div>;
+  return <ReviewEditor key={`${user.id}:${listingId}`} sellerId={sellerId} listingId={listingId} />;
+}
 
-export default function SellerReviewForm({ sellerId, listingId }: Props) {
-  const [rating, setRating] = useState(5);
+function ReviewEditor({ sellerId, listingId }: { sellerId: string; listingId: string }) {
+  const [elig, setElig] = useState<ReviewEligibility | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [rating, setRating] = useState('5');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<'idle' | 'ok' | 'error'>('idle');
-  const [message, setMessage] = useState('');
-  const [eligLoading, setEligLoading] = useState(true);
-  const [elig, setElig] = useState<ReviewEligibility | null>(null);
-  const [authRequired, setAuthRequired] = useState(false);
-
+  const lock = useRef(false);
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      setEligLoading(true);
-      const res = await apiFetchJson<ReviewEligibility>(`/reviews/listing/${listingId}/eligibility`, {
-        method: 'GET',
-      });
-      if (!alive) return;
-      setEligLoading(false);
-      if (res.ok) {
-        setElig(res.data);
-        setAuthRequired(false);
-        return;
-      }
-      if (res.status === 401) {
-        setAuthRequired(true);
-        setElig(null);
-        return;
-      }
-      setElig(null);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [listingId]);
+    const controller = new AbortController();
+    void apiFetchJson<ReviewEligibility>(`/reviews/listing/${listingId}/eligibility`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]) }).then((result) => {
+      if (controller.signal.aborted) return;
+      if (result.ok) { setElig(result.data); setLoadError(false); }
+      else setLoadError(true);
+    });
+    return () => controller.abort();
+  }, [listingId, attempt]);
 
-  async function submit() {
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (lock.current || !elig?.canReview) return;
+    lock.current = true;
     setBusy(true);
     setStatus('idle');
-    const res = await apiFetchJson<{ id: string }>(`/reviews/seller/${sellerId}`, {
-      method: 'POST',
-      body: JSON.stringify({
-        listingId,
-        rating,
-        text: text.trim() || undefined,
-      }),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      setStatus('error');
-      setMessage(res.message);
-      return;
-    }
-    setStatus('ok');
-    setMessage('Спасибо! Отзыв сохранён и учтётся в рейтинге продавца.');
-    setText('');
-    setElig({ canReview: false, reason: 'already_reviewed', sellerId, hasExistingReview: true });
+    try {
+      const result = await apiFetchJson(`/reviews/seller/${sellerId}`, {
+        method: 'POST',
+        body: JSON.stringify({ listingId, rating: Number(rating), text: text.trim() || undefined }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (result.ok) {
+        setStatus('ok');
+        setElig({ canReview: false, reason: 'already_reviewed', sellerId, hasExistingReview: true });
+      } else setStatus('error');
+    } finally { lock.current = false; setBusy(false); }
   }
-
-  const chatHref = `/messages?listingId=${encodeURIComponent(listingId)}`;
-
-  // Весь блок перевязан на `--mode-accent*`. Раньше контейнер имел
-  // сломанный класс `bg-primary to-white` (без `bg-gradient-to-b`, то
-  // есть фактически solid синий Avito) и кучу `text-primary` / `bg-accent`
-  // в дочерних элементах — в режиме Бартер это давало синие/оранжевые
-  // заплатки поверх оранжевого бренда. Сейчас фон — обычный card, акценты
-  // в CSS-переменных режима.
+  if (loadError) return <div className="space-y-3 pt-3"><p role="alert" className="text-sm text-muted-foreground">Не удалось проверить возможность оставить отзыв.</p><Button variant="secondary" onClick={() => { setLoadError(false); setAttempt((n) => n + 1); }}>Повторить</Button></div>;
+  if (!elig) return <p role="status" className="pt-3 text-sm text-muted-foreground">Проверяем условия…</p>;
+  if (elig.reason === 'is_owner') return <p className="pt-3 text-sm text-muted-foreground">Это ваше объявление. Отзыв могут оставить покупатели после переписки.</p>;
+  if (elig.reason === 'already_reviewed') return <p role="status" className="pt-3 text-sm">{status === 'ok' ? 'Спасибо! Ваш отзыв сохранён.' : 'Вы уже оставили отзыв по этому объявлению.'}</p>;
+  if (!elig.canReview) return <div className="space-y-3 pt-3"><p className="text-sm leading-6 text-muted-foreground">{elig.reason === 'need_mutual_messages' ? 'Отзыв станет доступен после обмена сообщениями с продавцом.' : elig.reason === 'no_chat' ? 'Сначала обсудите объявление с продавцом в чате.' : 'Сейчас отзыв недоступен.'}</p><Button render={<Link href={`/messages?listingId=${listingId}`} />} variant="secondary">Открыть переписку</Button></div>;
   return (
-    <div
-      id="listing-review"
-      className="scroll-mt-24 rounded-2xl border border-border bg-card p-4"
-    >
-      <div className="flex items-center gap-2">
-        <span
-          className="grid h-8 w-8 place-items-center rounded-lg"
-          style={{ backgroundColor: 'var(--mode-accent-soft)', color: 'var(--fg-default)' }}
-        >
-          <Star
-            size={16}
-            strokeWidth={1.8}
-            style={{ color: 'var(--fg-default)' }}
-            aria-hidden
-          />
-        </span>
-        <div>
-          <div className="text-sm font-bold text-foreground">Оценка продавца</div>
-          <p className="text-[11px] text-muted-foreground">Только после переписки</p>
-        </div>
-      </div>
-
-      {eligLoading ? (
-        <p className="mt-3 text-xs text-muted-foreground">Проверяем условия…</p>
-      ) : authRequired ? (
-        <div
-          className="mt-3 rounded-xl border px-3 py-3 text-sm"
-          style={{
-            borderColor: 'var(--mode-accent-ring)',
-            backgroundColor: 'var(--mode-accent-soft)',
-            color: 'var(--fg-default)',
-          }}
-        >
-          <p>Войдите, чтобы увидеть, можете ли вы оставить отзыв по этой сделке.</p>
-          <Link
-            href={`/auth?next=${encodeURIComponent(`/listing/${listingId}#listing-review`)}`}
-            className="mt-2 inline-flex text-sm font-bold underline"
-            style={{ color: 'var(--fg-default)' }}
-          >
-            Войти или зарегистрироваться
-          </Link>
-        </div>
-      ) : elig?.reason === 'is_owner' ? (
-        <p className="mt-3 text-xs text-muted-foreground">Это ваше объявление — отзыв оставляют покупатели после чата.</p>
-      ) : elig?.canReview ? (
-        <>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">Оценка:</span>
-            <UiSelect
-              value={String(rating)}
-              onChange={(v) => setRating(Number(v))}
-              options={[5, 4, 3, 2, 1].map((n) => ({ value: String(n), label: `${n} ★` }))}
-              className="h-9 min-w-[100px] rounded-xl border-border bg-card px-2"
-            />
-          </div>
-          <textarea
-            className="mt-3 min-h-28 w-full rounded-2xl border border-border bg-card px-4 py-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus:[border-color:var(--mode-accent-ring)] focus:[box-shadow:0_0_0_2px_var(--mode-accent-ring)]"
-            placeholder="Коротко о встрече, комплекте, общении (по желанию)"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <Button size="lg"
-            type="button"
-            onClick={() => void submit()}
-            disabled={busy}
-            className="mt-3 w-full"
-          >
-            {busy ? 'Сохраняем…' : 'Опубликовать отзыв'}
-          </Button>
-        </>
-      ) : elig?.reason === 'already_reviewed' ? (
-        <p className="mt-3 text-sm font-medium text-success">Вы уже оставили отзыв по этому объявлению.</p>
-      ) : (
-        <div
-          className="mt-3 space-y-3 rounded-xl border px-3 py-3 text-sm"
-          style={{
-            borderColor: 'var(--mode-accent-ring)',
-            backgroundColor: 'var(--mode-accent-soft)',
-            color: 'var(--fg-default)',
-          }}
-        >
-          <p className="font-medium">
-            {elig?.reason === 'no_chat'
-              ? 'Отзыв можно оставить только после начала переписки с продавцом в чате площадки.'
-              : elig?.reason === 'need_mutual_messages'
-                ? 'Напишите продавцу и дождитесь ответа в этом чате — после обмена сообщениями отзыв станет доступен (защита от накрутки).'
-                : 'Сейчас отзыв недоступен.'}
-          </p>
-          <p className="text-xs leading-relaxed opacity-90">
-            В чате помощник спросит, как прошла сделка, напомнит не уходить в сторонние мессенджеры и подскажет про оценку.
-          </p>
-          <Link
-            href={chatHref}
-            className="inline-flex min-h-12 items-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white"
-            style={{
-              backgroundColor: 'var(--mode-primary)',
-              boxShadow: '0 4px 12px var(--mode-accent-ring)',
-            }}
-          >
-            <MessageCircle size={18} strokeWidth={1.8} aria-hidden />
-            Перейти в чат
-          </Link>
-        </div>
-      )}
-
-      {status === 'ok' ? (
-        <div className="mt-2 text-xs font-medium text-success">{message}</div>
-      ) : null}
-      {status === 'error' ? (
-        <div className="mt-2 text-xs font-medium text-destructive">{message}</div>
-      ) : null}
-    </div>
+    <form onSubmit={(event) => void submit(event)} className="space-y-4 pt-4">
+      <label className="block space-y-2 text-sm font-medium"><span>Оценка</span>
+        <select value={rating} onChange={(e) => setRating(e.target.value)} disabled={busy} className="block min-h-12 w-full rounded-2xl border border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-primary">{[5,4,3,2,1].map((n) => <option key={n} value={n}>{n} из 5</option>)}</select>
+      </label>
+      <label className="block space-y-2 text-sm font-medium"><span>Ваш опыт общения</span><Textarea value={text} onChange={(e) => setText(e.target.value)} disabled={busy} placeholder="Что понравилось или пошло не так (необязательно)" /></label>
+      {status === 'error' ? <p role="alert" className="text-sm text-destructive">Отзыв не сохранён. Проверьте соединение и попробуйте ещё раз.</p> : null}
+      <Button type="submit" size="lg" disabled={busy} aria-busy={busy} className="w-full sm:w-auto">{busy ? 'Публикуем…' : 'Опубликовать отзыв'}</Button>
+    </form>
   );
 }

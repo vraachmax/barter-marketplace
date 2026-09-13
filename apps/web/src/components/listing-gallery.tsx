@@ -119,10 +119,10 @@ export default function ListingGallery({
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={onPointerCancel}
-          className={`relative aspect-[4/3] w-full touch-none select-none sm:aspect-[16/10] ${
+          className={`relative aspect-[4/3] w-full touch-pan-y select-none sm:aspect-[16/10] ${
  n > 1 ? 'cursor-grab active:cursor-grabbing' : ''
  }`}
-          style={{ touchAction: n > 1 ? 'none' : undefined }}
+          style={{ touchAction: 'pan-y' }}
           aria-label={n > 1 ? 'Потяните фото влево или вправо, чтобы перелистать' : undefined}
         >
           <ListingPhoto
@@ -135,17 +135,12 @@ export default function ListingGallery({
               transition: isDragging ? 'none' : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           />
-          {n > 1 ? (
-            <p className="pointer-events-none absolute left-3 top-3 hidden max-w-[min(100%,240px)] rounded-lg bg-black/45 px-2 py-1 text-[10px] font-medium leading-snug text-white/95 backdrop-blur-sm sm:block sm:text-[11px]">
-              Ведите по фото влево / вправо — перелистывание как на крупных площадках
-            </p>
-          ) : null}
         </div>
 
         <button
           type="button"
           onClick={() => setFullscreen(true)}
-          className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
+          className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
           aria-label="Открыть на весь экран"
         >
           <Search size={20} strokeWidth={1.8} className="text-white drop-shadow" aria-hidden />
@@ -155,7 +150,7 @@ export default function ListingGallery({
             <button
               type="button"
               onClick={prev}
-              className="absolute left-2 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-black/35 text-white shadow-md backdrop-blur-sm transition hover:bg-black/50 md:left-3"
+              className="absolute left-2 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-black/35 text-white shadow-md backdrop-blur-sm transition hover:bg-black/50 md:left-3"
               aria-label="Предыдущее фото"
             >
               <ChevronLeft size={22} strokeWidth={1.8} className="text-white" aria-hidden />
@@ -163,22 +158,12 @@ export default function ListingGallery({
             <button
               type="button"
               onClick={next}
-              className="absolute right-2 top-1/2 z-10 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-black/35 text-white shadow-md backdrop-blur-sm transition hover:bg-black/50 md:right-3"
+              className="absolute right-2 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-black/35 text-white shadow-md backdrop-blur-sm transition hover:bg-black/50 md:right-3"
               aria-label="Следующее фото"
             >
               <ChevronRight size={22} strokeWidth={1.8} className="text-white" aria-hidden />
             </button>
-            <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/45 px-2 py-1 backdrop-blur-sm">
-              {images.map((im, i) => (
-                <button
-                  key={im.id}
-                  type="button"
-                  onClick={() => setIdx(i)}
-                  className={`h-1.5 rounded-full transition ${i === idx ? 'w-5 bg-card' : 'w-1.5 bg-card/50 hover:bg-card/70'}`}
-                  aria-label={`Фото ${i + 1}`}
-                />
-              ))}
-            </div>
+            <span className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm tabular-nums text-white" aria-live="polite">{idx + 1} / {n}</span>
           </>
         ) : null}
       </div>
@@ -190,6 +175,7 @@ export default function ListingGallery({
               key={im.id}
               type="button"
               onClick={() => setIdx(i)}
+              aria-pressed={i === idx}
               aria-label={`Показать фото ${i + 1}`}
               className={`relative size-16 shrink-0 overflow-hidden rounded-xl border-2 transition sm:size-20 ${
                 i === idx ? '' : 'border-border opacity-80 hover:opacity-100'
@@ -239,6 +225,7 @@ function FullscreenGallery({
   onClose: () => void;
 }) {
   const [idx, setIdx] = useState(initialIdx);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const n = images.length;
   const current = images[idx] ?? images[0];
 
@@ -246,16 +233,19 @@ function FullscreenGallery({
   const next = useCallback(() => setIdx((i) => (i + 1) % n), [n]);
 
   useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    const previousOverflow = document.body.style.overflow;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowLeft') prev();
       else if (e.key === 'ArrowRight') next();
     };
     document.addEventListener('keydown', handler);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', handler);
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
+      dialog?.close();
     };
   }, [onClose, prev, next]);
 
@@ -273,8 +263,11 @@ function FullscreenGallery({
   );
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex flex-col bg-black/95 backdrop-blur-sm"
+    <dialog
+      ref={dialogRef}
+      aria-label="Просмотр фотографий"
+      onCancel={(e) => { e.preventDefault(); onClose(); }}
+      className="fixed inset-0 z-[100] m-0 flex h-dvh max-h-none w-screen max-w-none flex-col border-0 bg-black/95 p-0 text-white backdrop:bg-black/80"
       onClick={onClose}
     >
       <div className="flex items-center justify-between px-4 py-3">
@@ -283,7 +276,7 @@ function FullscreenGallery({
         </span>
         <button
           onClick={onClose}
-          className="grid h-10 w-10 place-items-center rounded-full bg-card/10 text-white transition hover:bg-card/20"
+          className="grid h-11 w-11 place-items-center rounded-full bg-card/10 text-white transition hover:bg-card/20"
           aria-label="Закрыть"
         >
           <X size={24} strokeWidth={1.8} className="text-white" aria-hidden />
@@ -339,6 +332,6 @@ function FullscreenGallery({
           </button>
         ))}
       </div>
-    </div>
+    </dialog>
   );
 }

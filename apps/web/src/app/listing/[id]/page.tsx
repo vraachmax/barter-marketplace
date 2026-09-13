@@ -4,16 +4,16 @@ import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { ApiRequestError } from '@/lib/api-error';
 import {
-  AlertTriangle,
   Calendar,
-  ChevronLeft,
   ChevronRight,
   Eye,
   MapPin,
-  Store,
+  ShieldCheck,
+  ArrowLeft,
 } from 'lucide-react';
 import { apiGetJson, type ListingCard, API_URL, resolveAssetUrl } from '@/lib/api';
-import FavoriteToggle from '@/components/favorite-toggle';
+import ListingContactActions from '@/components/listing-contact-actions';
+import { formatListingPrice } from '@/lib/listing-presentation';
 import SellerReviewForm from '@/components/seller-review-form';
 import ListingBotAssistant from '@/components/listing-bot-assistant';
 import ListingPlaceholder from '@/components/listing-placeholder';
@@ -23,12 +23,9 @@ import ListingViewTracker from '@/components/listing-view-tracker';
 import { SellerPresenceBadge } from '@/components/seller-presence-badge';
 import { ListingShareButton, ListingReportButton } from '@/components/listing-actions';
 import { ListingMiniMap } from '@/components/listing-mini-map';
-import { ShowPhoneButton } from '@/components/show-phone-button';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -59,11 +56,6 @@ type Listing = ListingCard & {
   viewsCount?: number;
   owner: { id: string; name: string | null; phone: string | null; email: string | null };
 };
-
-function formatRub(v: number | null) {
-  if (v == null) return 'Цена договорная';
-  return `${v.toLocaleString('ru-RU')} ₽`;
-}
 
 function formatListedAt(iso: string) {
   try {
@@ -113,253 +105,91 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     <ListingPlaceholder
       title={listing.title}
       categoryTitle={listing.category.title}
-      className="aspect-[4/3] w-full rounded-2xl border border-border sm:aspect-[16/10]"
+      categorySlug={listing.category.slug}
+      className="min-h-60 rounded-3xl sm:min-h-80"
     />
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <header className="glass-panel sticky top-0 z-50 border-b border-border">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-          <Button render={<Link href="/" />} variant="ghost" size="sm" className="gap-2 px-4">
-            <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
-            Назад в ленту
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 py-2 md:px-6">
+          <Button render={<Link href="/" />} variant="ghost" size="sm">
+            <ArrowLeft size={20} strokeWidth={1.8} aria-hidden /> В ленту
           </Button>
+          <ListingShareButton title={listing.title} />
         </div>
       </header>
-
-      <main className="mx-auto max-w-7xl px-4 pt-5 pb-28 lg:pb-12">
+      <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 md:px-6 lg:pb-12">
         <ListingViewTracker listingId={listing.id} />
-
-        {/* Breadcrumbs — Avito-style.
-            Hover-цвет привязан к `--mode-accent` через Tailwind arbitrary
-            syntax, поэтому в Маркете синий (#00AAFF), в Бартере оранжевый
-            (#E85D26). Без этого breadcrumbs светились статическим primary-
-            синим в Бартере — палитра-лик. */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
-        >
-          <Link href="/" className="transition-colors hover:[color:var(--mode-accent)]">
-            Главная
-          </Link>
-          <ChevronRight size={12} className="text-foreground/30" aria-hidden />
-          <Link
-            href={`/?categoryId=${listing.category.id}`}
-            className="transition-colors hover:[color:var(--mode-accent)]"
-          >
+        <nav aria-label="Путь к объявлению" className="mb-3 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+          <Link href={`/?categoryId=${listing.category.id}`} className="inline-flex min-h-11 items-center rounded-lg px-1 hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">
             {listing.category.title}
           </Link>
-          <ChevronRight size={12} className="text-foreground/30" aria-hidden />
-          <Link
-            href={`/?city=${encodeURIComponent(listing.city)}`}
-            className="transition-colors hover:[color:var(--mode-accent)]"
-          >
-            {listing.city}
-          </Link>
-          <ChevronRight size={12} className="text-foreground/30" aria-hidden />
-          <span className="truncate font-medium text-foreground/80">{listing.title}</span>
+          <ChevronRight size={14} aria-hidden />
+          <span>{listing.city}</span>
         </nav>
-
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-4">
-          <div className="min-w-0 space-y-3">
-            {/* Header card: title + meta */}
-            <Card className="gap-2 px-5 py-4">
-              <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-[28px]">
-                {listing.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span className="tabular-nums">№ {listing.id.slice(0, 9)}</span>
-                <span aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1">
-                  <Calendar size={12} strokeWidth={1.8} aria-hidden />
-                  {formatListedAt(listing.createdAt)}
-                </span>
-                <span aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1">
-                  <Eye size={12} strokeWidth={1.8} aria-hidden />
-                  {listing.viewsCount ?? 0} просмотров
-                </span>
-              </div>
-              {listing.status !== 'ACTIVE' ? (
-                <div className="mt-2 rounded-md bg-muted px-3 py-2 text-xs font-semibold text-foreground/70">
-                  {statusLabel(listing.status, listing.duplicateImageFlag)}
-                </div>
-              ) : null}
-            </Card>
-
-            {/* Gallery */}
-            <Card className="overflow-hidden p-0">
-              <ListingGallery
-                categoryTitle={listing.category.title}
-                images={images}
-                title={listing.title}
-                apiBase={API_URL}
-                placeholder={galleryPlaceholder}
-              />
-            </Card>
-
-            {/* Description + attributes */}
-            <Card className="gap-3 px-5 py-5">
-              <h2 className="text-lg font-semibold text-foreground">Описание</h2>
-              <div className="overflow-hidden break-words text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
-                {listing.description}
-              </div>
-              <ListingAttributesDisplay attributes={listing.attributes} />
-            </Card>
-
-            {/* Actions row */}
-            <div className="flex flex-wrap items-center gap-2 px-1">
-              <ListingShareButton title={listing.title} />
-              <ListingReportButton listingId={listing.id} title={listing.title} />
-              <span className="ml-auto inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
-                <MapPin size={12} strokeWidth={1.8} aria-hidden />
-                {listing.city}
-              </span>
-            </div>
-
-            {/* Safety notice — БЫЛ оранжевый (`text-accent` = #FF6D00),
-                это давало палитра-лик в Маркете (оранжевый текст на синем
-                бренде). Перевязали на `--mode-accent*` через Tailwind
-                arbitrary, поэтому в Маркете блок синий, в Бартере оранжевый. */}
-            <div
-              className="flex gap-3 rounded-2xl border p-4 text-sm"
-              style={{
-                borderColor: 'var(--mode-accent-ring)',
-                backgroundColor: 'var(--mode-accent-soft)',
-                color: 'var(--fg-default)',
-              }}
-            >
-              <AlertTriangle
-                size={20}
-                strokeWidth={1.8}
-                className="mt-0.5 shrink-0"
-                style={{ color: 'var(--mode-accent)' }}
-                aria-hidden
-              />
-              <div>
-                <p className="font-semibold">Перед договорённостью</p>
-                <p className="mt-1 text-xs leading-relaxed opacity-95">
-                  Не переходите в WhatsApp, Telegram и другие мессенджеры по просьбе продавцов и
-                  покупателей — так действуют мошенники. Договаривайтесь и переписывайтесь здесь, как
-                  рекомендуют крупные маркетплейсы.
-                </p>
-              </div>
-            </div>
-
-            <ListingBotAssistant
-              listing={{
-                id: listing.id,
-                title: listing.title,
-                description: listing.description,
-                city: listing.city,
-                category: listing.category,
-              }}
-              similar={similar}
-            />
+        <div className="mb-6 space-y-3">
+          <h1 className="max-w-4xl break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{listing.title}</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5"><MapPin size={16} aria-hidden />{listing.city}</span>
+            <span className="inline-flex items-center gap-1.5"><Calendar size={16} aria-hidden />{formatListedAt(listing.createdAt)}</span>
+            <span className="inline-flex items-center gap-1.5"><Eye size={16} aria-hidden />{listing.viewsCount ?? 0} просмотров</span>
           </div>
+          {listing.status !== 'ACTIVE' ? <p role="status" className="rounded-2xl bg-muted p-4 text-sm">{statusLabel(listing.status, listing.duplicateImageFlag)}</p> : null}
+        </div>
 
-          {/* Sticky right rail — buy panel */}
-          <aside className="space-y-3 lg:sticky lg:top-20">
-            {/* Price + CTA */}
-            <Card className="gap-3 px-5 py-5">
-              <div className="text-[28px] leading-tight font-bold tracking-tight text-foreground tabular-nums">
-                {formatRub(listing.priceRub)}
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+          <section aria-label="Фотографии объявления" className="min-w-0 lg:col-start-1 lg:row-start-1">
+            <ListingGallery categoryTitle={listing.category.title} images={images} title={listing.title} apiBase={API_URL} placeholder={galleryPlaceholder} />
+          </section>
+
+          <aside aria-label="Цена и связь с продавцом" className="min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+            <Card className="gap-5 p-5 sm:p-6">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">{listing.category.slug === 'job' ? 'Зарплата' : 'Стоимость'}</p>
+                <p className="break-words text-3xl font-semibold leading-tight tracking-tight tabular-nums">{formatListingPrice(listing.priceRub, listing.priceType)}</p>
+                {listing.isBarter ? <p className="text-sm font-medium text-foreground">Возможен обмен</p> : null}
               </div>
-              <p className="text-xs text-muted-foreground">Условия уточняйте в переписке</p>
-
-              <div className="mt-1 space-y-2">
-                {/* CTA «Написать сообщение» — основной бренд-CTA режима.
-                    Раньше `<Button>` рисовался в статическом `--color-primary`
-                    (синий Avito) → в Бартере получали синюю кнопку вопреки
-                    оранжевой палитре. Перевязали на `--mode-accent*` через
-                    inline style, сам `<Button>` оставляем для сохранения
-                    геометрии (h-11, rounded-xl, focus-ring). */}
-                <Button
-                  render={<Link href={`/messages?listingId=${listing.id}`} />}
-                  size="lg"
-                  className="w-full"
-                >
-                  Написать сообщение
-                </Button>
-                <ShowPhoneButton
-                  phone={listing.owner.phone}
-                  email={listing.owner.email}
-                  sellerId={listing.owner.id}
-                />
+              <ListingContactActions listingId={listing.id} sellerId={listing.owner.id} active={listing.status === 'ACTIVE'} phone={listing.owner.phone} email={listing.owner.email} />
+              <div className="border-t border-border pt-5">
+                <Link href={`/seller/${listing.owner.id}`} className="group flex min-h-14 items-center gap-3 rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
+                  <span className="grid size-12 shrink-0 place-items-center rounded-full bg-muted text-lg font-semibold" aria-hidden>{(listing.owner.name?.trim() || 'П').slice(0, 1).toUpperCase()}</span>
+                  <span className="min-w-0 flex-1"><span className="block break-words text-base font-semibold group-hover:underline">{listing.owner.name || 'Продавец'}</span><span className="block text-sm text-muted-foreground">Профиль и объявления</span></span>
+                  <ChevronRight size={18} className="shrink-0 text-muted-foreground" aria-hidden />
+                </Link>
+                <div className="mt-3"><SellerPresenceBadge sellerId={listing.owner.id} compact /></div>
               </div>
-
-              <Separator />
-
-              <FavoriteToggle listingId={listing.id} />
             </Card>
-
-            {/* Seller card — все бренд-акценты (avatar bg, hover-цвет имени,
-                badge «Документы проверены», ссылка «Все объявления продавца»)
-                перевязаны на `--mode-accent*`. Без этого аватар и бейдж
-                светились синим Avito-primary даже в Бартере. */}
-            <Card className="gap-3 px-5 py-5">
-              <div className="flex items-start gap-3">
-                <div
-                  className="grid size-12 shrink-0 place-items-center rounded-xl text-base font-bold text-white"
-                  style={{ backgroundColor: 'var(--mode-accent)' }}
-                >
-                  {(listing.owner.name ?? 'П').slice(0, 1).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold tracking-wide text-muted-foreground uppercase">
-                    Продавец
-                  </p>
-                  <Link
-                    href={`/seller/${listing.owner.id}`}
-                    className="block truncate text-base font-bold text-foreground transition-colors hover:[color:var(--mode-accent)]"
-                  >
-                    {listing.owner.name ?? 'Продавец'}
-                  </Link>
-                  <div className="mt-0.5">
-                    <SellerPresenceBadge sellerId={listing.owner.id} compact />
-                  </div>
-                </div>
-              </div>
-              <Badge
-                variant="outline"
-                className="w-fit gap-1.5"
-                style={{
-                  borderColor: 'var(--mode-accent-ring)',
-                  backgroundColor: 'var(--mode-accent-soft)',
-                  color: 'var(--mode-accent)',
-                }}
-              >
-                <Store size={12} strokeWidth={1.8} aria-hidden />
-                Документы проверены
-              </Badge>
-              <Link
-                href={`/seller/${listing.owner.id}`}
-                className="text-xs font-semibold hover:underline"
-                style={{ color: 'var(--mode-accent)' }}
-              >
-                Все объявления продавца →
-              </Link>
-            </Card>
-
-            <SellerReviewForm sellerId={listing.owner.id} listingId={listing.id} />
-
-            {listing.latitude != null && listing.longitude != null ? (
-              <ListingMiniMap
-                latitude={listing.latitude}
-                longitude={listing.longitude}
-                city={listing.city}
-              />
-            ) : null}
           </aside>
+
+          <div className="min-w-0 space-y-7 lg:col-start-1 lg:row-start-2">
+            <section aria-labelledby="listing-description">
+              <h2 id="listing-description" className="mb-3 text-xl font-semibold tracking-tight">Описание</h2>
+              <div className="break-words whitespace-pre-wrap text-base leading-7">{listing.description?.trim() || 'Продавец пока не добавил описание.'}</div>
+            </section>
+            <ListingAttributesDisplay attributes={listing.attributes} />
+            <section aria-labelledby="listing-location" className="border-t border-border pt-6">
+              <h2 id="listing-location" className="mb-3 text-xl font-semibold tracking-tight">Местоположение</h2>
+              {listing.latitude != null && listing.longitude != null ? <ListingMiniMap latitude={listing.latitude} longitude={listing.longitude} city={listing.city} /> : <p className="text-base">{listing.city}</p>}
+            </section>
+            <details className="rounded-3xl border border-border p-4 sm:p-5">
+              <summary className="min-h-11 cursor-pointer content-center text-base font-semibold focus-visible:outline-2 focus-visible:outline-primary">Оставить отзыв о продавце</summary>
+              <SellerReviewForm sellerId={listing.owner.id} listingId={listing.id} />
+            </details>
+            <div className="flex gap-3 rounded-2xl bg-muted/60 p-4">
+              <ShieldCheck size={20} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
+              <p className="text-sm leading-6 text-muted-foreground">Обсудите условия в чате. Не сообщайте коды из SMS и данные банковской карты, проверяйте вещь перед оплатой.</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <span className="break-all text-xs text-muted-foreground">Объявление № {listing.id}</span>
+              <ListingReportButton listingId={listing.id} title={listing.title} />
+            </div>
+            <ListingBotAssistant listing={{ id: listing.id, title: listing.title, description: listing.description, city: listing.city, category: listing.category }} similar={similar} />
+          </div>
         </div>
       </main>
-
-      <div className="hidden lg:block">
-        <SiteFooter />
-      </div>
-
-      {/* Bottom nav lives in layout.tsx — MobileBottomNav */}
+      <div className="hidden lg:block"><SiteFooter /></div>
     </div>
   );
 }
