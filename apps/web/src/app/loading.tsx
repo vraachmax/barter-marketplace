@@ -1,43 +1,46 @@
+import { Skeleton } from '@/components/ui/skeleton';
+
 export default function RootLoading() {
   return (
-    <div className="min-h-screen bg-muted">
-      {/* Header skeleton */}
-      <div className="sticky top-0 z-50 border-b border-border bg-card/95">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-          <div className="h-8 w-28 animate-pulse rounded-xl bg-muted" />
-          <div className="hidden h-10 flex-1 animate-pulse rounded-xl bg-muted md:block" />
-          <div className="flex gap-2">
-            <div className="h-9 w-24 animate-pulse rounded-xl bg-muted" />
-            <div className="h-9 w-24 animate-pulse rounded-xl bg-muted" />
+    <div className="min-h-screen bg-background pb-28 text-foreground">
+      <p role="status" className="sr-only">Загружаем страницу…</p>
+      <div aria-hidden="true">
+        <div className="border-b border-border bg-background">
+          <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4 md:px-6">
+            <Skeleton className="h-10 w-28 shrink-0 rounded-xl motion-reduce:animate-none" />
+            <Skeleton className="hidden h-12 flex-1 rounded-full motion-reduce:animate-none md:block" />
+            <Skeleton className="ml-auto size-12 shrink-0 rounded-full motion-reduce:animate-none" />
+          </div>
+          <div className="px-4 pb-4 md:hidden">
+            <Skeleton className="h-12 w-full rounded-full motion-reduce:animate-none" />
           </div>
         </div>
-      </div>
-
-      {/* Content skeleton */}
-      <div className="mx-auto max-w-7xl px-4 pt-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-[260px_1fr]">
-          {/* Sidebar skeleton */}
-          <div className="hidden space-y-3 md:block">
-            <div className="h-[400px] animate-pulse rounded-2xl bg-card" />
+        <div className="mx-auto max-w-7xl px-4 pt-4 md:px-6">
+          <Skeleton className="h-14 w-full max-w-96 rounded-full motion-reduce:animate-none" />
+          <div className="grid max-w-full auto-cols-[8.5rem] grid-flow-col grid-rows-2 gap-2 overflow-hidden py-5 md:gap-3 md:py-6">
+            {Array.from({ length: 10 }, (_, i) => (
+              <div key={i} className="flex min-h-[7.75rem] flex-col items-center gap-2 rounded-3xl border border-border bg-card p-2">
+                <Skeleton className="size-16 rounded-2xl motion-reduce:animate-none" />
+                <Skeleton className="mt-1 h-4 w-24 rounded motion-reduce:animate-none" />
+              </div>
+            ))}
           </div>
-
-          {/* Feed skeleton */}
-          <div className="space-y-4">
-            {/* Sort bar */}
-            <div className="h-14 animate-pulse rounded-2xl bg-card" />
-            {/* Cards */}
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex gap-3 rounded-2xl border border-border bg-card p-3">
-                  <div className="h-24 w-28 shrink-0 animate-pulse rounded-xl bg-muted" />
-                  <div className="flex-1 space-y-2 py-1">
-                    <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                    <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
-                    <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
-                  </div>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+            <Skeleton className="h-7 w-44 motion-reduce:animate-none" />
+            <Skeleton className="h-11 w-full max-w-80 rounded-full motion-reduce:animate-none" />
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-5 md:gap-y-8 lg:grid-cols-4">
+            {Array.from({ length: 8 }, (_, i) => (
+              <div key={i} className="min-w-0">
+                <Skeleton className="aspect-square w-full rounded-2xl motion-reduce:animate-none" />
+                <div className="space-y-2 px-0.5 pt-2.5">
+                  <Skeleton className="h-6 w-2/3 motion-reduce:animate-none" />
+                  <Skeleton className="h-4 w-full motion-reduce:animate-none" />
+                  <Skeleton className="h-4 w-3/4 motion-reduce:animate-none" />
+                  <Skeleton className="h-3 w-1/2 motion-reduce:animate-none" />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
