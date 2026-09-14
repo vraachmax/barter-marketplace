@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { cache } from 'react';
 import { API_URL, apiGetJson, type Category, type ListingCard } from '@/lib/api';
 import { getAvailableCatalogCategories } from '@/lib/catalog-categories';
+import { createHomeRequest } from '@/lib/home-request';
 import { HomePreferenceCookieSync } from '@/components/home-preference-cookie-sync';
 import { ListingCardComponent } from '@/components/listing-card';
 import { SiteHeader } from '@/components/site-header';
@@ -24,6 +25,16 @@ type ListingsResponse = {
   vipStrip?: ListingCard[];
   items: ListingCard[];
 };
+
+function HomeRetryForm({ values }: { values: Record<string, string> }) {
+  // Native GET reloads server data, including on a failed initial hydration.
+  return (
+    <form action="/" method="GET">
+      {Object.entries(values).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
+      <Button type="submit" size="lg" className="w-full sm:w-auto">Повторить загрузку</Button>
+    </form>
+  );
+}
 
 const getRussianCities = cache(async () => {
   try {
@@ -210,11 +221,12 @@ async function renderHome(sp: HomeSearchParams) {
   const recommendationCity = sp.city ?? prefCity;
   const recommendationCategoryId = urlCategoryId || undefined;
 
-  const categoriesPromise = apiGetJson<Category[]>('/categories');
+  const homeRequest = createHomeRequest(apiGetJson);
+  const categoriesPromise = homeRequest<Category[]>('/categories');
   const citiesPromise = getRussianCities();
   const listingsPromise: Promise<ListingsResponse> =
     effectiveRecoMode && viewedIds.length > 0
-      ? apiGetJson<ListingCard[]>(
+      ? homeRequest<ListingCard[]>(
           `/listings/${viewedIds[0]}/similar?limit=20&excludeIds=${encodeURIComponent(viewedIds.join(','))}`,
         )
           .then((items) => {
@@ -228,7 +240,7 @@ async function renderHome(sp: HomeSearchParams) {
             };
           })
           .catch(() =>
-            apiGetJson<ListingsResponse>(
+            homeRequest<ListingsResponse>(
               buildRecommendationPath({
                 city: recommendationCity,
                 categoryId: recommendationCategoryId,
@@ -236,7 +248,7 @@ async function renderHome(sp: HomeSearchParams) {
               }),
             ),
           )
-      : apiGetJson<ListingsResponse>(
+      : homeRequest<ListingsResponse>(
           buildListingsPath({
             ...sp,
             mode: currentMode,
@@ -414,6 +426,12 @@ async function renderHome(sp: HomeSearchParams) {
         <p className="text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Весь каталог: покупки и предложения обмена'}</p>
       </div>
       <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
+        {catRes.status === 'rejected' && !apiBackendDown ? (
+          <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted p-4 text-foreground">
+            <p className="text-sm">Категории не загрузились. Объявления доступны ниже.</p>
+            <HomeRetryForm values={{ ...preservedListQuery, ...(recoMode ? { reco: '1' } : {}) }} />
+          </div>
+        ) : null}
         <div className="grid min-w-0 max-w-full grid-flow-col grid-rows-2 auto-cols-[8.5rem] gap-2 overflow-x-auto pb-2 [scrollbar-width:thin] md:gap-3">
           {availableCategories.map((cat) => (
             <Link
@@ -513,12 +531,13 @@ async function renderHome(sp: HomeSearchParams) {
             {/* ===== RESPONSIVE CARD GRID ===== */}
             <div className="listing-grid grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 md:gap-x-5 md:gap-y-8 lg:grid-cols-4">
               {mergedFeed.length === 0 ? (
-                <div className="col-span-full rounded-2xl bg-card p-12 text-center text-card-foreground ring-1 ring-foreground/10">
+                <div role={apiBackendDown ? 'alert' : undefined} className="col-span-full rounded-3xl bg-card px-5 py-8 text-center text-card-foreground ring-1 ring-foreground/10 md:p-12">
                   <Search size={36} className="mx-auto mb-4 text-muted-foreground" aria-hidden />
                   <p className="text-base font-semibold text-foreground">{apiBackendDown ? 'Объявления временно недоступны' : 'Ничего не нашлось'}</p>
                   <p className="mt-1.5 text-sm text-muted-foreground">
                     {apiBackendDown ? feedError : currentMode === 'barter' ? 'Пока нет подходящих предложений обмена. Измените фильтры или добавьте своё объявление.' : 'Попробуйте снять категорию или изменить город.'}
                   </p>
+                  {apiBackendDown ? <div className="mt-5"><HomeRetryForm values={{ ...preservedListQuery, ...(recoMode ? { reco: '1' } : {}) }} /></div> : null}
                 </div>
               ) : null}
               {mergedFeed.map((x) => (
