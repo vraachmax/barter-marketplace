@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -116,14 +116,21 @@ async function geometry(page, label) {
     const header = document.querySelector('header');
     const rect = header.getBoundingClientRect();
     const main = document.querySelector('main')?.getBoundingClientRect();
+    const title = getComputedStyle(header.querySelector('h1'));
+    const section = document.querySelector('#settings-section-title');
     return {
       viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
       headerHeight: rect.height, headerTop: rect.top,
+      titleSize: parseFloat(title.fontSize), titleWeight: title.fontWeight,
+      sectionTitleSize: section ? parseFloat(getComputedStyle(section).fontSize) : null,
       mainLeft: main?.left, mainRight: main?.right,
     };
   });
   assert(metrics.scrollWidth <= metrics.viewport + 1, label + ': horizontal page overflow');
   assert(metrics.headerHeight >= 64, label + ': header shorter than 64px');
+  assert.equal(metrics.titleSize, 18, label + ': header typography overridden');
+  assert.equal(metrics.titleWeight, '600', label + ': header weight overridden');
+  if (metrics.sectionTitleSize !== null) assert.equal(metrics.sectionTitleSize, 20, label + ': section typography overridden');
   assert(Math.abs(metrics.headerTop) <= 1, label + ': header not at viewport top');
   if (metrics.mainLeft !== undefined) {
     assert(metrics.mainLeft >= -1 && metrics.mainRight <= metrics.viewport + 1, label + ': content outside viewport');
@@ -207,6 +214,13 @@ async function runScenario(browserType, mode, theme) {
     await expect(page.locator('html')).toHaveAttribute('data-theme', nextTheme);
     await expect(page.getByRole('button', { name: nextTheme === 'dark' ? /Тёмная/ : /Светлая/ })).toHaveAttribute('aria-pressed', 'true');
     checks.push('theme switch, section payload and reload');
+    await geometry(page, key + '/appearance');
+    if (mode === 'mobile') {
+      for (const choice of ['Системная', 'Светлая', 'Тёмная']) {
+        const box = await page.getByRole('button', { name: new RegExp(choice) }).boundingBox();
+        assert(box.height >= 72 && box.height <= 100, 'Mobile theme choice is not a compact row');
+      }
+    }
     await screenshot(page, key + '-appearance');
 
     await nav.getByRole('button', { name: 'Безопасность', exact: true }).click();
@@ -245,7 +259,7 @@ async function runScenario(browserType, mode, theme) {
     await nav.getByRole('button', { name: 'Аккаунт', exact: true }).click();
     await page.getByLabel('Email', { exact: true }).fill('new@example.test');
     await save.click();
-    await expect(page.getByRole('alert')).toContainText('Сессия истекла');
+    await expect(page.locator('main').getByRole('alert')).toContainText('Сессия истекла');
     await expect(page.getByLabel('Email', { exact: true })).toHaveValue('new@example.test');
     await expect(page.getByRole('link', { name: 'Войти снова', exact: true })).toHaveAttribute('href', '/auth?next=%2Fprofile%2Fsettings%3Fsection%3Daccount');
     checks.push('401 preserves input and login return path');
@@ -274,7 +288,7 @@ try {
   const review = await chromium.launch();
   try {
     const page = await review.newPage({ viewport: { width: 840, height: 1320 }, deviceScaleFactor: 1 });
-    const selected = shots.filter(shot => shot.key.includes('webkit') && /account|appearance|reviews|failure/.test(shot.key)).slice(0, 6);
+    const selected = shots.filter(shot => shot.key.includes('webkit') && /account|appearance|reviews/.test(shot.key)).slice(0, 6);
     await page.setContent('<html><style>body{margin:0;background:#dce1e8;font:13px Arial}.grid{display:grid;grid-template-columns:repeat(3,280px)}figure{margin:0;padding:8px}figcaption{height:32px;overflow:hidden}img{display:block;width:264px}</style><div class="grid">' +
       selected.map(shot => '<figure><figcaption>' + shot.key + '</figcaption><img src="data:image/jpeg;base64,' + shot.image + '"></figure>').join('') + '</div></html>');
     await page.locator('img').evaluateAll(images => Promise.all(images.map(img => img.decode())));

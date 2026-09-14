@@ -491,32 +491,35 @@ body {
 html { max-width: 100vw; overflow-x: hidden; background-color: var(--bg-page); }
 body, #__next { max-width: 100vw; overflow-x: hidden; background-color: var(--bg-page); }
 
-/* Semantic text classes (mirrors colors_and_type.css) */
-h1, .h1 {
-  font-size: var(--fs-32);
-  line-height: var(--lh-tight);
-  font-weight: var(--fw-bold);
-  color: var(--fg-strong);
-  letter-spacing: -0.01em;
-}
-h2, .h2 {
-  font-size: var(--fs-24);
-  line-height: var(--lh-snug);
-  font-weight: var(--fw-bold);
-  color: var(--fg-strong);
-  letter-spacing: -0.005em;
-}
-h3, .h3 {
-  font-size: var(--fs-20);
-  line-height: var(--lh-snug);
-  font-weight: var(--fw-semibold);
-  color: var(--fg-strong);
-}
-h4, .h4 {
-  font-size: var(--fs-16);
-  line-height: var(--lh-snug);
-  font-weight: var(--fw-semibold);
-  color: var(--fg-strong);
+@layer base {
+  /* Default headings belong below component utilities in the cascade. */
+  h1, .h1 {
+    font-size: var(--fs-32);
+    line-height: var(--lh-tight);
+    font-weight: var(--fw-bold);
+    color: var(--fg-strong);
+    letter-spacing: -0.01em;
+  }
+  h2, .h2 {
+    font-size: var(--fs-24);
+    line-height: var(--lh-snug);
+    font-weight: var(--fw-bold);
+    color: var(--fg-strong);
+    letter-spacing: -0.005em;
+  }
+  h3, .h3 {
+    font-size: var(--fs-20);
+    line-height: var(--lh-snug);
+    font-weight: var(--fw-semibold);
+    color: var(--fg-strong);
+  }
+  h4, .h4 {
+    font-size: var(--fs-16);
+    line-height: var(--lh-snug);
+    font-weight: var(--fw-semibold);
+    color: var(--fg-strong);
+  }
+  
 }
 
 .eyebrow {
