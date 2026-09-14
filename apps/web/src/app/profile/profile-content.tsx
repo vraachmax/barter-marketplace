@@ -262,7 +262,6 @@ export function ProfileContent() {
         width="catalog"
       />
 
-
       <div className="mx-auto max-w-7xl px-4 pt-6 pb-32 md:px-6 lg:pt-8">
         {actionNotice ? (
           <div role={actionError ? 'alert' : 'status'} aria-live="polite" className="sticky top-16 z-30 mb-4 rounded-2xl border border-border bg-card p-4 text-sm text-foreground shadow-sm">
@@ -573,7 +572,7 @@ export function ProfileContent() {
             {/* DESKTOP SECTION (hidden md:block) */}
             <div className="hidden md:block">
               <div className="grid gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
-                <ProfileSidebar
+                <div className="hidden lg:block"><ProfileSidebar
                   active="profile"
                   activeCount={activeCount}
                   archivedCount={archivedCount}
@@ -583,7 +582,7 @@ export function ProfileContent() {
                   ratingCount={publicProfile?.rating.count ?? 0}
                   sellerUserId={me.id}
                   onLogout={() => void logout()}
-                />
+                /></div>
 
                 <main className="min-w-0 space-y-6">
                   {/* KPI strip — Seller Hub */}

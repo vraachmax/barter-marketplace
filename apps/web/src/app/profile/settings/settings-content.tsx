@@ -272,7 +272,7 @@ export function ProfileSettingsContent() {
                               <Input
                                 value={form.email}
                                 onChange={(e) => editForm((p) => ({ ...p, email: e.target.value }))}
-                                
+
                                 placeholder="user@example.com"
                                 type="email"
                                 autoComplete="email"
@@ -286,7 +286,7 @@ export function ProfileSettingsContent() {
                               <Input
                                 value={form.phone}
                                 onChange={(e) => editForm((p) => ({ ...p, phone: e.target.value }))}
-                                
+
                                 placeholder="+7 999 123-45-67"
                                 type="tel"
                                 autoComplete="tel"
@@ -323,7 +323,7 @@ export function ProfileSettingsContent() {
                               <Input
                                 value={form.name}
                                 onChange={(e) => editForm((p) => ({ ...p, name: e.target.value }))}
-                                
+
                                 placeholder="Как вас увидят покупатели: Иван или «Магазин электроники»"
                                 autoComplete="name"
                               />
@@ -341,7 +341,7 @@ export function ProfileSettingsContent() {
                                 maxLength={2000}
                                 value={form.avatarUrl}
                                 onChange={(e) => editForm((p) => ({ ...p, avatarUrl: e.target.value }))}
-                                
+
                                 placeholder="https://… — прямая ссылка на изображение"
                                 autoComplete="off"
                               />
@@ -365,7 +365,7 @@ export function ProfileSettingsContent() {
                                 onChange={(e) => editForm((p) => ({ ...p, about: e.target.value }))}
                                 rows={6}
                                 maxLength={8000}
-                                
+
                                 placeholder="Расскажите о себе: чем торгуете, как долго на площадке, как быстро отвечаете в чате, условия возврата или самовывоза."
                               />
                             </label>
@@ -393,7 +393,7 @@ export function ProfileSettingsContent() {
                                   maxLength={500}
                                   value={form.companyName}
                                   onChange={(e) => editForm((p) => ({ ...p, companyName: e.target.value }))}
-                                  
+
                                   placeholder="ООО «Ромашка», ИП Иванов…"
                                 />
                               </label>
@@ -409,7 +409,7 @@ export function ProfileSettingsContent() {
                                   onChange={(e) => editForm((p) => ({ ...p, companyInfo: e.target.value }))}
                                   rows={5}
                                   maxLength={8000}
-                                  
+
                                   placeholder="Вид деятельности, юридический адрес, ИНН/ОГРН (если хотите указать публично), режим работы, сайт компании…"
                                 />
                               </label>
@@ -466,7 +466,7 @@ export function ProfileSettingsContent() {
                                   rows={4}
                                   disabled={!autoReply.enabled}
                                   placeholder="Спасибо за сообщение! Я обычно отвечаю в течение часа. Если вопрос срочный — напишите подробнее, и я вернусь как только смогу."
-                                  
+
                                 />
                                 <p className="mt-1 text-xs text-muted-foreground">
                                   Совет: укажите ваше обычное время ответа, способ связи (звонок/WhatsApp) или

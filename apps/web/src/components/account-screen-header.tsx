@@ -23,7 +23,7 @@ export function AccountScreenHeader({
       width={width}
       actions={showSettings ? (
         <Button render={<Link href="/profile/settings" />} variant="secondary" size="icon" aria-label="Настройки">
-          <Settings size={20} strokeWidth={1.8} aria-hidden />
+          <Settings size={20} className="size-5" strokeWidth={1.8} aria-hidden />
         </Button>
       ) : undefined}
     />

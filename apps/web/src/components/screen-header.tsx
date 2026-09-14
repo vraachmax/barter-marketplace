@@ -22,7 +22,7 @@ export function ScreenHeader({
     <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
       <div className={`mx-auto flex min-h-16 items-center gap-3 px-4 py-2 md:px-6 ${maxWidth}`}>
         <Button render={<Link href={backHref} />} variant="secondary" size="icon" aria-label={backLabel}>
-          <ArrowLeft size={20} strokeWidth={1.8} aria-hidden />
+          <ArrowLeft size={20} className="size-5" strokeWidth={1.8} aria-hidden />
         </Button>
         <div className="min-w-0 flex-1">
           <Title className="truncate text-lg font-semibold tracking-tight">{title}</Title>
