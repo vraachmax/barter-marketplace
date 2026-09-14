@@ -504,25 +504,27 @@ export function ProfileSettingsContent() {
                                     type="button"
                                     onClick={() => { editForm((p) => ({ ...p, appTheme: id })); applyThemePreference(id); }}
                                     aria-pressed={active}
-                                    className={`flex flex-col items-center rounded-2xl border-2 px-4 py-5 text-center transition ${
+                                    className={`flex min-h-20 min-w-0 items-center gap-3 rounded-2xl border-2 p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-primary sm:flex-col sm:gap-2 sm:p-4 sm:text-center ${
  active
  ? 'border-primary bg-primary/10'
  : 'border-border bg-muted/50 hover:border-primary/40 hover:bg-primary/10'
  }`}
                                   >
                                     <span
-                                      className={`mb-3 grid h-12 w-12 place-items-center rounded-xl ${
+                                      className={`grid size-10 shrink-0 place-items-center rounded-2xl ${
  active
  ? 'bg-primary text-white'
  : 'bg-card text-muted-foreground ring-1 ring-border'
  }`}
                                     >
-                                      <ThemeIcon size={24} strokeWidth={stroke} aria-hidden />
+                                      <ThemeIcon size={22} strokeWidth={stroke} aria-hidden />
                                     </span>
-                                    <span className="text-sm font-bold text-foreground">{label}</span>
-                                    <span className="mt-1 text-xs text-muted-foreground">{hint}</span>
+                                    <span className="min-w-0 flex-1 sm:flex-none">
+                                      <span className="block text-sm font-semibold text-foreground">{label}</span>
+                                      <span className="mt-1 block text-xs text-muted-foreground">{hint}</span>
+                                    </span>
                                     {active ? (
-                                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                                      <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
                                         <CheckCircle size={14} strokeWidth={stroke} aria-hidden />
                                         Выбрано
                                       </span>

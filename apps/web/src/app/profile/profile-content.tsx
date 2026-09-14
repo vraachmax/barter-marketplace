@@ -311,8 +311,8 @@ export function ProfileContent() {
 
         {status === 'ready' && me ? (
           <>
-            {/* MOBILE SECTION (md:hidden) */}
-            <div className="md:hidden">
+            {/* MOBILE / TABLET SECTION (lg:hidden) */}
+            <div className="lg:hidden">
               {showListingsView ? (
                 /* ===== AVITO-STYLE LISTINGS VIEW ===== */
                 <div className="pb-28">
@@ -569,8 +569,8 @@ export function ProfileContent() {
               )}
             </div>
 
-            {/* DESKTOP SECTION (hidden md:block) */}
-            <div className="hidden md:block">
+            {/* DESKTOP SECTION (hidden lg:block) */}
+            <div className="hidden lg:block">
               <div className="grid gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
                 <div className="hidden lg:block"><ProfileSidebar
                   active="profile"
