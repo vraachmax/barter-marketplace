@@ -46,7 +46,7 @@ export function CatalogModeToggle({ mode, values, path = '/', syncPreference = t
     else document.documentElement.dataset.mode = mode;
   }, [mode, syncPreference]);
   return <nav aria-label="Маркет или Бартер" aria-busy={isPending}
-    className="glass-panel relative isolate grid w-full min-w-0 max-w-sm grid-cols-2 shrink-0 rounded-full border border-border p-1">
+    className="glass-panel relative isolate mx-auto grid w-full min-w-0 max-w-sm grid-cols-2 shrink-0 rounded-full border border-border p-1">
     <span aria-hidden data-mode={displayMode}
       className="pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-4px)] translate-x-0 rounded-full bg-[#006bd6] transition-[translate,background-color] duration-200 ease-out data-[mode=barter]:translate-x-full data-[mode=barter]:bg-[#b84617] motion-reduce:transition-none" />
     {(['market', 'barter'] as const).map((value) => {
