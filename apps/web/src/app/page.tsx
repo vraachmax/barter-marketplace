@@ -334,6 +334,8 @@ async function renderHome(sp: HomeSearchParams) {
     ...(currentSort ? { sort: currentSort } : {}),
     ...(geoOk ? { lat: String(latN), lon: String(lonN), radiusKm: currentRadiusKm } : {}),
   };
+  // Keep explicit "all cities" even if a saved city preference exists.
+  const retryQuery = { ...preservedListQuery, city: currentCity ?? '', ...(recoMode ? { reco: '1' } : {}) };
 
   // Category illustrations are decorative; destinations always come from API slugs.
   const CATS = [
@@ -429,7 +431,7 @@ async function renderHome(sp: HomeSearchParams) {
         {catRes.status === 'rejected' && !apiBackendDown ? (
           <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted p-4 text-foreground">
             <p className="text-sm">Категории не загрузились. Объявления доступны ниже.</p>
-            <HomeRetryForm values={{ ...preservedListQuery, ...(recoMode ? { reco: '1' } : {}) }} />
+            <HomeRetryForm values={retryQuery} />
           </div>
         ) : null}
         <div className="grid min-w-0 max-w-full grid-flow-col grid-rows-2 auto-cols-[8.5rem] gap-2 overflow-x-auto pb-2 [scrollbar-width:thin] md:gap-3">
@@ -537,7 +539,7 @@ async function renderHome(sp: HomeSearchParams) {
                   <p className="mt-1.5 text-sm text-muted-foreground">
                     {apiBackendDown ? feedError : currentMode === 'barter' ? 'Пока нет подходящих предложений обмена. Измените фильтры или добавьте своё объявление.' : 'Попробуйте снять категорию или изменить город.'}
                   </p>
-                  {apiBackendDown ? <div className="mt-5"><HomeRetryForm values={{ ...preservedListQuery, ...(recoMode ? { reco: '1' } : {}) }} /></div> : null}
+                  {apiBackendDown ? <div className="mt-5"><HomeRetryForm values={retryQuery} /></div> : null}
                 </div>
               ) : null}
               {mergedFeed.map((x) => (
