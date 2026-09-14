@@ -38,6 +38,9 @@ export function assertCatalogMode<T extends {
 }
 
 export function catalogErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.name === 'TimeoutError') {
+    return 'Сервер отвечает дольше обычного. Повторите загрузку через несколько секунд. Выбранные фильтры сохранятся.';
+  }
   return error instanceof Error && error.message === 'barter_filter_unavailable'
     ? 'Режим «Бартер» появится после обновления сервера. Сейчас можно смотреть объявления в «Маркете».'
     : 'Не удалось загрузить объявления. Проверьте фильтры и повторите попытку.';
