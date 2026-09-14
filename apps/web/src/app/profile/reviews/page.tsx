@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, MessageSquare, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { AccountScreenHeader } from '@/components/account-screen-header';
 import { apiFetchJson, type MyReviewsResponse } from '@/lib/api';
 
@@ -29,10 +30,10 @@ export default function MyReviewsPage() {
 
     <main className="mx-auto max-w-3xl px-4 pb-32 pt-6 md:px-6 md:pt-8">
       {status === 'loading' ? <div role="status" aria-label="Загружаем отзывы" className="space-y-4 animate-pulse motion-reduce:animate-none"><div className="h-44 rounded-3xl bg-muted" /><div className="h-14 rounded-2xl bg-muted" /><div className="h-36 rounded-3xl bg-muted" /></div> : null}
-      {status === 'need_auth' ? <div className="rounded-3xl border border-border bg-card p-8 text-center"><MessageSquare className="mx-auto mb-4 text-primary" size={36} /><h2 className="text-xl font-bold">Ваши отзывы будут здесь</h2><p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы увидеть оценки и отзывы о сделках.</p><Link href="/auth?next=%2Fprofile%2Freviews" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-7 font-semibold text-primary-foreground">Войти</Link></div> : null}
-      {status === 'error' ? <div role="alert" className="rounded-3xl border border-border bg-card p-6"><p>Не удалось загрузить отзывы.</p><button onClick={() => { setStatus('loading'); void load(); }} className="mt-4 min-h-11 rounded-full bg-primary px-5 font-semibold text-primary-foreground">Повторить</button></div> : null}
+      {status === 'need_auth' ? <div className="rounded-3xl border border-border bg-card p-8 text-center"><MessageSquare className="mx-auto mb-4 text-primary" size={36} /><h2 className="text-xl font-bold">Ваши отзывы будут здесь</h2><p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы увидеть оценки и отзывы о сделках.</p><Button render={<Link href="/auth?next=%2Fprofile%2Freviews" />} size="lg" className="mt-6">Войти</Button></div> : null}
+      {status === 'error' ? <div role="alert" className="rounded-3xl border border-border bg-card p-6"><p>Не удалось загрузить отзывы.</p><Button className="mt-4" onClick={() => { setStatus('loading'); void load(); }}>Повторить</Button></div> : null}
       {status === 'ready' ? <>
-        <section aria-label="Ваш рейтинг" className="relative overflow-hidden rounded-[28px] border border-border/70 bg-card p-6 shadow-sm md:p-8">
+        <section aria-label="Ваш рейтинг" className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-6 shadow-sm md:p-8">
           <div className="pointer-events-none absolute -right-10 -top-10 size-44 rounded-full bg-primary/5" aria-hidden />
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Ваша репутация</p>
           <div className="mt-5 flex items-end gap-4">

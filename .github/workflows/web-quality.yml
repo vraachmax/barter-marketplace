@@ -1,0 +1,40 @@
+name: Web quality
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'apps/web/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/web-quality.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'apps/web/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/web-quality.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  web-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Web regression tests
+        run: npm run test -w @app/web
+      - name: Production build and TypeScript
+        run: npm run build -w @app/web -- --webpack
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'

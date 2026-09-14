@@ -9,7 +9,6 @@ import {
   Eye,
   MapPin,
   ShieldCheck,
-  ArrowLeft,
 } from 'lucide-react';
 import { apiGetJson, type ListingCard, API_URL, resolveAssetUrl } from '@/lib/api';
 import ListingContactActions from '@/components/listing-contact-actions';
@@ -24,7 +23,7 @@ import { SellerPresenceBadge } from '@/components/seller-presence-badge';
 import { ListingShareButton, ListingReportButton } from '@/components/listing-actions';
 import { ListingMiniMap } from '@/components/listing-mini-map';
 import { SiteFooter } from '@/components/site-footer';
-import { Button } from '@/components/ui/button';
+import { ScreenHeader } from '@/components/screen-header';
 import { Card } from '@/components/ui/card';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -112,14 +111,14 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 py-2 md:px-6">
-          <Button render={<Link href="/" />} variant="ghost" size="sm">
-            <ArrowLeft size={20} strokeWidth={1.8} aria-hidden /> В ленту
-          </Button>
-          <ListingShareButton title={listing.title} />
-        </div>
-      </header>
+      <ScreenHeader
+        title="Объявление"
+        titleAs="p"
+        backHref="/"
+        backLabel="Назад в ленту"
+        width="wide"
+        actions={<ListingShareButton title={listing.title} />}
+      />
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 md:px-6 lg:pb-12">
         <ListingViewTracker listingId={listing.id} />
         <nav aria-label="Путь к объявлению" className="mb-3 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">

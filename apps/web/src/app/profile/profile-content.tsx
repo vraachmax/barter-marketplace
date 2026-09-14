@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useListingActions } from '@/lib/use-listing-actions';
 import { Card } from '@/components/ui/card';
+import { AccountScreenHeader } from '@/components/account-screen-header';
+import { useAuth } from '@/components/auth-provider';
 import { ListingEditorDialog } from '@/components/listing-editor-dialog';
 import { canOfferBarter } from '@/lib/barter-category';
 import { Button } from '@/components/ui/button';
@@ -20,15 +22,12 @@ import {
   FileText,
   Grid3x3,
   Headphones,
-  Home,
   LogOut,
-  Search,
   Settings,
   ShoppingBag,
   Sparkles,
   Star,
   Wallet,
-  ArrowLeft,
 } from 'lucide-react';
 
 const s = 1.8;
@@ -65,6 +64,7 @@ function formatPromoEndsAt(iso: string) {
 }
 
 export function ProfileContent() {
+  const { logout: logoutAccount } = useAuth();
   const { busy: actionBusy, notice: actionNotice, error: actionError, needsLogin: actionNeedsLogin, performAction } = useListingActions(loadMe);
   const [supportSheetOpen, setSupportSheetOpen] = useState(false);
   const router = useRouter();
@@ -181,7 +181,7 @@ export function ProfileContent() {
 
   async function logout() {
     if (actionBusy) return;
-    await apiFetchJson<{ ok: true }>('/auth/logout', { method: 'POST' });
+    await logoutAccount();
     setMe(null);
     setStatus('need_auth');
   }
@@ -254,33 +254,15 @@ export function ProfileContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      {/* Mobile header */}
-      <header className="glass-panel sticky top-0 z-20 border-b border-border pt-[env(safe-area-inset-top)] md:hidden">
-        <div className="flex h-14 items-center justify-between px-4">
-          {showListingsView ? (
-            <Link
-              href="/profile"
-              aria-label="Вернуться в профиль"
-              className="inline-flex size-11 items-center justify-center rounded-lg transition hover:bg-muted"
-            >
-              <ArrowLeft size={24} strokeWidth={s} aria-hidden />
-            </Link>
-          ) : (
-            <span className="size-11" aria-hidden />
-          )}
-          <h1 className="text-base font-bold text-foreground">{showListingsView ? 'Мои объявления' : 'Профиль'}</h1>
-          <Button variant="ghost" size="icon"
-            type="button"
-            onClick={() => router.push('/search')}
-            aria-label="Открыть поиск"
-            className="inline-flex size-11 items-center justify-center rounded-full transition hover:bg-muted"
-          >
-            <Search size={24} strokeWidth={s} className="text-foreground" aria-hidden />
-          </Button>
-        </div>
-      </header>
+      <AccountScreenHeader
+        title={showListingsView ? 'Мои объявления' : 'Профиль'}
+        subtitle={showListingsView ? 'Публикация и управление объявлениями' : 'Ваш аккаунт и активность'}
+        backHref={showListingsView ? '/profile' : '/'}
+        backLabel={showListingsView ? 'Назад в профиль' : 'Назад в ленту'}
+        width="catalog"
+      />
 
-      <div className="mx-auto max-w-7xl px-4 pt-6 pb-32 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-7xl px-4 pt-6 pb-32 md:px-6 lg:pt-8">
         {actionNotice ? (
           <div role={actionError ? 'alert' : 'status'} aria-live="polite" className="sticky top-16 z-30 mb-4 rounded-2xl border border-border bg-card p-4 text-sm text-foreground shadow-sm">
             <p>{actionNotice}</p>
@@ -305,7 +287,7 @@ export function ProfileContent() {
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-lg bg-card">
                   <Sparkles size={32} strokeWidth={s} className="[color:var(--mode-accent)]" aria-hidden />
                 </div>
-                <h1 className="mt-4 text-xl font-bold text-foreground">Кабинет продавца</h1>
+                <h2 className="mt-4 text-xl font-semibold text-foreground">Кабинет продавца</h2>
                 <p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы управлять объявлениями и заказами.</p>
               </div>
               <div className="p-6">
@@ -590,7 +572,7 @@ export function ProfileContent() {
             {/* DESKTOP SECTION (hidden md:block) */}
             <div className="hidden md:block">
               <div className="grid gap-6 lg:grid-cols-[280px_1fr] lg:items-start">
-                <ProfileSidebar
+                <div className="hidden lg:block"><ProfileSidebar
                   active="profile"
                   activeCount={activeCount}
                   archivedCount={archivedCount}
@@ -600,28 +582,9 @@ export function ProfileContent() {
                   ratingCount={publicProfile?.rating.count ?? 0}
                   sellerUserId={me.id}
                   onLogout={() => void logout()}
-                />
+                /></div>
 
                 <main className="min-w-0 space-y-6">
-                  {/* Desktop title */}
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">Кабинет продавца</h1>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Метрики, задачи и управление лотами в одном месте.
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                      <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 rounded-lg [background-color:var(--mode-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:[background-color:var(--mode-accent-hover)]"
-                      >
-                        <Home size={20} strokeWidth={s} className="text-white" aria-hidden />
-                        На главную
-                      </Link>
-                    </div>
-                  </div>
-
                   {/* KPI strip — Seller Hub */}
                   <div className="overflow-hidden rounded-3xl border border-border bg-card">
                     <div className="[background-color:var(--mode-accent-soft)] px-5 py-5 text-foreground">

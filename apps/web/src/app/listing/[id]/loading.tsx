@@ -5,9 +5,10 @@ export default function ListingLoading() {
     <div className="min-h-screen bg-background pb-28 lg:pb-12">
       <p role="status" className="sr-only">Загружаем объявление…</p>
       <div aria-hidden="true">
-        <div className="border-b border-border">
-          <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between px-4 py-2 md:px-6">
-            <Skeleton className="h-11 w-28 rounded-full motion-reduce:animate-none" />
+        <div className="glass-panel border-b border-border/60 pt-[env(safe-area-inset-top)]">
+          <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 py-2 md:px-6">
+            <Skeleton className="size-11 shrink-0 rounded-full motion-reduce:animate-none" />
+            <div className="min-w-0 flex-1"><Skeleton className="h-6 w-28 motion-reduce:animate-none" /></div>
             <Skeleton className="h-11 w-32 rounded-full motion-reduce:animate-none" />
           </div>
         </div>
