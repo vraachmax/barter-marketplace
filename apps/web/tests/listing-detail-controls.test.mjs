@@ -97,7 +97,9 @@ test('cancelling native share does not copy the URL', async () => {
   const error = new Error('cancelled');
   error.name = 'AbortError';
   const render = harness(null, { share: async () => { throw error; }, clipboard: { writeText: async () => { copies++; } } });
-  button(render('ListingShareButton'), 'Поделиться').props.onClick();
+  const trigger = button(render('ListingShareButton'), 'Поделиться');
+  assert.equal(trigger.props['aria-label'], 'Поделиться');
+  trigger.props.onClick();
   await new Promise((done) => setImmediate(done));
   assert.equal(copies, 0);
 });

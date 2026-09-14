@@ -38,7 +38,7 @@ export function ListingShareButton({ title }: { title: string }) {
   }
   return (
     <Dialog open={state === 'fallback'} onOpenChange={(open) => { if (!open) setState('idle'); }}>
-      <Button type="button" variant="ghost" size="sm" onClick={() => void share()}>
+      <Button type="button" variant="ghost" size="sm" aria-label={state === 'copied' ? 'Ссылка скопирована' : 'Поделиться'} onClick={() => void share()}>
         {state === 'copied' ? <Check size={18} aria-hidden /> : <Share2 size={18} aria-hidden />}
         <span role="status">{state === 'copied' ? 'Ссылка скопирована' : 'Поделиться'}</span>
       </Button>
