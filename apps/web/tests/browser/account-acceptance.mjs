@@ -161,7 +161,7 @@ async function screenshot(page, key) {
 async function runScenario(browserType, mode, theme) {
   const browser = await browserType.launch();
   const context = await browser.newContext({
-    viewport: mode === 'mobile' ? { width: 390, height: 844 } : { width: 1280, height: 900 },
+    viewport: mode === 'mobile' ? { width: 390, height: 844 } : mode === 'tablet' ? { width: 820, height: 1180 } : { width: 1280, height: 900 },
     isMobile: mode === 'mobile', hasTouch: mode === 'mobile', deviceScaleFactor: 1,
     colorScheme: theme, reducedMotion: 'reduce', serviceWorkers: 'block',
   });
@@ -282,6 +282,7 @@ try {
   await waitForServer();
   for (const theme of ['light', 'dark']) {
     await runScenario(chromium, 'desktop', theme);
+    await runScenario(chromium, 'tablet', theme);
     await runScenario(webkit, 'mobile', theme);
   }
   // A review sheet is a browser screenshot of actual captured screens, not a generated mockup.
@@ -304,4 +305,4 @@ try {
     baseURL, results,
   }, null, 2));
 }
-if (results.length !== 4 || results.some(result => !result.passed)) process.exitCode = 1;
+if (results.length !== 6 || results.some(result => !result.passed)) process.exitCode = 1;
