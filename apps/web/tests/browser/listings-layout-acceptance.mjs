@@ -114,6 +114,7 @@ async function installFixture(context, state, theme) {
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
     if (path === '/categories') return json([category]);
+    if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
     if (path === '/wallet/packages') return json(packages);
     if (path === '/wallet/pro-plans') return json(plans);
@@ -143,11 +144,12 @@ async function contained(locator) {
 }
 
 async function headerCheck(page) {
-  const title = page.locator('header h1');
+  await expect(page.locator('header:visible')).toHaveCount(1);
+  const title = page.locator('header:visible h1');
   await expect(title).toHaveText('Мои объявления');
   const style = await title.evaluate(el => ({ font: getComputedStyle(el).fontSize, weight: getComputedStyle(el).fontWeight }));
   assert.deepEqual(style, { font: '18px', weight: '600' });
-  const box = await page.locator('header').boundingBox();
+  const box = await page.locator('header:visible').boundingBox();
   assert(box.height >= 64);
   await contained(page.getByRole('navigation', { name: 'Статусы объявлений' }));
 }
@@ -158,6 +160,13 @@ async function shot(page, key, scrollTarget) {
   await page.screenshot({ path: join(output, key + '.png'), animations: 'disabled', fullPage: true });
   const preview = await page.screenshot({ type: 'jpeg', quality: 70, animations: 'disabled' });
   if (key.includes('-440-')) shots.push({ key, image: preview.toString('base64') });
+}
+
+async function visit(page, path) {
+  // Finish background prefetch before unloading the document, then await the new page.
+  await page.waitForLoadState('networkidle');
+  await page.goto(baseURL + path);
+  await page.waitForLoadState('networkidle');
 }
 
 async function scenario(browserType, width, theme) {
@@ -174,9 +183,9 @@ async function scenario(browserType, width, theme) {
   const key = browserType.name() + '-' + width + '-' + theme;
   const checks = [];
   try {
-    await page.goto(baseURL + '/profile/listings?tab=SOLD');
+    await visit(page, '/profile/listings?tab=SOLD');
     await expect(page).toHaveURL(/\/listings\?tab=COMPLETED/);
-    await page.goto(baseURL + '/listings?tab=NEEDS_ACTION');
+    await visit(page, '/listings?tab=NEEDS_ACTION');
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
     const tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
@@ -204,7 +213,9 @@ async function scenario(browserType, width, theme) {
 
     await tabs.getByRole('button', { name: 'Завершены 1', exact: true }).click();
     await expect(page).toHaveURL(/tab=COMPLETED/);
+    await page.waitForLoadState('networkidle');
     await page.reload();
+    await page.waitForLoadState('networkidle');
     const sold = page.locator('main li').filter({ hasText: 'Проданное объявление' });
     await sold.locator('summary').click();
     await sold.getByRole('button', { name: 'Вернуть в активные', exact: true }).click();
@@ -229,7 +240,7 @@ async function scenario(browserType, width, theme) {
     assert.equal(state.writes.length, 2);
     checks.push('shared promotion chooser opens without payment');
 
-    await page.goto(baseURL + '/pricing');
+    await visit(page, '/pricing');
     const badge = page.getByText('Рекомендуем', { exact: true });
     await expect(badge).toBeVisible();
     await badge.scrollIntoViewIfNeeded();
@@ -242,7 +253,7 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByRole('link', { name: 'Применить', exact: true }).first()).toHaveAttribute('href', '/listings');
     checks.push('recommended badge fully inside plan card');
 
-    await page.goto(baseURL + '/?mode=market&sort=new');
+    await visit(page, '/?mode=market&sort=new');
     const toggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
     for (const mode of ['market', 'barter']) {
       const label = mode === 'market' ? 'Маркет' : 'Бартер';
@@ -257,7 +268,7 @@ async function scenario(browserType, width, theme) {
       assert(Math.abs(pill.x + pill.width / 2 - selected.x - selected.width / 2) <= 2, 'selected pill is off-center');
     }
     await shot(page, key + '-catalog');
-    await page.goto(baseURL + '/search');
+    await visit(page, '/search');
     const searchToggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
     await expect(searchToggle).toBeVisible();
     const searchBox = await contained(searchToggle);
@@ -265,13 +276,13 @@ async function scenario(browserType, width, theme) {
     checks.push('catalog and search centered, selected pill aligned, sort preserved');
 
     state.failListings = true;
-    await page.goto(baseURL + '/listings');
+    await visit(page, '/listings');
     await expect(page.getByRole('heading', { name: 'Не удалось загрузить объявления' })).toBeVisible();
     state.failListings = false;
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
     state.guest = true;
-    await page.goto(baseURL + '/listings?tab=COMPLETED');
+    await visit(page, '/listings?tab=COMPLETED');
     await expect(page.getByRole('link', { name: 'Войти или зарегистрироваться' })).toHaveAttribute('href', '/auth?next=%2Flistings%3Ftab%3DCOMPLETED');
     assert.deepEqual(errors, [], 'browser errors');
     assert.deepEqual(state.unexpected, [], 'unexpected browser requests');
@@ -292,7 +303,7 @@ try {
   }
   const browser = await chromium.launch();
   try {
-    const page = await browser.newPage({ viewport: { width: 900, height: 1400 }, deviceScaleFactor: 1 });
+    const page = await browser.newPage({ viewport: { width: 900, height: 720 }, deviceScaleFactor: 1 });
     await page.setContent('<html><style>body{margin:0;background:#dce1e8;font:13px Arial}.grid{display:grid;grid-template-columns:repeat(3,300px)}figure{margin:0;padding:8px}figcaption{height:32px}img{display:block;width:284px}</style><div class="grid">' +
       shots.filter(x => !x.key.endsWith('failure')).map(x => '<figure><figcaption>' + x.key + '</figcaption><img src="data:image/jpeg;base64,' + x.image + '"></figure>').join('') + '</div></html>');
     await page.locator('img').evaluateAll(images => Promise.all(images.map(img => img.decode())));
