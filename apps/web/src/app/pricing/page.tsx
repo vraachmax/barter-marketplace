@@ -206,7 +206,7 @@ export default function PricingPage() {
                   className={`group relative flex flex-col gap-3 rounded-3xl border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-md ${pkg.isBundle ? 'ring-1 ring-accent/40' : ''}`}
                 >
                   {pkg.isBundle ? (
-                    <Badge className="absolute right-3 top-3 bg-accent/90 text-white">Пакет</Badge>
+                    <Badge className="w-fit max-w-full self-start bg-accent/10 text-accent">Пакет</Badge>
                   ) : null}
                   <div className="flex items-center gap-3">
                     <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${meta.toneBg} ${meta.toneText}`}>
@@ -239,7 +239,7 @@ export default function PricingPage() {
                       </p>
                     </div>
                     <Link
-                      href="/profile/listings"
+                      href="/listings"
                       className="inline-flex min-h-11 items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-primary hover:text-white"
                     >
                       Применить
@@ -293,7 +293,7 @@ export default function PricingPage() {
                   className={`relative flex flex-col gap-4 rounded-3xl border-border bg-card p-5 ring-1 ${tone.ring} ${tone.popular ? 'shadow-sm' : ''}`}
                 >
                   {tone.popular ? (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white shadow">
+                    <Badge className="w-fit max-w-full self-start whitespace-normal bg-primary text-primary-foreground">
                       <Sparkles size={12} strokeWidth={1.8} className="mr-1" />
                       Рекомендуем
                     </Badge>

@@ -46,6 +46,18 @@ jobs:
         run: node apps/web/tests/browser/account-acceptance.mjs
         env:
           BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Listings, pricing and catalog browser acceptance
+        run: node apps/web/tests/browser/listings-layout-acceptance.mjs
+        env:
+          BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Upload listings layout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: listings-layout-evidence
+          path: apps/web/test-results/listings-layout/
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Upload account acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
