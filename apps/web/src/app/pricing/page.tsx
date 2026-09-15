@@ -293,7 +293,7 @@ export default function PricingPage() {
                   className={`relative flex flex-col gap-4 rounded-3xl border-border bg-card p-5 ring-1 ${tone.ring} ${tone.popular ? 'shadow-sm' : ''}`}
                 >
                   {tone.popular ? (
-                    <Badge className="w-fit max-w-full self-start whitespace-normal bg-primary/10 text-primary">
+                    <Badge className="w-fit max-w-full self-start whitespace-normal bg-primary text-primary-foreground">
                       <Sparkles size={12} strokeWidth={1.8} className="mr-1" />
                       Рекомендуем
                     </Badge>
