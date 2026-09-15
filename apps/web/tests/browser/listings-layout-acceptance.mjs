@@ -47,6 +47,12 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold)\/similar$/.test(url.pathname)) data = [];
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold)$/.test(url.pathname)) {
+    // Next Link prefetch also requests listing metadata through the server API.
+    const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id);
+    data = { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
+  }
   else { serverUnexpected.push(req.method + ' ' + url.pathname); res.statusCode = 404; data = {}; }
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify(data));
@@ -168,6 +174,8 @@ async function scenario(browserType, width, theme) {
   const key = browserType.name() + '-' + width + '-' + theme;
   const checks = [];
   try {
+    await page.goto(baseURL + '/profile/listings?tab=SOLD');
+    await expect(page).toHaveURL(/\/listings\?tab=COMPLETED/);
     await page.goto(baseURL + '/listings?tab=NEEDS_ACTION');
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
@@ -249,7 +257,12 @@ async function scenario(browserType, width, theme) {
       assert(Math.abs(pill.x + pill.width / 2 - selected.x - selected.width / 2) <= 2, 'selected pill is off-center');
     }
     await shot(page, key + '-catalog');
-    checks.push('catalog centered in both modes, selected pill aligned, sort preserved');
+    await page.goto(baseURL + '/search');
+    const searchToggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
+    await expect(searchToggle).toBeVisible();
+    const searchBox = await contained(searchToggle);
+    assert(Math.abs((searchBox.left + searchBox.right) / 2 - width / 2) <= 1, 'search toggle is off-center');
+    checks.push('catalog and search centered, selected pill aligned, sort preserved');
 
     state.failListings = true;
     await page.goto(baseURL + '/listings');
@@ -277,7 +290,6 @@ try {
   for (const theme of ['light', 'dark']) {
     for (const width of [360, 440, 820, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
   }
-  assert.deepEqual(serverUnexpected, [], 'unexpected server fixture requests');
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage({ viewport: { width: 900, height: 1400 }, deviceScaleFactor: 1 });
@@ -288,6 +300,7 @@ try {
     await writeFile(join(output, 'review-sheet.jpg'), sheet);
     console.log('BARTER_LAYOUT_REVIEW_IMAGE ' + sheet.toString('base64'));
   } finally { await browser.close(); }
+  assert.deepEqual(serverUnexpected, [], 'unexpected server fixture requests');
 } finally {
   server.kill('SIGTERM');
   api.close();
