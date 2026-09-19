@@ -39,9 +39,10 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Generate Prisma and apply full migration chain to isolated PostgreSQL
+        working-directory: apps/api
         run: |
-          npx prisma generate --schema apps/api/prisma/schema.prisma
-          npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+          npx prisma generate
+          npx prisma migrate deploy
       - name: API production build
         run: npm run build -w @app/api
       - name: HTTP and PostgreSQL message acceptance
