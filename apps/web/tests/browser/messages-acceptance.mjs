@@ -168,6 +168,8 @@ async function scenario(type, width, theme) {
     const geometry = await send.evaluate(el => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, height: r.height, viewport: innerHeight, width: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth }; });
     assert(geometry.height >= 44 && geometry.top >= 0 && geometry.bottom <= geometry.viewport);
     assert(geometry.scrollWidth <= geometry.width + 1);
+    await expect(input).toBeEnabled();
+    await expect(input).toHaveValue('');
     await input.focus();
     await expect(input).toBeFocused();
     await page.screenshot({ path: join(output, key + '.png'), fullPage: true });
