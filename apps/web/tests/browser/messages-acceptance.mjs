@@ -130,7 +130,7 @@ async function scenario(type, width, theme) {
     await input.fill('Отправка в старый чат');
     let releaseSend;
     state.holdSend = new Promise(resolve => { releaseSend = resolve; });
-    await send.click();
+    await send.evaluate(button => { button.click(); button.click(); });
     await expect(send).toBeDisabled();
     await choose('Борис');
     await expect(input).toHaveValue('Черновик Борису');
@@ -180,7 +180,7 @@ async function scenario(type, width, theme) {
     await choose('Борис');
     await page.goBack();
     await expect(page).toHaveURL(width < 768 ? /\/messages$/ : /chatId=a/);
-    if (width < 768) await expect(page.getByRole('textbox', { name: 'Поиск по диалогам' })).toBeVisible();
+    if (width < 768) await expect(page.getByRole('searchbox', { name: 'Поиск по диалогам' })).toBeVisible();
     assert.deepEqual(errors, []);
     assert.deepEqual(state.unexpected, []);
     checks.push('browser back and no unexpected API calls');

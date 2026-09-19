@@ -218,7 +218,7 @@ export default function MessagesPage() {
   }, []);
 
   async function openByListing(maybeListingId: string) {
-    const res = await apiFetchJson<{ id: string }>(`/chats/by-listing/${maybeListingId}`, {
+    const res = await apiFetchJson<{ id: string }>(`/chats/by-listing/${encodeURIComponent(maybeListingId)}`, {
       method: 'POST',
     });
     if (!res.ok) {
@@ -378,6 +378,13 @@ export default function MessagesPage() {
       const list = await loadChats();
       if (!alive) return;
 
+      if (preferredChatId && !list.some(c => c.id === preferredChatId)) {
+        activateChat('');
+        setMobileThreadOpen(false);
+        setOpenError('Диалог недоступен. Обновите список или выберите другую переписку.');
+        return;
+      }
+      setOpenError('');
       let targetChatId =
         preferredChatId && list.some((c) => c.id === preferredChatId) ? preferredChatId : list[0]?.id ?? '';
       if (listingId) {
@@ -386,6 +393,7 @@ export default function MessagesPage() {
         if (!createdId) { activateChat(''); return; }
         if (createdId) {
           const updated = await loadChats();
+          if (!alive) return;
           targetChatId = createdId || updated[0]?.id || '';
         }
       }
