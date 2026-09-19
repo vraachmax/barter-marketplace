@@ -105,6 +105,7 @@ export default function MessagesPage() {
   const [threadStatus, setThreadStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [sendErrors, setSendErrors] = useState<Record<string, string>>({});
   const sendingRef = useRef(false);
+  const textAttemptsRef = useRef<Record<string, { text: string; key: string }>>({});
   const messageRequestRef = useRef(0);
   const listRequestRef = useRef(0);
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
@@ -255,6 +256,17 @@ export default function MessagesPage() {
     const chatId = selectedChatId;
     const currentText = text;
     const file = selectedFile;
+    // Keep the same key after an ambiguous failure, even across chat switches.
+    // A confirmed send or a different payload starts a new logical operation.
+    let attempt: { text: string; key: string } | undefined;
+    if (!withFile) {
+      const payload = currentText.trim();
+      attempt = textAttemptsRef.current[chatId];
+      if (!attempt || attempt.text !== payload) {
+        attempt = { text: payload, key: crypto.randomUUID() };
+        textAttemptsRef.current[chatId] = attempt;
+      }
+    }
     sendingRef.current = true;
     setBusy(true);
     setSendErrors(previous => ({ ...previous, [chatId]: '' }));
@@ -262,7 +274,7 @@ export default function MessagesPage() {
       const res = withFile && file
         ? await apiUploadFile(`/chats/${encodeURIComponent(chatId)}/media`, file, 'file', { text: currentText.trim() })
         : await apiFetchJson<ChatMessage>(`/chats/${encodeURIComponent(chatId)}/messages`, {
-            method: 'POST', body: JSON.stringify({ text: currentText.trim() }),
+            method: 'POST', body: JSON.stringify({ text: currentText.trim(), clientMessageId: attempt!.key }),
             signal: AbortSignal.timeout(20000),
           });
       if (!res.ok) {
@@ -273,6 +285,7 @@ export default function MessagesPage() {
         setSendErrors(previous => ({ ...previous, [chatId]: message }));
         return;
       }
+      if (attempt && textAttemptsRef.current[chatId] === attempt) delete textAttemptsRef.current[chatId];
       setDrafts(previous => {
         const draft = previous[chatId];
         if (!draft) return previous;

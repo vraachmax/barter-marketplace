@@ -41,7 +41,7 @@ function fixture(theme) {
     user: { id: 'fixture-user', name: 'Покупатель', email: 'buyer@example.test', appTheme: theme.toUpperCase() },
     chats: ['a', 'b'].map(id => ({ id, peer: { id: 'peer-' + id, name: id === 'a' ? 'Анна' : 'Борис' }, listing: null, myRole: 'buyer', unreadCount: 0, updatedAt: '2026-09-19T12:00:00Z', lastMessage: null })),
     messages: { a: [message('a-1', 'Сообщение Анны')], b: [message('b-1', 'Сообщение Бориса', 'peer-b')] },
-    sends: [], unexpected: [], rejectSend: false, rejectHistory: false, rejectList: false,
+    sends: [], savedAttempts: new Map(), loseSendResponse: false, unexpected: [], rejectSend: false, rejectHistory: false, rejectList: false,
     holdSend: null, holdHistory: null, historyStarted: false, guest: false,
     makeMessage: message,
   };
@@ -72,11 +72,17 @@ async function install(context, state, theme) {
       }
       if (req.method() === 'POST') {
         const body = req.postDataJSON();
-        state.sends.push({ id, text: body.text });
+        state.sends.push({ id, text: body.text, key: body.clientMessageId });
+        assert.match(body.clientMessageId, /^[0-9a-f-]{36}$/);
         if (state.holdSend) await state.holdSend;
         if (state.rejectSend) return json({ message: 'temporarily unavailable' }, 503);
+        const attemptKey = id + ':' + body.clientMessageId;
+        const previous = state.savedAttempts.get(attemptKey);
+        if (previous) return json(previous, previous.text === body.text ? 200 : 409);
         const message = state.makeMessage('sent-' + state.sends.length, body.text, state.user.id);
         state.messages[id].push(message);
+        state.savedAttempts.set(attemptKey, message);
+        if (state.loseSendResponse) { state.loseSendResponse = false; return json({ message: 'response lost after commit' }, 503); }
         return json(message);
       }
     }
@@ -178,6 +184,31 @@ async function scenario(type, width, theme) {
       for (let offset = 0; offset < encoded.length; offset += 6000) console.log('BARTER_MESSAGES_IMAGE ' + key + ' ' + offset + ' ' + encoded.slice(offset, offset + 6000));
     }
     checks.push('history error/retry, long text, focus and composer geometry');
+
+    const beforeLoss = state.messages.a.length;
+    await input.fill('Сохранено, но ответ потерян');
+    state.loseSendResponse = true;
+    await send.click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Нет подтверждения отправки' })).toBeVisible();
+    await expect(input).toBeEnabled();
+    const lostKey = state.sends.at(-1).key;
+    assert.equal(state.messages.a.length, beforeLoss + 1);
+    await choose('Борис');
+    await choose('Анна');
+    await expect(input).toHaveValue('Сохранено, но ответ потерян');
+    await send.click();
+    await expect(input).toHaveValue('');
+    await expect(input).toBeEnabled();
+    assert.equal(state.sends.at(-1).key, lostKey);
+    assert.equal(state.messages.a.length, beforeLoss + 1);
+    await expect(page.getByText('Сохранено, но ответ потерян', { exact: true })).toHaveCount(1);
+    await input.fill('Сохранено, но ответ потерян');
+    await send.click();
+    await expect(input).toHaveValue('');
+    await expect(input).toBeEnabled();
+    assert.notEqual(state.sends.at(-1).key, lostKey);
+    assert.equal(state.messages.a.length, beforeLoss + 2);
+    checks.push('lost acknowledgement reuses key; new identical message uses a new key');
 
     await choose('Борис');
     await page.goBack();
