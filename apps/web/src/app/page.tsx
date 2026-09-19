@@ -423,9 +423,9 @@ async function renderHome(sp: HomeSearchParams) {
         </div>
       </header>
 
-      <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-start gap-2 px-4 pt-4 md:flex-row md:items-center md:justify-between md:px-6">
+      <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-2 px-4 pt-4 md:px-6">
         <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
-        <p className="text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Весь каталог: покупки и предложения обмена'}</p>
+        <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Весь каталог: покупки и предложения обмена'}</p>
       </div>
       <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
         {catRes.status === 'rejected' && !apiBackendDown ? (

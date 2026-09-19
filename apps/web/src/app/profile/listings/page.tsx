@@ -1,25 +1,14 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { Suspense } from 'react';
-import { ProfileContent } from '../profile-content';
-
-function ListingsFallback() {
-  return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 bg-background">
-      <div
-        className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-transparent"
-        role="status"
-        aria-label="Загрузка"
-      />
-      <p className="text-sm text-muted-foreground">Загрузка объявлений…</p>
-    </div>
-  );
-}
-
-export default function MobileListingsPage() {
-  return (
-    <Suspense fallback={<ListingsFallback />}>
-      <ProfileContent />
-    </Suspense>
-  );
+/** Keep saved profile links on the same listings screen as the mobile hub. */
+export default async function ProfileListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string | string[] }>;
+}) {
+  const { tab } = await searchParams;
+  const value = Array.isArray(tab) ? tab[0] : tab;
+  const target = value === 'NEEDS_ACTION' ? 'NEEDS_ACTION'
+    : value === 'COMPLETED' || value === 'ARCHIVED' || value === 'SOLD' ? 'COMPLETED' : 'ACTIVE';
+  redirect(`/listings?tab=${target}`);
 }
