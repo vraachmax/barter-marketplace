@@ -175,7 +175,17 @@ async function scenario(browserType, width, theme) {
   const errors = [];
   const failedRequests = [];
   const pendingRsc = new Set();
-  const onError = e => errors.push({ message: e.message, url: page.url() });
+  let documentTransition = null;
+  const navigationDiagnostics = [];
+  const onError = e => {
+    const item = { message: e.message, url: page.url(), transition: documentTransition };
+    // WebKit reports cancelled native RSC fetches as pageerror during document
+    // replacement. Retain these diagnostics; never allow this exception during UI actions.
+    if (browserType.name() === 'webkit' && documentTransition &&
+        /^\/127\.0\.0\.1:3201\/[^\s]*[?&]_rsc=[^\s]+ due to access control checks\.$/.test(e.message)) {
+      navigationDiagnostics.push(item);
+    } else errors.push(item);
+  };
   async function visit(path) {
     // These are independent screen scenarios, not cross-document navigation tests.
     // Stop observing only when deliberately disposing the previous test document.
@@ -195,9 +205,11 @@ async function scenario(browserType, width, theme) {
   const key = browserType.name() + '-' + width + '-' + theme;
   const checks = [];
   try {
+    documentTransition = 'server redirect';
     await visit('/profile/listings?tab=SOLD');
     await expect(page).toHaveURL(/\/listings\?tab=COMPLETED/);
     await expect(page.getByRole('heading', { name: 'Завершённые объявления', exact: true })).toBeVisible();
+    documentTransition = null;
     await visit('/listings?tab=NEEDS_ACTION');
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
@@ -227,9 +239,12 @@ async function scenario(browserType, width, theme) {
     await tabs.getByRole('button', { name: 'Завершены 1', exact: true }).click();
     await expect(page).toHaveURL(/tab=COMPLETED/);
     await expect.poll(() => pendingRsc.size, { timeout: 12000, message: 'RSC prefetch must finish before reload' }).toBe(0);
+    documentTransition = 'explicit reload';
     await page.reload();
     await page.waitForLoadState('load');
     const sold = page.locator('main li').filter({ hasText: 'Проданное объявление' });
+    await expect(sold).toBeVisible();
+    documentTransition = null;
     await sold.locator('summary').click();
     await sold.getByRole('button', { name: 'Вернуть в активные', exact: true }).click();
     await expect(sold).toHaveCount(0);
@@ -300,13 +315,14 @@ async function scenario(browserType, width, theme) {
     assert.deepEqual(errors, [], 'browser errors');
     assert.deepEqual(state.unexpected, [], 'unexpected browser requests');
     checks.push('error retry and guest return route');
-    results.push({ key, passed: true, checks });
+    results.push({ key, passed: true, checks, navigationDiagnostics });
+    console.log('BARTER_NAVIGATION_DIAGNOSTICS ' + key + ' ' + JSON.stringify(navigationDiagnostics));
     console.log('BARTER_LAYOUT_PASS ' + key + ' ' + checks.length + ' checks');
   } catch (error) {
     await shot(page, key + '-failure').catch(() => {});
     results.push({ key, passed: false, checks, error: error.stack, errors, failedRequests, pendingRsc: [...pendingRsc].map(r => r.url()), unexpected: state.unexpected });
     console.error('BARTER_LAYOUT_FAIL ' + key + '\n' + error.stack);
-    console.error('BARTER_LAYOUT_DIAGNOSTICS ' + JSON.stringify({ errors, failedRequests, pendingRsc: [...pendingRsc].map(r => r.url()) }));
+    console.error('BARTER_LAYOUT_DIAGNOSTICS ' + JSON.stringify({ errors, navigationDiagnostics, failedRequests, pendingRsc: [...pendingRsc].map(r => r.url()) }));
   } finally { await context.close(); await browser.close(); }
 }
 
