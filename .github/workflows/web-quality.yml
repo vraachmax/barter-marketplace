@@ -39,6 +39,7 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: '1'
       - name: Install isolated browser test tools
+        id: browser-tools
         run: |
           npm install --prefix "$RUNNER_TEMP/barter-browser-tools" --no-package-lock --ignore-scripts @playwright/test@1.58.2
           "$RUNNER_TEMP/barter-browser-tools/node_modules/.bin/playwright" install --with-deps chromium webkit
@@ -50,6 +51,19 @@ jobs:
         run: node apps/web/tests/browser/listings-layout-acceptance.mjs
         env:
           BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Messages browser acceptance
+        if: ${{ !cancelled() && steps.browser-tools.outcome == 'success' }}
+        run: node apps/web/tests/browser/messages-acceptance.mjs
+        env:
+          BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Upload messages evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: messages-browser-evidence
+          path: apps/web/test-results/messages/
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Upload listings layout evidence
         if: always()
         uses: actions/upload-artifact@v4

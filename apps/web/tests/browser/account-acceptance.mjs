@@ -245,7 +245,9 @@ async function runScenario(browserType, mode, theme) {
     checks.push('profile → orders → profile → reviews → profile, long review text');
 
     state.failReply = true;
-    await page.goto(baseURL + '/profile/settings?section=storefront');
+    // Follow the UI route instead of aborting profile requests with a new document.
+    await page.locator('header a[href="/profile/settings"]').click();
+    await nav.getByRole('button', { name: 'Витрина продавца', exact: true }).click();
     await expect(page.getByText('Не удалось загрузить автоответ. Настройки витрины можно сохранить отдельно.')).toBeVisible();
     await name.fill('Витрина без автоответа');
     const count = state.writes.length;
