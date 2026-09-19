@@ -50,6 +50,18 @@ jobs:
         run: node apps/web/tests/browser/listings-layout-acceptance.mjs
         env:
           BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Messages browser acceptance
+        run: node apps/web/tests/browser/messages-acceptance.mjs
+        env:
+          BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Upload messages evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: messages-browser-evidence
+          path: apps/web/test-results/messages/
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Upload listings layout evidence
         if: always()
         uses: actions/upload-artifact@v4

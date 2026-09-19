@@ -29,6 +29,8 @@ import {
   SOCKET_URL,
 } from '@/lib/api';
 import { filterChatList, type ChatListFilter } from '@/lib/chat-list';
+import { Button } from '@/components/ui/button';
+import { AccountScreenHeader } from '@/components/account-screen-header';
 import { SupportSheet } from '@/components/support-sheet';
 
 function peerInitials(peer: ChatSummary['peer']): string {
@@ -86,8 +88,25 @@ export default function MessagesPage() {
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string>('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [text, setText] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, { text: string; file: File | null }>>({});
+  const text = drafts[selectedChatId]?.text ?? '';
+  const selectedFile = drafts[selectedChatId]?.file ?? null;
+  function setText(value: string | ((previous: string) => string)) {
+    const id = selectedChatIdRef.current;
+    setDrafts(previous => {
+      const draft = previous[id] ?? { text: '', file: null };
+      return { ...previous, [id]: { ...draft, text: (typeof value === 'function' ? value(draft.text) : value).slice(0, 4000) } };
+    });
+  }
+  function setSelectedFile(file: File | null) {
+    const id = selectedChatIdRef.current;
+    setDrafts(previous => ({ ...previous, [id]: { text: previous[id]?.text ?? '', file } }));
+  }
+  const [threadStatus, setThreadStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [sendErrors, setSendErrors] = useState<Record<string, string>>({});
+  const sendingRef = useRef(false);
+  const messageRequestRef = useRef(0);
+  const listRequestRef = useRef(0);
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
   const [busy, setBusy] = useState(false);
   const [onlineByUserId, setOnlineByUserId] = useState<Record<string, boolean>>({});
@@ -177,9 +196,12 @@ export default function MessagesPage() {
     socketRef.current?.emit('typing', { chatId: selectedChatIdRef.current, isTyping });
   }
 
-  const loadChats = useCallback(async () => {
-    const res = await apiFetchJson<ChatSummary[]>('/chats');
+  const loadChats = useCallback(async (background = false) => {
+    const request = ++listRequestRef.current;
+    const res = await apiFetchJson<ChatSummary[]>('/chats', { signal: AbortSignal.timeout(15000) });
+    if (request !== listRequestRef.current) return [];
     if (!res.ok) {
+      if (background) return [];
       if (res.status === 401) {
         setStatus('need_auth');
         return [];
@@ -202,59 +224,89 @@ export default function MessagesPage() {
   }
 
   async function loadMessages(chatId: string) {
-    const res = await apiFetchJson<ChatMessage[]>(`/chats/${chatId}/messages`);
-    if (!res.ok) return;
+    const request = ++messageRequestRef.current;
+    const res = await apiFetchJson<ChatMessage[]>(`/chats/${encodeURIComponent(chatId)}/messages`, {
+      signal: AbortSignal.timeout(15000),
+    });
+    if (selectedChatIdRef.current !== chatId || request !== messageRequestRef.current) return;
+    if (!res.ok) { setThreadStatus('error'); return; }
     setMessages(res.data);
+    setThreadStatus('ready');
   }
 
   async function sendMessage() {
-    if (!selectedChatId || text.trim().length === 0 || busy) return;
-    setBusy(true);
-    const currentText = text.trim();
-    const res = await apiFetchJson<ChatMessage>(`/chats/${selectedChatId}/messages`, {
-      method: 'POST',
-      body: JSON.stringify({ text: currentText }),
-    });
-    setBusy(false);
-    if (res.ok) {
-      setMessages((prev) => (prev.some((x) => x.id === res.data.id) ? prev : [...prev, res.data]));
-      setText('');
-      emitTyping(false);
-    }
-    const updated = await loadChats();
-    if (updated.length > 0 && !updated.some((c) => c.id === selectedChatId)) {
-      activateChat(updated[0].id);
-    }
+    if (!selectedChatId || !text.trim() || sendingRef.current || threadStatus !== 'ready') return;
+    await sendCurrentDraft(false);
   }
 
   async function sendAttachment() {
-    if (!selectedChatId || !selectedFile || busy) return;
+    if (!selectedChatId || !selectedFile || sendingRef.current || threadStatus !== 'ready') return;
+    await sendCurrentDraft(true);
+  }
+
+  async function sendCurrentDraft(withFile: boolean) {
+    const chatId = selectedChatId;
+    const currentText = text;
+    const file = selectedFile;
+    sendingRef.current = true;
     setBusy(true);
-    const res = await apiUploadFile(`/chats/${selectedChatId}/media`, selectedFile, 'file', {
-      text: text.trim(),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      window.alert(`Не удалось отправить файл: ${res.message ?? 'ошибка сети'}`);
-      return;
-    }
-    setText('');
-    setSelectedFile(null);
-    await Promise.all([loadMessages(selectedChatId), loadChats()]);
+    setSendErrors(previous => ({ ...previous, [chatId]: '' }));
+    try {
+      const res = withFile && file
+        ? await apiUploadFile(`/chats/${encodeURIComponent(chatId)}/media`, file, 'file', { text: currentText.trim() })
+        : await apiFetchJson<ChatMessage>(`/chats/${encodeURIComponent(chatId)}/messages`, {
+            method: 'POST', body: JSON.stringify({ text: currentText.trim() }),
+            signal: AbortSignal.timeout(20000),
+          });
+      if (!res.ok) {
+        const message = res.status === 401 ? 'Сессия истекла. Войдите снова. Черновик сохранён в открытой странице.'
+          : res.status === 0 || res.status >= 500
+            ? 'Нет подтверждения отправки. Обновите переписку и проверьте, появилось ли сообщение, прежде чем отправлять снова.'
+            : 'Не удалось отправить сообщение. Черновик сохранён, попробуйте ещё раз.';
+        setSendErrors(previous => ({ ...previous, [chatId]: message }));
+        return;
+      }
+      setDrafts(previous => {
+        const draft = previous[chatId];
+        if (!draft) return previous;
+        return { ...previous, [chatId]: {
+          text: draft.text === currentText ? '' : draft.text,
+          file: draft.file === file ? null : draft.file,
+        } };
+      });
+      socketRef.current?.emit('typing', { chatId, isTyping: false });
+      if (selectedChatIdRef.current === chatId) {
+        ++messageRequestRef.current;
+        if (!withFile) setMessages(previous => previous.some(x => x.id === res.data.id) ? previous : [...previous, res.data]);
+        else await loadMessages(chatId);
+      }
+      await loadChats(true);
+    } finally { sendingRef.current = false; setBusy(false); }
   }
 
   const activateChat = useCallback((id: string) => {
+    if (selectedChatIdRef.current === id) return;
+    socketRef.current?.emit('typing', { chatId: selectedChatIdRef.current, isTyping: false });
+    selectedChatIdRef.current = id;
+    ++messageRequestRef.current;
     setSelectedChatId(id);
+    setMessages([]);
+    setThreadStatus('loading');
     setPeerTyping(false);
     setAdvise(null);
     setAdviseDismissed(false);
     setAdviseBusy(true);
   }, []);
 
-  function selectChat(id: string) {
-    activateChat(id);
-    setMobileThreadOpen(true);
+  function navigateChat(id?: string) {
+    const next = id ? '/messages?chatId=' + encodeURIComponent(id) : '/messages';
+    window.history.pushState(null, '', next);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    setMobileThreadOpen(Boolean(id));
+    if (id) activateChat(id);
   }
+
+  function selectChat(id: string) { navigateChat(id); }
 
 
   useEffect(() => {
@@ -271,7 +323,7 @@ export default function MessagesPage() {
           );
           void loadMessages(incoming.chatId);
         }
-        void loadChats();
+        void loadChats(true);
       },
     );
     socket.on('presence-snapshot', (payload: { onlineUserIds?: string[]; lastSeenByUser?: Record<string, string> } | null | undefined) => {
@@ -301,7 +353,7 @@ export default function MessagesPage() {
       const peerId = chatsRef.current.find((c) => c.id === selectedChatIdRef.current)?.peer?.id;
       if (!peerId || payload.userId !== peerId) return;
       void loadMessages(payload.chatId);
-      void loadChats();
+      void loadChats(true);
     });
 
     return () => {
@@ -330,10 +382,7 @@ export default function MessagesPage() {
       }
       if (targetChatId) {
         activateChat(targetChatId);
-        await loadMessages(targetChatId);
-        if (listingId || preferredChatId) {
-          setMobileThreadOpen(true);
-        }
+        setMobileThreadOpen(Boolean(listingId || preferredChatId));
       }
     })();
 
@@ -346,7 +395,7 @@ export default function MessagesPage() {
     if (!selectedChatId) return;
     void (async () => {
       await loadMessages(selectedChatId);
-      await loadChats();
+      await loadChats(true);
     })();
     socketRef.current?.emit('join-chat', { chatId: selectedChatId });
     socketRef.current?.emit('read-chat', { chatId: selectedChatId });
@@ -420,6 +469,7 @@ export default function MessagesPage() {
         prompt,
       }),
     });
+    if (selectedChatIdRef.current !== selectedChatId) return;
     setAdviseBusy(false);
     if (res.ok) {
       setAdvise(res.data);
@@ -428,40 +478,17 @@ export default function MessagesPage() {
   }
 
   if (status === 'need_auth') {
-    return (
-      <div className="min-h-screen bg-muted text-foreground antialiased">
-        <div className="border-b border-border bg-card">
-          <div className="mx-auto max-w-lg px-4 py-8">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary"
-            >
-              <ChevronLeft size={20} strokeWidth={1.8} className="shrink-0" aria-hidden />
-              На главную
-            </Link>
-          </div>
+    return <div className="min-h-screen bg-background text-foreground">
+      <AccountScreenHeader title="Сообщения" subtitle="Чаты по объявлениям" backHref="/" />
+      <main className="mx-auto max-w-lg px-4 py-8">
+        <div className="rounded-3xl border border-border bg-card p-6 text-center">
+          <MessageCircle className="mx-auto size-10 text-muted-foreground" aria-hidden />
+          <h2 className="mt-4 text-xl font-semibold">Ваши переписки в одном месте</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы переписываться с продавцами и покупателями.</p>
+          <Button size="lg" className="mt-6 w-full" render={<Link href={'/auth?next=' + encodeURIComponent('/messages' + query)} />}>Войти или зарегистрироваться</Button>
         </div>
-        <div className="mx-auto max-w-lg px-4 py-10">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <div className="border-b border-border bg-primary px-6 py-8 text-center">
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-card shadow-md ring-1 ring-primary/30">
-                <MessageCircle size={36} strokeWidth={1.8} aria-hidden />
-              </div>
-              <h1 className="mt-4 text-xl font-bold text-foreground">Сообщения</h1>
-              <p className="mt-2 text-sm text-muted-foreground">Войдите, чтобы переписываться с продавцами и покупателями.</p>
-            </div>
-            <div className="p-6">
-              <Link
-                href="/auth"
-                className="flex min-h-13 w-full items-center justify-center rounded-full bg-primary px-4 text-base font-semibold text-primary-foreground hover:bg-primary-hover"
-              >
-                Войти или зарегистрироваться
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+      </main>
+    </div>;
   }
 
   const listingHref = selectedChat?.listing?.id ? `/listing/${selectedChat.listing.id}` : null;
@@ -532,7 +559,10 @@ export default function MessagesPage() {
               </div>
             ) : null}
             {status === 'error' ? (
-              <div className="p-4 text-center text-sm text-destructive">Не удалось загрузить чаты</div>
+              <div role="alert" className="p-4 text-center text-sm text-destructive">
+                <p>Не удалось загрузить чаты</p>
+                <Button variant="outline" className="mt-3" onClick={() => void loadChats()}>Повторить загрузку</Button>
+              </div>
             ) : null}
 
             <ul className="p-2 pt-0">
@@ -673,7 +703,7 @@ export default function MessagesPage() {
                 <button
                   type="button"
                   className="grid size-11 shrink-0 place-items-center rounded-full text-foreground transition active:bg-muted md:hidden"
-                  onClick={() => setMobileThreadOpen(false)}
+                  onClick={() => navigateChat()}
                   aria-label="Назад к списку"
                 >
                   <ChevronLeft size={22} strokeWidth={2} aria-hidden />
@@ -747,7 +777,9 @@ export default function MessagesPage() {
               {/* Messages */}
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-muted/30 px-3 py-5 md:px-5">
                 <div className="mx-auto max-w-3xl space-y-3">
-                  {messages.length === 0 ? (
+                  {threadStatus === 'loading' ? <p role="status" className="py-8 text-center text-sm text-muted-foreground">Загрузка переписки…</p> : null}
+                  {threadStatus === 'error' ? <div role="alert" className="rounded-2xl border border-border bg-card p-4 text-sm"><p>Не удалось загрузить переписку</p><Button variant="outline" className="mt-3" onClick={() => void loadMessages(selectedChatId)}>Обновить переписку</Button></div> : null}
+                  {threadStatus === 'ready' && messages.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-border bg-card/60 py-12 text-center text-sm text-muted-foreground">
                       Напишите первое сообщение — обычно отвечают быстрее, если указать удобное время связи.
                     </div>
@@ -915,6 +947,10 @@ export default function MessagesPage() {
 
               {/* Composer stays above the existing mobile navigation. */}
               <div className="glass-panel shrink-0 border-t border-border px-3 py-3 md:p-4">
+                {sendErrors[selectedChatId] ? <div role="alert" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-border bg-card p-3 text-sm">
+                  <p>{sendErrors[selectedChatId]}</p>
+                  <Button variant="outline" className="mt-2" disabled={busy} onClick={() => void loadMessages(selectedChatId)}>Обновить переписку</Button>
+                </div> : null}
                 {/* Quick replies chips */}
                 {quickReplies.length > 0 ? (
                   <div className="mx-auto mb-1.5 flex max-w-3xl items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -954,6 +990,7 @@ export default function MessagesPage() {
                     <input
                       type="file"
                       aria-label="Прикрепить фото или видео"
+                      disabled={busy}
                       className="absolute inset-0 w-full cursor-pointer opacity-0"
                       onChange={(e) => {
                         const file = e.currentTarget.files?.[0];
@@ -965,6 +1002,7 @@ export default function MessagesPage() {
                   <textarea
                     ref={composerRef}
                     rows={2}
+                    maxLength={4000}
                     aria-label="Сообщение"
                     className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-2.5 text-base leading-6 placeholder:text-muted-foreground transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Сообщение…"
@@ -994,7 +1032,7 @@ export default function MessagesPage() {
                         sendMessage();
                       }
                     }}
-                    disabled={busy || (text.trim().length === 0 && !selectedFile)}
+                    disabled={busy || threadStatus !== 'ready' || (text.trim().length === 0 && !selectedFile)}
                     aria-label="Отправить"
                     className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 md:w-auto md:px-4"
                   >
