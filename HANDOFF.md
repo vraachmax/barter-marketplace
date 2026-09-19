@@ -1,5 +1,60 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-19: UI-02, текстовая идемпотентность, PR #28
+
+База: master `f661a911fb8def818bdef61ba6fd599f49a65c93`.
+PR: https://github.com/vraachmax/barter-marketplace/pull/28
+
+Что изменено:
+
+- Необязательный clientMessageId (UUID v4) для текстового HTTP POST.
+- Один ключ + пользователь + чат возвращают одну запись; другой текст с тем же
+  ключом получает 409. Проверка участия предшествует выдаче сохранённого результата.
+- Существующий TEXT primary key Message.id обеспечивает уникальность через
+  msg_v1_ + SHA-256 от JSON([chatId,userId,UUID]). Новых миграций нет.
+- Параллельный конфликт P2002 обрабатывается после rollback транзакции.
+- Повтор не меняет даты чтения/чата и не повторяет emit/автоответы/аналитику.
+- Клиент сохраняет ключ до подтверждения, в том числе после переключения чатов.
+  Новая подтверждённая отправка такого же текста получает новый ключ.
+- Старые клиенты без ключа работают как раньше; внешний вид и нижний хаб не менялись.
+
+Проверенный head: `1b2912d0472a2ceef265f99c41c7f240c10fa56b`.
+Merge commit PR #28: `f681ed936fd0bbe947bb1593c373a2d15261103f`.
+API/PostgreSQL CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35476995870
+Полная цепочка миграций, Prisma generate, build API и 6 групп HTTP/PostgreSQL
+проверок прошли, включая 20 одновременных повторов.
+Web CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35476995977
+69/69 web tests, build/TypeScript, 6/6 account, 8/8 layout и 6/6 messages
+browser runs успешны. Messages suite теперь содержит 7 групп сценариев.
+Dependency security audit 35476996336: success.
+Artifacts (14 дней): messages-browser-evidence 10593464956,
+account-browser-evidence 10595185215, listings-layout-evidence 10595220166.
+
+Vercel frontend: success, «Deployment has completed».
+Деплой: https://vercel.com/vraachmaxs-projects/web/3pATt82x43cz9VryTo6maeb99t2U
+Это подтверждение frontend, не production API в Render.
+
+Первый API-прогон 35476908981 остановился до тестов: npx prisma из корня
+не находил binary API workspace. Исправлен working-directory: apps/api;
+финальный прогон полностью прошёл. Проверки не ослаблялись, lint не запускался.
+Исходники редактировались через GitHub, локального checkout в scratch нет.
+
+Границы: настоящая PostgreSQL только изолированная CI. HTTP controller и
+ValidationPipe настоящие, auth guard тестовый; участие в чате проверяет реальный
+service/БД. Socket.IO/автоответы/analytics заменены счётчиками вызовов.
+Ключи/черновики не переживают reload. Вложения и legacy Socket.IO send-message
+ещё без защиты от дублей. Durable outbox нет: падение после commit может потерять
+уведомление, но история содержит сообщение. Физический iPhone и реальные аккаунты
+не проверены, пользовательских сообщений ради QA не создавали.
+Подробности: `docs/MESSAGE_IDEMPOTENCY_REVIEW.md`.
+
+Render MCP вернул «no workspace selected» и потребовал явное подтверждение
+пользователя. Доступна My Workspace (tea-d78k82muk2gs73dqoong), выбор не сделан.
+Render-сервисы/настройки не менялись. Версия production API НЕ подтверждена.
+Следующий шаг: подтвердить эту рабочую область и активный commit API, затем
+Socket.IO между двумя изолированными клиентами и вложения. UI-01/iPhone открыты.
+
+
 ## 2026-09-19: UI-02, состояние переписок, PR #27
 
 База master: `cdfa06ff8cbd55562699ff0a8dd8ece82b1c24a3`.
