@@ -48,7 +48,10 @@ export class ChatsController {
     @Param('chatId') chatId: string,
     @Body() dto: SendMessageDto,
   ) {
-    const message = await this.chats.sendMessage(chatId, req.user.id, dto.text);
+    const { message, created } = await this.chats.sendMessageOnce(
+      chatId, req.user.id, dto.text, dto.clientMessageId,
+    );
+    if (!created) return message;
     this.gateway.server.to(`chat:${chatId}`).emit('message-created', {
       chatId,
       ...message,

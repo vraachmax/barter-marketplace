@@ -1,0 +1,48 @@
+name: Messages PostgreSQL acceptance
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'apps/api/src/chats/**'
+      - 'apps/api/prisma/**'
+      - 'apps/api/test/messages-idempotency.cjs'
+      - 'package-lock.json'
+      - '.github/workflows/messages-quality.yml'
+permissions:
+  contents: read
+jobs:
+  messages-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-ci-fixture-only
+          POSTGRES_DB: barter_message_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:isolated-ci-fixture-only@127.0.0.1:5432/barter_message_ci
+      JWT_SECRET: isolated-message-ci-secret-not-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Generate Prisma and apply full migration chain to isolated PostgreSQL
+        run: |
+          npx prisma generate --schema apps/api/prisma/schema.prisma
+          npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+      - name: API production build
+        run: npm run build -w @app/api
+      - name: HTTP and PostgreSQL message acceptance
+        run: node apps/api/test/messages-idempotency.cjs

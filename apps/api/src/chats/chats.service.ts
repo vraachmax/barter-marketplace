@@ -1,7 +1,7 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { ListingStatus, type MessageMediaType } from '@prisma/client';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ListingStatus, Prisma, type MessageMediaType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { PLATFORM_ASSISTANT_EMAIL, PLATFORM_ASSISTANT_NAME } from '../platform.constants';
 import { PrismaService } from '../prisma/prisma.service';
@@ -316,46 +316,82 @@ export class ChatsService {
     }));
   }
 
+  // Legacy callers keep their response shape and can continue without a key.
   async sendMessage(
     chatId: string,
     userId: string,
     text: string,
     ctx?: { sessionId?: string; anonymousId?: string },
   ) {
+    return (await this.sendMessageOnce(chatId, userId, text, undefined, ctx)).message;
+  }
+
+  async sendMessageOnce(
+    chatId: string,
+    userId: string,
+    text: string,
+    clientMessageId?: string,
+    ctx?: { sessionId?: string; anonymousId?: string },
+  ) {
     await this.assertParticipant(chatId, userId);
-
-    const [message] = await this.prisma.$transaction([
-      this.prisma.message.create({
-        data: {
-          chatId,
-          senderId: userId,
-          text,
-          mediaUrl: null,
-          mediaType: null,
-        },
-        select: {
-          id: true,
-          text: true,
-          mediaUrl: true,
-          mediaType: true,
-          createdAt: true,
-          senderId: true,
-          sender: { select: { id: true, name: true } },
-        },
-      }),
-      this.prisma.chat.update({
-        where: { id: chatId },
-        data: {},
-        select: { id: true },
-      }),
-      this.prisma.chatUser.updateMany({
-        where: { chatId, userId },
-        data: { lastReadAt: new Date() },
-      }),
-    ]);
-
-    void this.recordSendMessageListingEvent(chatId, userId, ctx);
-    return message;
+    if (typeof text !== 'string' || !text.trim() || text.length > 4000) {
+      throw new BadRequestException('invalid_message_text');
+    }
+    if (clientMessageId !== undefined &&
+        (typeof clientMessageId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientMessageId))) {
+      throw new BadRequestException('invalid_client_message_id');
+    }
+    // Existing TEXT primary key provides cross-process uniqueness, with no migration.
+    // JSON encoding keeps sender/chat boundaries unambiguous; legacy CUIDs have no prefix.
+    const id = clientMessageId === undefined ? undefined : 'msg_v1_' +
+      createHash('sha256').update(JSON.stringify([chatId, userId, clientMessageId.toLowerCase()])).digest('hex');
+    const select = {
+      id: true, text: true, mediaUrl: true, mediaType: true,
+      createdAt: true, senderId: true,
+      sender: { select: { id: true, name: true } },
+    } as const;
+    const replay = async () => {
+      if (!id) return null;
+      const existing = await this.prisma.message.findUnique({
+        where: { id }, select: { ...select, chatId: true },
+      });
+      if (!existing) return null;
+      if (existing.chatId !== chatId || existing.senderId !== userId ||
+          existing.text !== text || existing.mediaUrl !== null || existing.mediaType !== null) {
+        throw new ConflictException('message_key_reused');
+      }
+      const { chatId: _chatId, ...message } = existing;
+      return { message, created: false };
+    };
+    const existing = await replay();
+    if (existing) return existing;
+    try {
+      const [message] = await this.prisma.$transaction([
+        this.prisma.message.create({
+          data: { ...(id ? { id } : {}), chatId, senderId: userId, text, mediaUrl: null, mediaType: null },
+          select,
+        }),
+        this.prisma.chat.update({
+          where: { id: chatId },
+          data: { updatedAt: new Date() },
+          select: { id: true },
+        }),
+        this.prisma.chatUser.updateMany({
+          where: { chatId, userId },
+          data: { lastReadAt: new Date() },
+        }),
+      ]);
+      void this.recordSendMessageListingEvent(chatId, userId, ctx).catch(() => undefined);
+      return { message, created: true };
+    } catch (error) {
+      // A parallel request may win after our read. Read only AFTER rollback,
+      // not inside the aborted PostgreSQL transaction.
+      if (id && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const winner = await replay();
+        if (winner) return winner;
+      }
+      throw error;
+    }
   }
 
   /**
