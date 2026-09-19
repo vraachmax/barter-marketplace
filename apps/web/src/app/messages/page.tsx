@@ -201,7 +201,7 @@ export default function MessagesPage() {
   const loadChats = useCallback(async (background = false) => {
     const request = ++listRequestRef.current;
     const res = await apiFetchJson<ChatSummary[]>('/chats', { signal: AbortSignal.timeout(15000) });
-    if (request !== listRequestRef.current) return [];
+    if (request !== listRequestRef.current) return res.ok ? res.data : [];
     if (!res.ok) {
       if (background) return [];
       if (res.status === 401) {
