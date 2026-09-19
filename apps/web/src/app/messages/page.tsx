@@ -121,6 +121,8 @@ export default function MessagesPage() {
   const [adviseBusy, setAdviseBusy] = useState(false);
   const [adviseDismissed, setAdviseDismissed] = useState(false);
   const [supportSheetOpen, setSupportSheetOpen] = useState(false);
+  const [openError, setOpenError] = useState('');
+  const [openAttempt, setOpenAttempt] = useState(0);
 
   const socketRef = useRef<Socket | null>(null);
   const selectedChatIdRef = useRef<string>('');
@@ -219,7 +221,12 @@ export default function MessagesPage() {
     const res = await apiFetchJson<{ id: string }>(`/chats/by-listing/${maybeListingId}`, {
       method: 'POST',
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if (res.status === 401) setStatus('need_auth');
+      else setOpenError('Не удалось открыть чат по объявлению. Попробуйте ещё раз.');
+      return null;
+    }
+    setOpenError('');
     return res.data.id;
   }
 
@@ -375,6 +382,8 @@ export default function MessagesPage() {
         preferredChatId && list.some((c) => c.id === preferredChatId) ? preferredChatId : list[0]?.id ?? '';
       if (listingId) {
         const createdId = await openByListing(listingId);
+        if (!alive) return;
+        if (!createdId) { activateChat(''); return; }
         if (createdId) {
           const updated = await loadChats();
           targetChatId = createdId || updated[0]?.id || '';
@@ -389,7 +398,7 @@ export default function MessagesPage() {
     return () => {
       alive = false;
     };
-  }, [listingId, preferredChatId, loadChats, activateChat]);
+  }, [listingId, preferredChatId, openAttempt, loadChats, activateChat]);
 
   useEffect(() => {
     if (!selectedChatId) return;
@@ -479,7 +488,7 @@ export default function MessagesPage() {
 
   if (status === 'need_auth') {
     return <div className="min-h-screen bg-background text-foreground">
-      <AccountScreenHeader title="Сообщения" subtitle="Чаты по объявлениям" backHref="/" />
+      <AccountScreenHeader title="Сообщения" subtitle="Чаты по объявлениям" backHref="/" backLabel="Назад в ленту" />
       <main className="mx-auto max-w-lg px-4 py-8">
         <div className="rounded-3xl border border-border bg-card p-6 text-center">
           <MessageCircle className="mx-auto size-10 text-muted-foreground" aria-hidden />
@@ -537,6 +546,7 @@ export default function MessagesPage() {
             </div>
             <button type="button" onClick={() => setSupportSheetOpen(true)} aria-label="Помощь и поддержка" className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"><CircleHelp size={21} aria-hidden /></button>
           </div>
+          {openError ? <div role="alert" className="px-4 pb-3 text-sm"><p>{openError}</p><Button variant="outline" className="mt-2" onClick={() => { setOpenError(''); setOpenAttempt(value => value + 1); }}>Повторить открытие</Button></div> : null}
           <div className="shrink-0 px-4 pb-3">
             <div className="relative">
               <Search size={19} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -949,6 +959,7 @@ export default function MessagesPage() {
               <div className="glass-panel shrink-0 border-t border-border px-3 py-3 md:p-4">
                 {sendErrors[selectedChatId] ? <div role="alert" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-border bg-card p-3 text-sm">
                   <p>{sendErrors[selectedChatId]}</p>
+                  {sendErrors[selectedChatId].startsWith('Сессия истекла') ? <Link className="mt-2 inline-flex min-h-11 items-center text-primary underline" href={'/auth?next=' + encodeURIComponent('/messages?chatId=' + selectedChatId)}>Войти снова</Link> : null}
                   <Button variant="outline" className="mt-2" disabled={busy} onClick={() => void loadMessages(selectedChatId)}>Обновить переписку</Button>
                 </div> : null}
                 {/* Quick replies chips */}

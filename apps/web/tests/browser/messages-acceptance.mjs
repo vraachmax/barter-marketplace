@@ -171,6 +171,10 @@ async function scenario(type, width, theme) {
     await input.focus();
     await expect(input).toBeFocused();
     await page.screenshot({ path: join(output, key + '.png'), fullPage: true });
+    if (width === 440) {
+      const encoded = (await page.screenshot({ type: 'jpeg', quality: 65 })).toString('base64');
+      for (let offset = 0; offset < encoded.length; offset += 6000) console.log('BARTER_MESSAGES_IMAGE ' + key + ' ' + offset + ' ' + encoded.slice(offset, offset + 6000));
+    }
     checks.push('history error/retry, long text, focus and composer geometry');
 
     await choose('Борис');
