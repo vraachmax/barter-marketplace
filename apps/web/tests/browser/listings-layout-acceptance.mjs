@@ -87,7 +87,8 @@ async function installFixture(context, state, theme) {
     localStorage.setItem('barter_theme_pref', theme.toUpperCase());
   }, { theme });
   await context.routeWebSocket(/.*/, socket => socket.close());
-  await context.route('**/*', async route => {
+  await context.route(url => url.hostname !== '127.0.0.1' || url.pathname.startsWith('/api/backend/') ||
+    ['/auth/me', '/auth/logout', '/chats'].includes(url.pathname) || url.pathname.startsWith('/socket.io'), async route => {
     const request = route.request();
     const url = new URL(request.url());
     if (url.hostname !== '127.0.0.1') {
@@ -163,10 +164,10 @@ async function shot(page, key, scrollTarget) {
 }
 
 async function visit(page, path) {
-  // Finish background prefetch before unloading the document, then await the new page.
-  await page.waitForLoadState('networkidle');
+  // Wait for document load; background Next prefetch is not a page-readiness signal.
+  await page.waitForLoadState('load');
   await page.goto(baseURL + path);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('load');
 }
 
 async function scenario(browserType, width, theme) {
@@ -185,6 +186,7 @@ async function scenario(browserType, width, theme) {
   try {
     await visit(page, '/profile/listings?tab=SOLD');
     await expect(page).toHaveURL(/\/listings\?tab=COMPLETED/);
+    await expect(page.getByRole('heading', { name: 'Завершённые объявления', exact: true })).toBeVisible();
     await visit(page, '/listings?tab=NEEDS_ACTION');
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
@@ -213,9 +215,9 @@ async function scenario(browserType, width, theme) {
 
     await tabs.getByRole('button', { name: 'Завершены 1', exact: true }).click();
     await expect(page).toHaveURL(/tab=COMPLETED/);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     const sold = page.locator('main li').filter({ hasText: 'Проданное объявление' });
     await sold.locator('summary').click();
     await sold.getByRole('button', { name: 'Вернуть в активные', exact: true }).click();
