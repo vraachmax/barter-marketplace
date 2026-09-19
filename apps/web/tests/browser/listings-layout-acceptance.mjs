@@ -163,12 +163,6 @@ async function shot(page, key, scrollTarget) {
   if (key.includes('-440-')) shots.push({ key, image: preview.toString('base64') });
 }
 
-async function visit(page, path) {
-  // Wait for document load; background Next prefetch is not a page-readiness signal.
-  await page.waitForLoadState('load');
-  await page.goto(baseURL + path);
-  await page.waitForLoadState('load');
-}
 
 async function scenario(browserType, width, theme) {
   const browser = await browserType.launch();
@@ -177,17 +171,34 @@ async function scenario(browserType, width, theme) {
     reducedMotion: 'reduce', serviceWorkers: 'block' });
   const state = fixture(theme);
   await installFixture(context, state, theme);
-  const page = await context.newPage();
-  page.setDefaultTimeout(12000);
+  let page;
   const errors = [];
-  page.on('pageerror', e => errors.push(e.message));
+  const failedRequests = [];
+  const pendingRsc = new Set();
+  const onError = e => errors.push({ message: e.message, url: page.url() });
+  async function visit(path) {
+    // These are independent screen scenarios, not cross-document navigation tests.
+    // Stop observing only when deliberately disposing the previous test document.
+    if (page) { page.off('pageerror', onError); await page.close(); }
+    pendingRsc.clear();
+    page = await context.newPage();
+    page.setDefaultTimeout(12000);
+    page.on('pageerror', onError);
+    page.on('request', request => { if (new URL(request.url()).searchParams.has('_rsc')) pendingRsc.add(request); });
+    page.on('requestfinished', request => pendingRsc.delete(request));
+    page.on('requestfailed', request => {
+      pendingRsc.delete(request);
+      failedRequests.push({ url: request.url(), error: request.failure()?.errorText });
+    });
+    await page.goto(baseURL + path);
+  }
   const key = browserType.name() + '-' + width + '-' + theme;
   const checks = [];
   try {
-    await visit(page, '/profile/listings?tab=SOLD');
+    await visit('/profile/listings?tab=SOLD');
     await expect(page).toHaveURL(/\/listings\?tab=COMPLETED/);
     await expect(page.getByRole('heading', { name: 'Завершённые объявления', exact: true })).toBeVisible();
-    await visit(page, '/listings?tab=NEEDS_ACTION');
+    await visit('/listings?tab=NEEDS_ACTION');
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
     const tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
@@ -215,7 +226,7 @@ async function scenario(browserType, width, theme) {
 
     await tabs.getByRole('button', { name: 'Завершены 1', exact: true }).click();
     await expect(page).toHaveURL(/tab=COMPLETED/);
-    await page.waitForLoadState('load');
+    await expect.poll(() => pendingRsc.size, { timeout: 12000, message: 'RSC prefetch must finish before reload' }).toBe(0);
     await page.reload();
     await page.waitForLoadState('load');
     const sold = page.locator('main li').filter({ hasText: 'Проданное объявление' });
@@ -242,7 +253,7 @@ async function scenario(browserType, width, theme) {
     assert.equal(state.writes.length, 2);
     checks.push('shared promotion chooser opens without payment');
 
-    await visit(page, '/pricing');
+    await visit('/pricing');
     const badge = page.getByText('Рекомендуем', { exact: true });
     await expect(badge).toBeVisible();
     await badge.scrollIntoViewIfNeeded();
@@ -255,7 +266,7 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByRole('link', { name: 'Применить', exact: true }).first()).toHaveAttribute('href', '/listings');
     checks.push('recommended badge fully inside plan card');
 
-    await visit(page, '/?mode=market&sort=new');
+    await visit('/?mode=market&sort=new');
     const toggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
     for (const mode of ['market', 'barter']) {
       const label = mode === 'market' ? 'Маркет' : 'Бартер';
@@ -270,7 +281,7 @@ async function scenario(browserType, width, theme) {
       assert(Math.abs(pill.x + pill.width / 2 - selected.x - selected.width / 2) <= 2, 'selected pill is off-center');
     }
     await shot(page, key + '-catalog');
-    await visit(page, '/search');
+    await visit('/search');
     const searchToggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
     await expect(searchToggle).toBeVisible();
     const searchBox = await contained(searchToggle);
@@ -278,13 +289,13 @@ async function scenario(browserType, width, theme) {
     checks.push('catalog and search centered, selected pill aligned, sort preserved');
 
     state.failListings = true;
-    await visit(page, '/listings');
+    await visit('/listings');
     await expect(page.getByRole('heading', { name: 'Не удалось загрузить объявления' })).toBeVisible();
     state.failListings = false;
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
     state.guest = true;
-    await visit(page, '/listings?tab=COMPLETED');
+    await visit('/listings?tab=COMPLETED');
     await expect(page.getByRole('link', { name: 'Войти или зарегистрироваться' })).toHaveAttribute('href', '/auth?next=%2Flistings%3Ftab%3DCOMPLETED');
     assert.deepEqual(errors, [], 'browser errors');
     assert.deepEqual(state.unexpected, [], 'unexpected browser requests');
@@ -293,8 +304,9 @@ async function scenario(browserType, width, theme) {
     console.log('BARTER_LAYOUT_PASS ' + key + ' ' + checks.length + ' checks');
   } catch (error) {
     await shot(page, key + '-failure').catch(() => {});
-    results.push({ key, passed: false, checks, error: error.stack, errors, unexpected: state.unexpected });
+    results.push({ key, passed: false, checks, error: error.stack, errors, failedRequests, pendingRsc: [...pendingRsc].map(r => r.url()), unexpected: state.unexpected });
     console.error('BARTER_LAYOUT_FAIL ' + key + '\n' + error.stack);
+    console.error('BARTER_LAYOUT_DIAGNOSTICS ' + JSON.stringify({ errors, failedRequests, pendingRsc: [...pendingRsc].map(r => r.url()) }));
   } finally { await context.close(); await browser.close(); }
 }
 
