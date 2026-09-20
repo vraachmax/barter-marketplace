@@ -6,6 +6,9 @@ on:
       - 'apps/api/src/chats/**'
       - 'apps/api/prisma/**'
       - 'apps/api/test/messages-idempotency.cjs'
+      - 'apps/api/test/messages-socket.cjs'
+      - 'apps/api/src/presence/**'
+      - 'apps/api/src/config/security.ts'
       - 'package-lock.json'
       - '.github/workflows/messages-quality.yml'
 permissions:
@@ -47,3 +50,5 @@ jobs:
         run: npm run build -w @app/api
       - name: HTTP and PostgreSQL message acceptance
         run: node apps/api/test/messages-idempotency.cjs
+      - name: Socket.IO and PostgreSQL acceptance
+        run: node apps/api/test/messages-socket.cjs

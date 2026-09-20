@@ -53,6 +53,10 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         secret: getJwtSecret(),
       });
       const userId = payload.sub;
+      if (typeof userId !== 'string' || !userId.trim()) {
+        client.disconnect();
+        return;
+      }
       client.data.userId = userId;
       this.presence.addOnline(userId);
       const snap = this.presence.getSnapshot();
