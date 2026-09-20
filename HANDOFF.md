@@ -1,5 +1,42 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-20: deadline вложений и браузерная приёмка, PR #29, НЕ ОПУБЛИКОВАНО
+
+Ветка test/socket-conversation-acceptance, продолжаем тот же draft PR.
+apiUploadFile теперь принимает signal; экран сообщений ограничивает ожидание
+вложения 60 сек. Отмена fetch освобождает busy через существующий finally.
+При ошибке текст/файл остаются в черновике, показано предупреждение о
+неподтверждённой отправке и обновление переписки. Автоповторов нет.
+Другие места upload не получили новый default. Геометрия/стили не менялись.
+
+Браузерная suite расширена с 7 до 10 групп: multipart/file input, 503 и явный
+повтор, сохранение файла по чатам, двойное нажатие/запоздалый успех, timeout
+и позднее завершение на серверной фикстуре без автоповтора.
+Проверенный code commit: `7905a4488f2188a5bdf496b759696ea576cf4ba3`.
+Web CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35516210223
+69/69 regression tests, production build/TypeScript, 6/6 account, 8/8 layout,
+6/6 messages browser runs успешны. Messages: по 10 групп в каждой конфигурации.
+API CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35516210238
+Все 21 группа (6 HTTP + 7 Socket.IO + 8 media) и сборка/миграции успешны.
+Dependency security audit 35516210444: success. Отдельный lint не запускался.
+Artifacts, 14 дней: messages-browser-evidence 10606474167,
+account-browser-evidence 10606509025, listings-layout-evidence 10606763645.
+
+Подробности: docs/MESSAGE_UPLOAD_UI_REVIEW.md.
+Deadline в тесте ускорен с 60000 до 800ms через test-only addInitScript;
+проверяется запрошенное значение 60000 и настоящая отмена браузерного fetch.
+Это не замер минуты ожидания или фоновой вкладки. API/auth/history фикстуры,
+WebSocket выключен; физический iPhone, cookie/reconnect и Vercel Blob не приняты.
+Реальные сообщения/файлы не создавались.
+
+Следующий шаг: идемпотентность media POST и клиентского повтора (ключ,
+проверка payload, параллельные повторы, cleanup лишних файлов).
+Сейчас явный повтор после потери ответа может создать дубль. Затем browser
+reconnect/cookie и оставшаяся приёмка устройства/аккаунтов.
+Production health по-прежнему внешне заблокирован, прежние попытки не повторять.
+Максим разрешил публикацию после завершения раздела. Сейчас не публикуем,
+master c980e5c не менялся. Оба документа актуальны в ветке PR.
+
 ## 2026-09-20: вложения, валидация и отказы, PR #29, НЕ ОПУБЛИКОВАНО
 
 Ветка: test/socket-conversation-acceptance. Master c980e5c не менялся.
