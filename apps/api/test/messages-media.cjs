@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const { readFile, access } = require('node:fs/promises');
+const { randomUUID } = require('node:crypto');
 const { resolve } = require('node:path');
 require('reflect-metadata');
 const { Test } = require('@nestjs/testing');
@@ -35,8 +36,8 @@ async function main() {
     for (let i = 0; i < 3; i++) users.push(await db.user.create({ data: { name: 'Isolated fixture ' + i } }));
     for (let i = 0; i < 1; i++) chats.push(await db.chat.create({ data: { users: { create: users.slice(0, 2).map(u => ({ userId: u.id })) } } }));
     const service = new ChatsService(db, { trackServerEvent: async () => {} }, {});
-    const save = service.sendMediaMessage.bind(service);
-    service.sendMediaMessage = (...args) => { if (rejectSave) throw new Error('fixture persistence failure'); return save(...args); };
+    const save = service.sendMediaMessageOnce.bind(service);
+    service.sendMediaMessageOnce = (...args) => { if (rejectSave) throw new Error('fixture persistence failure'); return save(...args); };
     const storage = {
       async upload(...args) { attempts++; if (rejectUpload) throw new Error('fixture upload failure'); const value = await local.upload(...args); uploaded.push(value.url); return value; },
       async delete(url) { deleted.push(url); if (rejectDelete) throw new Error('fixture cleanup failure'); await local.delete(url); },
@@ -138,6 +139,84 @@ async function main() {
     assert.equal(await count(), 3);
     assert.equal(events.length, 3);
     console.log('PASS cleanup failure is observable and fresh request succeeds after recovery');
+
+    const key = randomUUID();
+    const keyed = () => attach(post().field('clientMessageId', key).field('text', 'Replay photo'));
+    const original = await keyed().expect(201);
+    const countBefore = await count(), uploadsBefore = attempts, eventsBefore = events.length;
+    const chatBefore = await db.chat.findUniqueOrThrow({ where: { id: c.id } });
+    const readBefore = await db.chatUser.findUniqueOrThrow({ where: { chatId_userId: { chatId: c.id, userId: u.id } } });
+    const replyCount = replies.length, assistantCount = assistants.length;
+    const replay = await keyed().expect(201);
+    assert.equal(replay.body.id, original.body.id);
+    assert.equal(replay.body.mediaUrl, original.body.mediaUrl);
+    assert.equal(await count(), countBefore);
+    assert.equal(attempts, uploadsBefore);
+    assert.equal(events.length, eventsBefore);
+    assert.equal(replies.length, replyCount); assert.equal(assistants.length, assistantCount);
+    assert.equal((await db.chat.findUniqueOrThrow({ where: { id: c.id } })).updatedAt.toISOString(), chatBefore.updatedAt.toISOString());
+    assert.equal((await db.chatUser.findUniqueOrThrow({ where: { chatId_userId: { chatId: c.id, userId: u.id } } })).lastReadAt.toISOString(), readBefore.lastReadAt.toISOString());
+    console.log('PASS media replay returns same row/file without upload or repeated side effects');
+
+    await attach(post().field('clientMessageId', key).field('text', 'Changed')).expect(409);
+    await post().field('clientMessageId', key).field('text', 'Replay photo')
+      .attach('file', Buffer.from('different bytes'), { filename: 'photo.png', contentType: 'image/png' }).expect(409);
+    await post().field('clientMessageId', key).field('text', 'Replay photo')
+      .attach('file', png, { filename: 'photo.jpg', contentType: 'image/jpeg' }).expect(409);
+    await request(app.getHttpServer()).post('/chats/' + c.id + '/messages')
+      .set('x-fixture-user', u.id).send({ text: 'Replay photo', clientMessageId: key }).expect(409);
+    const textKey = randomUUID();
+    await request(app.getHttpServer()).post('/chats/' + c.id + '/messages')
+      .set('x-fixture-user', u.id).send({ text: 'Text first', clientMessageId: textKey }).expect(201);
+    await attach(post().field('clientMessageId', textKey).field('text', 'Text first')).expect(409);
+    assert.equal(attempts, uploadsBefore);
+    await access(diskPath(original.body.mediaUrl));
+    console.log('PASS changed caption, bytes, MIME and message kind conflict before storage');
+
+    for (const value of ['', 'invalid', '17']) await attach(post().field('clientMessageId', value)).expect(400);
+    await attach(post().field('clientMessageId', [key, key])).expect(400);
+    await attach(post(users[2]).field('clientMessageId', key)).expect(403);
+    const canonical = await attach(post().field('clientMessageId', key.toUpperCase()).field('text', 'Replay photo')).expect(201);
+    assert.equal(canonical.body.id, original.body.id);
+    const otherSender = await attach(post(users[1]).field('clientMessageId', key).field('text', 'Replay photo')).expect(201);
+    assert.notEqual(otherSender.body.id, original.body.id);
+    console.log('PASS invalid keys, participant authorization, canonical key and sender scope');
+
+    // Hold all uploads before persistence so every request must dispose of its own losing file.
+    const realUpload = storage.upload;
+    let arrived = 0, release;
+    const barrier = new Promise(resolve => { release = resolve; });
+    storage.upload = async (...args) => {
+      const result = await realUpload(...args);
+      if (++arrived === 10) release();
+      await barrier;
+      return result;
+    };
+    const concurrentKey = randomUUID(), concurrentStart = uploaded.length;
+    const concurrentCount = await count(), concurrentEvents = events.length;
+    const concurrentReplies = replies.length, concurrentAssistants = assistants.length;
+    const responses = await Promise.all(Array.from({ length: 10 }, () =>
+      attach(post().field('clientMessageId', concurrentKey).field('text', 'Concurrent photo')).expect(201)));
+    storage.upload = realUpload;
+    assert.equal(new Set(responses.map(r => r.body.id)).size, 1);
+    assert.equal(await count(), concurrentCount + 1);
+    assert.equal(events.length, concurrentEvents + 1);
+    assert.equal(replies.length, concurrentReplies + 1);
+    assert.equal(assistants.length, concurrentAssistants + 1);
+    const winnerUrl = responses[0].body.mediaUrl;
+    const concurrentFiles = uploaded.slice(concurrentStart);
+    assert.equal(concurrentFiles.length, 10);
+    for (const url of concurrentFiles) {
+      if (url === winnerUrl) await access(diskPath(url));
+      else { assert.ok(deleted.includes(url)); await assert.rejects(access(diskPath(url)), { code: 'ENOENT' }); }
+    }
+    console.log('PASS 10 simultaneous media requests create one row/event and remove nine losing files');
+
+    const fresh = await attach(post().field('clientMessageId', randomUUID()).field('text', 'Replay photo')).expect(201);
+    assert.notEqual(fresh.body.id, original.body.id);
+    const legacy1 = await attach(post()).expect(201), legacy2 = await attach(post()).expect(201);
+    assert.notEqual(legacy1.body.id, legacy2.body.id);
+    console.log('PASS new media operation and legacy requests remain compatible');
   } finally {
     Logger.prototype.warn = originalWarn;
     if (app) await app.close();

@@ -73,11 +73,18 @@ async function install(context, state, theme) {
     const media = path.match(/^\/chats\/([ab])\/media$/);
     if (media && req.method() === 'POST') {
       const id = media[1];
-      state.uploads.push({ id, body: req.postDataBuffer().toString() });
+      const multipart = req.postDataBuffer().toString();
+      const clientMessageId = multipart.match(/name="clientMessageId"\r\n\r\n([^\r]+)/)?.[1];
+      assert.match(clientMessageId ?? '', /^[0-9a-f-]{36}$/);
+      state.uploads.push({ id, body: multipart, key: clientMessageId });
       if (state.holdUpload) await state.holdUpload;
       if (state.rejectUpload) return json({ message: 'upload unavailable' }, 503).catch(() => {});
+      const attemptKey = 'media:' + id + ':' + clientMessageId;
+      const previous = state.savedAttempts.get(attemptKey);
+      if (previous) return json(previous).catch(() => {});
       const message = { ...state.makeMessage('media-' + state.uploads.length, 'Фото', state.user.id), mediaType: 'IMAGE', mediaUrl: null };
       state.messages[id].push(message);
+      state.savedAttempts.set(attemptKey, message);
       return json(message).catch(() => {}); // A timed-out client may already have aborted.
     }
     const match = path.match(/^\/chats\/([ab])\/messages$/);
@@ -253,6 +260,7 @@ async function scenario(type, width, theme) {
     await expect(input).toHaveValue('');
     await expect(input).toBeEnabled();
     assert.equal(state.uploads.length, 2);
+    assert.equal(state.uploads[0].key, state.uploads[1].key);
     checks.push('upload failure retains file/caption by chat; explicit retry clears confirmed draft');
 
     let releaseUpload;
@@ -299,6 +307,23 @@ async function scenario(type, width, theme) {
     await expect(page.getByText(image.name, { exact: true })).toBeVisible();
     await page.screenshot({ path: join(output, key + '-upload-timeout.png'), fullPage: true });
     checks.push('native upload abort releases busy, preserves draft and does not automatically repeat');
+    const mediaCountBeforeRetry = state.messages.a.length;
+    const lostMediaKey = state.uploads.at(-1).key;
+    await send.click();
+    await expect(input).toHaveValue('');
+    await expect(input).toBeEnabled();
+    await expect(page.getByText(image.name, { exact: true })).toHaveCount(0);
+    assert.equal(state.uploads.at(-1).key, lostMediaKey);
+    assert.equal(state.messages.a.length, mediaCountBeforeRetry);
+    await fileInput.setInputFiles(image);
+    await input.fill('Фото без подтверждения');
+    await send.click();
+    await expect(input).toHaveValue('');
+    await expect(input).toBeEnabled();
+    assert.notEqual(state.uploads.at(-1).key, lostMediaKey);
+    assert.equal(state.messages.a.length, mediaCountBeforeRetry + 1);
+    checks.push('media retry keeps key across chats; confirmed new operation gets a fresh key');
+
 
     await choose('Борис');
     await page.goBack();

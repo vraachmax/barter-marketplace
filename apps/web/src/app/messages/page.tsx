@@ -106,6 +106,7 @@ export default function MessagesPage() {
   const [sendErrors, setSendErrors] = useState<Record<string, string>>({});
   const sendingRef = useRef(false);
   const textAttemptsRef = useRef<Record<string, { text: string; key: string }>>({});
+  const mediaAttemptsRef = useRef<Record<string, { text: string; file: File; key: string }>>({});
   const messageRequestRef = useRef(0);
   const listRequestRef = useRef(0);
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
@@ -267,12 +268,21 @@ export default function MessagesPage() {
         textAttemptsRef.current[chatId] = attempt;
       }
     }
+    let mediaAttempt: { text: string; file: File; key: string } | undefined;
+    if (withFile && file) {
+      const payload = currentText.trim();
+      mediaAttempt = mediaAttemptsRef.current[chatId];
+      if (!mediaAttempt || mediaAttempt.text !== payload || mediaAttempt.file !== file) {
+        mediaAttempt = { text: payload, file, key: crypto.randomUUID() };
+        mediaAttemptsRef.current[chatId] = mediaAttempt;
+      }
+    }
     sendingRef.current = true;
     setBusy(true);
     setSendErrors(previous => ({ ...previous, [chatId]: '' }));
     try {
       const res = withFile && file
-        ? await apiUploadFile(`/chats/${encodeURIComponent(chatId)}/media`, file, 'file', { text: currentText.trim() }, {
+        ? await apiUploadFile(`/chats/${encodeURIComponent(chatId)}/media`, file, 'file', { text: currentText.trim(), clientMessageId: mediaAttempt!.key }, {
             // Uploads need more time than text; aborting does not prove the server did not save it.
             signal: AbortSignal.timeout(60000),
           })
@@ -288,6 +298,7 @@ export default function MessagesPage() {
         setSendErrors(previous => ({ ...previous, [chatId]: message }));
         return;
       }
+      if (mediaAttempt && mediaAttemptsRef.current[chatId] === mediaAttempt) delete mediaAttemptsRef.current[chatId];
       if (attempt && textAttemptsRef.current[chatId] === attempt) delete textAttemptsRef.current[chatId];
       setDrafts(previous => {
         const draft = previous[chatId];

@@ -454,49 +454,91 @@ export class ChatsService {
     return [{ ...m, isAssistant: false, isAutoReply: true }];
   }
 
-  async sendMediaMessage(
-    chatId: string,
-    userId: string,
-    mediaUrl: string,
-    mediaType: MessageMediaType,
-    text?: string,
-    ctx?: { sessionId?: string; anonymousId?: string },
+  private mediaMessageId(chatId: string, userId: string, key?: string) {
+    if (key === undefined) return undefined;
+    if (typeof key !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key)) {
+      throw new BadRequestException('invalid_client_message_id');
+    }
+    // Share the text endpoint namespace so a key cannot silently change message kind.
+    return 'msg_v1_' + createHash('sha256')
+      .update(JSON.stringify([chatId, userId, key.toLowerCase()])).digest('hex');
+  }
+
+  async findMediaReplay(
+    chatId: string, userId: string, key: string | undefined,
+    fingerprint: string, mediaType: MessageMediaType, text?: string,
   ) {
     await this.assertParticipant(chatId, userId);
+    if (text !== undefined && (typeof text !== 'string' || text.length > 4000)) {
+      throw new BadRequestException('invalid_media_text');
+    }
+    const id = this.mediaMessageId(chatId, userId, key);
+    if (!id) return null;
+    const existing = await this.prisma.message.findUnique({
+      where: { id },
+      select: {
+        id: true, chatId: true, text: true, mediaUrl: true, mediaType: true,
+        mediaFingerprint: true, createdAt: true, senderId: true,
+        sender: { select: { id: true, name: true } },
+      },
+    });
+    if (!existing) return null;
+    const caption = text?.trim() || (mediaType === 'VIDEO' ? 'Видео' : 'Фото');
+    if (existing.chatId !== chatId || existing.senderId !== userId ||
+        existing.text !== caption || existing.mediaType !== mediaType ||
+        existing.mediaFingerprint !== fingerprint || !existing.mediaUrl) {
+      throw new ConflictException('message_key_reused');
+    }
+    const { chatId: _chatId, mediaFingerprint: _fingerprint, ...message } = existing;
+    return { message, created: false };
+  }
 
-    const fallbackText = mediaType === 'VIDEO' ? 'Видео' : 'Фото';
-    const [message] = await this.prisma.$transaction([
-      this.prisma.message.create({
-        data: {
-          chatId,
-          senderId: userId,
-          text: text?.trim() || fallbackText,
-          mediaUrl,
-          mediaType,
-        },
-        select: {
-          id: true,
-          text: true,
-          mediaUrl: true,
-          mediaType: true,
-          createdAt: true,
-          senderId: true,
-          sender: { select: { id: true, name: true } },
-        },
-      }),
-      this.prisma.chat.update({
-        where: { id: chatId },
-        data: {},
-        select: { id: true },
-      }),
-      this.prisma.chatUser.updateMany({
-        where: { chatId, userId },
-        data: { lastReadAt: new Date() },
-      }),
-    ]);
+  async sendMediaMessage(
+    chatId: string, userId: string, mediaUrl: string, mediaType: MessageMediaType,
+    text?: string, ctx?: { sessionId?: string; anonymousId?: string },
+  ) {
+    return (await this.sendMediaMessageOnce(chatId, userId, mediaUrl, mediaType, text, ctx)).message;
+  }
 
-    void this.recordSendMessageListingEvent(chatId, userId, ctx);
-    return message;
+  async sendMediaMessageOnce(
+    chatId: string, userId: string, mediaUrl: string, mediaType: MessageMediaType,
+    text?: string, ctx?: { sessionId?: string; anonymousId?: string },
+    key?: string, fingerprint?: string,
+  ) {
+    const previous = await this.findMediaReplay(chatId, userId, key, fingerprint ?? '', mediaType, text);
+    if (previous) return previous;
+    const id = this.mediaMessageId(chatId, userId, key);
+    if (id && !fingerprint) throw new BadRequestException('media_fingerprint_required');
+    try {
+      const [message] = await this.prisma.$transaction([
+        this.prisma.message.create({
+          data: {
+            ...(id ? { id } : {}), chatId, senderId: userId,
+            text: text?.trim() || (mediaType === 'VIDEO' ? 'Видео' : 'Фото'),
+            mediaUrl, mediaType, mediaFingerprint: fingerprint,
+          },
+          select: {
+            id: true, text: true, mediaUrl: true, mediaType: true, createdAt: true,
+            senderId: true, sender: { select: { id: true, name: true } },
+          },
+        }),
+        this.prisma.chat.update({
+          where: { id: chatId }, data: { updatedAt: new Date() }, select: { id: true },
+        }),
+        this.prisma.chatUser.updateMany({
+          where: { chatId, userId }, data: { lastReadAt: new Date() },
+        }),
+      ]);
+      void this.recordSendMessageListingEvent(chatId, userId, ctx).catch(() => undefined);
+      return { message, created: true };
+    } catch (error) {
+      // The losing transaction must roll back before reading the committed winner.
+      if (id && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const winner = await this.findMediaReplay(chatId, userId, key, fingerprint!, mediaType, text);
+        if (winner) return winner;
+      }
+      throw error;
+    }
   }
 
   async markRead(chatId: string, userId: string) {

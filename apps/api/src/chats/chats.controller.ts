@@ -12,6 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SendMessageDto } from './dto';
@@ -74,6 +75,7 @@ export class ChatsController {
     @Param('chatId') chatId: string,
     @UploadedFile() file?: Express.Multer.File,
     @Body('text') text?: string,
+    @Body('clientMessageId') clientMessageId?: string,
     @Headers('x-session-id') sessionId?: string,
     @Headers('x-anonymous-id') anonymousId?: string,
   ) {
@@ -82,17 +84,24 @@ export class ChatsController {
       throw new BadRequestException('invalid_media_text');
     }
     const mediaType = getMediaType(file);
-    await this.chats.assertParticipant(chatId, req.user.id);
+    const fingerprint = createHash('sha256').update(file.buffer)
+      .update('\0' + file.mimetype.split(';', 1)[0].trim().toLowerCase()).digest('hex');
+    const existing = await this.chats.findMediaReplay(
+      chatId, req.user.id, clientMessageId, fingerprint, mediaType, text,
+    );
+    if (existing) return existing.message;
     const stored = await this.mediaStorage.upload('chat-media', chatId, file);
-    let message;
+    let result;
     try {
-      message = await this.chats.sendMediaMessage(
+      result = await this.chats.sendMediaMessageOnce(
         chatId,
         req.user.id,
         stored.url,
         mediaType,
         text,
         { sessionId, anonymousId },
+        clientMessageId,
+        fingerprint,
       );
     } catch (error) {
       await this.mediaStorage.delete(stored.url).catch(() => {
@@ -100,6 +109,14 @@ export class ChatsController {
       });
       throw error;
     }
+    if (!result.created) {
+      // Each upload has a unique URL: discard only this request's losing object.
+      await this.mediaStorage.delete(stored.url).catch(() => {
+        this.logger.warn('Failed to clean up duplicate chat media upload');
+      });
+      return result.message;
+    }
+    const { message } = result;
     this.gateway.server.to(`chat:${chatId}`).emit('message-created', {
       chatId,
       ...message,
