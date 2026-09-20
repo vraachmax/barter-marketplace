@@ -31,8 +31,8 @@ version = sql('SHOW server_version_num;')
 assert 160000 <= int(version) < 170000, version
 locale = sql('SELECT datctype FROM pg_database WHERE datname=current_database();')
 migrations = sorted((Path(__file__).resolve().parents[1] / 'apps/api/prisma/migrations').glob('*/migration.sql'))
-assert migrations[-1].parent.name == '20260907090000_search_guard_fields'
-for migration in migrations[:-1]:
+search_index = next(i for i, m in enumerate(migrations) if m.parent.name == '20260907090000_search_guard_fields')
+for migration in migrations[:search_index]:
     sql(migration.read_text())
 
 sql('''
@@ -50,7 +50,7 @@ snapshot_query = '''SELECT md5(string_agg(row_to_json(t)::text, '' ORDER BY id))
 before = sql(snapshot_query)
 backup = run('pg_dump', '-U', 'postgres', '-d', 'barter_rehearsal', '-Fc')
 started = time.monotonic()
-sql(migrations[-1].read_text())
+sql(migrations[search_index].read_text())
 elapsed = round((time.monotonic() - started) * 1000, 1)
 assert sql(snapshot_query) == before, 'Customer fields changed during migration'
 assert sql('SELECT count(*) FROM "Listing" WHERE "searchTokens" && ARRAY[\'s24\'];') == '450'
@@ -68,6 +68,23 @@ assert sql('SELECT "searchTokens" && ARRAY[\'s25\'] AND NOT "searchAccessory" FR
 plan = sql('''SET enable_seqscan=off; EXPLAIN SELECT id FROM "Listing" WHERE "searchTokens" && ARRAY['s24'];''')
 assert 'Listing_searchTokens_idx' in plan, plan
 
+# Apply subsequent migrations without changing the search backfill/backup target above.
+sql('''
+INSERT INTO "Chat" (id,"updatedAt") VALUES ('fixture-chat',now());
+INSERT INTO "Message" (id,"chatId","senderId",text)
+VALUES ('fixture-message','fixture-chat','fixture-seller','Existing message');
+''')
+message_before = sql('SELECT row_to_json(t)::text FROM (SELECT id,"createdAt","chatId","senderId",text,"mediaUrl","mediaType" FROM "Message") t;')
+for migration in migrations[search_index + 1:]:
+    sql(migration.read_text())
+assert sql('SELECT row_to_json(t)::text FROM (SELECT id,"createdAt","chatId","senderId",text,"mediaUrl","mediaType" FROM "Message") t;') == message_before
+assert sql('SELECT "mediaFingerprint" IS NULL FROM "Message" WHERE id=\'fixture-message\';') == 't'
+sql('UPDATE "Message" SET "mediaFingerprint"=\'fixture-hash\' WHERE id=\'fixture-message\';')
+media_backup = run('pg_dump', '-U', 'postgres', '-d', 'barter_rehearsal', '-Fc')
+sql('CREATE DATABASE barter_media_restore;', 'postgres')
+run('pg_restore', '-U', 'postgres', '-d', 'barter_media_restore', '--exit-on-error', data=media_backup)
+assert sql('SELECT "mediaFingerprint" FROM "Message" WHERE id=\'fixture-message\';', 'barter_media_restore') == 'fixture-hash'
+
 # Restore the pre-migration full database into another isolated database.
 sql('CREATE DATABASE barter_rehearsal_restore;', 'postgres')
 run('pg_restore', '-U', 'postgres', '-d', 'barter_rehearsal_restore', '--exit-on-error', data=backup)
@@ -84,5 +101,5 @@ for migration in migrations:
 print(json.dumps({'ok': True, 'serverVersionNum': int(version), 'locale': locale,
                   'migrationCount': len(migrations), 'fixtureRows': 900,
                   'migrationElapsedMsOnFixture': elapsed, 'dataPreserved': True,
-                  'backupRestoreVerified': True, 'freshInstallVerified': True,
+                  'mediaMigrationAndRestoreVerified': True, 'backupRestoreVerified': True, 'freshInstallVerified': True,
                   'deepPaginationVerified': True, 'ginPlanVerified': True}, indent=2))
