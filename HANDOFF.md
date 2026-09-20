@@ -1,5 +1,42 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-20: PR #29 подготовлен к разрешённой публикации
+
+Последнее указание Максима: «Делай и публикуй». Прежняя пауза отменена.
+Работа продолжена в test/socket-conversation-acceptance; выпуск через PR #29.
+Добавлена идемпотентность media POST с необязательным clientMessageId UUIDv4.
+Ключ scoped по chat/user, fingerprint SHA-256 bytes+MIME, сравнение подписи.
+Replay без upload/emit/readAt/updatedAt; конфликт payload 409. PK и rollback P2002
+защищают гонку; проигравший upload удаляется. Клиент хранит ключ с File/подписью
+между ошибками и переходами чатов, сбрасывает после подтверждения/смены payload.
+Добавлена nullable Message.mediaFingerprint миграцией 20260920150000.
+
+Код приложения: `a020682068e76bdf8530d2be413cc8d1eb714ada`; исправление migration rehearsal: `d8fc94d302a3fda615889fffec4c12e335acc8a3`.
+Web CI 35518345177: success, сборка/TypeScript, 69 tests, account/layout/messages browser suites.
+API CI 35518470496: success, 6 HTTP + 7 Socket.IO + 13 media групп.
+PostgreSQL 16 rehearsal 35518470553: success, 21 миграция, сохранность данных,
+backup/restore старой схемы и mediaFingerprint, чистая установка, GIN/пагинация.
+Dependency security audit 35518471032: success. Отдельный lint не запускался.
+Браузер: изолированные фикстуры и ускоренный native timeout, не реальные аккаунты.
+
+
+Первый migration rehearsal 35518345176 упал на жёстком ожидании, что последняя
+миграция всегда search_guard_fields. Исправлен выбор именно search-миграции;
+сохранены прежние backfill/GIN/backup проверки, добавлены последующие миграции,
+сохранность старого сообщения и backup/restore mediaFingerprint.
+Ни один тест не отключён.
+
+Render get_service подтвердил autoDeploy master и startCommand
+prisma migrate deploy перед node dist/main. Миграция только добавляет nullable поле.
+Подробности: docs/MEDIA_IDEMPOTENCY_REVIEW.md.
+Открыты browser reconnect/cookie, реальные аккаунты/физический iPhone,
+воспроизведение и доставка Vercel Blob. Health извне ранее заблокирован, попытки
+не повторялись. Ключи после reload теряются, legacy без ключа не защищён,
+outbox/фонового cleanup нет. UI-02 целиком не закрыт.
+
+Следующий шаг после проверки деплоев: browser Socket.IO reconnect/cookie
+в изоляции. Не создавать реальные пользовательские сообщения ради теста.
+
 ## 2026-09-20: deadline вложений и браузерная приёмка, PR #29, НЕ ОПУБЛИКОВАНО
 
 Ветка test/socket-conversation-acceptance, продолжаем тот же draft PR.
