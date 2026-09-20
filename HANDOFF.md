@@ -1,5 +1,37 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-20: PR #30 опубликован, новый логотип и иконка домашнего экрана
+
+PR: https://github.com/vraachmax/barter-marketplace/pull/30
+Проверенный head: 81517ff21c1ba70af9b5e98908906f5e7621c4f5.
+Merge: a8746ca879a4f8c8deea7cd69725e7e8644f694f.
+Vercel production: success,
+https://vercel.com/vraachmaxs-projects/web/KF6hcTS715QtVTd5fKFqTPDCijCk.
+Только frontend/брендинг, API-код и схема не менялись после PR #29.
+Данная последующая правка ROADMAP/HANDOFF фиксирует результат, не меняет приложение.
+
+Оригиналы из архива Максима: прозрачный mark 1024, apple icon 180, favicon ICO,
+PNG 32/48/192/512 и maskable 512. Файлы сохранены без изменения байтов.
+BarterHomeLogo использует next/image и текст БАРТЕР; старая геометрия ссылки
+и поведение сброса фильтров сохранены. Root metadata и manifest указывают новые
+ресурсы; ручная ссылка старого favicon.svg удалена, app/favicon.ico заменён.
+Кириллические имена добавлены в metadata/manifest/footer.
+
+CI 35531003136: success, 69/69 tests, production build/TypeScript,
+6/6 account, 8/8 layout (по 8 групп), 6/6 messages (по 11 групп).
+Audit 35531003597: success; отдельный lint не запускался.
+Проверены реально отдаваемые Apple/manifest PNG (HTTP 200, заявленные размеры),
+загрузка logo и отсутствие старой ссылки. Review sheet просмотрен: 440px, две темы.
+Artifacts, 14 дней: listings-layout-evidence 10611500812,
+messages-browser-evidence 10611670558, account-browser-evidence 10611480914.
+
+Физический iPhone/установка и автоматическое обновление старой иконки не проверены.
+Для добавления: Safari → Поделиться → На экран «Домой», включить веб-приложение,
+если такой переключатель показан. Инструкция Apple указана в docs/BRAND_ICON_RELEASE.md.
+Нельзя обещать автообновление уже установленного ярлыка.
+После этого блока следующий шаг: UI-02 browser reconnect/cookie в изоляции.
+PR #29 уже live; внешний health/реальные аккаунты/iPhone остаются отдельными границами.
+
 ## 2026-09-20: публикация сообщений подтверждена; новый логотип и home-screen icon
 
 PR #29 слит в master: 29669151f9fe01afd7d6d6f570534ac1c13f17d9.
