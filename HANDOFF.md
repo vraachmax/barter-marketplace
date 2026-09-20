@@ -1,5 +1,40 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-20: подтверждена версия backend после PR #28
+
+На ответ «Продолжаем» после вопроса о My Workspace продолжена read-only проверка
+в этой рабочей области. Открытых PR нет, master при старте:
+`72b08e8aab097077aab76c99c102d0b38e309a95`.
+
+20 сентября Render подтвердил live-деплой `dep-dani01fe2svs73co5d40`,
+commit `72b08e8aab097077aab76c99c102d0b38e309a95` (содержит PR #28).
+Деплой завершился 2026-09-19 23:53:56 UTC. Сервис `barter-api`,
+`srv-d78lvenpm1nc73ea1psg`, workspace `tea-d78k82muk2gs73dqoong`.
+Версия backend подтверждена через Render, но HTTP health и отсутствие ошибок
+не подтверждены: запросы из текущей среды завершились timeout без ответа,
+а запрос логов не вернулся и был остановлен. Это не доказательство сбоя сервиса.
+
+Render dashboard: https://dashboard.render.com/web/srv-d78lvenpm1nc73ea1psg
+
+GitHub compare подтвердил: между merge PR #28 и live commit изменены только
+ROADMAP.md, HANDOFF.md, docs/MESSAGE_IDEMPOTENCY_REVIEW.md, код API совпадает.
+Предыдущий деплой PR #28 `dep-danhvbbtqb8s73ajfs60` завершился успешно,
+затем деактивирован при следующем автоматическом деплое. AutoDeploy включён
+для master; вручную деплои, настройки, окружение и данные не менялись.
+
+GET / из текущей scratch-среды: timeout 25s, 0 bytes, HTTP 000.
+GET /health: timeout 20s, 0 bytes, HTTP 000. HTTP 000 не ответ сервера,
+а отсутствие HTTP-ответа. Причина (сеть среды/холодный старт/сервис) не установлена.
+Render list_logs(level=error) не завершился, ожидание остановлено.
+Не утверждать отсутствие runtime-ошибок или полную работоспособность production.
+Инструкция render-deploy требует остановить дальнейший выпуск при неуспешной
+проверке health; никаких повторных деплоев без установленной причины не делали.
+
+Код приложения не менялся, новые тесты CI не запускались, локального checkout нет.
+ROADMAP/HANDOFF обновлены. Следующий шаг: завершить read-only health/log проверку
+из доступной среды, затем изолированная Socket.IO-приёмка. UI-01/iPhone открыты.
+
+
 ## 2026-09-19: UI-02, текстовая идемпотентность, PR #28
 
 База: master `f661a911fb8def818bdef61ba6fd599f49a65c93`.
