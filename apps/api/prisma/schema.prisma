@@ -419,6 +419,7 @@ model Message {
   text      String
   mediaUrl  String?
   mediaType MessageMediaType?
+  mediaFingerprint String?
 }
 
 enum ListingStatus {

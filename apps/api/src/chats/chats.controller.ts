@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Logger,
   Param,
   Post,
   Req,
@@ -11,6 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SendMessageDto } from './dto';
@@ -21,6 +23,7 @@ import { getMediaType, MediaStorageService } from '../storage/media-storage.serv
 @UseGuards(AuthGuard('jwt'))
 @Controller('chats')
 export class ChatsController {
+  private readonly logger = new Logger(ChatsController.name);
   constructor(
     private chats: ChatsService,
     private gateway: ChatsGateway,
@@ -72,27 +75,48 @@ export class ChatsController {
     @Param('chatId') chatId: string,
     @UploadedFile() file?: Express.Multer.File,
     @Body('text') text?: string,
+    @Body('clientMessageId') clientMessageId?: string,
     @Headers('x-session-id') sessionId?: string,
     @Headers('x-anonymous-id') anonymousId?: string,
   ) {
-    if (!file) throw new BadRequestException('file_required');
+    if (!file?.buffer?.length) throw new BadRequestException('file_required');
+    if (text !== undefined && (typeof text !== 'string' || text.length > 4000)) {
+      throw new BadRequestException('invalid_media_text');
+    }
     const mediaType = getMediaType(file);
-    await this.chats.assertParticipant(chatId, req.user.id);
+    const fingerprint = createHash('sha256').update(file.buffer)
+      .update('\0' + file.mimetype.split(';', 1)[0].trim().toLowerCase()).digest('hex');
+    const existing = await this.chats.findMediaReplay(
+      chatId, req.user.id, clientMessageId, fingerprint, mediaType, text,
+    );
+    if (existing) return existing.message;
     const stored = await this.mediaStorage.upload('chat-media', chatId, file);
-    let message;
+    let result;
     try {
-      message = await this.chats.sendMediaMessage(
+      result = await this.chats.sendMediaMessageOnce(
         chatId,
         req.user.id,
         stored.url,
         mediaType,
         text,
         { sessionId, anonymousId },
+        clientMessageId,
+        fingerprint,
       );
     } catch (error) {
-      await this.mediaStorage.delete(stored.url).catch(() => undefined);
+      await this.mediaStorage.delete(stored.url).catch(() => {
+        this.logger.warn('Failed to clean up chat media after message persistence failure');
+      });
       throw error;
     }
+    if (!result.created) {
+      // Each upload has a unique URL: discard only this request's losing object.
+      await this.mediaStorage.delete(stored.url).catch(() => {
+        this.logger.warn('Failed to clean up duplicate chat media upload');
+      });
+      return result.message;
+    }
+    const { message } = result;
     this.gateway.server.to(`chat:${chatId}`).emit('message-created', {
       chatId,
       ...message,

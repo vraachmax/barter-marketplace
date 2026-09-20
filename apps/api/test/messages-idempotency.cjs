@@ -46,7 +46,8 @@ async function main() {
     }).compile();
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    await app.init();
+    // Own the listener for the whole suite; concurrent Supertest requests must not close it.
+    await app.listen(0, '127.0.0.1');
     const send = (chat, user, body) => request(app.getHttpServer()).post('/chats/' + chat.id + '/messages').set('x-fixture-user', user.id).send(body);
     const c = chats[0], u = users[0];
     const key = randomUUID(), body = { text: 'Lost acknowledgement', clientMessageId: key };

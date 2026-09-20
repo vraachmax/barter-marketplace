@@ -1,5 +1,159 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-20: PR #29 подготовлен к разрешённой публикации
+
+Последнее указание Максима: «Делай и публикуй». Прежняя пауза отменена.
+Работа продолжена в test/socket-conversation-acceptance; выпуск через PR #29.
+Добавлена идемпотентность media POST с необязательным clientMessageId UUIDv4.
+Ключ scoped по chat/user, fingerprint SHA-256 bytes+MIME, сравнение подписи.
+Replay без upload/emit/readAt/updatedAt; конфликт payload 409. PK и rollback P2002
+защищают гонку; проигравший upload удаляется. Клиент хранит ключ с File/подписью
+между ошибками и переходами чатов, сбрасывает после подтверждения/смены payload.
+Добавлена nullable Message.mediaFingerprint миграцией 20260920150000.
+
+Код приложения: `a020682068e76bdf8530d2be413cc8d1eb714ada`; исправление migration rehearsal: `d8fc94d302a3fda615889fffec4c12e335acc8a3`.
+Web CI 35518345177: success, сборка/TypeScript, 69 tests, account/layout/messages browser suites.
+API CI 35518470496: success, 6 HTTP + 7 Socket.IO + 13 media групп.
+PostgreSQL 16 rehearsal 35518470553: success, 21 миграция, сохранность данных,
+backup/restore старой схемы и mediaFingerprint, чистая установка, GIN/пагинация.
+Dependency security audit 35518471032: success. Отдельный lint не запускался.
+Браузер: изолированные фикстуры и ускоренный native timeout, не реальные аккаунты.
+
+
+Первый migration rehearsal 35518345176 упал на жёстком ожидании, что последняя
+миграция всегда search_guard_fields. Исправлен выбор именно search-миграции;
+сохранены прежние backfill/GIN/backup проверки, добавлены последующие миграции,
+сохранность старого сообщения и backup/restore mediaFingerprint.
+Ни один тест не отключён.
+
+Render get_service подтвердил autoDeploy master и startCommand
+prisma migrate deploy перед node dist/main. Миграция только добавляет nullable поле.
+Подробности: docs/MEDIA_IDEMPOTENCY_REVIEW.md.
+Открыты browser reconnect/cookie, реальные аккаунты/физический iPhone,
+воспроизведение и доставка Vercel Blob. Health извне ранее заблокирован, попытки
+не повторялись. Ключи после reload теряются, legacy без ключа не защищён,
+outbox/фонового cleanup нет. UI-02 целиком не закрыт.
+
+Следующий шаг после проверки деплоев: browser Socket.IO reconnect/cookie
+в изоляции. Не создавать реальные пользовательские сообщения ради теста.
+
+## 2026-09-20: deadline вложений и браузерная приёмка, PR #29, НЕ ОПУБЛИКОВАНО
+
+Ветка test/socket-conversation-acceptance, продолжаем тот же draft PR.
+apiUploadFile теперь принимает signal; экран сообщений ограничивает ожидание
+вложения 60 сек. Отмена fetch освобождает busy через существующий finally.
+При ошибке текст/файл остаются в черновике, показано предупреждение о
+неподтверждённой отправке и обновление переписки. Автоповторов нет.
+Другие места upload не получили новый default. Геометрия/стили не менялись.
+
+Браузерная suite расширена с 7 до 10 групп: multipart/file input, 503 и явный
+повтор, сохранение файла по чатам, двойное нажатие/запоздалый успех, timeout
+и позднее завершение на серверной фикстуре без автоповтора.
+Проверенный code commit: `7905a4488f2188a5bdf496b759696ea576cf4ba3`.
+Web CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35516210223
+69/69 regression tests, production build/TypeScript, 6/6 account, 8/8 layout,
+6/6 messages browser runs успешны. Messages: по 10 групп в каждой конфигурации.
+API CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35516210238
+Все 21 группа (6 HTTP + 7 Socket.IO + 8 media) и сборка/миграции успешны.
+Dependency security audit 35516210444: success. Отдельный lint не запускался.
+Artifacts, 14 дней: messages-browser-evidence 10606474167,
+account-browser-evidence 10606509025, listings-layout-evidence 10606763645.
+
+Подробности: docs/MESSAGE_UPLOAD_UI_REVIEW.md.
+Deadline в тесте ускорен с 60000 до 800ms через test-only addInitScript;
+проверяется запрошенное значение 60000 и настоящая отмена браузерного fetch.
+Это не замер минуты ожидания или фоновой вкладки. API/auth/history фикстуры,
+WebSocket выключен; физический iPhone, cookie/reconnect и Vercel Blob не приняты.
+Реальные сообщения/файлы не создавались.
+
+Следующий шаг: идемпотентность media POST и клиентского повтора (ключ,
+проверка payload, параллельные повторы, cleanup лишних файлов).
+Сейчас явный повтор после потери ответа может создать дубль. Затем browser
+reconnect/cookie и оставшаяся приёмка устройства/аккаунтов.
+Production health по-прежнему внешне заблокирован, прежние попытки не повторять.
+Максим разрешил публикацию после завершения раздела. Сейчас не публикуем,
+master c980e5c не менялся. Оба документа актуальны в ветке PR.
+
+## 2026-09-20: вложения, валидация и отказы, PR #29, НЕ ОПУБЛИКОВАНО
+
+Ветка: test/socket-conversation-acceptance. Master c980e5c не менялся.
+Максим уточнил: публикуем после завершения раздела. Это согласие на итоговый
+выпуск, текущий блок не завершает UI-02. Продолжаем существующий draft PR #29.
+
+В ChatsController добавлены проверка пустого файла и подписи (строка <=4000)
+до upload. Ошибка cleanup после отказа сохранения теперь даёт предупреждение
+без пользовательских данных; исходная ошибка сохраняется.
+Добавлен messages-media.cjs: настоящий Nest multipart, локальные байты и PostgreSQL,
+права участника, 40 МиБ + 1, неверные поля, сбои upload/save/delete и восстановление.
+Все записи и файлы тестовые, production не затронут.
+
+Проверенный code commit: `998173fee9898b79fd5da27209cd598c92d598c0`.
+CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35514831724
+PostgreSQL 16, миграции, Prisma generate, API build и 21 группа успешны
+(6 HTTP, 7 Socket.IO, 8 media). Dependency security audit 35514831934: success.
+
+Подробности и границы: docs/MESSAGE_MEDIA_REVIEW.md.
+HTTP guard тестовый; успешная persistence настоящая, отказы индуцированы обёртками.
+Заявленный MIME не доказывает содержимое/декодирование; видео синтетическое.
+Vercel Blob и воспроизведение не проверены. Cleanup warning не удаляет orphan
+при реальном отказе хранилища; фоновой очереди очистки пока нет.
+Frontend не менялся; browser suite и lint в этом блоке не запускались.
+Повторы вложений после потери ответа всё ещё могут создать дубль.
+
+Следующий шаг: UI-02, deadline загрузки вложения и браузерные проверки
+ошибки/черновика/переключения чатов. apiUploadFile в apps/web/src/lib/api.ts
+пока вызывает fetch без signal/deadline; зависший запрос удерживает busy.
+Не делать автоматический повтор неидемпотентной загрузки.
+Затем browser reconnect/cookie, дубли вложений, реальные аккаунты/iPhone.
+Production health остаётся внешней границей; старые заблокированные запросы
+не повторять. Свежие ROADMAP/HANDOFF находятся в ветке PR, не master.
+
+## 2026-09-20: изолированная Socket.IO-приёмка, draft PR #29, НЕ ОПУБЛИКОВАНО
+
+База master: `c980e5c31eaeccb1ee631c6a63693096b16f3d8d`.
+Ветка: `test/socket-conversation-acceptance`.
+PR: https://github.com/vraachmax/barter-marketplace/pull/29
+Пользователь согласовал отдельную ветку без production-выпуска.
+Master, Render и production не изменялись в этом блоке. Не сливать автоматически.
+Свежие ROADMAP/HANDOFF находятся в этой ветке, не в master.
+
+Добавлен apps/api/test/messages-socket.cjs: настоящий Socket.IO gateway/client,
+подписанный cookie JWT и изолированная PostgreSQL. Проверены два участника,
+посторонний клиент, невалидные токены, доставка HTTP POST, отсутствие повторного
+emit, typing/read и соответствие БД, legacy socket-send, явный disconnect/connect,
+повторный join и получение пропущенного сообщения из истории.
+Небольшое исправление gateway: до presence отклоняется JWT без непустого
+строкового sub. Схема БД и внешний вид не менялись.
+
+Проверенный код: `97e0d2a884c101c2e260ce93de6ebc341ecc0cfa`.
+CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35502348765
+Полная цепочка миграций PostgreSQL 16, Prisma generate, production build API,
+6/6 HTTP/PostgreSQL и 7/7 Socket.IO групп успешны.
+Dependency security audit 35502349158: success.
+Web browser suite и lint в этом блоке не запускались, frontend не менялся.
+
+Первый CI 35502272167 прошёл build/миграции, но прежняя HTTP-suite дала ECONNRESET
+на параллельных запросах, Socket.IO был skipped. В HTTP-тесте app.init заменён
+на app.listen(0, '127.0.0.1'): один listener принадлежит всему тесту, Supertest
+не управляет его закрытием между конкурентными запросами. Финальный прогон зелёный;
+проверки не отключались. Удалены только созданные текущим тестом CI-фикстуры.
+
+Границы: HTTP auth guard тестовый, WebSocket JWT/проверка участия настоящие;
+cookie передаётся Node-клиентом, не браузером. Не проверены SameSite/CORS,
+автоматический reconnect UI, настоящие аккаунты/iPhone и media storage.
+Bot provisioning отключён, listing отсутствует, analytics/storage подменены.
+Проверка отсутствия повторного события ограничена окном 150ms; число записей
+дополнительно проверено в PostgreSQL. Запрещённые действия дают ожидаемые
+exception-events и ошибки в Nest log, но не доступ к чату.
+Подробнее: docs/SOCKET_IO_REVIEW.md в этой ветке.
+
+Следующая доступная задача: UI-02, изолированная приёмка вложений
+(разрешённые типы/размер, отказ загрузки, отказ БД после загрузки и очистка
+объекта, права участника). Продолжать эту ветку/PR, не создавать дубликат.
+Production health остаётся внешне заблокированным, не повторять старые обходы.
+Пауза публикации сохраняется; UI-01/iPhone остаются открытыми.
+
+
 ## 2026-09-20: браузерная попытка /health после согласия пользователя
 
 Пользователь ответил «Да» на проверку публичного /health в облачном браузере.
