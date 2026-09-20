@@ -1,5 +1,32 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-20: публикация сообщений подтверждена; новый логотип и home-screen icon
+
+PR #29 слит в master: 29669151f9fe01afd7d6d6f570534ac1c13f17d9.
+Финальные проверки head ce744308: Web 35518596602, API 35518596599,
+PG rehearsal 35518596577, audit 35518596845: success.
+Vercel: success, https://vercel.com/vraachmaxs-projects/web/7CCxsuomwxmke9Mvc8MmHvMe36Ne.
+Render dep-danvfgvf3r2c73eciv7g: live, finished 15:14:05 UTC.
+Логи: миграция 20260920150000_message_media_fingerprint применялась 15:13:46,
+Nest application successfully started 15:13:56. Внешний health не перепроверялся.
+
+Максим прислал barter-icons-ready.zip, apple-touch-icon.png и
+barter-logo-mark-1024.png и попросил заменить знак на сайте/домашнем экране.
+Начат отдельный frontend-блок поверх опубликованного PR #29:
+- новый Bubble B в BarterHomeLogo через next/image, название БАРТЕР в обеих темах;
+- сохранены внешние размеры ссылки и логика сброса фильтров;
+- оригинальный PNG 180x180 подключён как Apple touch icon, новый favicon.ico;
+- manifest содержит готовые 192/512 и отдельный maskable 512, standalone и русское имя;
+- версионные пути иконок, удалены конфликтующие ручные ссылки на старый favicon.svg;
+- старые SVG в public/brand сохранены как legacy assets, текущая шапка их не использует.
+
+Готовые изображения скопированы побайтно, не сгенерированы и не перерисованы.
+Браузерная suite проверяет загрузку логотипа, единственную Apple-ссылку,
+HTTP 200 и реальные PNG-размеры ресурсов manifest. Результаты CI см. PR этого блока;
+до завершения CI этот блок не считается опубликованным.
+Установка/обновление уже добавленного ярлыка на физическом iPhone не подтверждена.
+После логотипа следующий шаг: UI-02 browser reconnect/cookie; его не закрывает смена бренда.
+
 ## 2026-09-20: PR #29 подготовлен к разрешённой публикации
 
 Последнее указание Максима: «Делай и публикуй». Прежняя пауза отменена.

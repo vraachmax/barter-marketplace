@@ -9,7 +9,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="text-sm font-bold text-[#1a1a1a]">Barter</p>
+            <p className="text-sm font-bold text-[#1a1a1a]">БАРТЕР</p>
             <p className="mt-2 text-xs leading-relaxed text-[#6b7280]">
               Маркетплейс объявлений по всей России. Покупайте и продавайте легко.
             </p>
@@ -64,7 +64,7 @@ export function SiteFooter() {
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 pt-6">
           <p className="text-xs text-[#6b7280]">
-            © {new Date().getFullYear()} Barter. Все права защищены.
+            © {new Date().getFullYear()} БАРТЕР. Все права защищены.
           </p>
           <div className="flex items-center gap-3 text-xs text-[#6b7280]">
             <Link href="/auth" className="hover:text-[#007AFF]">Вход</Link>

@@ -26,20 +26,30 @@ const golosText = localFont({
   ],
 });
 
-const SITE_NAME = 'Barter — маркетплейс объявлений';
+const SITE_NAME = 'БАРТЕР — маркетплейс объявлений';
 const SITE_DESC = 'Покупайте и продавайте легко: электроника, авто, недвижимость, услуги и многое другое. Бесплатные объявления по всей России.';
 
 export const metadata: Metadata = {
+  applicationName: 'БАРТЕР',
+  manifest: '/manifest.json?v=bubble-b-1',
+  appleWebApp: { capable: true, title: 'БАРТЕР', statusBarStyle: 'default' },
+  icons: {
+    icon: [
+      { url: '/brand/bubble-b/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/brand/bubble-b/favicon-48.png', sizes: '48x48', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png?v=bubble-b-1', sizes: '180x180', type: 'image/png' }],
+  },
   title: {
     default: SITE_NAME,
-    template: `%s | Barter`,
+    template: `%s | БАРТЕР`,
   },
   description: SITE_DESC,
   keywords: ['объявления', 'маркетплейс', 'купить', 'продать', 'бартер', 'электроника', 'авто', 'недвижимость'],
   openGraph: {
     type: 'website',
     locale: 'ru_RU',
-    siteName: 'Barter',
+    siteName: 'БАРТЕР',
     title: SITE_NAME,
     description: SITE_DESC,
   },
@@ -68,9 +78,6 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var p=localStorage.getItem('barter_theme_pref');var r='light';if(p==='DARK')r='dark';else if(p==='LIGHT')r='light';else if(p==='SYSTEM'&&window.matchMedia('(prefers-color-scheme: dark)').matches)r='dark';var el=document.documentElement;el.setAttribute('data-theme',r);el.classList.toggle('dark',r==='dark');el.setAttribute('data-theme-pref',p||'LIGHT');}catch(e){}})();`,

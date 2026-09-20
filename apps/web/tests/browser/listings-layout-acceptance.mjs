@@ -282,6 +282,38 @@ async function scenario(browserType, width, theme) {
     checks.push('recommended badge fully inside plan card');
 
     await visit('/?mode=market&sort=new');
+    const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
+    await expect(logo).toBeVisible();
+    await expect(logo).toContainText('БАРТЕР');
+    await expect(logo.locator('img')).toHaveJSProperty('complete', true);
+    assert(await logo.locator('img').evaluate(img => img.naturalWidth > 0));
+    await contained(logo);
+    const apple = page.locator('link[rel="apple-touch-icon"]');
+    await expect(apple).toHaveCount(1);
+    const appleHref = await apple.getAttribute('href');
+    assert.equal(appleHref, '/apple-touch-icon.png?v=bubble-b-1');
+    const appleResponse = await page.request.get(baseURL + appleHref);
+    assert.equal(appleResponse.status(), 200);
+    const appleBytes = await appleResponse.body();
+    assert.equal(appleBytes.readUInt32BE(16), 180);
+    assert.equal(appleBytes.readUInt32BE(20), 180);
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
+    const manifestResponse = await page.request.get(baseURL + manifestHref);
+    assert.equal(manifestResponse.status(), 200);
+    const manifest = await manifestResponse.json();
+    assert.equal(manifest.short_name, 'БАРТЕР');
+    assert.equal(manifest.display, 'standalone');
+    assert(manifest.icons.some(icon => icon.purpose === 'maskable' && icon.sizes === '512x512'));
+    for (const icon of manifest.icons) {
+      const response = await page.request.get(baseURL + icon.src);
+      assert.equal(response.status(), 200);
+      const bytes = await response.body();
+      const [w, h] = icon.sizes.split('x').map(Number);
+      assert.equal(bytes.readUInt32BE(16), w);
+      assert.equal(bytes.readUInt32BE(20), h);
+    }
+    assert.equal(await page.locator('link[href="/favicon.svg"]').count(), 0);
+    checks.push('Bubble B logo renders; Apple icon and manifest assets resolve at declared sizes');
     const toggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
     for (const mode of ['market', 'barter']) {
       const label = mode === 'market' ? 'Маркет' : 'Бартер';
