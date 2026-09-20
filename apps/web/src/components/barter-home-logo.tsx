@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 /** Совпадает с брейкпоинтом `md` в Tailwind */
@@ -38,18 +39,17 @@ export function BarterHomeLogo() {
       title="Главная — сбросить фильтры и поиск"
       aria-label="Бартер — на главную"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/brand/logo_light.svg"
-        alt="Бартер"
-        className="brand-logo-light h-9 w-full max-w-full object-contain md:h-10 md:w-auto md:max-w-[200px]"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/brand/logo_dark.svg"
-        alt="Бартер"
-        className="brand-logo-dark h-9 w-full max-w-full object-contain md:h-10 md:w-auto md:max-w-[200px]"
-      />
+      <span className="inline-flex items-center gap-2">
+        <Image
+          src="/brand/bubble-b/barter-logo-mark-1024.png"
+          alt=""
+          width={40}
+          height={40}
+          sizes="40px"
+          className="h-9 w-9 shrink-0 object-contain md:h-10 md:w-10"
+        />
+        <span className="text-base font-bold tracking-tight text-foreground md:text-lg">БАРТЕР</span>
+      </span>
     </Link>
   );
 }
