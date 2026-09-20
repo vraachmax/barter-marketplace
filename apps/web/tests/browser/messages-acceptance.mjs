@@ -42,12 +42,20 @@ function fixture(theme) {
     chats: ['a', 'b'].map(id => ({ id, peer: { id: 'peer-' + id, name: id === 'a' ? 'Анна' : 'Борис' }, listing: null, myRole: 'buyer', unreadCount: 0, updatedAt: '2026-09-19T12:00:00Z', lastMessage: null })),
     messages: { a: [message('a-1', 'Сообщение Анны')], b: [message('b-1', 'Сообщение Бориса', 'peer-b')] },
     sends: [], savedAttempts: new Map(), loseSendResponse: false, unexpected: [], rejectSend: false, rejectHistory: false, rejectList: false,
+    uploads: [], rejectUpload: false, holdUpload: null,
     holdSend: null, holdHistory: null, historyStarted: false, guest: false,
     makeMessage: message,
   };
 }
 async function install(context, state, theme) {
   await context.addInitScript(theme => {
+    // Accelerate only the upload deadline when explicitly enabled by the scenario.
+    // The real browser AbortSignal still cancels fetch; production requests use 60000ms.
+    const nativeTimeout = AbortSignal.timeout.bind(AbortSignal);
+    AbortSignal.timeout = ms => {
+      if (ms === 60000) window.__uploadDeadline = ms;
+      return nativeTimeout(ms === 60000 && window.__fastUploadTimeout ? 800 : ms);
+    };
     localStorage.setItem('barter_token', 'isolated-ui-fixture');
     localStorage.setItem('barter_theme_pref', theme.toUpperCase());
   }, theme);
@@ -62,6 +70,16 @@ async function install(context, state, theme) {
     if (path === '/chats') return json(state.chats, state.guest ? 401 : state.rejectList ? 503 : 200);
     if (path === '/support/templates' || path === '/support/faq') return json([]);
     if (path === '/support/advise') return json({ tip: null, suggestions: [] });
+    const media = path.match(/^\/chats\/([ab])\/media$/);
+    if (media && req.method() === 'POST') {
+      const id = media[1];
+      state.uploads.push({ id, body: req.postDataBuffer().toString() });
+      if (state.holdUpload) await state.holdUpload;
+      if (state.rejectUpload) return json({ message: 'upload unavailable' }, 503).catch(() => {});
+      const message = { ...state.makeMessage('media-' + state.uploads.length, 'Фото', state.user.id), mediaType: 'IMAGE', mediaUrl: null };
+      state.messages[id].push(message);
+      return json(message).catch(() => {}); // A timed-out client may already have aborted.
+    }
     const match = path.match(/^\/chats\/([ab])\/messages$/);
     if (match) {
       const id = match[1];
@@ -209,6 +227,78 @@ async function scenario(type, width, theme) {
     assert.notEqual(state.sends.at(-1).key, lostKey);
     assert.equal(state.messages.a.length, beforeLoss + 2);
     checks.push('lost acknowledgement reuses key; new identical message uses a new key');
+
+    // Real browser file input and multipart fetch; API persistence here is a fixture.
+    const fileInput = page.getByLabel('Прикрепить фото или видео');
+    const image = { name: 'attachment.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=', 'base64') };
+    await fileInput.setInputFiles(image);
+    await input.fill('Подпись к фото');
+    state.rejectUpload = true;
+    await send.click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Нет подтверждения отправки' })).toBeVisible();
+    await expect(input).toHaveValue('Подпись к фото');
+    await expect(page.getByText(image.name, { exact: true })).toBeVisible();
+    await expect(send).toBeEnabled();
+    assert.equal(state.uploads.length, 1);
+    assert.ok(state.uploads[0].body.includes('filename="attachment.png"'));
+    assert.ok(state.uploads[0].body.includes('Подпись к фото'));
+    await choose('Борис');
+    await expect(page.getByText(image.name, { exact: true })).toHaveCount(0);
+    await choose('Анна');
+    await expect(page.getByText(image.name, { exact: true })).toBeVisible();
+    await expect(input).toHaveValue('Подпись к фото');
+    state.rejectUpload = false;
+    await send.click();
+    await expect(page.getByText(image.name, { exact: true })).toHaveCount(0);
+    await expect(input).toHaveValue('');
+    await expect(input).toBeEnabled();
+    assert.equal(state.uploads.length, 2);
+    checks.push('upload failure retains file/caption by chat; explicit retry clears confirmed draft');
+
+    let releaseUpload;
+    state.holdUpload = new Promise(resolve => { releaseUpload = resolve; });
+    await fileInput.setInputFiles(image);
+    await input.fill('Запоздалое фото');
+    await send.evaluate(button => { button.click(); button.click(); });
+    await expect.poll(() => state.uploads.length).toBe(3);
+    await expect(send).toBeDisabled();
+    await choose('Борис');
+    await expect(input).toHaveValue('Черновик Борису');
+    releaseUpload(); state.holdUpload = null;
+    await expect(send).toBeEnabled();
+    await expect(input).toHaveValue('Черновик Борису');
+    assert.equal(state.uploads.at(-1).id, 'a');
+    await choose('Анна');
+    await expect(input).toHaveValue('');
+    await expect(page.getByText(image.name, { exact: true })).toHaveCount(0);
+    checks.push('late upload success and double click cannot clear another chat draft');
+
+    await fileInput.setInputFiles(image);
+    await input.fill('Фото без подтверждения');
+    state.holdUpload = new Promise(resolve => { releaseUpload = resolve; });
+    await page.evaluate(() => { window.__fastUploadTimeout = true; });
+    await send.click();
+    await expect.poll(() => state.uploads.length).toBe(4);
+    await expect(page.getByRole('alert').filter({ hasText: 'Нет подтверждения отправки' })).toBeVisible();
+    await expect(send).toBeEnabled();
+    await expect(input).toHaveValue('Фото без подтверждения');
+    await expect(page.getByText(image.name, { exact: true })).toBeVisible();
+    assert.equal(await page.evaluate(() => window.__uploadDeadline), 60000);
+    // Even if the server completes after the client abort, do not retry automatically.
+    releaseUpload(); state.holdUpload = null;
+    await expect.poll(() => state.messages.a.some(m => m.id === 'media-4')).toBe(true);
+    await page.evaluate(() => { window.__fastUploadTimeout = false; });
+    await page.getByRole('button', { name: 'Обновить переписку', exact: true }).click();
+    await expect(input).toBeEnabled();
+    await expect(input).toHaveValue('Фото без подтверждения');
+    await expect(page.getByText(image.name, { exact: true })).toBeVisible();
+    assert.equal(state.uploads.length, 4);
+    await choose('Борис');
+    await choose('Анна');
+    await expect(input).toHaveValue('Фото без подтверждения');
+    await expect(page.getByText(image.name, { exact: true })).toBeVisible();
+    await page.screenshot({ path: join(output, key + '-upload-timeout.png'), fullPage: true });
+    checks.push('native upload abort releases busy, preserves draft and does not automatically repeat');
 
     await choose('Борис');
     await page.goBack();

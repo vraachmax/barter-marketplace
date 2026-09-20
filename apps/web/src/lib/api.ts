@@ -427,6 +427,7 @@ export async function apiUploadFile(
   file: File,
   fieldName = 'file',
   extraFields?: Record<string, string>,
+  options?: { signal?: AbortSignal },
 ): Promise<{ ok: true; data: any } | { ok: false; status: number; message: string }> {
   try {
     const fd = new FormData();
@@ -440,6 +441,7 @@ export async function apiUploadFile(
     const res = await fetch(`${API_URL}${path}`, {
       method: 'POST',
       body: fd,
+      signal: options?.signal,
       credentials: 'include',
       headers: {
         ...authHeaders,

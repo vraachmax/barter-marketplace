@@ -272,7 +272,10 @@ export default function MessagesPage() {
     setSendErrors(previous => ({ ...previous, [chatId]: '' }));
     try {
       const res = withFile && file
-        ? await apiUploadFile(`/chats/${encodeURIComponent(chatId)}/media`, file, 'file', { text: currentText.trim() })
+        ? await apiUploadFile(`/chats/${encodeURIComponent(chatId)}/media`, file, 'file', { text: currentText.trim() }, {
+            // Uploads need more time than text; aborting does not prove the server did not save it.
+            signal: AbortSignal.timeout(60000),
+          })
         : await apiFetchJson<ChatMessage>(`/chats/${encodeURIComponent(chatId)}/messages`, {
             method: 'POST', body: JSON.stringify({ text: currentText.trim(), clientMessageId: attempt!.key }),
             signal: AbortSignal.timeout(20000),
