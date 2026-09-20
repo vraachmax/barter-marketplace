@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Logger,
   Param,
   Post,
   Req,
@@ -21,6 +22,7 @@ import { getMediaType, MediaStorageService } from '../storage/media-storage.serv
 @UseGuards(AuthGuard('jwt'))
 @Controller('chats')
 export class ChatsController {
+  private readonly logger = new Logger(ChatsController.name);
   constructor(
     private chats: ChatsService,
     private gateway: ChatsGateway,
@@ -75,7 +77,10 @@ export class ChatsController {
     @Headers('x-session-id') sessionId?: string,
     @Headers('x-anonymous-id') anonymousId?: string,
   ) {
-    if (!file) throw new BadRequestException('file_required');
+    if (!file?.buffer?.length) throw new BadRequestException('file_required');
+    if (text !== undefined && (typeof text !== 'string' || text.length > 4000)) {
+      throw new BadRequestException('invalid_media_text');
+    }
     const mediaType = getMediaType(file);
     await this.chats.assertParticipant(chatId, req.user.id);
     const stored = await this.mediaStorage.upload('chat-media', chatId, file);
@@ -90,7 +95,9 @@ export class ChatsController {
         { sessionId, anonymousId },
       );
     } catch (error) {
-      await this.mediaStorage.delete(stored.url).catch(() => undefined);
+      await this.mediaStorage.delete(stored.url).catch(() => {
+        this.logger.warn('Failed to clean up chat media after message persistence failure');
+      });
       throw error;
     }
     this.gateway.server.to(`chat:${chatId}`).emit('message-created', {

@@ -7,6 +7,8 @@ on:
       - 'apps/api/prisma/**'
       - 'apps/api/test/messages-idempotency.cjs'
       - 'apps/api/test/messages-socket.cjs'
+      - 'apps/api/test/messages-media.cjs'
+      - 'apps/api/src/storage/**'
       - 'apps/api/src/presence/**'
       - 'apps/api/src/config/security.ts'
       - 'package-lock.json'
@@ -52,3 +54,8 @@ jobs:
         run: node apps/api/test/messages-idempotency.cjs
       - name: Socket.IO and PostgreSQL acceptance
         run: node apps/api/test/messages-socket.cjs
+
+      - name: Media multipart and PostgreSQL acceptance
+        run: node apps/api/test/messages-media.cjs
+        env:
+          MEDIA_STORAGE_DRIVER: local
