@@ -1,5 +1,51 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-20: изолированная Socket.IO-приёмка, draft PR #29, НЕ ОПУБЛИКОВАНО
+
+База master: `c980e5c31eaeccb1ee631c6a63693096b16f3d8d`.
+Ветка: `test/socket-conversation-acceptance`.
+PR: https://github.com/vraachmax/barter-marketplace/pull/29
+Пользователь согласовал отдельную ветку без production-выпуска.
+Master, Render и production не изменялись в этом блоке. Не сливать автоматически.
+Свежие ROADMAP/HANDOFF находятся в этой ветке, не в master.
+
+Добавлен apps/api/test/messages-socket.cjs: настоящий Socket.IO gateway/client,
+подписанный cookie JWT и изолированная PostgreSQL. Проверены два участника,
+посторонний клиент, невалидные токены, доставка HTTP POST, отсутствие повторного
+emit, typing/read и соответствие БД, legacy socket-send, явный disconnect/connect,
+повторный join и получение пропущенного сообщения из истории.
+Небольшое исправление gateway: до presence отклоняется JWT без непустого
+строкового sub. Схема БД и внешний вид не менялись.
+
+Проверенный код: `97e0d2a884c101c2e260ce93de6ebc341ecc0cfa`.
+CI: https://github.com/vraachmax/barter-marketplace/actions/runs/35502348765
+Полная цепочка миграций PostgreSQL 16, Prisma generate, production build API,
+6/6 HTTP/PostgreSQL и 7/7 Socket.IO групп успешны.
+Dependency security audit 35502349158: success.
+Web browser suite и lint в этом блоке не запускались, frontend не менялся.
+
+Первый CI 35502272167 прошёл build/миграции, но прежняя HTTP-suite дала ECONNRESET
+на параллельных запросах, Socket.IO был skipped. В HTTP-тесте app.init заменён
+на app.listen(0, '127.0.0.1'): один listener принадлежит всему тесту, Supertest
+не управляет его закрытием между конкурентными запросами. Финальный прогон зелёный;
+проверки не отключались. Удалены только созданные текущим тестом CI-фикстуры.
+
+Границы: HTTP auth guard тестовый, WebSocket JWT/проверка участия настоящие;
+cookie передаётся Node-клиентом, не браузером. Не проверены SameSite/CORS,
+автоматический reconnect UI, настоящие аккаунты/iPhone и media storage.
+Bot provisioning отключён, listing отсутствует, analytics/storage подменены.
+Проверка отсутствия повторного события ограничена окном 150ms; число записей
+дополнительно проверено в PostgreSQL. Запрещённые действия дают ожидаемые
+exception-events и ошибки в Nest log, но не доступ к чату.
+Подробнее: docs/SOCKET_IO_REVIEW.md в этой ветке.
+
+Следующая доступная задача: UI-02, изолированная приёмка вложений
+(разрешённые типы/размер, отказ загрузки, отказ БД после загрузки и очистка
+объекта, права участника). Продолжать эту ветку/PR, не создавать дубликат.
+Production health остаётся внешне заблокированным, не повторять старые обходы.
+Пауза публикации сохраняется; UI-01/iPhone остаются открытыми.
+
+
 ## 2026-09-20: браузерная попытка /health после согласия пользователя
 
 Пользователь ответил «Да» на проверку публичного /health в облачном браузере.
