@@ -35,20 +35,21 @@ export function BarterHomeLogo() {
     <Link
       href="/"
       onClick={onLogoClick}
-      className="inline-flex w-[120px] shrink-0 items-center sm:w-[148px] md:w-auto"
+      className="inline-flex min-h-11 w-fit shrink-0 items-center"
       title="Главная — сбросить фильтры и поиск"
       aria-label="Бартер — на главную"
     >
       <span className="inline-flex items-center gap-2">
         <Image
-          src="/brand/bubble-b/barter-logo-mark-1024.png"
+          src="/brand/bubble-b-v2/mark.png"
           alt=""
-          width={40}
-          height={40}
-          sizes="40px"
-          className="h-9 w-9 shrink-0 object-contain md:h-10 md:w-10"
+          width={160}
+          height={192}
+          sizes="(min-width: 768px) 36px, 32px"
+          unoptimized
+          className="h-auto w-8 shrink-0 object-contain md:w-9"
         />
-        <span className="text-base font-bold tracking-tight text-foreground md:text-lg">БАРТЕР</span>
+        <span className="whitespace-nowrap text-base font-bold tracking-tight text-foreground md:text-lg">БАРТЕР</span>
       </span>
     </Link>
   );
