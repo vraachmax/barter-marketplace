@@ -9,19 +9,19 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/brand/bubble-b/icon-192.png",
+      "src": "/brand/bubble-b-v2/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/brand/bubble-b/icon-512.png",
+      "src": "/brand/bubble-b-v2/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/brand/bubble-b/icon-maskable-512.png",
+      "src": "/brand/bubble-b-v2/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

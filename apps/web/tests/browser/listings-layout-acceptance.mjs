@@ -23,6 +23,30 @@ const results = [];
 const shots = [];
 const delay = ms => new Promise(done => setTimeout(done, ms));
 
+
+async function assertArtwork(bytes, fill, transparent = false, maskable = false) {
+  const sharp = webRequire('sharp');
+  const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let left = info.width, right = -1, top = info.height, bottom = -1;
+  let blue = 0, orange = 0;
+  for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
+    const i = (y * info.width + x) * 4;
+    const [r, g, b, a] = data.subarray(i, i + 4);
+    if (!transparent) assert.equal(a, 255, 'home icon must be opaque');
+    if (a < 64 || Math.max(r, g, b) - Math.min(r, g, b) < 50) continue;
+    left = Math.min(left, x); right = Math.max(right, x);
+    top = Math.min(top, y); bottom = Math.max(bottom, y);
+    if (b > r) blue++; else orange++;
+    if (maskable) assert(Math.hypot(x + 0.5 - info.width / 2, y + 0.5 - info.height / 2) < info.width * 0.4,
+      'all colored pixels stay inside the maskable safe circle');
+  }
+  assert(blue > 0 && orange > 0, 'both complete color shapes are present');
+  assert(left > 0 && top > 0 && right < info.width - 1 && bottom < info.height - 1, 'artwork never touches a cut edge');
+  assert(Math.abs((bottom - top + 1) / info.height - fill) < 0.05, 'visible mark occupies the intended height');
+  assert(Math.abs((left + right + 1) / 2 - info.width / 2) <= 1.5, 'horizontal centering');
+  assert(Math.abs((top + bottom + 1) / 2 - info.height / 2) <= 1.5, 'vertical centering');
+}
+
 async function waitForServer() {
   for (let attempt = 0; attempt < 60; attempt++) {
     if (server.exitCode !== null) throw new Error('Next server exited: ' + serverLogs.join(''));
@@ -288,15 +312,25 @@ async function scenario(browserType, width, theme) {
     await expect(logo.locator('img')).toHaveJSProperty('complete', true);
     assert(await logo.locator('img').evaluate(img => img.naturalWidth > 0));
     await contained(logo);
+    await contained(logo.locator('img'));
+    const markBox = await logo.locator('img').boundingBox();
+    const wordBox = await logo.locator('span').last().boundingBox();
+    assert(markBox.x + markBox.width <= wordBox.x, 'wordmark must not overlap the mark');
+    assert(Math.abs(markBox.y + markBox.height / 2 - wordBox.y - wordBox.height / 2) < 1,
+      'mark and name share a vertical center');
+    const markResponse = await page.request.get(baseURL + '/brand/bubble-b-v2/mark.png');
+    assert.equal(markResponse.status(), 200);
+    await assertArtwork(await markResponse.body(), 0.94, true);
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
-    assert.equal(appleHref, '/apple-touch-icon.png?v=bubble-b-1');
+    assert.equal(appleHref, '/brand/bubble-b-v2/apple-touch-icon.png');
     const appleResponse = await page.request.get(baseURL + appleHref);
     assert.equal(appleResponse.status(), 200);
     const appleBytes = await appleResponse.body();
     assert.equal(appleBytes.readUInt32BE(16), 180);
     assert.equal(appleBytes.readUInt32BE(20), 180);
+    await assertArtwork(appleBytes, 0.84);
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const manifestResponse = await page.request.get(baseURL + manifestHref);
     assert.equal(manifestResponse.status(), 200);
@@ -311,9 +345,18 @@ async function scenario(browserType, width, theme) {
       const [w, h] = icon.sizes.split('x').map(Number);
       assert.equal(bytes.readUInt32BE(16), w);
       assert.equal(bytes.readUInt32BE(20), h);
+      await assertArtwork(bytes, icon.purpose === 'maskable' ? 0.60 : 0.84, false, icon.purpose === 'maskable');
     }
     assert.equal(await page.locator('link[href="/favicon.svg"]').count(), 0);
-    checks.push('Bubble B logo renders; Apple icon and manifest assets resolve at declared sizes');
+    for (const link of await page.locator('link[rel="icon"]').all()) {
+      const href = await link.getAttribute('href');
+      assert(href.startsWith('/brand/bubble-b-v2/'), 'no stale icon candidate');
+      const res = await page.request.get(baseURL + href);
+      assert.equal(res.status(), 200);
+      await assertArtwork(await res.body(), 0.84);
+    }
+    if (key.includes('440')) console.log('BARTER_APPLE_ICON_IMAGE ' + appleBytes.toString('base64'));
+    checks.push('full mark bounds, alignment, larger Apple/PWA artwork and maskable safe circle');
     const toggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
     for (const mode of ['market', 'barter']) {
       const label = mode === 'market' ? 'Маркет' : 'Бартер';
