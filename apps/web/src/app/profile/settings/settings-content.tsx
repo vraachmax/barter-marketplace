@@ -214,7 +214,7 @@ export function ProfileSettingsContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AccountScreenHeader title="Настройки" subtitle="Аккаунт и приложение" showSettings={false} width="wide" />
-      <main className="mx-auto max-w-6xl px-4 pb-32 pt-6 md:px-6">
+      <main className="mx-auto max-w-6xl page-content-spacing px-4 pt-6 md:px-6">
         {status === 'loading' ? <div role="status" aria-label="Загружаем настройки" className="h-80 animate-pulse rounded-3xl bg-muted motion-reduce:animate-none" /> : null}
         {status === 'need_auth' ? (
           <section className="mx-auto max-w-md rounded-3xl border border-border bg-card p-6 text-center sm:p-8">

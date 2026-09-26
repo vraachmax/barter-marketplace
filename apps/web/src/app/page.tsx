@@ -459,7 +459,7 @@ async function renderHome(sp: HomeSearchParams) {
           Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
           muted на десктопе ради контраста карточек. */}
       <main className="relative z-20 bg-background">
-        <div className="mx-auto max-w-7xl px-4 pt-1 pb-28 md:px-6 md:pb-10">
+        <div className="mx-auto max-w-7xl page-content-spacing px-4 pt-1 md:px-6">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 
           {/* Exchange availability is a seller choice, not a cosmetic theme. */}

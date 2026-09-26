@@ -267,7 +267,7 @@ function SearchContent() {
     <div className="min-h-screen bg-background text-foreground antialiased">
       {/* ===== STICKY HEADER ===== */}
       <header className="glass-panel sticky top-0 z-30 border-b border-border pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2.5">
+        <div className="mx-auto flex max-w-3xl min-h-16 items-center gap-2 px-4 py-2 md:px-6">
           <h1 className="sr-only">Поиск</h1>
           <form
             onSubmit={(e) => {
@@ -312,11 +312,11 @@ function SearchContent() {
 
         {/* Filter chip row — показываем только если есть результаты или фильтры */}
         {hasResults ? (
-          <div className="flex items-center gap-2 overflow-x-auto px-3 pb-2.5 scrollbar-none">
+          <div className="mx-auto flex max-w-3xl items-center gap-2 overflow-x-auto px-4 pb-3 md:px-6 scrollbar-none">
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
               style={
                 activeFiltersCount > 0
                   ? {
@@ -354,7 +354,7 @@ function SearchContent() {
       </header>
 
       {/* ===== BODY ===== */}
-      <main className="mx-auto max-w-3xl px-3 pb-24 pt-4 md:px-4">
+      <main className="mx-auto max-w-3xl page-content-spacing px-4 pt-4 md:px-6">
         <div className="mb-4">
           <CatalogModeToggle mode={mode} syncPreference={false} path="/search" values={{ q: activeQuery, categoryId, sort, priceMin, priceMax, city }} />
         </div>

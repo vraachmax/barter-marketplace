@@ -102,8 +102,8 @@ export default function WalletPage() {
 
   if (error && !balance) {
     return (
-      <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Кошелёк" subtitle="Баланс и история операций" /><div className="mx-auto max-w-3xl px-4 pt-6 pb-32">
-        <Card className="gap-3 p-6">
+      <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Кошелёк" subtitle="Баланс и история операций" width="wide" /><div className="mx-auto max-w-6xl page-content-spacing px-4 pt-6 md:px-6">
+        <Card className="gap-3 p-4 md:p-6">
           <div className="text-base font-semibold text-foreground">Кошелёк недоступен</div>
           <p className="text-sm text-muted-foreground">{error}</p>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -118,8 +118,8 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Кошелёк" subtitle="Баланс и история операций" /><div className="mx-auto max-w-5xl px-4 pt-6 pb-32 md:pt-8">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Кошелёк" subtitle="Баланс и история операций" width="wide" /><div className="mx-auto max-w-6xl page-content-spacing px-4 pt-6 md:px-6 md:pt-8">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Кошелёк
@@ -136,7 +136,7 @@ export default function WalletPage() {
 
       <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
         {/* Balance + topup */}
-        <Card className="gap-5 p-5 md:p-6">
+        <Card className="gap-4 p-4 md:p-6">
           <div className="flex items-start gap-4">
             <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
               <WalletIcon size={24} strokeWidth={1.8} />
@@ -173,7 +173,7 @@ export default function WalletPage() {
 
         {/* Pro / Promo summary */}
         <div className="grid gap-4">
-          <Card className="gap-3 p-5">
+          <Card className="gap-3 p-4 md:p-6">
             <div className="flex items-center gap-3">
               <span className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
                 <Crown size={20} strokeWidth={1.8} />
@@ -205,7 +205,7 @@ export default function WalletPage() {
             )}
           </Card>
 
-          <Card className="gap-3 p-5">
+          <Card className="gap-3 p-4 md:p-6">
             <div className="flex items-center gap-3">
               <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Rocket size={20} strokeWidth={1.8} />
@@ -225,7 +225,7 @@ export default function WalletPage() {
       </div>
 
       {/* History */}
-      <div className="mt-8">
+      <div className="mt-8 md:mt-12">
         <div className="mb-3 flex items-center gap-2">
           <History size={18} strokeWidth={1.8} className="text-muted-foreground" />
           <h2 className="text-lg font-semibold text-foreground">История операций</h2>

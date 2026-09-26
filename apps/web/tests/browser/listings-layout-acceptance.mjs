@@ -144,7 +144,8 @@ async function installFixture(context, state, theme) {
     if (path === '/wallet/packages') return json(packages);
     if (path === '/wallet/pro-plans') return json(plans);
     if (path === '/wallet/pro/subscription') return json(null);
-    if (path === '/wallet/balance') return json({ balanceKopecks: 0, balanceRub: 0 });
+    if (path === '/wallet/balance') return state.guest ? json({}, 401) : json({ balanceKopecks: 0, balanceRub: 0, updatedAt: '2026-09-26T12:00:00Z' });
+    if (path === '/wallet/transactions') return json([]);
     if (path === '/chats' || path === '/support/faq') return json([]);
     state.unexpected.push(method + ' ' + path);
     return json({}, 404);
@@ -166,6 +167,29 @@ async function contained(locator) {
   assert(result.left >= -1 && result.right <= result.viewport + 1, JSON.stringify(result));
   assert.deepEqual(result.clipped, [], 'clipped element: ' + JSON.stringify(result));
   return result;
+}
+
+
+async function spacingCheck(page, width, alignHeader = true) {
+  const metrics = await page.locator('.page-content-spacing').evaluate(el => {
+    const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+    const header = document.querySelector('header > div');
+    const h = header?.getBoundingClientRect(), hs = header && getComputedStyle(header);
+    return { left: r.left + parseFloat(s.paddingLeft), right: r.right - parseFloat(s.paddingRight),
+      gutter: parseFloat(s.paddingLeft), bottom: parseFloat(s.paddingBottom),
+      bodyBottom: parseFloat(getComputedStyle(document.body).paddingBottom),
+      headerLeft: h && h.left + parseFloat(hs.paddingLeft),
+      headerRight: h && h.right - parseFloat(hs.paddingRight),
+      overflow: document.documentElement.scrollWidth > innerWidth };
+  });
+  assert.equal(metrics.gutter, width < 768 ? 16 : 24, JSON.stringify(metrics));
+  assert.equal(metrics.bottom, width < 768 ? 116 : 40, JSON.stringify(metrics));
+  assert.equal(metrics.bodyBottom, 0, 'no second body reserve: ' + JSON.stringify(metrics));
+  assert.equal(metrics.overflow, false, 'horizontal page overflow');
+  if (alignHeader) {
+    assert(Math.abs(metrics.left - metrics.headerLeft) <= 1, 'left rail: ' + JSON.stringify(metrics));
+    assert(Math.abs(metrics.right - metrics.headerRight) <= 1, 'right rail: ' + JSON.stringify(metrics));
+  }
 }
 
 async function headerCheck(page) {
@@ -237,6 +261,7 @@ async function scenario(browserType, width, theme) {
     await visit('/listings?tab=NEEDS_ACTION');
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
+    await spacingCheck(page, width);
     const tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
     await expect(tabs.getByRole('button', { name: 'Внимание 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(tabs.getByRole('button', { name: 'Завершены 1', exact: true })).toBeVisible();
@@ -295,6 +320,9 @@ async function scenario(browserType, width, theme) {
     await visit('/pricing');
     const badge = page.getByText('Рекомендуем', { exact: true });
     await expect(badge).toBeVisible();
+    await spacingCheck(page, width);
+    const sectionMargins = await page.locator('.page-content-spacing > section').evaluateAll(els => els.map(el => parseFloat(getComputedStyle(el).marginTop)));
+    assert.deepEqual(sectionMargins, Array(3).fill(width < 768 ? 32 : 48));
     await badge.scrollIntoViewIfNeeded();
     await contained(badge);
     const planCard = badge.locator('xpath=..');
@@ -302,8 +330,20 @@ async function scenario(browserType, width, theme) {
     const planBox = await planCard.boundingBox();
     assert(badgeBox.y >= planBox.y && badgeBox.y + badgeBox.height <= planBox.y + planBox.height);
     await shot(page, key + '-pricing', planCard);
+    await shot(page, key + '-pricing-top');
     await expect(page.getByRole('link', { name: 'Применить', exact: true }).first()).toHaveAttribute('href', '/listings');
-    checks.push('recommended badge fully inside plan card');
+    checks.push('pricing header/content rails, 32/48 section rhythm, recommended badge inside card');
+    await visit('/wallet');
+    await expect(page.getByText('Операций пока нет.', { exact: true })).toBeVisible();
+    await spacingCheck(page, width);
+    await shot(page, key + '-wallet');
+    state.guest = true;
+    await visit('/wallet');
+    await expect(page.getByText('Кошелёк недоступен', { exact: true })).toBeVisible();
+    await spacingCheck(page, width);
+    state.guest = false;
+    checks.push('wallet populated and guest states keep the same content rails');
+
 
     await visit('/?mode=market&sort=new');
     const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
@@ -370,10 +410,13 @@ async function scenario(browserType, width, theme) {
       const pill = await toggle.locator('span[aria-hidden]').boundingBox();
       assert(Math.abs(pill.x + pill.width / 2 - selected.x - selected.width / 2) <= 2, 'selected pill is off-center');
     }
+    await spacingCheck(page, width, false);
     await shot(page, key + '-catalog');
     await visit('/search');
     const searchToggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
     await expect(searchToggle).toBeVisible();
+    await spacingCheck(page, width);
+    await shot(page, key + '-search');
     const searchBox = await contained(searchToggle);
     assert(Math.abs((searchBox.left + searchBox.right) / 2 - width / 2) <= 1, 'search toggle is off-center');
     checks.push('catalog and search centered, selected pill aligned, sort preserved');
@@ -408,8 +451,8 @@ try {
   }
   const browser = await chromium.launch();
   try {
-    const page = await browser.newPage({ viewport: { width: 900, height: 720 }, deviceScaleFactor: 1 });
-    await page.setContent('<html><style>body{margin:0;background:#dce1e8;font:13px Arial}.grid{display:grid;grid-template-columns:repeat(3,300px)}figure{margin:0;padding:8px}figcaption{height:32px}img{display:block;width:284px}</style><div class="grid">' +
+    const page = await browser.newPage({ viewport: { width: 1200, height: 720 }, deviceScaleFactor: 1 });
+    await page.setContent('<html><style>body{margin:0;background:#dce1e8;font:13px Arial}.grid{display:grid;grid-template-columns:repeat(4,300px)}figure{margin:0;padding:8px}figcaption{height:32px}img{display:block;width:284px}</style><div class="grid">' +
       shots.filter(x => !x.key.endsWith('failure')).map(x => '<figure><figcaption>' + x.key + '</figcaption><img src="data:image/jpeg;base64,' + x.image + '"></figure>').join('') + '</div></html>');
     await page.locator('img').evaluateAll(images => Promise.all(images.map(img => img.decode())));
     const sheet = await page.screenshot({ type: 'jpeg', quality: 72, fullPage: true });

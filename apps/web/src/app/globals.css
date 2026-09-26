@@ -921,3 +921,19 @@ html[data-theme="dark"][data-mode="barter"] { --mode-primary-soft: #39261f; }
 }
 .btn-show-phone { color: #ffffff; }
 .btn-swap { color: var(--mode-primary); }
+
+/* One content reserve on migrated screens. Keep the original hub geometry.
+   Mobile: 12px bottom + 66px bar + 20px bubble + 18px clear space = 116px. */
+.page-content-spacing {
+  padding-bottom: 40px;
+}
+@media (max-width: 767px) {
+  .page-content-spacing {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (max-width: 768px) {
+  body:has(.page-content-spacing) {
+    padding-bottom: 0 !important;
+  }
+}

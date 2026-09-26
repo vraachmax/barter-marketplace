@@ -149,7 +149,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Тарифы" subtitle="Продвижение и подписка" /><div className="mx-auto max-w-6xl px-4 pt-6 pb-32 sm:pt-8">
+    <div className="min-h-screen bg-background text-foreground"><AccountScreenHeader title="Тарифы" subtitle="Продвижение и подписка" width="wide" /><div className="mx-auto max-w-6xl page-content-spacing px-4 pt-6 md:px-6 md:pt-8">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
         <Badge variant="outline" className="mb-3 border-primary/30 text-primary">
@@ -165,8 +165,8 @@ export default function PricingPage() {
       </div>
 
       {/* Promotion packages */}
-      <section className="mt-12">
-        <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+      <section className="mt-8 md:mt-12">
+        <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-xl font-bold tracking-tight text-foreground">Платное продвижение</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -190,20 +190,20 @@ export default function PricingPage() {
         </div>
 
         {pkgs === null ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-[148px] w-full rounded-2xl" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {pkgs.map((pkg) => {
               const meta = PROMO_META[pkg.promotionType] ?? PROMO_META.TOP;
               const Icon = meta.icon;
               return (
                 <Card
                   key={pkg.id}
-                  className={`group relative flex flex-col gap-3 rounded-3xl border-border bg-card p-4 transition hover:border-primary/40 hover:shadow-md ${pkg.isBundle ? 'ring-1 ring-accent/40' : ''}`}
+                  className={`group relative flex flex-col gap-3 rounded-3xl border-border bg-card p-4 md:p-6 transition hover:border-primary/40 hover:shadow-md ${pkg.isBundle ? 'ring-1 ring-accent/40' : ''}`}
                 >
                   {pkg.isBundle ? (
                     <Badge className="w-fit max-w-full self-start bg-accent/10 text-accent">Пакет</Badge>
@@ -254,8 +254,8 @@ export default function PricingPage() {
       </section>
 
       {/* Pro subscription plans */}
-      <section className="mt-16">
-        <div className="mb-5 text-center">
+      <section className="mt-8 md:mt-12">
+        <div className="mb-4 text-center">
           <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             Подписка <span className="text-primary">Бартер Pro</span>
           </h2>
@@ -290,7 +290,7 @@ export default function PricingPage() {
               return (
                 <Card
                   key={plan.id}
-                  className={`relative flex flex-col gap-4 rounded-3xl border-border bg-card p-5 ring-1 ${tone.ring} ${tone.popular ? 'shadow-sm' : ''}`}
+                  className={`relative flex flex-col gap-4 rounded-3xl border-border bg-card p-4 md:p-6 ring-1 ${tone.ring} ${tone.popular ? 'shadow-sm' : ''}`}
                 >
                   {tone.popular ? (
                     <Badge className="w-fit max-w-full self-start whitespace-normal bg-primary text-primary-foreground">
@@ -348,7 +348,7 @@ export default function PricingPage() {
       </section>
 
       {/* Footer note */}
-      <section className="mt-14 rounded-2xl border border-border bg-muted/40 p-6 text-center">
+      <section className="mt-8 rounded-2xl md:mt-12 border border-border bg-muted/40 p-4 text-center md:p-6">
         <p className="text-sm text-muted-foreground">
           Подписка оплачивается с баланса. Баланс и доступность пополнения смотрите в{' '}
           <Link href="/wallet" className="font-semibold text-primary underline-offset-2 hover:underline">
