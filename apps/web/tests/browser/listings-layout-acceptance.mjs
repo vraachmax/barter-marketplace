@@ -192,6 +192,18 @@ async function spacingCheck(page, width, alignHeader = true) {
   }
 }
 
+async function bottomClearanceCheck(page, width) {
+  if (width >= 768) return;
+  await page.locator('.page-content-spacing').evaluate(el => el.scrollIntoView({ block: 'end' }));
+  const geometry = await page.evaluate(() => {
+    const content = document.querySelector('.page-content-spacing');
+    const last = content.lastElementChild.getBoundingClientRect();
+    const nav = document.querySelector('.magic-nav').getBoundingClientRect();
+    return { contentBottom: last.bottom, bubbleTop: nav.top - 20 };
+  });
+  assert(geometry.contentBottom <= geometry.bubbleTop - 16, 'last content can clear the hub: ' + JSON.stringify(geometry));
+}
+
 async function headerCheck(page) {
   await expect(page.locator('header:visible')).toHaveCount(1);
   const title = page.locator('header:visible h1');
@@ -331,12 +343,15 @@ async function scenario(browserType, width, theme) {
     assert(badgeBox.y >= planBox.y && badgeBox.y + badgeBox.height <= planBox.y + planBox.height);
     await shot(page, key + '-pricing', planCard);
     await shot(page, key + '-pricing-top');
+    await bottomClearanceCheck(page, width);
+    await shot(page, key + '-pricing-bottom', page.locator('.page-content-spacing > section').last());
     await expect(page.getByRole('link', { name: 'Применить', exact: true }).first()).toHaveAttribute('href', '/listings');
     checks.push('pricing header/content rails, 32/48 section rhythm, recommended badge inside card');
     await visit('/wallet');
     await expect(page.getByText('Операций пока нет.', { exact: true })).toBeVisible();
     await spacingCheck(page, width);
     await shot(page, key + '-wallet');
+    await bottomClearanceCheck(page, width);
     state.guest = true;
     await visit('/wallet');
     await expect(page.getByText('Кошелёк недоступен', { exact: true })).toBeVisible();
@@ -447,7 +462,7 @@ async function scenario(browserType, width, theme) {
 try {
   await waitForServer();
   for (const theme of ['light', 'dark']) {
-    for (const width of [360, 440, 820, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
+    for (const width of [360, 440, 768, 820, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
   }
   const browser = await chromium.launch();
   try {
@@ -466,4 +481,4 @@ try {
   await writeFile(join(output, 'server.log'), serverLogs.join(''));
   await writeFile(join(output, 'results.json'), JSON.stringify({ scope: 'Production web build with loopback SSR API and browser fixtures; no real account, payments or physical iPhone.', results }, null, 2));
 }
-if (results.length !== 8 || results.some(x => !x.passed)) process.exitCode = 1;
+if (results.length !== 10 || results.some(x => !x.passed)) process.exitCode = 1;
