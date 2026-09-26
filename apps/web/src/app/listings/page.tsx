@@ -220,7 +220,7 @@ function ListingsContent() {
       {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={actionError ? actionNotice : undefined} authHref={actionNeedsLogin ? '/auth?next=%2Flistings' : undefined} /> : null}
       {promoteTarget ? <PromoteDialog open onOpenChange={(open) => { if (!open) setPromoteTarget(null); }} listingId={promoteTarget.id} listingTitle={promoteTarget.title} onSuccess={() => void loadData()} /> : null}
 
-      <main className="mx-auto max-w-6xl px-4 pt-6 pb-32 md:px-6">
+      <main className="mx-auto max-w-6xl page-content-spacing px-4 pt-6 md:px-6">
         {actionNotice ? (
           <div role={actionError ? 'alert' : 'status'} className="mb-4 rounded-2xl border border-border bg-card p-4 text-sm text-foreground">
             <p>{actionNotice}</p>

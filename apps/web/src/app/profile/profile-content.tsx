@@ -262,7 +262,7 @@ export function ProfileContent() {
         width="catalog"
       />
 
-      <div className="mx-auto max-w-7xl px-4 pt-6 pb-32 md:px-6 lg:pt-8">
+      <div className="mx-auto max-w-7xl page-content-spacing px-4 pt-6 md:px-6 lg:pt-8">
         {actionNotice ? (
           <div role={actionError ? 'alert' : 'status'} aria-live="polite" className="sticky top-16 z-30 mb-4 rounded-2xl border border-border bg-card p-4 text-sm text-foreground shadow-sm">
             <p>{actionNotice}</p>
@@ -315,7 +315,7 @@ export function ProfileContent() {
             <div className="lg:hidden">
               {showListingsView ? (
                 /* ===== AVITO-STYLE LISTINGS VIEW ===== */
-                <div className="pb-28">
+                <div>
                   {/* Tabs: Активные / Продано / Архив */}
                   <div className="glass-panel flex flex-wrap gap-3 rounded-2xl border border-border px-4 pt-3">
                     {([
