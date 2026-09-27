@@ -48,8 +48,10 @@ CI завершены успешно для head 252021293212bd04faacbedb7d5ab2a
 Контрольный лист 440 light/dark просмотрен.
 PR #33 merged: f56e578820031e91c1c305ae77d35082dc62bf0f.
 Vercel production success (deployment 83oZEttkfV4f17qkKWQXMBQtZp34).
-Публичный API capabilities дважды вернул экран Render Application loading:
-production backend/миграция не подтверждены. Для чтения логов требуется
-подтверждённый пользователем Render workspace. Полный production acceptance открыт.
+Первичная публичная проверка capabilities показала Render Application loading.
+После разрешения My Workspace: Render live на 82c4647, логи подтвердили применение
+миграции 09:28 UTC и запуск Nest 09:30 UTC 27 сентября. Блокер workspace снят.
+Повторную HTTP-проверку в browser остановила URL policy; не обходить ограничение.
+Статус live/логи подтверждены, но не заменяют production acceptance с аккаунтом.
 Реальные объявления не создаются для QA. Физический iPhone и работа из РФ
 без VPN этим блоком не проверяются. UI-01/02 и PERF-01 не закрываются автоматически.
