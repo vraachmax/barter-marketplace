@@ -47,6 +47,8 @@ export class UsersService {
           id: true,
           title: true,
           priceRub: true,
+          saleEnabled: true,
+          barterEnabled: true,
           city: true,
           createdAt: true,
           category: { select: { id: true, title: true } },
@@ -70,4 +72,5 @@ export class UsersService {
     };
   }
 }
+
 

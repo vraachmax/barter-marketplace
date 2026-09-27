@@ -1,4 +1,6 @@
 'use client';
+import { listingTradeMode, tradeModeFields, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
+
 import { canOfferBarter } from '@/lib/barter-category';
 
 import Link from 'next/link';
@@ -32,7 +34,7 @@ function needsAction(x: MyListing): { is: boolean; reason: string } {
   if (x.status === 'PENDING') return { is: true, reason: 'Ожидает модерации — подтвердите публикацию' };
   if (x.status === 'BLOCKED') return { is: true, reason: 'Объявление скрыто модерацией' };
   if (x.duplicateImageFlag) return { is: true, reason: 'Фото совпало с другим объявлением — замените' };
-  if (x.status === 'ACTIVE' && x.priceRub == null) return { is: true, reason: 'Не указана цена' };
+  if (x.status === 'ACTIVE' && x.saleEnabled !== false && x.priceRub == null) return { is: true, reason: 'Не указана цена' };
   if (x.status === 'ACTIVE' && (!x.images || x.images.length === 0)) return { is: true, reason: 'Нет ни одного фото' };
   return { is: false, reason: '' };
 }
@@ -60,6 +62,7 @@ function ListingsContent() {
   const { busy: actionBusy, notice: actionNotice, error: actionError, needsLogin: actionNeedsLogin, performAction } = useListingActions(loadData);
   const tabParam = searchParams.get('tab');
   const activeTab: ListingTab = tabParam === 'NEEDS_ACTION' ? 'NEEDS_ACTION' : tabParam === 'COMPLETED' || tabParam === 'ARCHIVED' || tabParam === 'SOLD' ? 'COMPLETED' : 'ACTIVE';
+  const [modeError, setModeError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
   const [editForm, setEditForm] = useState({
@@ -68,7 +71,7 @@ function ListingsContent() {
     city: '',
     categoryId: '',
     priceRub: '',
-    isBarter: false,
+    tradeMode: 'sale' as ListingTradeMode,
   });
 
   function setListingTab(tab: ListingTab) {
@@ -122,24 +125,33 @@ function ListingsContent() {
   function startEdit(x: MyListing) {
     if (actionBusy) return;
     setEditingId(x.id);
+    setModeError('');
     setEditForm({
       title: x.title,
       description: '',
       city: x.city,
       categoryId: x.category.id,
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
-      isBarter: x.attributes?.isBarter === true,
+      tradeMode: listingTradeMode(x),
     });
   }
 
   async function saveEdit(id: string) {
     const category = categories.find((item) => item.id === editForm.categoryId);
     if (!category) return false;
+    setModeError('');
+    const capability = await apiFetchJson<{ tradeModesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    if (!capability.ok || capability.data.tradeModesVersion !== 1) {
+      setModeError(TRADE_MODES_UNAVAILABLE);
+      return false;
+    }
+    const modes = tradeModeFields(canOfferBarter(category) ? editForm.tradeMode : 'sale');
     const payload: Record<string, unknown> = {
+      ...modes,
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
-      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: canOfferBarter(category) && editForm.isBarter },
+      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: modes.barterEnabled },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
     payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
@@ -217,7 +229,7 @@ function ListingsContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AccountScreenHeader title="Мои объявления" subtitle="Публикация и управление" backHref="/" backLabel="Назад в ленту" width="wide" />
-      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={actionError ? actionNotice : undefined} authHref={actionNeedsLogin ? '/auth?next=%2Flistings' : undefined} /> : null}
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={modeError || (actionError ? actionNotice : undefined)} authHref={actionNeedsLogin ? '/auth?next=%2Flistings' : undefined} /> : null}
       {promoteTarget ? <PromoteDialog open onOpenChange={(open) => { if (!open) setPromoteTarget(null); }} listingId={promoteTarget.id} listingTitle={promoteTarget.title} onSuccess={() => void loadData()} /> : null}
 
       <main className="mx-auto max-w-6xl page-content-spacing px-4 pt-6 md:px-6">
@@ -289,7 +301,7 @@ function ListingsContent() {
                             </Link>
                             <div className="min-w-0">
                               <Link href={`/listing/${x.id}`} className="line-clamp-2 break-words text-base font-semibold leading-snug hover:underline">{x.title}</Link>
-                              <p className="mt-1 break-words text-lg font-semibold">{x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена не указана'}</p>
+                              <p className="mt-1 break-words text-lg font-semibold">{x.saleEnabled === false ? 'Только обмен' : x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена не указана'}</p>
                               <p className="mt-1 break-words text-xs text-muted-foreground">{x.city}</p>
                               <span className={`mt-2 inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${st.className}`}>{st.text}</span>
                             </div>
@@ -343,3 +355,4 @@ export default function ListingsPage() {
     <ListingsLoading />
   </div>}><ListingsContent /></Suspense>;
 }
+

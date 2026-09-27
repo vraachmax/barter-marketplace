@@ -227,10 +227,10 @@ async function renderHome(sp: HomeSearchParams) {
   const listingsPromise: Promise<ListingsResponse> =
     effectiveRecoMode && viewedIds.length > 0
       ? homeRequest<ListingCard[]>(
-          `/listings/${viewedIds[0]}/similar?limit=20&excludeIds=${encodeURIComponent(viewedIds.join(','))}`,
+          `/listings/${viewedIds[0]}/similar?mode=market&limit=20&excludeIds=${encodeURIComponent(viewedIds.join(','))}`,
         )
           .then((items) => {
-            const normalized = applyClientFiltersAndSort(items, { ...sp, city: recommendationCity });
+            const normalized = applyClientFiltersAndSort(items.filter(item => item.saleEnabled !== false), { ...sp, city: recommendationCity });
             return {
               page: 1,
               limit: 20,
@@ -425,7 +425,7 @@ async function renderHome(sp: HomeSearchParams) {
 
       <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-2 px-4 pt-4 md:px-6">
         <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
-        <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Весь каталог: покупки и предложения обмена'}</p>
+        <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Объявления с возможностью покупки'}</p>
       </div>
       <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
         {catRes.status === 'rejected' && !apiBackendDown ? (
@@ -561,3 +561,4 @@ async function renderHome(sp: HomeSearchParams) {
     </div>
   );
 }
+

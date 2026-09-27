@@ -97,6 +97,9 @@ model Listing {
   /// Maintained by database trigger for exact model filtering before pagination.
   searchTokens String[] @default([])
   searchAccessory Boolean @default(false)
+  /// One listing may appear in either or both catalogs.
+  saleEnabled Boolean @default(true)
+  barterEnabled Boolean @default(false)
   priceRub    Int?
   /// Тип цены: null = обычная, per_day, per_hour, per_service, per_sqm, per_month, negotiable
   priceType   String?
@@ -582,3 +585,4 @@ model UserBehaviorEvent {
   @@index([sessionId, createdAt])
   @@index([type, createdAt])
 }
+

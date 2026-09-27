@@ -76,7 +76,22 @@ VALUES ('fixture-message','fixture-chat','fixture-seller','Existing message');
 ''')
 message_before = sql('SELECT row_to_json(t)::text FROM (SELECT id,"createdAt","chatId","senderId",text,"mediaUrl","mediaType" FROM "Message") t;')
 for migration in migrations[search_index + 1:]:
+    trade_modes = migration.parent.name == '20260927090000_listing_trade_modes'
+    if trade_modes:
+        sql("""UPDATE "Listing" SET attributes='{"isBarter":true,"brand":"Keep"}'::jsonb WHERE id='0001';
+        UPDATE "Listing" SET attributes='{"isBarter":"true"}'::jsonb WHERE id='0002';""")
+        trade_before = sql(snapshot_query)
     sql(migration.read_text())
+    if trade_modes:
+        assert sql(snapshot_query) == trade_before, 'Trade mode backfill changed customer fields'
+        assert sql('SELECT count(*) FROM "Listing" WHERE "saleEnabled";') == '900'
+        assert sql('SELECT count(*) FROM "Listing" WHERE "barterEnabled";') == '1'
+        assert sql("SELECT attributes->>'brand' FROM \"Listing\" WHERE id='0001';") == 'Keep'
+        sql("""UPDATE "Listing" SET attributes='{"isBarter":true}'::jsonb WHERE id='0003';""")
+        assert sql("SELECT \"barterEnabled\" FROM \"Listing\" WHERE id='0003';") == 't'
+        sql("""UPDATE "Listing" SET "barterEnabled"=false WHERE id='0003';""")
+        assert sql("SELECT attributes->>'isBarter' FROM \"Listing\" WHERE id='0003';") == 'false'
+
 assert sql('SELECT row_to_json(t)::text FROM (SELECT id,"createdAt","chatId","senderId",text,"mediaUrl","mediaType" FROM "Message") t;') == message_before
 assert sql('SELECT "mediaFingerprint" IS NULL FROM "Message" WHERE id=\'fixture-message\';') == 't'
 sql('UPDATE "Message" SET "mediaFingerprint"=\'fixture-hash\' WHERE id=\'fixture-message\';')
@@ -101,5 +116,6 @@ for migration in migrations:
 print(json.dumps({'ok': True, 'serverVersionNum': int(version), 'locale': locale,
                   'migrationCount': len(migrations), 'fixtureRows': 900,
                   'migrationElapsedMsOnFixture': elapsed, 'dataPreserved': True,
-                  'mediaMigrationAndRestoreVerified': True, 'backupRestoreVerified': True, 'freshInstallVerified': True,
+                  'tradeModeBackfillVerified': True, 'mediaMigrationAndRestoreVerified': True, 'backupRestoreVerified': True, 'freshInstallVerified': True,
                   'deepPaginationVerified': True, 'ginPlanVerified': True}, indent=2))
+

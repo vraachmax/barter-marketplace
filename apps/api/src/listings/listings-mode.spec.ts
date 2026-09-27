@@ -51,21 +51,7 @@ describe('exchange eligibility', () => {
       });
       const eligibility: unknown = expect.objectContaining({
         status: 'ACTIVE',
-        attributes: { path: ['isBarter'], equals: true },
-        category: {
-          slug: {
-            in: [
-              'auto',
-              'realty',
-              'services',
-              'electronics',
-              'home',
-              'clothes',
-              'kids',
-              'hobby',
-            ],
-          },
-        },
+        barterEnabled: true,
         city: { equals: 'Краснодар', mode: 'insensitive' },
         categoryId: 'hobby',
         priceRub: { gte: 1000 },
@@ -104,7 +90,9 @@ describe('exchange eligibility', () => {
         owner: { id: 'seller', name: null },
         images: [],
         promotions: [],
-        attributes: isBarter === undefined ? null : { isBarter },
+        saleEnabled: true,
+        barterEnabled: isBarter === true,
+        attributes: { isBarter: !isBarter },
       };
       findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([row]);
       const result = await service.list({ sort: 'new' });
@@ -146,3 +134,4 @@ describe.each([CreateListingDto, UpdateListingDto])(
     );
   },
 );
+

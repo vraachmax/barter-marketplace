@@ -1,4 +1,7 @@
 'use client';
+import { ListingTradeModeField } from '@/components/listing-trade-mode-field';
+import { type ListingTradeMode } from '@/lib/listing-trade-mode';
+
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +10,7 @@ import Link from 'next/link';
 import type { Category } from '@/lib/api';
 import { canOfferBarter } from '@/lib/barter-category';
 
-type Fields = { title: string; description: string; city: string; categoryId: string; priceRub: string; isBarter: boolean };
+type Fields = { title: string; description: string; city: string; categoryId: string; priceRub: string; tradeMode: ListingTradeMode };
 
 /** Shared editor outside the desktop/mobile wrappers, with native modal focus. */
 export function ListingEditorDialog({ values, onChange, categories, onSave, onClose, saveError, authHref }: {
@@ -47,12 +50,12 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
         <label className="block text-sm font-medium">Название<input required minLength={3} maxLength={120} value={values.title} onChange={(e) => change('title', e.target.value)} className={inputClass} /></label>
         <label className="block text-sm font-medium">Новое описание<textarea minLength={10} maxLength={5000} value={values.description} onChange={(e) => change('description', e.target.value)} placeholder="Оставьте пустым, чтобы сохранить прежнее" className={`${inputClass} min-h-28`} /></label>
         <label className="block text-sm font-medium">Город<input required minLength={2} maxLength={80} value={values.city} onChange={(e) => change('city', e.target.value)} className={inputClass} /></label>
-        <label className="block text-sm font-medium">Категория<select required value={values.categoryId} onChange={(e) => onChange({ ...values, categoryId: e.target.value, isBarter: canOfferBarter(categories.find((category) => category.id === e.target.value)) && values.isBarter })} className={inputClass}>
+        <label className="block text-sm font-medium">Категория<select required value={values.categoryId} onChange={(e) => onChange({ ...values, categoryId: e.target.value, tradeMode: canOfferBarter(categories.find((category) => category.id === e.target.value)) ? values.tradeMode : 'sale' })} className={inputClass}>
           {!categories.some((category) => category.id === values.categoryId) ? <option value={values.categoryId}>Текущая категория</option> : null}
           {categories.map((category) => <option key={category.id} value={category.id}>{category.title}</option>)}
         </select></label>
-        <label className="block text-sm font-medium">Цена, ₽<input type="number" min="0" max="2147483647" step="1" value={values.priceRub} onChange={(e) => change('priceRub', e.target.value)} className={inputClass} /></label>
-        {canOfferBarter(categories.find((category) => category.id === values.categoryId)) ? <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={values.isBarter} onChange={(e) => change('isBarter', e.target.checked)} className="size-5 accent-primary" />Рассматриваю обмен</label> : <p className="text-sm text-muted-foreground">Для этой категории обмен недоступен.</p>}
+        <label className="block text-sm font-medium">{values.tradeMode === 'barter' ? 'Оценочная стоимость, ₽' : 'Цена, ₽'}<input type="number" min="0" max="2147483647" step="1" value={values.priceRub} onChange={(e) => change('priceRub', e.target.value)} className={inputClass} /></label>
+        <ListingTradeModeField value={values.tradeMode} onChange={(mode) => change('tradeMode', mode)} barterAllowed={canOfferBarter(categories.find((category) => category.id === values.categoryId))} />
       </fieldset>
       <div className="glass-panel sticky bottom-0 space-y-3 border-t border-border px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
       {saveError || error ? <p role="alert" className="text-sm text-destructive">{saveError || error}</p> : null}
@@ -62,3 +65,4 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
     </form>
   </dialog>;
 }
+

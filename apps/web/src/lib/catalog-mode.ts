@@ -34,6 +34,10 @@ export function assertCatalogMode<T extends {
       throw new Error('barter_filter_unavailable');
     }
   }
+  if (mode === 'market' && [...(response.items ?? []), ...(response.vipStrip ?? [])].some(row =>
+    row !== null && typeof row === 'object' && 'saleEnabled' in row && row.saleEnabled === false)) {
+    throw new Error('market_filter_unavailable');
+  }
   return response;
 }
 
@@ -45,3 +49,4 @@ export function catalogErrorMessage(error: unknown): string {
     ? 'Режим «Бартер» появится после обновления сервера. Сейчас можно смотреть объявления в «Маркете».'
     : 'Не удалось загрузить объявления. Проверьте фильтры и повторите попытку.';
 }
+

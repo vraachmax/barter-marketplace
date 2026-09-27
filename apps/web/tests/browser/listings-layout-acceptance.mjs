@@ -138,6 +138,7 @@ async function installFixture(context, state, theme) {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
+    if (path === '/listings/capabilities') return json(state.oldApi ? {} : { tradeModesVersion: 1 });
     if (path === '/categories') return json([category]);
     if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
@@ -288,8 +289,28 @@ async function scenario(browserType, width, theme) {
     await card.getByRole('button', { name: 'Редактировать', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByLabel('Название', { exact: true })).toHaveValue(state.listings[0].title);
-    await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
+    const exchangeOnly = page.getByRole('radio', { name: /^Только обмен/ });
+    await exchangeOnly.check();
+    await expect(page.getByLabel('Оценочная стоимость, ₽')).toBeVisible();
+    // An old backend must not silently discard the new mode fields.
+    state.oldApi = true;
+    await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await expect(page.getByRole('alert')).toContainText('поддержку режимов');
     assert.equal(state.writes.length, 0);
+    state.oldApi = false;
+    await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    assert.equal(state.writes.at(-1).body.saleEnabled, false);
+    assert.equal(state.writes.at(-1).body.barterEnabled, true);
+    await visit('/listings?tab=NEEDS_ACTION');
+    const edited = page.locator('main li').filter({ hasText: state.listings[0].title });
+    await edited.locator('summary').click();
+    await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
+    await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
+    await shot(page, key + '-trade-mode');
+    await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
+    state.writes.length = 0;
+    checks.push('exchange-only edit persists after reload; old API cannot silently accept it');
     const pending = page.locator('main li').filter({ hasText: 'На модерации' });
     await pending.locator('summary').click();
     await pending.getByRole('button', { name: 'Подтвердить публикацию', exact: true }).click();
@@ -482,3 +503,4 @@ try {
   await writeFile(join(output, 'results.json'), JSON.stringify({ scope: 'Production web build with loopback SSR API and browser fixtures; no real account, payments or physical iPhone.', results }, null, 2));
 }
 if (results.length !== 10 || results.some(x => !x.passed)) process.exitCode = 1;
+

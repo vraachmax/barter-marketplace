@@ -129,9 +129,9 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
           }
         />
         <div className="flex flex-col gap-1 px-0.5 pb-1 pt-2.5">
-          {data.isBarter ? <span className="text-xs font-medium text-primary">Возможен обмен</span> : null}
+          {(data.barterEnabled ?? data.isBarter) && data.saleEnabled !== false ? <span className="text-xs font-medium text-primary">Продажа или обмен</span> : null}
           <div className="text-[18px] leading-tight font-bold md:text-xl tracking-tight text-foreground">
-            {formatRub(data.priceRub, data.priceType)}
+            {data.saleEnabled === false ? 'Только обмен' : formatRub(data.priceRub, data.priceType)}
           </div>
           <div className="line-clamp-2 text-[14px] leading-snug text-foreground md:text-[15px]">
             {data.title}
@@ -159,3 +159,4 @@ export function ListingCardSkeleton({ thumbHeight = 140 }: { thumbHeight?: numbe
     </Card>
   );
 }
+
