@@ -425,7 +425,7 @@ export default function NewListingPage() {
     setBusy(true);
     setSubmitStatus({ kind: 'idle' });
     const capability = await apiFetchJson<{ tradeModesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
-    if (!capability.ok || capability.data.tradeModesVersion !== 1) {
+    if (!capability.ok || capability.data?.tradeModesVersion !== 1) {
       submitting.current = false;
       setBusy(false);
       setSubmitStatus({ kind: 'error', msg: TRADE_MODES_UNAVAILABLE });

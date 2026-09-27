@@ -143,7 +143,7 @@ async function installFixture(context, state, theme) {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
-    if (path === '/listings/capabilities') return json(state.oldApi ? {} : { tradeModesVersion: 1 });
+    if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1 });
     if (path === '/categories') return json([category]);
     if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
@@ -300,7 +300,7 @@ async function scenario(browserType, width, theme) {
     // An old backend must not silently discard the new mode fields.
     state.oldApi = true;
     await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
-    await expect(page.getByRole('alert')).toContainText('поддержку режимов');
+    await expect(page.getByRole('dialog').getByRole('alert')).toContainText('поддержку режимов');
     assert.equal(state.writes.length, 0);
     state.oldApi = false;
     await page.getByRole('button', { name: 'Сохранить', exact: true }).click();

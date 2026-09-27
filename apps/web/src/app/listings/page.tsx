@@ -141,7 +141,7 @@ function ListingsContent() {
     if (!category) return false;
     setModeError('');
     const capability = await apiFetchJson<{ tradeModesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
-    if (!capability.ok || capability.data.tradeModesVersion !== 1) {
+    if (!capability.ok || capability.data?.tradeModesVersion !== 1) {
       setModeError(TRADE_MODES_UNAVAILABLE);
       return false;
     }
@@ -355,4 +355,3 @@ export default function ListingsPage() {
     <ListingsLoading />
   </div>}><ListingsContent /></Suspense>;
 }
-
