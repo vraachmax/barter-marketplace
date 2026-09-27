@@ -71,10 +71,10 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold)\/similar$/.test(url.pathname)) data = [];
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold)$/.test(url.pathname)) {
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)\/similar$/.test(url.pathname)) data = [];
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)$/.test(url.pathname)) {
     // Next Link prefetch also requests listing metadata through the server API.
-    const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id);
+    const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id) ?? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true };
     data = { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
   }
   else { serverUnexpected.push(req.method + ' ' + url.pathname); res.statusCode = 404; data = {}; }
@@ -134,10 +134,16 @@ async function installFixture(context, state, theme) {
       else Object.assign(listing, body);
       return json(listing);
     }
+    if (method === 'POST' && path === '/listings') {
+      const body = request.postDataJSON();
+      state.writes.push({ path, body });
+      return json({ ...body, id: 'fixture-created', category, images: [] }, 201);
+    }
     if (method !== 'GET') {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
+    if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1 });
     if (path === '/categories') return json([category]);
     if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
@@ -274,7 +280,7 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
     await spacingCheck(page, width);
-    const tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
+    let tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
     await expect(tabs.getByRole('button', { name: 'Внимание 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(tabs.getByRole('button', { name: 'Завершены 1', exact: true })).toBeVisible();
     for (const button of await tabs.getByRole('button').all()) { const box = await contained(button); assert(box.height >= 44); }
@@ -288,8 +294,29 @@ async function scenario(browserType, width, theme) {
     await card.getByRole('button', { name: 'Редактировать', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByLabel('Название', { exact: true })).toHaveValue(state.listings[0].title);
-    await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
+    const exchangeOnly = page.getByRole('radio', { name: /^Только обмен/ });
+    await exchangeOnly.check();
+    await expect(page.getByLabel('Оценочная стоимость, ₽')).toBeVisible();
+    // An old backend must not silently discard the new mode fields.
+    state.oldApi = true;
+    await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await expect(page.getByRole('dialog').getByRole('alert')).toContainText('поддержку режимов');
     assert.equal(state.writes.length, 0);
+    state.oldApi = false;
+    await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    assert.equal(state.writes.at(-1).body.saleEnabled, false);
+    assert.equal(state.writes.at(-1).body.barterEnabled, true);
+    await visit('/listings?tab=NEEDS_ACTION');
+    const edited = page.locator('main li').filter({ hasText: state.listings[0].title });
+    tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
+    await edited.locator('summary').click();
+    await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
+    await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
+    await shot(page, key + '-trade-mode');
+    await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
+    state.writes.length = 0;
+    checks.push('exchange-only edit persists after reload; old API cannot silently accept it');
     const pending = page.locator('main li').filter({ hasText: 'На модерации' });
     await pending.locator('summary').click();
     await pending.getByRole('button', { name: 'Подтвердить публикацию', exact: true }).click();
@@ -442,6 +469,26 @@ async function scenario(browserType, width, theme) {
     state.failListings = false;
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
+    if (width === 360 || width === 1280) {
+      await visit('/new');
+      await page.getByPlaceholder('iPhone 14 Pro Max 256 ГБ').fill('iPhone для обмена');
+      await page.getByRole('button', { name: 'Электроника', exact: true }).first().click();
+      await page.getByRole('button', { name: 'Далее', exact: true }).click();
+      await page.getByRole('radio', { name: /^Только обмен/ }).check();
+      await page.getByLabel('Оценочная стоимость, ₽').fill('18000');
+      await page.getByPlaceholder('Состояние, комплект, дефекты, история покупки, способ передачи…').fill('Телефон в хорошем состоянии, полный комплект. Рассмотрю обмен на фотоаппарат.');
+      for (let step = 2; step <= 4; step++) await page.getByRole('button', { name: 'Далее', exact: true }).click();
+      await expect(page.getByText('Только обмен', { exact: true })).toBeVisible();
+      await expect(page.getByText(/Оценка:.*18/)).toBeVisible();
+      await page.getByRole('button', { name: 'Опубликовать', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Объявление опубликовано', exact: true })).toBeVisible();
+      const creates = state.writes.filter(x => x.path === '/listings');
+      assert.equal(creates.length, 1);
+      assert.equal(creates[0].body.saleEnabled, false);
+      assert.equal(creates[0].body.barterEnabled, true);
+      assert.equal(creates[0].body.priceRub, 18000);
+      checks.push('five-step publication sends exchange-only once with optional valuation');
+    }
     state.guest = true;
     await visit('/listings?tab=COMPLETED');
     await expect(page.getByRole('link', { name: 'Войти или зарегистрироваться' })).toHaveAttribute('href', '/auth?next=%2Flistings%3Ftab%3DCOMPLETED');

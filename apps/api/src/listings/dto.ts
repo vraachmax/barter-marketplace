@@ -18,6 +18,14 @@ import {
 import { IsListingAttributes } from './is-listing-attributes.decorator';
 
 export class CreateListingDto {
+  @ValidateIf((_o, value) => value !== undefined)
+  @IsBoolean()
+  saleEnabled?: boolean;
+
+  @ValidateIf((_o, value) => value !== undefined)
+  @IsBoolean()
+  barterEnabled?: boolean;
+
   @IsString()
   @MinLength(3)
   @MaxLength(120)
@@ -71,6 +79,14 @@ export class PromoteListingDto {
 }
 
 export class UpdateListingDto {
+  @ValidateIf((_o, value) => value !== undefined)
+  @IsBoolean()
+  saleEnabled?: boolean;
+
+  @ValidateIf((_o, value) => value !== undefined)
+  @IsBoolean()
+  barterEnabled?: boolean;
+
   @IsOptional()
   @IsString()
   @MinLength(3)
@@ -141,4 +157,5 @@ export class ReorderListingImagesDto {
   @IsString({ each: true })
   imageIds!: string[];
 }
+
 

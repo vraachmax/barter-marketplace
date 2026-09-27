@@ -1,3 +1,4 @@
+import { resolveListingModes } from './listing-modes';
 import {
   BadRequestException,
   ForbiddenException,
@@ -5,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AnalyticsService } from '../analytics/analytics.service';
-import { BARTER_CATEGORY_SLUGS, categoryAllowsBarter } from '../categories/barter-policy';
+import { categoryAllowsBarter } from '../categories/barter-policy';
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
 import { searchTermGroups } from '../search/search-synonyms';
@@ -166,6 +167,8 @@ export class ListingsService {
       id: true,
       title: true,
       priceRub: true,
+      saleEnabled: true,
+      barterEnabled: true,
       priceType: true,
       city: true,
       latitude: true,
@@ -213,6 +216,8 @@ export class ListingsService {
       longitude?: number | null;
       createdAt: Date;
       attributes?: Prisma.JsonValue;
+      saleEnabled: boolean;
+      barterEnabled: boolean;
       category: { id: string; title: string };
       owner: { id: string; name: string | null };
       images: Array<{ id: string; url: string; sortOrder: number }>;
@@ -224,7 +229,7 @@ export class ListingsService {
     const { promotions: _p, attributes, description: _description, ...rest } = x;
     return {
       ...rest,
-      isBarter: attributes != null && typeof attributes === 'object' && !Array.isArray(attributes) && attributes.isBarter === true,
+      isBarter: x.barterEnabled,
       images: x.images,
       promoType: promo?.type ?? null,
       promoEndsAt: promo?.endsAt ?? null,
@@ -465,15 +470,14 @@ export class ListingsService {
       where: { id: dto.categoryId }, select: { slug: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
-    if (dto.attributes?.isBarter === true && !categoryAllowsBarter(category.slug)) {
-      throw new BadRequestException('barter_not_available_for_category');
-    }
+    const modes = resolveListingModes(dto, undefined, categoryAllowsBarter(category.slug));
     await this.assertListingDailyLimit(userId);
     await this.assertActiveListingsLimit(userId);
     await this.assertNotDuplicateListingText(dto.title, dto.description);
 
     const row = await this.prisma.listing.create({
       data: {
+        ...modes,
         title: dto.title,
         description: dto.description,
         priceRub: dto.priceRub ?? null,
@@ -484,14 +488,14 @@ export class ListingsService {
         ownerId: userId,
         status: ListingStatus.ACTIVE,
         duplicateImageFlag: false,
-        ...(dto.attributes !== undefined && dto.attributes !== null
-          ? { attributes: dto.attributes as Prisma.InputJsonValue }
-          : {}),
+        attributes: { ...dto.attributes, isBarter: modes.barterEnabled } as Prisma.InputJsonValue,
       },
       select: {
         id: true,
         title: true,
         priceRub: true,
+        saleEnabled: true,
+        barterEnabled: true,
         city: true,
         latitude: true,
         longitude: true,
@@ -687,8 +691,8 @@ export class ListingsService {
     const where: Prisma.ListingWhereInput = {
       status: 'ACTIVE',
       ...(params.mode === 'barter'
-        ? { attributes: { path: ['isBarter'], equals: true }, category: { slug: { in: [...BARTER_CATEGORY_SLUGS] } } }
-        : {}),
+        ? { barterEnabled: true }
+        : { saleEnabled: true }),
     };
     if (params.categoryId) where.categoryId = params.categoryId;
     if (params.city) where.city = { equals: params.city, mode: 'insensitive' };
@@ -909,6 +913,8 @@ export class ListingsService {
         id: true,
         title: true,
         priceRub: true,
+        saleEnabled: true,
+        barterEnabled: true,
         priceType: true,
         city: true,
         latitude: true,
@@ -941,6 +947,8 @@ export class ListingsService {
         title: true,
         description: true,
         priceRub: true,
+        saleEnabled: true,
+        barterEnabled: true,
         city: true,
         latitude: true,
         longitude: true,
@@ -1078,7 +1086,7 @@ export class ListingsService {
    * Похожие объявления: та же категория, цена ±20% (если у базы задана цена > 0),
    * пересечение по ключевым словам (title + description). Сортировка: views+clicks, затем свежесть.
    */
-  async similar(id: string, limit = 10, excludeIds: string[] = []) {
+  async similar(id: string, limit = 10, excludeIds: string[] = [], mode?: 'market' | 'barter') {
     const base = await this.prisma.listing.findUnique({
       where: { id },
       select: {
@@ -1086,6 +1094,8 @@ export class ListingsService {
         title: true,
         description: true,
         priceRub: true,
+        saleEnabled: true,
+        barterEnabled: true,
         categoryId: true,
         status: true,
       },
@@ -1114,6 +1124,7 @@ export class ListingsService {
 
     const where: Prisma.ListingWhereInput = {
       status: 'ACTIVE',
+      ...(mode === 'market' ? { saleEnabled: true } : mode === 'barter' ? { barterEnabled: true } : {}),
       id: { notIn: [base.id, ...excludeIds] },
       categoryId: base.categoryId,
       AND: [keywordClause],
@@ -1172,6 +1183,8 @@ export class ListingsService {
         id: true,
         title: true,
         priceRub: true,
+        saleEnabled: true,
+        barterEnabled: true,
         city: true,
         latitude: true,
         longitude: true,
@@ -1244,6 +1257,8 @@ export class ListingsService {
         description: true,
         status: true,
         categoryId: true,
+        saleEnabled: true,
+        barterEnabled: true,
         attributes: true,
       },
     });
@@ -1256,10 +1271,9 @@ export class ListingsService {
       where: { id: dto.categoryId ?? current.categoryId }, select: { slug: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
-    const barterAllowed = categoryAllowsBarter(category.slug);
-    if (!barterAllowed && dto.attributes?.isBarter === true) {
-      throw new BadRequestException('barter_not_available_for_category');
-    }
+    const currentAttributes = current.attributes && typeof current.attributes === 'object' && !Array.isArray(current.attributes)
+      ? current.attributes : {};
+    const modes = resolveListingModes(dto, { ...current, attributes: currentAttributes }, categoryAllowsBarter(category.slug));
 
     const nextTitle = dto.title ?? current.title;
     const nextDesc = dto.description ?? current.description;
@@ -1267,23 +1281,15 @@ export class ListingsService {
       await this.assertNotDuplicateListingText(nextTitle, nextDesc, listingId);
     }
 
-    const data: any = {};
+    const data: Prisma.ListingUncheckedUpdateInput = { ...modes };
     if (typeof dto.title === 'string') data.title = dto.title;
     if (typeof dto.description === 'string') data.description = dto.description;
     if (typeof dto.city === 'string') data.city = dto.city;
     if (dto.latitude !== undefined) data.latitude = dto.latitude;
     if (dto.longitude !== undefined) data.longitude = dto.longitude;
     if (typeof dto.categoryId === 'string') data.categoryId = dto.categoryId;
-    if (typeof dto.priceRub === 'number') data.priceRub = dto.priceRub;
-    if (dto.attributes !== undefined) {
-      data.attributes = dto.attributes as Prisma.InputJsonValue;
-    }
-    // Category changes must also clear an old opt-in when attributes are omitted.
-    if (!barterAllowed && dto.attributes === undefined && current.attributes &&
-      typeof current.attributes === 'object' && !Array.isArray(current.attributes) &&
-      current.attributes.isBarter === true) {
-      data.attributes = { ...current.attributes, isBarter: false };
-    }
+    if (dto.priceRub !== undefined) data.priceRub = dto.priceRub;
+    data.attributes = { ...(dto.attributes ?? currentAttributes), isBarter: modes.barterEnabled } as Prisma.InputJsonValue;
 
     if (dto.publishFromModeration === true) {
       if (current.status !== ListingStatus.PENDING) {
@@ -1300,6 +1306,8 @@ export class ListingsService {
         title: true,
         description: true,
         priceRub: true,
+        saleEnabled: true,
+        barterEnabled: true,
         city: true,
         latitude: true,
         longitude: true,
@@ -1535,4 +1543,3 @@ export class ListingsService {
     return { ok: true };
   }
 }
-

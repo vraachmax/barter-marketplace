@@ -1,4 +1,5 @@
 'use client';
+import { listingTradeMode, tradeModeFields, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
 
 import Link from 'next/link';
 import { useListingActions } from '@/lib/use-listing-actions';
@@ -77,6 +78,7 @@ export function ProfileContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const tabParam = searchParams.get('tab');
   const activeTab: ListingTab = tabParam === 'ALL' || tabParam === 'SOLD' || tabParam === 'ARCHIVED' ? tabParam : 'ACTIVE';
+  const [modeError, setModeError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{
     title: string;
@@ -84,14 +86,14 @@ export function ProfileContent() {
     city: string;
     categoryId: string;
     priceRub: string;
-    isBarter: boolean;
+    tradeMode: ListingTradeMode;
   }>({
     title: '',
     description: '',
     city: '',
     categoryId: '',
     priceRub: '',
-    isBarter: false,
+    tradeMode: 'sale',
   });
   const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
 
@@ -152,24 +154,33 @@ export function ProfileContent() {
 
   function startEdit(x: MyListing) {
     setEditingId(x.id);
+    setModeError('');
     setEditForm({
       title: x.title,
       description: '',
       city: x.city,
       categoryId: x.category.id,
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
-      isBarter: x.attributes?.isBarter === true,
+      tradeMode: listingTradeMode(x),
     });
   }
 
   async function saveEdit(id: string) {
     const category = categories.find((item) => item.id === editForm.categoryId);
     if (!category) return false;
+    setModeError('');
+    const capability = await apiFetchJson<{ tradeModesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    if (!capability.ok || capability.data?.tradeModesVersion !== 1) {
+      setModeError(TRADE_MODES_UNAVAILABLE);
+      return false;
+    }
+    const modes = tradeModeFields(canOfferBarter(category) ? editForm.tradeMode : 'sale');
     const payload: Record<string, unknown> = {
+      ...modes,
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
-      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: canOfferBarter(category) && editForm.isBarter },
+      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: modes.barterEnabled },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
     payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
@@ -378,7 +389,7 @@ export function ProfileContent() {
                                   {x.title}
                                 </Link>
                                 <div className="mt-0.5 text-sm font-bold text-foreground">
-                                  {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} \u20BD` : 'Цена не указана'}
+                                  {x.saleEnabled === false ? 'Только обмен' : x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} \u20BD` : 'Цена не указана'}
                                 </div>
                               </div>
                               <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -911,7 +922,7 @@ export function ProfileContent() {
                                       </span>
                                     </div>
                                     <div className="mt-1 text-xl font-bold text-foreground">
-                                      {x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена не указана'}
+                                      {x.saleEnabled === false ? 'Только обмен' : x.priceRub != null ? `${x.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена не указана'}
                                     </div>
                                     <div className="mt-1 text-xs text-muted-foreground">
                                       {x.city} · {x.category.title} ·{' '}
@@ -944,7 +955,7 @@ export function ProfileContent() {
         ) : null}
       </div>
 
-      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={actionError ? actionNotice : undefined} authHref={actionNeedsLogin ? '/auth?next=%2Fprofile' : undefined} /> : null}
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={modeError || (actionError ? actionNotice : undefined)} authHref={actionNeedsLogin ? '/auth?next=%2Fprofile' : undefined} /> : null}
       <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
 
       {promoteTarget ? (

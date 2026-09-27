@@ -29,9 +29,9 @@ import { Card } from '@/components/ui/card';
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   try {
-    const listing = await apiGetJson<{ title: string; city: string; priceRub: number | null; images?: Array<{ url: string }> }>(`/listings/${id}`);
+    const listing = await apiGetJson<{ saleEnabled?: boolean; title: string; city: string; priceRub: number | null; images?: Array<{ url: string }> }>(`/listings/${id}`);
     if (!listing) return { title: 'Объявление не найдено' };
-    const price = listing.priceRub != null ? `${listing.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена договорная';
+    const price = listing.saleEnabled === false ? 'Только обмен' : listing.priceRub != null ? `${listing.priceRub.toLocaleString('ru-RU')} ₽` : 'Цена договорная';
     const title = `${listing.title} — ${price}`;
     const desc = `${listing.title} в ${listing.city}. ${price}. Купить на Бартер.`;
     const img = resolveAssetUrl(listing.images?.[0]?.url) ?? undefined;
@@ -147,10 +147,10 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             <Card className="gap-5 p-5 sm:p-6">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">{listing.category.slug === 'job' ? 'Зарплата' : 'Стоимость'}</p>
-                <p className="break-words text-3xl font-semibold leading-tight tracking-tight tabular-nums">{formatListingPrice(listing.priceRub, listing.priceType)}</p>
-                {listing.isBarter ? <p className="text-sm font-medium text-foreground">Возможен обмен</p> : null}
+                <p className="break-words text-3xl font-semibold leading-tight tracking-tight tabular-nums">{listing.saleEnabled === false ? 'Только обмен' : formatListingPrice(listing.priceRub, listing.priceType)}</p>
+                {listing.saleEnabled === false && listing.priceRub != null ? <p className="text-sm text-muted-foreground">Оценочная стоимость: {formatListingPrice(listing.priceRub, listing.priceType)}</p> : (listing.barterEnabled ?? listing.isBarter) && listing.saleEnabled !== false ? <p className="text-sm font-medium text-foreground">Продажа или обмен</p> : null}
               </div>
-              <ListingContactActions listingId={listing.id} sellerId={listing.owner.id} active={listing.status === 'ACTIVE'} phone={listing.owner.phone} email={listing.owner.email} />
+              <ListingContactActions listingId={listing.id} sellerId={listing.owner.id} saleEnabled={listing.saleEnabled} active={listing.status === 'ACTIVE'} phone={listing.owner.phone} email={listing.owner.email} />
               <div className="border-t border-border pt-5">
                 <Link href={`/seller/${listing.owner.id}`} className="group flex min-h-14 items-center gap-3 rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
                   <span className="grid size-12 shrink-0 place-items-center rounded-full bg-muted text-lg font-semibold" aria-hidden>{(listing.owner.name?.trim() || 'П').slice(0, 1).toUpperCase()}</span>
@@ -192,3 +192,4 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     </div>
   );
 }
+

@@ -15,7 +15,7 @@ const row = (id: string, boosted = false) => ({
   category: { id: 'hobby', title: 'Хобби' },
   owner: { id: 'seller', name: null },
   images: [],
-  attributes: { isBarter: true },
+  attributes: { isBarter: true }, saleEnabled: true, barterEnabled: true,
   promotions: boosted
     ? [{ type: 'TOP', weight: 10, endsAt: new Date('2027-01-01') }]
     : [],
@@ -143,7 +143,7 @@ describe('explicit listing sort and pagination', () => {
     const where = {
       AND: [
         {
-          status: 'ACTIVE',
+          status: 'ACTIVE', saleEnabled: true,
           city: { equals: 'Краснодар', mode: 'insensitive' },
           categoryId: 'hobby',
           priceRub: { gte: 500 },

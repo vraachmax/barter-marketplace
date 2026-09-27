@@ -1,4 +1,7 @@
 'use client';
+import { ListingTradeModeField } from '@/components/listing-trade-mode-field';
+import { listingTradeMode, tradeModeFields, tradeModeLabel, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
+
 import { canOfferBarter } from '@/lib/barter-category';
 
 /**
@@ -63,6 +66,8 @@ import { Textarea } from '@/components/ui/textarea';
 type CreateListingPayload = {
   title: string;
   description: string;
+  saleEnabled: boolean;
+  barterEnabled: boolean;
   priceRub?: number;
   city: string;
   categoryId: string;
@@ -226,12 +231,13 @@ export default function NewListingPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<string>('');
-  const [isBarter, setIsBarter] = useState(false);
+  const [tradeMode, setTradeMode] = useState<ListingTradeMode>('sale');
   const [city, setCity] = useState('Москва');
   const [categoryId, setCategoryId] = useState<string>('');
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
 
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
   const [uploading, setUploading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     { kind: 'idle' } | { kind: 'error'; msg: string } | { kind: 'ok'; id: string }
@@ -309,6 +315,7 @@ export default function NewListingPage() {
 
   const payload = useMemo<CreateListingPayload>(() => {
     const p: CreateListingPayload = {
+      ...tradeModeFields(canOfferBarter(selectedCategory) ? tradeMode : 'sale'),
       title: title.trim(),
       description: description.trim(),
       city: city.trim(),
@@ -316,9 +323,9 @@ export default function NewListingPage() {
     };
     const pr = Number(price);
     if (price.trim().length > 0 && Number.isFinite(pr)) p.priceRub = pr;
-    p.attributes = { ...serializedAttributes, isBarter: canOfferBarter(selectedCategory) && isBarter };
+    p.attributes = { ...serializedAttributes, isBarter: p.barterEnabled };
     return p;
-  }, [title, description, city, categoryId, price, serializedAttributes, isBarter, selectedCategory]);
+  }, [title, description, city, categoryId, price, serializedAttributes, tradeMode, selectedCategory]);
 
   const attributeError = validateListingAttributes(attrSections, attrValues, price);
 
@@ -408,18 +415,28 @@ export default function NewListingPage() {
   }
 
   async function submit() {
+    if (submitting.current) return;
     const validationError = attributeError ?? validate();
     if (validationError) {
       setSubmitStatus({ kind: 'error', msg: validationError });
       return;
     }
+    submitting.current = true;
     setBusy(true);
     setSubmitStatus({ kind: 'idle' });
+    const capability = await apiFetchJson<{ tradeModesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    if (!capability.ok || capability.data?.tradeModesVersion !== 1) {
+      submitting.current = false;
+      setBusy(false);
+      setSubmitStatus({ kind: 'error', msg: TRADE_MODES_UNAVAILABLE });
+      return;
+    }
     const photosSnapshot = [...pendingPhotos];
     const res = await apiFetchJson<{ id: string }>('/listings', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    submitting.current = false;
     setBusy(false);
     if (!res.ok) {
       if (res.status === 401) {
@@ -459,6 +476,7 @@ export default function NewListingPage() {
     setTitle('');
     setDescription('');
     setPrice('');
+    setTradeMode('sale');
     setCategoryId('');
     setStep(1);
   }
@@ -551,15 +569,15 @@ export default function NewListingPage() {
             suggestions={titleSuggestions}
             allCats={cats}
             categoryId={categoryId}
-            onCategoryPick={(id) => { setCategoryId(id); setAttrValues({}); if (!canOfferBarter(cats.find((category) => category.id === id))) setIsBarter(false); }}
+            onCategoryPick={(id) => { setCategoryId(id); setAttrValues({}); if (!canOfferBarter(cats.find((category) => category.id === id))) setTradeMode('sale'); }}
             loadingCats={loadingCats}
           />
         ) : null}
 
         {step === 2 ? (
           <Step2Description
-            isBarter={isBarter}
-            onIsBarterChange={setIsBarter}
+            tradeMode={tradeMode}
+            onTradeModeChange={setTradeMode}
             title={title}
             selectedCategory={selectedCategory}
             description={description}
@@ -599,6 +617,7 @@ export default function NewListingPage() {
 
         {step === 5 ? (
           <Step5Confirm
+            tradeMode={listingTradeMode(payload)}
             title={title}
             selectedCategory={selectedCategory}
             description={description}
@@ -849,8 +868,8 @@ function Step1WhatToSell(props: {
 }
 
 function Step2Description(props: {
-  isBarter: boolean;
-  onIsBarterChange: (value: boolean) => void;
+  tradeMode: ListingTradeMode;
+  onTradeModeChange: (value: ListingTradeMode) => void;
   title: string;
   selectedCategory: Category | null;
   description: string;
@@ -904,17 +923,15 @@ function Step2Description(props: {
         </div>
       </div>
 
-      {canOfferBarter(selectedCategory) ? <label className="flex min-h-14 cursor-pointer items-start gap-3 rounded-2xl border border-border bg-primary/5 p-4 text-sm text-foreground">
-        <input type="checkbox" checked={props.isBarter} onChange={(event) => props.onIsBarterChange(event.target.checked)} className="mt-0.5 size-5 shrink-0 accent-primary" />
-        <span><strong className="block">Рассматриваю обмен</strong><span className="mt-1 block text-xs text-muted-foreground">Объявление также появится в «Бартере». Напишите в описании, что хотите получить взамен.</span></span>
-      </label> : <p className="text-sm text-muted-foreground">Для этой категории обмен недоступен.</p>}
+      <ListingTradeModeField value={props.tradeMode} onChange={props.onTradeModeChange} barterAllowed={canOfferBarter(selectedCategory)} />
       {/* Price */}
       <div>
-        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+        <label htmlFor="listing-price" className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
           <Wallet size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground" aria-hidden />
-          {selectedCategory?.slug === 'job' ? 'Зарплата от, ₽' : 'Цена, ₽'}
+          {selectedCategory?.slug === 'job' ? 'Зарплата от, ₽' : props.tradeMode === 'barter' ? 'Оценочная стоимость, ₽' : 'Цена, ₽'}
         </label>
         <Input
+          id="listing-price"
           value={price}
           onChange={(e) => onPriceChange(e.target.value.replace(/[^\d]/g, ''))}
           placeholder="Например: 122 000"
@@ -922,7 +939,7 @@ function Step2Description(props: {
           className="h-12 rounded-xl px-4 text-base"
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          {selectedCategory?.slug === 'job' ? 'Период оплаты и верхнюю границу укажите в условиях вакансии ниже.' : 'Оставьте пустым, если цена договорная'}
+          {selectedCategory?.slug === 'job' ? 'Период оплаты и верхнюю границу укажите в условиях вакансии ниже.' : props.tradeMode === 'barter' ? 'Необязательно. Помогает сравнивать вещи, но не означает продажу.' : 'Оставьте пустым, если цена договорная'}
         </p>
       </div>
 
@@ -1143,6 +1160,7 @@ function Step4Location(props: { city: string; onCityChange: (v: string) => void 
 }
 
 function Step5Confirm(props: {
+  tradeMode: ListingTradeMode;
   title: string;
   selectedCategory: Category | null;
   description: string;
@@ -1217,15 +1235,16 @@ function Step5Confirm(props: {
           Что публикуем
         </p>
         <p className="mt-1 text-base font-bold text-foreground">{title || '—'}</p>
+        <p className="text-sm font-medium">{tradeModeLabel(props.tradeMode)}</p>
         {price ? (
           <p
             className="mt-1 text-xl font-bold"
             style={{ color: 'var(--mode-accent)' }}
           >
-            {Number(price).toLocaleString('ru-RU')} ₽
+            {props.tradeMode === 'barter' ? 'Оценка: ' : ''}{Number(price).toLocaleString('ru-RU')} ₽
           </p>
         ) : (
-          <p className="mt-1 text-sm text-muted-foreground">Цена договорная</p>
+          <p className="mt-1 text-sm text-muted-foreground">{props.tradeMode === 'barter' ? 'Оценочная стоимость не указана' : 'Цена договорная'}</p>
         )}
         <ul className="mt-3 space-y-2 text-sm">
           <SummaryRow label="Категория" value={selectedCategory?.title ?? '—'} />

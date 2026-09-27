@@ -42,6 +42,8 @@ export type Category = {
 };
 
 export type ListingCard = {
+  saleEnabled?: boolean;
+  barterEnabled?: boolean;
   id: string;
   title: string;
   isBarter?: boolean;
@@ -174,6 +176,8 @@ export type ReviewEligibility = {
 };
 
 export type MyListing = {
+  saleEnabled?: boolean;
+  barterEnabled?: boolean;
   id: string;
   title: string;
   priceRub: number | null;
@@ -214,6 +218,8 @@ export type SellerProfileResponse = {
     listing: { id: string; title: string };
   }>;
   activeListings: Array<{
+    saleEnabled?: boolean;
+    barterEnabled?: boolean;
     id: string;
     title: string;
     priceRub: number | null;
@@ -463,4 +469,3 @@ export async function apiUploadFile(
     return { ok: false, status: 0, message: e?.message ?? 'network_error' };
   }
 }
-

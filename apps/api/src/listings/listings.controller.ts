@@ -36,6 +36,11 @@ export class ListingsController {
     private mediaStorage: MediaStorageService,
   ) {}
 
+  @Get('capabilities')
+  capabilities() {
+    return { tradeModesVersion: 1 };
+  }
+
   @Get('map')
   async mapPins(
     @Query('swLat') swLat?: string,
@@ -80,12 +85,13 @@ export class ListingsController {
     @Param('id') id: string,
     @Query('limit') limit?: string,
     @Query('excludeIds') excludeIds?: string,
+    @Query('mode') mode?: 'market' | 'barter',
   ) {
     const excluded = (excludeIds ?? '')
       .split(',')
       .map((x) => x.trim())
       .filter(Boolean);
-    return this.listings.similar(id, limit ? Number(limit) : 10, excluded);
+    return this.listings.similar(id, limit ? Number(limit) : 10, excluded, mode);
   }
 
   /** Публичный учёт клика по карточке (вовлечённость в ранжировании). */
@@ -195,3 +201,4 @@ export class ListingsController {
     return this.listings.reportListing(id, req.user.id, dto.reason);
   }
 }
+

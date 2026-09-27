@@ -21,6 +21,8 @@ export class FavoritesService {
             id: true,
             title: true,
             priceRub: true,
+            saleEnabled: true,
+            barterEnabled: true,
             city: true,
             createdAt: true,
             category: { select: { id: true, title: true } },
@@ -66,4 +68,5 @@ export class FavoritesService {
     return { ok: true };
   }
 }
+
 

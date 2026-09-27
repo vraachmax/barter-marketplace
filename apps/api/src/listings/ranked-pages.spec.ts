@@ -24,7 +24,7 @@ describe('ranked database pages', () => {
     _count: { favorites: 0 },
     images: [],
     promotions: [],
-    attributes: { isBarter: true },
+    attributes: { isBarter: true }, saleEnabled: true, barterEnabled: true,
   });
   let service: ListingsService;
   const findMany = jest.fn();
@@ -91,7 +91,7 @@ describe('ranked database pages', () => {
         where: {
           AND: [
             {
-              status: 'ACTIVE',
+              status: 'ACTIVE', saleEnabled: true,
               city: { equals: 'Краснодар', mode: 'insensitive' },
               categoryId: 'hobby',
               priceRub: { gte: 500, lte: 2000 },
@@ -184,7 +184,7 @@ describe('ranked database pages', () => {
     ];
     expect(count).toHaveBeenCalledWith({
       where: {
-        status: 'ACTIVE',
+        status: 'ACTIVE', saleEnabled: true,
         AND: [
           { OR: ['айфон', 'iphone', 'айфона', 'айфоне'].flatMap(match) },
           { OR: match('1') },

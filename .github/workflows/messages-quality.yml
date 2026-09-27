@@ -4,6 +4,12 @@ on:
     branches: [master]
     paths:
       - 'apps/api/src/chats/**'
+      - 'apps/api/src/listings/**'
+      - 'apps/api/src/categories/**'
+      - 'apps/api/src/search/**'
+      - 'apps/api/src/users/**'
+      - 'apps/api/src/favorites/**'
+      - 'apps/api/test/listing-trade-modes.cjs'
       - 'apps/api/prisma/**'
       - 'apps/api/test/messages-idempotency.cjs'
       - 'apps/api/test/messages-socket.cjs'
@@ -50,6 +56,10 @@ jobs:
           npx prisma migrate deploy
       - name: API production build
         run: npm run build -w @app/api
+      - name: Listing contracts and search regression
+        run: npm test -w @app/api -- --runInBand listings categories
+      - name: Listing modes HTTP and PostgreSQL acceptance
+        run: node apps/api/test/listing-trade-modes.cjs
       - name: HTTP and PostgreSQL message acceptance
         run: node apps/api/test/messages-idempotency.cjs
       - name: Socket.IO and PostgreSQL acceptance
@@ -59,3 +69,4 @@ jobs:
         run: node apps/api/test/messages-media.cjs
         env:
           MEDIA_STORAGE_DRIVER: local
+

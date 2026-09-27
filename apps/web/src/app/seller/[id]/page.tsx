@@ -265,7 +265,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
                               <p className="line-clamp-2 text-sm font-bold leading-snug text-foreground group-hover:text-primary">
                                 {x.title}
                               </p>
-                              <p className="mt-2 text-lg font-semibold text-foreground">{formatRub(x.priceRub)}</p>
+                              <p className="mt-2 text-lg font-semibold text-foreground">{x.saleEnabled === false ? 'Только обмен' : formatRub(x.priceRub)}</p>
                               <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                                 <MapPin size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
                                 {x.city} · {x.category.title}
