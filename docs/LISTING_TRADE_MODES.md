@@ -37,8 +37,19 @@
 ## Проверка и границы
 
 Локально проверены вспомогательные web-контракты и синтаксис новых тестов.
-В CI подготовлены PostgreSQL 16 rehearsal/backfill/restore, HTTP с настоящей БД,
-регрессии поиска и браузерный редактор с перезагрузкой в обеих темах.
-Результаты CI и production будут внесены после выполнения.
+CI завершены успешно для head 252021293212bd04faacbedb7d5ab2a4dc32ff96:
+- Web 36309102144: 71 unit, build/TypeScript, 6 account + 10 layout + 6 messages.
+- API 36309102153: 150 unit tests, HTTP режимов с настоящей PostgreSQL,
+  прежние HTTP/Socket.IO/media сценарии.
+- PG16 36309102159: 22 миграции, backfill 900 записей, legacy trigger,
+  fresh install, backup/restore и поиск. Audit 36309102514 success.
+Редактор проверен с повторным открытием на 360/440/768/820/1280 в обеих темах.
+Пятишаговое создание exchange-only с оценкой проверено на 360/1280 в обеих темах.
+Контрольный лист 440 light/dark просмотрен.
+PR #33 merged: f56e578820031e91c1c305ae77d35082dc62bf0f.
+Vercel production success (deployment 83oZEttkfV4f17qkKWQXMBQtZp34).
+Публичный API capabilities дважды вернул экран Render Application loading:
+production backend/миграция не подтверждены. Для чтения логов требуется
+подтверждённый пользователем Render workspace. Полный production acceptance открыт.
 Реальные объявления не создаются для QA. Физический iPhone и работа из РФ
 без VPN этим блоком не проверяются. UI-01/02 и PERF-01 не закрываются автоматически.

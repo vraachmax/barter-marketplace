@@ -11,7 +11,23 @@ legacy-совместимость, три режима в форме/редак�
 пагинации и продвижения. Фото, избранное и статус принадлежат тому же Listing.
 Пустую цену теперь можно очистить PATCH-запросом. Exchange-only показывает
 оценочную стоимость, а не предложение продажи.
-Проверки и границы: docs/LISTING_TRADE_MODES.md. CI и публикация ещё впереди.
+PR #33 объединён: f56e578820031e91c1c305ae77d35082dc62bf0f.
+Проверенный head: 252021293212bd04faacbedb7d5ab2a4dc32ff96.
+CI success: Web 36309102144 (71 unit, build/TS, 6 account, 10 layout,
+6 messages), API 36309102153 (150 unit + HTTP/Socket/media),
+PG16 36309102159 (22 миграции, backfill, restore), audit 36309102514.
+Исправлены профильный редактор и fixtures, а также два сбоя локаторов
+браузерного теста. Создание exchange-only проверено на 360/1280 в обеих темах,
+редактирование с перезагрузкой на пяти ширинах; старый API не теряет режим молча.
+Контрольный лист снимков 440 light/dark просмотрен.
+Vercel production success:
+https://vercel.com/vraachmaxs-projects/web/83oZEttkfV4f17qkKWQXMBQtZp34
+Production API /api/backend/listings/capabilities дважды показал Render
+Application loading. Backend deployment/миграция production НЕ подтверждены.
+Render connector требует подтверждённого пользователем workspace; не выбирать
+его самостоятельно и не обходить через dashboard. Реальных записей для QA нет.
+Проверки и границы: docs/LISTING_TRADE_MODES.md.
+Сначала подтвердить живой backend, затем продолжать продуктовый блок.
 Следующий шаг после приёмки: структурированные пожелания и доплата.
 
 
@@ -2769,4 +2785,3 @@ npm run dev:web      # Web (3000)
 - **Мобильная версия** — фокус на мобилке, десктоп пока не трогаем
 - **Git через sandbox** не работает (коррапт `.git/index`), пушить только из терминала юзера
 - **Force push** был необходим из-за рассинхрона коммитов (remote 68 vs local 10)
-
