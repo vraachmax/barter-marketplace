@@ -1,4 +1,6 @@
 'use client';
+import { ExchangePreferencesField } from '@/components/exchange-preferences-field';
+import { exchangePreferencesError, type ExchangePreferences } from '@/lib/exchange-preferences';
 import { ListingTradeModeField } from '@/components/listing-trade-mode-field';
 import { type ListingTradeMode } from '@/lib/listing-trade-mode';
 
@@ -10,7 +12,7 @@ import Link from 'next/link';
 import type { Category } from '@/lib/api';
 import { canOfferBarter } from '@/lib/barter-category';
 
-type Fields = { title: string; description: string; city: string; categoryId: string; priceRub: string; tradeMode: ListingTradeMode };
+type Fields = { title: string; description: string; city: string; categoryId: string; priceRub: string; tradeMode: ListingTradeMode; exchangePreferences: ExchangePreferences };
 
 /** Shared editor outside the desktop/mobile wrappers, with native modal focus. */
 export function ListingEditorDialog({ values, onChange, categories, onSave, onClose, saveError, authHref }: {
@@ -40,6 +42,8 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
     <form onSubmit={async (event) => {
       event.preventDefault();
       if (submitting.current) return;
+      const preferencesError = values.tradeMode === 'sale' ? null : exchangePreferencesError(values.exchangePreferences);
+      if (preferencesError) { setError(preferencesError); return; }
       submitting.current = true;
       setBusy(true); setError('');
       try { if (!await onSave()) setError('Не удалось сохранить изменения. Проверьте поля и повторите.'); }
@@ -56,6 +60,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
         </select></label>
         <label className="block text-sm font-medium">{values.tradeMode === 'barter' ? 'Оценочная стоимость, ₽' : 'Цена, ₽'}<input type="number" min="0" max="2147483647" step="1" value={values.priceRub} onChange={(e) => change('priceRub', e.target.value)} className={inputClass} /></label>
         <ListingTradeModeField value={values.tradeMode} onChange={(mode) => change('tradeMode', mode)} barterAllowed={canOfferBarter(categories.find((category) => category.id === values.categoryId))} />
+        {values.tradeMode !== 'sale' ? <ExchangePreferencesField value={values.exchangePreferences} onChange={v => change('exchangePreferences', v)} categories={categories} /> : null}
       </fieldset>
       <div className="glass-panel sticky bottom-0 space-y-3 border-t border-border px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
       {saveError || error ? <p role="alert" className="text-sm text-destructive">{saveError || error}</p> : null}

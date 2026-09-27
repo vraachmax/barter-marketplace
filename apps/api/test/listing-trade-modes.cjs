@@ -117,6 +117,22 @@ async function main() {
     await patch(exchange.id, { saleEnabled: false }, outsider).expect(403);
     await assert.rejects(db.listing.update({ where: { id: exchange.id }, data: { saleEnabled: false, barterEnabled: false, attributes: { isBarter: false } } }));
     console.log('PASS invalid modes, conflicting alias, wrong owner and database invariant rejected');
+    const wishes = { anyOffer: false, wantedCategoryIds: [category.id], wantedDescription: 'Велосипед', canAddCash: true, acceptsCash: true, maxCashRub: 15000 };
+    assert.equal((await http().get('/listings/capabilities').expect(200)).body.exchangePreferencesVersion, 1);
+    await patch(exchange.id, { exchangePreferences: wishes }).expect(200);
+    assert.deepEqual((await http().get('/listings/' + exchange.id).expect(200)).body.exchangePreferences, wishes);
+    await patch(exchange.id, { city: 'Москва' }).expect(200);
+    const refreshed = (await http().get('/listings/my').set('x-fixture-user', owner.id).expect(200)).body;
+    assert.deepEqual(refreshed.find(x => x.id === exchange.id).exchangePreferences, wishes);
+    await patch(exchange.id, { exchangePreferences: { ...wishes, wantedCategoryIds: ['nonexistent'] } }).expect(400);
+    await patch(exchange.id, { exchangePreferences: { ...wishes, maxCashRub: -1 } }).expect(400);
+    await patch(exchange.id, { exchangePreferences: wishes }, outsider).expect(403);
+    await patch(exchange.id, { barterEnabled: false }).expect(200);
+    assert.deepEqual((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences, wishes);
+    await patch(exchange.id, { exchangePreferences: wishes }).expect(400);
+    await patch(exchange.id, { barterEnabled: true, exchangePreferences: null }).expect(200);
+    assert.equal((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences, null);
+    console.log('PASS exchange wishes persist, validate category/budget/owner, survive sale mode and clear explicitly');
   } finally {
     if (app) await app.close();
     if (owner) {

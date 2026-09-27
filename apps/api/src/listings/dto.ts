@@ -18,6 +18,9 @@ import {
 import { IsListingAttributes } from './is-listing-attributes.decorator';
 
 export class CreateListingDto {
+  @Allow()
+  exchangePreferences?: unknown;
+
   @ValidateIf((_o, value) => value !== undefined)
   @IsBoolean()
   saleEnabled?: boolean;
@@ -79,6 +82,9 @@ export class PromoteListingDto {
 }
 
 export class UpdateListingDto {
+  @Allow()
+  exchangePreferences?: unknown;
+
   @ValidateIf((_o, value) => value !== undefined)
   @IsBoolean()
   saleEnabled?: boolean;

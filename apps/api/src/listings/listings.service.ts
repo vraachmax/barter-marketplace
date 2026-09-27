@@ -1,3 +1,4 @@
+import { parseExchangePreferences } from './exchange-preferences';
 import { resolveListingModes } from './listing-modes';
 import {
   BadRequestException,
@@ -465,12 +466,25 @@ export class ListingsService {
     }
   }
 
+  private async validateExchangePreferences(value: unknown, barterEnabled: boolean) {
+    const preferences = parseExchangePreferences(value);
+    if (preferences && !barterEnabled) throw new BadRequestException('exchange_preferences_require_barter');
+    if (preferences?.wantedCategoryIds.length) {
+      const categories = await this.prisma.category.findMany({ where: { id: { in: preferences.wantedCategoryIds } }, select: { id: true, slug: true } });
+      if (categories.length !== preferences.wantedCategoryIds.length || categories.some(c => !categoryAllowsBarter(c.slug))) {
+        throw new BadRequestException('invalid_exchange_categories');
+      }
+    }
+    return preferences;
+  }
+
   async create(userId: string, dto: CreateListingDto) {
     const category = await this.prisma.category.findUnique({
       where: { id: dto.categoryId }, select: { slug: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
     const modes = resolveListingModes(dto, undefined, categoryAllowsBarter(category.slug));
+    const exchangePreferences = dto.exchangePreferences === undefined ? null : await this.validateExchangePreferences(dto.exchangePreferences, modes.barterEnabled);
     await this.assertListingDailyLimit(userId);
     await this.assertActiveListingsLimit(userId);
     await this.assertNotDuplicateListingText(dto.title, dto.description);
@@ -478,6 +492,7 @@ export class ListingsService {
     const row = await this.prisma.listing.create({
       data: {
         ...modes,
+        exchangePreferences: exchangePreferences === null ? Prisma.DbNull : exchangePreferences,
         title: dto.title,
         description: dto.description,
         priceRub: dto.priceRub ?? null,
@@ -502,6 +517,7 @@ export class ListingsService {
         createdAt: true,
         status: true,
         duplicateImageFlag: true,
+        exchangePreferences: true,
         attributes: true,
         category: { select: { id: true, title: true } },
         owner: { select: { id: true, name: true } },
@@ -956,6 +972,7 @@ export class ListingsService {
         status: true,
         duplicateImageFlag: true,
         ownerId: true,
+        exchangePreferences: true,
         attributes: true,
         viewsCount: true,
         category: { select: { id: true, title: true } },
@@ -1191,6 +1208,7 @@ export class ListingsService {
         createdAt: true,
         status: true,
         duplicateImageFlag: true,
+        exchangePreferences: true,
         attributes: true,
         category: { select: { id: true, title: true } },
         images: {
@@ -1259,6 +1277,7 @@ export class ListingsService {
         categoryId: true,
         saleEnabled: true,
         barterEnabled: true,
+        exchangePreferences: true,
         attributes: true,
       },
     });
@@ -1282,6 +1301,10 @@ export class ListingsService {
     }
 
     const data: Prisma.ListingUncheckedUpdateInput = { ...modes };
+    if (dto.exchangePreferences !== undefined) {
+      const preferences = await this.validateExchangePreferences(dto.exchangePreferences, modes.barterEnabled);
+      data.exchangePreferences = preferences === null ? Prisma.DbNull : preferences;
+    }
     if (typeof dto.title === 'string') data.title = dto.title;
     if (typeof dto.description === 'string') data.description = dto.description;
     if (typeof dto.city === 'string') data.city = dto.city;
@@ -1313,6 +1336,7 @@ export class ListingsService {
         longitude: true,
         status: true,
         duplicateImageFlag: true,
+        exchangePreferences: true,
         attributes: true,
         category: { select: { id: true, title: true } },
         images: {
@@ -1543,3 +1567,5 @@ export class ListingsService {
     return { ok: true };
   }
 }
+
+

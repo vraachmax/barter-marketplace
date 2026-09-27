@@ -1,5 +1,8 @@
 'use client';
 import { ListingTradeModeField } from '@/components/listing-trade-mode-field';
+import { ExchangePreferencesSummary } from '@/components/exchange-preferences-summary';
+import { ExchangePreferencesField } from '@/components/exchange-preferences-field';
+import { emptyExchangePreferences, exchangePreferencesError, type ExchangePreferences } from '@/lib/exchange-preferences';
 import { listingTradeMode, tradeModeFields, tradeModeLabel, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
 
 import { canOfferBarter } from '@/lib/barter-category';
@@ -71,6 +74,7 @@ type CreateListingPayload = {
   priceRub?: number;
   city: string;
   categoryId: string;
+  exchangePreferences?: ExchangePreferences;
   attributes?: Record<string, string | number | boolean>;
 };
 
@@ -232,6 +236,7 @@ export default function NewListingPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<string>('');
   const [tradeMode, setTradeMode] = useState<ListingTradeMode>('sale');
+  const [exchangePreferences, setExchangePreferences] = useState(emptyExchangePreferences);
   const [city, setCity] = useState('Москва');
   const [categoryId, setCategoryId] = useState<string>('');
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
@@ -323,11 +328,13 @@ export default function NewListingPage() {
     };
     const pr = Number(price);
     if (price.trim().length > 0 && Number.isFinite(pr)) p.priceRub = pr;
+    if (p.barterEnabled) p.exchangePreferences = exchangePreferences;
     p.attributes = { ...serializedAttributes, isBarter: p.barterEnabled };
     return p;
-  }, [title, description, city, categoryId, price, serializedAttributes, tradeMode, selectedCategory]);
+  }, [title, description, city, categoryId, price, serializedAttributes, tradeMode, selectedCategory, exchangePreferences]);
 
   const attributeError = validateListingAttributes(attrSections, attrValues, price);
+  const exchangeError = tradeMode === 'sale' ? null : exchangePreferencesError(exchangePreferences);
 
   const titleLen = title.trim().length;
   const descLen = description.trim().length;
@@ -335,7 +342,7 @@ export default function NewListingPage() {
   /** Проверка можно ли нажать «Далее» на текущем шаге. */
   function canGoNext(s: WizardStep): boolean {
     if (s === 1) return titleLen >= 3 && categoryId.length > 0;
-    if (s === 2) return descLen >= 10 && !attributeError;
+    if (s === 2) return descLen >= 10 && !attributeError && !exchangeError;
     if (s === 3) return true; // фото — необязательно
     if (s === 4) return city.trim().length >= 2;
     if (s === 5) return me !== 'loading' && me !== null;
@@ -345,6 +352,7 @@ export default function NewListingPage() {
   function nextStepHint(s: WizardStep): string {
     if (s === 1 && titleLen < 3) return 'Введите хотя бы 3 символа';
     if (s === 1 && !categoryId) return 'Выберите категорию из подсказок';
+    if (s === 2 && exchangeError) return exchangeError;
     if (s === 2 && attributeError) return attributeError;
     if (s === 2 && descLen < 10) return 'Описание: минимум 10 символов';
     if (s === 4 && city.trim().length < 2) return 'Укажите город';
@@ -416,7 +424,7 @@ export default function NewListingPage() {
 
   async function submit() {
     if (submitting.current) return;
-    const validationError = attributeError ?? validate();
+    const validationError = exchangeError ?? attributeError ?? validate();
     if (validationError) {
       setSubmitStatus({ kind: 'error', msg: validationError });
       return;
@@ -424,8 +432,8 @@ export default function NewListingPage() {
     submitting.current = true;
     setBusy(true);
     setSubmitStatus({ kind: 'idle' });
-    const capability = await apiFetchJson<{ tradeModesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
-    if (!capability.ok || capability.data?.tradeModesVersion !== 1) {
+    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    if (!capability.ok || capability.data?.tradeModesVersion !== 1 || capability.data?.exchangePreferencesVersion !== 1) {
       submitting.current = false;
       setBusy(false);
       setSubmitStatus({ kind: 'error', msg: TRADE_MODES_UNAVAILABLE });
@@ -574,10 +582,15 @@ export default function NewListingPage() {
           />
         ) : null}
 
+        {step === 5 && payload.exchangePreferences ? <ExchangePreferencesSummary value={payload.exchangePreferences} categories={cats} /> : null}
+
         {step === 2 ? (
           <Step2Description
             tradeMode={tradeMode}
             onTradeModeChange={setTradeMode}
+            exchangePreferences={exchangePreferences}
+            onExchangePreferencesChange={setExchangePreferences}
+            categories={cats}
             title={title}
             selectedCategory={selectedCategory}
             description={description}
@@ -868,6 +881,9 @@ function Step1WhatToSell(props: {
 }
 
 function Step2Description(props: {
+  exchangePreferences: ExchangePreferences;
+  onExchangePreferencesChange: (value: ExchangePreferences) => void;
+  categories: Category[];
   tradeMode: ListingTradeMode;
   onTradeModeChange: (value: ListingTradeMode) => void;
   title: string;
@@ -924,6 +940,7 @@ function Step2Description(props: {
       </div>
 
       <ListingTradeModeField value={props.tradeMode} onChange={props.onTradeModeChange} barterAllowed={canOfferBarter(selectedCategory)} />
+      {props.tradeMode !== 'sale' ? <ExchangePreferencesField value={props.exchangePreferences} onChange={props.onExchangePreferencesChange} categories={props.categories} /> : null}
       {/* Price */}
       <div>
         <label htmlFor="listing-price" className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
@@ -1384,3 +1401,4 @@ function PostPublishScreen(props: {
     </div>
   );
 }
+
