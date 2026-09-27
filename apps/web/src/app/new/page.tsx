@@ -926,11 +926,12 @@ function Step2Description(props: {
       <ListingTradeModeField value={props.tradeMode} onChange={props.onTradeModeChange} barterAllowed={canOfferBarter(selectedCategory)} />
       {/* Price */}
       <div>
-        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+        <label htmlFor="listing-price" className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
           <Wallet size={16} strokeWidth={1.8} className="shrink-0 text-muted-foreground" aria-hidden />
           {selectedCategory?.slug === 'job' ? 'Зарплата от, ₽' : props.tradeMode === 'barter' ? 'Оценочная стоимость, ₽' : 'Цена, ₽'}
         </label>
         <Input
+          id="listing-price"
           value={price}
           onChange={(e) => onPriceChange(e.target.value.replace(/[^\d]/g, ''))}
           placeholder="Например: 122 000"
@@ -1243,7 +1244,7 @@ function Step5Confirm(props: {
             {props.tradeMode === 'barter' ? 'Оценка: ' : ''}{Number(price).toLocaleString('ru-RU')} ₽
           </p>
         ) : (
-          <p className="mt-1 text-sm text-muted-foreground">Цена договорная</p>
+          <p className="mt-1 text-sm text-muted-foreground">{props.tradeMode === 'barter' ? 'Оценочная стоимость не указана' : 'Цена договорная'}</p>
         )}
         <ul className="mt-3 space-y-2 text-sm">
           <SummaryRow label="Категория" value={selectedCategory?.title ?? '—'} />
@@ -1383,4 +1384,3 @@ function PostPublishScreen(props: {
     </div>
   );
 }
-

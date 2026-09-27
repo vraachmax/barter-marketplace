@@ -71,10 +71,10 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold)\/similar$/.test(url.pathname)) data = [];
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold)$/.test(url.pathname)) {
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)\/similar$/.test(url.pathname)) data = [];
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)$/.test(url.pathname)) {
     // Next Link prefetch also requests listing metadata through the server API.
-    const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id);
+    const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id) ?? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true };
     data = { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
   }
   else { serverUnexpected.push(req.method + ' ' + url.pathname); res.statusCode = 404; data = {}; }
@@ -133,6 +133,11 @@ async function installFixture(context, state, theme) {
       if (body.publishFromModeration) listing.status = 'ACTIVE';
       else Object.assign(listing, body);
       return json(listing);
+    }
+    if (method === 'POST' && path === '/listings') {
+      const body = request.postDataJSON();
+      state.writes.push({ path, body });
+      return json({ ...body, id: 'fixture-created', category, images: [] }, 201);
     }
     if (method !== 'GET') {
       state.unexpected.push(method + ' ' + path);
@@ -463,6 +468,26 @@ async function scenario(browserType, width, theme) {
     state.failListings = false;
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
+    if (width === 360 || width === 1280) {
+      await visit('/new');
+      await page.getByPlaceholder('iPhone 14 Pro Max 256 ГБ').fill('iPhone для обмена');
+      await page.getByRole('button', { name: 'Электроника', exact: true }).first().click();
+      await page.getByRole('button', { name: 'Далее', exact: true }).click();
+      await page.getByRole('radio', { name: /^Только обмен/ }).check();
+      await page.getByLabel('Оценочная стоимость, ₽').fill('18000');
+      await page.getByPlaceholder('Состояние, комплект, дефекты, история покупки, способ передачи…').fill('Телефон в хорошем состоянии, полный комплект. Рассмотрю обмен на фотоаппарат.');
+      for (let step = 2; step <= 4; step++) await page.getByRole('button', { name: 'Далее', exact: true }).click();
+      await expect(page.getByText('Только обмен', { exact: true })).toBeVisible();
+      await expect(page.getByText(/Оценка:.*18/)).toBeVisible();
+      await page.getByRole('button', { name: 'Опубликовать', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Объявление опубликовано', exact: true })).toBeVisible();
+      const creates = state.writes.filter(x => x.path === '/listings');
+      assert.equal(creates.length, 1);
+      assert.equal(creates[0].body.saleEnabled, false);
+      assert.equal(creates[0].body.barterEnabled, true);
+      assert.equal(creates[0].body.priceRub, 18000);
+      checks.push('five-step publication sends exchange-only once with optional valuation');
+    }
     state.guest = true;
     await visit('/listings?tab=COMPLETED');
     await expect(page.getByRole('link', { name: 'Войти или зарегистрироваться' })).toHaveAttribute('href', '/auth?next=%2Flistings%3Ftab%3DCOMPLETED');
@@ -503,4 +528,3 @@ try {
   await writeFile(join(output, 'results.json'), JSON.stringify({ scope: 'Production web build with loopback SSR API and browser fixtures; no real account, payments or physical iPhone.', results }, null, 2));
 }
 if (results.length !== 10 || results.some(x => !x.passed)) process.exitCode = 1;
-

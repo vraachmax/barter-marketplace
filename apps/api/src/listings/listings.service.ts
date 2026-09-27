@@ -167,8 +167,8 @@ export class ListingsService {
       id: true,
       title: true,
       priceRub: true,
-        saleEnabled: true,
-        barterEnabled: true,
+      saleEnabled: true,
+      barterEnabled: true,
       priceType: true,
       city: true,
       latitude: true,
@@ -1543,5 +1543,3 @@ export class ListingsService {
     return { ok: true };
   }
 }
-
-
