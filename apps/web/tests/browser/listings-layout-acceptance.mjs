@@ -280,7 +280,7 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
     await spacingCheck(page, width);
-    const tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
+    let tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
     await expect(tabs.getByRole('button', { name: 'Внимание 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(tabs.getByRole('button', { name: 'Завершены 1', exact: true })).toBeVisible();
     for (const button of await tabs.getByRole('button').all()) { const box = await contained(button); assert(box.height >= 44); }
@@ -309,6 +309,7 @@ async function scenario(browserType, width, theme) {
     assert.equal(state.writes.at(-1).body.barterEnabled, true);
     await visit('/listings?tab=NEEDS_ACTION');
     const edited = page.locator('main li').filter({ hasText: state.listings[0].title });
+    tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
     await edited.locator('summary').click();
     await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
     await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
