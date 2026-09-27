@@ -143,7 +143,7 @@ async function installFixture(context, state, theme) {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
-    if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1 });
+    if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1 });
     if (path === '/categories') return json([category]);
     if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
@@ -296,6 +296,10 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByLabel('Название', { exact: true })).toHaveValue(state.listings[0].title);
     const exchangeOnly = page.getByRole('radio', { name: /^Только обмен/ });
     await exchangeOnly.check();
+    await page.getByLabel('Пожелания к обмену', { exact: true }).fill('Рассмотрю фотоаппарат или велосипед');
+    await page.getByLabel('Могу доплатить', { exact: true }).check();
+    await page.getByLabel('Моя доплата до, ₽', { exact: true }).fill('15000');
+    await page.getByLabel('Готов принять доплату', { exact: true }).check();
     await expect(page.getByLabel('Оценочная стоимость, ₽')).toBeVisible();
     // An old backend must not silently discard the new mode fields.
     state.oldApi = true;
@@ -313,6 +317,9 @@ async function scenario(browserType, width, theme) {
     await edited.locator('summary').click();
     await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
     await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
+    await expect(page.getByLabel('Пожелания к обмену', { exact: true })).toHaveValue('Рассмотрю фотоаппарат или велосипед');
+    await expect(page.getByLabel('Моя доплата до, ₽', { exact: true })).toHaveValue('15000');
+    await expect(page.getByLabel('Готов принять доплату', { exact: true })).toBeChecked();
     await shot(page, key + '-trade-mode');
     await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
     state.writes.length = 0;
@@ -476,6 +483,10 @@ async function scenario(browserType, width, theme) {
       await page.getByRole('button', { name: 'Далее', exact: true }).click();
       await page.getByRole('radio', { name: /^Только обмен/ }).check();
       await page.getByLabel('Оценочная стоимость, ₽').fill('18000');
+      await page.getByLabel('Рассмотрю любые предложения', { exact: true }).uncheck();
+      await page.getByLabel('Пожелания к обмену', { exact: true }).fill('Фотоаппарат с объективом');
+      await page.getByLabel('Могу доплатить', { exact: true }).check();
+      await page.getByLabel('Моя доплата до, ₽', { exact: true }).fill('5000');
       await page.getByPlaceholder('Состояние, комплект, дефекты, история покупки, способ передачи…').fill('Телефон в хорошем состоянии, полный комплект. Рассмотрю обмен на фотоаппарат.');
       for (let step = 2; step <= 4; step++) await page.getByRole('button', { name: 'Далее', exact: true }).click();
       await expect(page.getByText('Только обмен', { exact: true })).toBeVisible();
@@ -487,6 +498,9 @@ async function scenario(browserType, width, theme) {
       assert.equal(creates[0].body.saleEnabled, false);
       assert.equal(creates[0].body.barterEnabled, true);
       assert.equal(creates[0].body.priceRub, 18000);
+      assert.equal(creates[0].body.exchangePreferences.wantedDescription, 'Фотоаппарат с объективом');
+      assert.equal(creates[0].body.exchangePreferences.maxCashRub, 5000);
+      assert.equal(creates[0].body.exchangePreferences.anyOffer, false);
       checks.push('five-step publication sends exchange-only once with optional valuation');
     }
     state.guest = true;

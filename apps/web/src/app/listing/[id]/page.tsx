@@ -1,3 +1,6 @@
+import { ExchangePreferencesSummary } from '@/components/exchange-preferences-summary';
+import type { ExchangePreferences } from '@/lib/exchange-preferences';
+import type { Category } from '@/lib/api';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
@@ -50,6 +53,7 @@ type Listing = ListingCard & {
   status: 'ACTIVE' | 'PENDING' | 'BLOCKED' | 'SOLD' | 'ARCHIVED';
   duplicateImageFlag?: boolean;
   createdAt: string;
+  exchangePreferences?: ExchangePreferences | null;
   attributes?: Record<string, unknown> | null;
   promotions?: Array<{ type: string; weight: number; endsAt: string }>;
   viewsCount?: number;
@@ -87,7 +91,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
     .join('; ');
-  const [listing, similar] = await Promise.all([
+  const [listing, similar, categories] = await Promise.all([
     apiGetJson<Listing>(`/listings/${id}`, {
       headers: cookieHeader ? { cookie: cookieHeader } : {},
     }).catch((error: unknown) => {
@@ -95,6 +99,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
       throw error;
     }),
     apiGetJson<ListingCard[]>(`/listings/${id}/similar?limit=10`).catch(() => [] as ListingCard[]),
+    apiGetJson<Category[]>('/categories').catch(() => [] as Category[]),
   ]);
 
   if (!listing) notFound();
@@ -167,6 +172,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <h2 id="listing-description" className="mb-3 text-xl font-semibold tracking-tight">Описание</h2>
               <div className="break-words whitespace-pre-wrap text-base leading-7">{listing.description?.trim() || 'Продавец пока не добавил описание.'}</div>
             </section>
+            {listing.barterEnabled && listing.exchangePreferences ? <ExchangePreferencesSummary value={listing.exchangePreferences} categories={categories} /> : null}
             <ListingAttributesDisplay attributes={listing.attributes} />
             <section aria-labelledby="listing-location" className="border-t border-border pt-6">
               <h2 id="listing-location" className="mb-3 text-xl font-semibold tracking-tight">Местоположение</h2>

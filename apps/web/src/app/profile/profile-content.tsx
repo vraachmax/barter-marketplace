@@ -1,4 +1,5 @@
 'use client';
+import { emptyExchangePreferences, type ExchangePreferences } from '@/lib/exchange-preferences';
 import { listingTradeMode, tradeModeFields, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
 
 import Link from 'next/link';
@@ -87,6 +88,7 @@ export function ProfileContent() {
     categoryId: string;
     priceRub: string;
     tradeMode: ListingTradeMode;
+    exchangePreferences: ExchangePreferences;
   }>({
     title: '',
     description: '',
@@ -94,6 +96,7 @@ export function ProfileContent() {
     categoryId: '',
     priceRub: '',
     tradeMode: 'sale',
+    exchangePreferences: emptyExchangePreferences(),
   });
   const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
 
@@ -162,6 +165,7 @@ export function ProfileContent() {
       categoryId: x.category.id,
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
       tradeMode: listingTradeMode(x),
+      exchangePreferences: x.exchangePreferences ?? emptyExchangePreferences(),
     });
   }
 
@@ -169,14 +173,15 @@ export function ProfileContent() {
     const category = categories.find((item) => item.id === editForm.categoryId);
     if (!category) return false;
     setModeError('');
-    const capability = await apiFetchJson<{ tradeModesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
-    if (!capability.ok || capability.data?.tradeModesVersion !== 1) {
+    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    if (!capability.ok || capability.data?.tradeModesVersion !== 1 || capability.data?.exchangePreferencesVersion !== 1) {
       setModeError(TRADE_MODES_UNAVAILABLE);
       return false;
     }
     const modes = tradeModeFields(canOfferBarter(category) ? editForm.tradeMode : 'sale');
     const payload: Record<string, unknown> = {
       ...modes,
+      ...(modes.barterEnabled ? { exchangePreferences: editForm.exchangePreferences } : {}),
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
@@ -973,3 +978,4 @@ export function ProfileContent() {
     </div>
   );
 }
+

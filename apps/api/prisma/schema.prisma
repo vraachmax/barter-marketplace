@@ -109,6 +109,7 @@ model Listing {
   /// Долгота WGS-84
   longitude   Float?
   /// Плоские характеристики по категории: состояние, бренд, пробег и т.д. (как «параметры» на Avito / Item specifics)
+  exchangePreferences Json?
   attributes  Json?
   status      ListingStatus @default(ACTIVE)
 

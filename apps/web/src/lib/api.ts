@@ -176,6 +176,7 @@ export type ReviewEligibility = {
 };
 
 export type MyListing = {
+  exchangePreferences?: import('./exchange-preferences').ExchangePreferences | null;
   saleEnabled?: boolean;
   barterEnabled?: boolean;
   id: string;
@@ -469,3 +470,5 @@ export async function apiUploadFile(
     return { ok: false, status: 0, message: e?.message ?? 'network_error' };
   }
 }
+
+

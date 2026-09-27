@@ -14,12 +14,13 @@ async function main() {
   assert.equal(url.hostname, '127.0.0.1');
   assert.equal(url.pathname, '/barter_message_ci');
   const db = new PrismaClient();
-  let app, owner, outsider, category;
+  let app, owner, outsider, category, wantedCategory;
   let indexed = false;
   try {
     owner = await db.user.create({ data: { name: 'Trade mode fixture' } });
     outsider = await db.user.create({ data: { name: 'Other fixture' } });
     category = await db.category.create({ data: { slug: 'hobby', title: 'Хобби' } });
+    wantedCategory = await db.category.create({ data: { slug: 'electronics', title: 'Электроника' } });
     const meili = {
       isEnabled: () => indexed, upsertListingById: async () => {},
       // Deliberately stale index includes every mode. SQL must recheck before paging/counting.
@@ -57,9 +58,15 @@ async function main() {
         title: ['Ваза голубая', 'Книга история', 'Шахматы деревянные'][i], description: descriptions[i],
         city: 'Краснодар', categoryId: category.id, priceRub: 1000 + i * 100,
         latitude: 45, longitude: 39, saleEnabled, barterEnabled,
+        ...(i === 1 ? { exchangePreferences: { anyOffer: false, wantedCategoryIds: [wantedCategory.id], wantedDescription: 'Фотоаппарат', canAddCash: true, acceptsCash: false, maxCashRub: 5000 } } : {}),
       }).expect(201);
       assert.equal(res.body.saleEnabled, saleEnabled);
       assert.equal(res.body.barterEnabled, barterEnabled);
+      if (i === 1) {
+        assert.deepEqual(res.body.exchangePreferences.wantedCategoryIds, [wantedCategory.id]);
+        assert.equal(res.body.exchangePreferences.maxCashRub, 5000);
+        assert.equal((await http().get('/listings/' + res.body.id).expect(200)).body.exchangePreferences.wantedDescription, 'Фотоаппарат');
+      } else assert.equal(res.body.exchangePreferences, null);
       listings.push(res.body);
     }
     assert.equal(await db.listing.count({ where: { ownerId: owner.id } }), 3);
@@ -117,6 +124,22 @@ async function main() {
     await patch(exchange.id, { saleEnabled: false }, outsider).expect(403);
     await assert.rejects(db.listing.update({ where: { id: exchange.id }, data: { saleEnabled: false, barterEnabled: false, attributes: { isBarter: false } } }));
     console.log('PASS invalid modes, conflicting alias, wrong owner and database invariant rejected');
+    const wishes = { anyOffer: false, wantedCategoryIds: [category.id], wantedDescription: 'Велосипед', canAddCash: true, acceptsCash: true, maxCashRub: 15000 };
+    assert.equal((await http().get('/listings/capabilities').expect(200)).body.exchangePreferencesVersion, 1);
+    await patch(exchange.id, { exchangePreferences: wishes }).expect(200);
+    assert.deepEqual((await http().get('/listings/' + exchange.id).expect(200)).body.exchangePreferences, wishes);
+    await patch(exchange.id, { city: 'Москва' }).expect(200);
+    const refreshed = (await http().get('/listings/my').set('x-fixture-user', owner.id).expect(200)).body;
+    assert.deepEqual(refreshed.find(x => x.id === exchange.id).exchangePreferences, wishes);
+    await patch(exchange.id, { exchangePreferences: { ...wishes, wantedCategoryIds: ['nonexistent'] } }).expect(400);
+    await patch(exchange.id, { exchangePreferences: { ...wishes, maxCashRub: -1 } }).expect(400);
+    await patch(exchange.id, { exchangePreferences: wishes }, outsider).expect(403);
+    await patch(exchange.id, { barterEnabled: false }).expect(200);
+    assert.deepEqual((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences, wishes);
+    await patch(exchange.id, { exchangePreferences: wishes }).expect(400);
+    await patch(exchange.id, { barterEnabled: true, exchangePreferences: null }).expect(200);
+    assert.equal((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences, null);
+    console.log('PASS exchange wishes persist, validate category/budget/owner, survive sale mode and clear explicitly');
   } finally {
     if (app) await app.close();
     if (owner) {
@@ -126,6 +149,7 @@ async function main() {
       await db.listing.deleteMany({ where: { id: { in: ids } } });
     }
     if (category) await db.category.delete({ where: { id: category.id } });
+    if (wantedCategory) await db.category.delete({ where: { id: wantedCategory.id } });
     await db.user.deleteMany({ where: { id: { in: [owner?.id, outsider?.id].filter(Boolean) } } });
     await db.$disconnect();
   }

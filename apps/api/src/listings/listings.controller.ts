@@ -38,7 +38,7 @@ export class ListingsController {
 
   @Get('capabilities')
   capabilities() {
-    return { tradeModesVersion: 1 };
+    return { tradeModesVersion: 1, exchangePreferencesVersion: 1 };
   }
 
   @Get('map')
