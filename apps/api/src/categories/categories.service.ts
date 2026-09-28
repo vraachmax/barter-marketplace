@@ -61,11 +61,11 @@ export class CategoriesService {
         attributeFields: {
           where: { isActive: true },
           orderBy: [{ sectionId: 'asc' }, { sortOrder: 'asc' }],
-          select: { key: true, label: true, sectionId: true, sectionTitle: true, fieldType: true },
+          select: { key: true, label: true, sectionId: true, sectionTitle: true, fieldType: true, parentKey: true },
         },
       },
     });
-    return category ? { version: category.catalogRevision, fields: category.attributeFields } : null;
+    return category ? { version: category.catalogRevision, optionsQueryVersion: 1, fields: category.attributeFields } : null;
   }
 
   async ensureSeed() {

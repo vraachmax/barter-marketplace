@@ -6,8 +6,19 @@ test('catalog field metadata controls the existing vehicle field without changin
   const schema = { version: 1, fields: [{ key: 'fuel', label: 'Тип топлива', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select' }] };
   const configured = withCatalogFieldDefinitions(sections('auto'), schema);
   assert.equal(configured.flatMap(section => section.fields).find(field => field.key === 'fuel').label, 'Тип топлива');
+  assert.deepEqual(configured.flatMap(section => section.fields).find(field => field.key === 'fuel').options, []);
   assert.equal(configured.flatMap(section => section.fields).find(field => field.key === 'auto_make').label, 'Марка');
   assert.equal(sections('auto').flatMap(section => section.fields).find(field => field.key === 'fuel').label, 'Топливо');
+});
+
+test('schema parent clears a selected child even before its options have loaded', () => {
+  const schema = { version: 2, fields: [
+    { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select' },
+    { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_make' },
+  ] };
+  const fields = withCatalogFieldDefinitions(sections('auto'), schema).flatMap(section => section.fields);
+  assert.equal(fields.find(field => field.key === 'auto_model').dependsOn, 'auto_make');
+  assert.deepEqual(changeCatalogAttribute({ auto_make: 'bmw', auto_model: '3-series' }, 'auto_make', 'lada', [], schema), { auto_make: 'lada' });
 });
 
 test('server catalog choices drive vehicle select without changing other fields', () => {
