@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
 import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
@@ -18,9 +18,26 @@ export class CategoriesService {
     }));
   }
 
-  async attributeOptions(categoryId: string) {
+  async attributeOptions(categoryId: string, scope: {
+    fieldKey?: string; parentFieldKey?: string; parentValue?: string;
+  } = {}) {
+    const { fieldKey, parentFieldKey, parentValue } = scope;
+    if ((parentFieldKey !== undefined || parentValue !== undefined) &&
+        (!fieldKey || !parentFieldKey || !parentValue)) {
+      throw new BadRequestException('fieldKey, parentFieldKey and parentValue are required together');
+    }
+    if (fieldKey !== undefined && !fieldKey.trim()) {
+      throw new BadRequestException('fieldKey must not be empty');
+    }
     const options = await this.prisma.categoryAttributeOption.findMany({
-      where: { categoryId },
+      where: {
+        categoryId,
+        ...(fieldKey ? { fieldKey,
+          ...(parentFieldKey && parentValue
+            ? { parentOption: { is: { categoryId, fieldKey: parentFieldKey, value: parentValue } } }
+            : { parentOptionId: null }),
+        } : {}),
+      },
       orderBy: [{ fieldKey: 'asc' }, { sortOrder: 'asc' }],
       select: {
         fieldKey: true, value: true, label: true,

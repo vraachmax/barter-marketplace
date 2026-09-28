@@ -170,6 +170,13 @@ async function main() {
       fieldKey: 'auto_model', value: '3-series', label: '3 Series', parentFieldKey: 'auto_make', parentValue: 'bmw',
     });
     assert.deepEqual(choices.filter(x => x.fieldKey === 'fuel').map(x => x.value), ['petrol', 'electric']);
+    const rootFuel = (await http().get(`/categories/${autoCategory.id}/attribute-options?fieldKey=fuel`).expect(200)).body;
+    assert.deepEqual(rootFuel.map(x => x.value), ['petrol', 'electric']);
+    const bmwModels = (await http().get(`/categories/${autoCategory.id}/attribute-options?fieldKey=auto_model&parentFieldKey=auto_make&parentValue=bmw`).expect(200)).body;
+    assert.deepEqual(bmwModels.map(x => x.value), ['3-series']);
+    const ladaModels = (await http().get(`/categories/${autoCategory.id}/attribute-options?fieldKey=auto_model&parentFieldKey=auto_make&parentValue=lada`).expect(200)).body;
+    assert.deepEqual(ladaModels, []);
+    await http().get(`/categories/${autoCategory.id}/attribute-options?parentValue=bmw`).expect(400);
     const car = await http().post('/listings').set('x-fixture-user', owner.id).send({
       title: 'Автомобиль городской электрический', description: 'Электромобиль с проверенной историей обслуживания.',
       city: 'Краснодар', categoryId: autoCategory.id, priceRub: 800000,
