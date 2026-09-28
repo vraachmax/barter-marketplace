@@ -68,6 +68,7 @@ const api = createServer((req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1:3001');
   let data;
   if (req.method === 'GET' && url.pathname === '/categories') data = [category];
+  else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
@@ -145,6 +146,7 @@ async function installFixture(context, state, theme) {
     }
     if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1 });
     if (path === '/categories') return json([category]);
+    if (path === '/categories/fixture-category/attribute-options') return json([]);
     if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
     if (path === '/wallet/packages') return json(packages);
