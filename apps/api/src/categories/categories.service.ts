@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
 import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
+import { catalogOwnerId, categoryRoot } from './category-hierarchy';
 
 @Injectable()
 export class CategoriesService {
@@ -12,9 +13,11 @@ export class CategoriesService {
       orderBy: [{ title: 'asc' }],
       select: { id: true, slug: true, title: true, parentId: true },
     });
+    const byId = new Map(categories.map((category) => [category.id, category]));
     return categories.map((category) => ({
       ...category,
-      barterAllowed: categoryAllowsBarter(category.slug),
+      rootSlug: categoryRoot(category, byId)?.slug ?? null,
+      barterAllowed: categoryAllowsBarter(categoryRoot(category, byId)?.slug ?? ''),
     }));
   }
 
@@ -29,12 +32,13 @@ export class CategoriesService {
     if (fieldKey !== undefined && !fieldKey.trim()) {
       throw new BadRequestException('fieldKey must not be empty');
     }
+    const ownerId = await catalogOwnerId(this.prisma, categoryId);
     const options = await this.prisma.categoryAttributeOption.findMany({
       where: {
-        categoryId,
+        categoryId: ownerId,
         ...(fieldKey ? { fieldKey,
           ...(parentFieldKey && parentValue
-            ? { parentOption: { is: { categoryId, fieldKey: parentFieldKey, value: parentValue } } }
+            ? { parentOption: { is: { categoryId: ownerId, fieldKey: parentFieldKey, value: parentValue } } }
             : { parentOptionId: null }),
         } : {}),
       },
@@ -44,7 +48,7 @@ export class CategoriesService {
         parentOption: { select: { categoryId: true, fieldKey: true, value: true } },
       },
     });
-    return options.filter(({ parentOption }) => !parentOption || parentOption.categoryId === categoryId)
+    return options.filter(({ parentOption }) => !parentOption || parentOption.categoryId === ownerId)
       .map(({ parentOption, ...option }) => ({
       ...option,
       ...(parentOption
@@ -54,8 +58,9 @@ export class CategoriesService {
   }
 
   async attributeSchema(categoryId: string) {
+    const ownerId = await catalogOwnerId(this.prisma, categoryId);
     const category = await this.prisma.category.findUnique({
-      where: { id: categoryId },
+      where: { id: ownerId },
       select: {
         catalogRevision: true,
         attributeFields: {
@@ -86,6 +91,11 @@ export class CategoriesService {
 
     const auto = await this.prisma.category.findUnique({ where: { slug: 'auto' }, select: { id: true } });
     if (auto) {
+      await this.prisma.category.upsert({
+        where: { slug: 'passenger-cars' },
+        create: { slug: 'passenger-cars', title: 'Легковые автомобили', parentId: auto.id },
+        update: {},
+      });
       await this.prisma.categoryAttributeField.createMany({
         data: AUTO_ATTRIBUTE_FIELDS.map(({ key, label }, sortOrder) => ({
           categoryId: auto.id, key, label, sectionId: 'auto_main',

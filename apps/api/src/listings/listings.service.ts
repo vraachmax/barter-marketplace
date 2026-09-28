@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { categoryAllowsBarter } from '../categories/barter-policy';
+import { catalogOwnerId, categoryDescendantIds, categoryLineage, categoryRoot } from '../categories/category-hierarchy';
 import { AUTO_ATTRIBUTE_OPTIONS, invalidCatalogOption } from '../categories/attribute-options';
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
@@ -74,13 +75,14 @@ export class ListingsService {
     const selected = attributes && managedKeys.filter((key) =>
       attributes[key] !== undefined && attributes[key] !== null && attributes[key] !== '');
     if (!attributes || !selected?.length) return;
+    const ownerId = await catalogOwnerId(this.prisma, categoryId);
     const rows = await this.prisma.categoryAttributeOption.findMany({
-      where: { categoryId }, select: {
+      where: { categoryId: ownerId }, select: {
         fieldKey: true, value: true,
         parentOption: { select: { categoryId: true, fieldKey: true, value: true } },
       },
     });
-    const options = rows.filter(({ parentOption }) => !parentOption || parentOption.categoryId === categoryId)
+    const options = rows.filter(({ parentOption }) => !parentOption || parentOption.categoryId === ownerId)
       .map(({ parentOption, ...row }) => ({
       ...row,
       ...(parentOption
@@ -498,8 +500,9 @@ export class ListingsService {
     const preferences = parseExchangePreferences(value);
     if (preferences && !barterEnabled) throw new BadRequestException('exchange_preferences_require_barter');
     if (preferences?.wantedCategoryIds.length) {
-      const categories = await this.prisma.category.findMany({ where: { id: { in: preferences.wantedCategoryIds } }, select: { id: true, slug: true } });
-      if (categories.length !== preferences.wantedCategoryIds.length || categories.some(c => !categoryAllowsBarter(c.slug))) {
+      const all = await this.prisma.category.findMany({ select: { id: true, slug: true, parentId: true } });
+      const byId = new Map(all.map((c) => [c.id, c]));
+      if (preferences.wantedCategoryIds.some(id => !byId.has(id) || !categoryAllowsBarter(categoryRoot(byId.get(id)!, byId)?.slug ?? ''))) {
         throw new BadRequestException('invalid_exchange_categories');
       }
     }
@@ -508,11 +511,12 @@ export class ListingsService {
 
   async create(userId: string, dto: CreateListingDto) {
     const category = await this.prisma.category.findUnique({
-      where: { id: dto.categoryId }, select: { slug: true },
+      where: { id: dto.categoryId }, select: { slug: true, parentId: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
     await this.validateCategoryOptions(dto.categoryId, dto.attributes);
-    const modes = resolveListingModes(dto, undefined, categoryAllowsBarter(category.slug));
+    const rootSlug = category.parentId ? (await categoryLineage(this.prisma, dto.categoryId)).at(-1)!.slug : category.slug;
+    const modes = resolveListingModes(dto, undefined, categoryAllowsBarter(rootSlug));
     const exchangePreferences = dto.exchangePreferences === undefined ? null : await this.validateExchangePreferences(dto.exchangePreferences, modes.barterEnabled);
     await this.assertListingDailyLimit(userId);
     await this.assertActiveListingsLimit(userId);
@@ -739,7 +743,10 @@ export class ListingsService {
         ? { barterEnabled: true }
         : { saleEnabled: true }),
     };
-    if (params.categoryId) where.categoryId = params.categoryId;
+    const categoryIds = params.categoryId
+      ? categoryDescendantIds(params.categoryId, await this.prisma.category.findMany({ select: { id: true, slug: true, parentId: true } }))
+      : [];
+    if (params.categoryId) where.categoryId = categoryIds.length > 1 ? { in: categoryIds } : params.categoryId;
     if (params.city) where.city = { equals: params.city, mode: 'insensitive' };
     if (typeof params.priceMin === 'number' || typeof params.priceMax === 'number') {
       const min = typeof params.priceMin === 'number' ? Math.max(0, Math.floor(params.priceMin)) : undefined;
@@ -789,7 +796,7 @@ export class ListingsService {
     // Keep explicit sorts on the authoritative database path: index relevance
     // and post-page promotion merging must not change their order or page size.
     // Barter also requires eligibility filtering before counting/pagination.
-    if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled()) {
+    if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled() && categoryIds.length <= 1) {
       // Recheck hard filters against current database rows, but leave text
       // matching to Meili so typo matches are not lost to SQL substring rules.
       const eligibilityWhere = { ...where };
@@ -948,7 +955,7 @@ export class ListingsService {
       status: 'ACTIVE',
       latitude: { not: null, gte: bounds.swLat, lte: bounds.neLat },
       longitude: { not: null, gte: bounds.swLon, lte: bounds.neLon },
-      ...(categoryId ? { categoryId } : {}),
+      ...(categoryId ? { categoryId: { in: categoryDescendantIds(categoryId, await this.prisma.category.findMany({ select: { id: true, slug: true, parentId: true } })) } } : {}),
     };
     const rows = await this.prisma.listing.findMany({
       where,
@@ -1316,13 +1323,14 @@ export class ListingsService {
     }
 
     const category = await this.prisma.category.findUnique({
-      where: { id: dto.categoryId ?? current.categoryId }, select: { slug: true },
+      where: { id: dto.categoryId ?? current.categoryId }, select: { slug: true, parentId: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
     await this.validateCategoryOptions(dto.categoryId ?? current.categoryId, dto.attributes);
     const currentAttributes = current.attributes && typeof current.attributes === 'object' && !Array.isArray(current.attributes)
       ? current.attributes : {};
-    const modes = resolveListingModes(dto, { ...current, attributes: currentAttributes }, categoryAllowsBarter(category.slug));
+    const rootSlug = category.parentId ? (await categoryLineage(this.prisma, dto.categoryId ?? current.categoryId)).at(-1)!.slug : category.slug;
+    const modes = resolveListingModes(dto, { ...current, attributes: currentAttributes }, categoryAllowsBarter(rootSlug));
 
     const nextTitle = dto.title ?? current.title;
     const nextDesc = dto.description ?? current.description;

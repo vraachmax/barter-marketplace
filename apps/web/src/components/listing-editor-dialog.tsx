@@ -56,7 +56,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
         <label className="block text-sm font-medium">Город<input required minLength={2} maxLength={80} value={values.city} onChange={(e) => change('city', e.target.value)} className={inputClass} /></label>
         <label className="block text-sm font-medium">Категория<select required value={values.categoryId} onChange={(e) => onChange({ ...values, categoryId: e.target.value, tradeMode: canOfferBarter(categories.find((category) => category.id === e.target.value)) ? values.tradeMode : 'sale' })} className={inputClass}>
           {!categories.some((category) => category.id === values.categoryId) ? <option value={values.categoryId}>Текущая категория</option> : null}
-          {categories.map((category) => <option key={category.id} value={category.id}>{category.title}</option>)}
+          {categories.map((category) => <option key={category.id} value={category.id}>{category.parentId ? `${categories.find((parent) => parent.id === category.parentId)?.title ?? 'Категория'} · ` : ''}{category.title}</option>)}
         </select></label>
         <label className="block text-sm font-medium">{values.tradeMode === 'barter' ? 'Оценочная стоимость, ₽' : 'Цена, ₽'}<input type="number" min="0" max="2147483647" step="1" value={values.priceRub} onChange={(e) => change('priceRub', e.target.value)} className={inputClass} /></label>
         <ListingTradeModeField value={values.tradeMode} onChange={(mode) => change('tradeMode', mode)} barterAllowed={canOfferBarter(categories.find((category) => category.id === values.categoryId))} />
@@ -70,4 +70,3 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
     </form>
   </dialog>;
 }
-
