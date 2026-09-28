@@ -362,7 +362,7 @@ export default function NewListingPage() {
   const attrSections = useMemo(
     () => withCatalogOptions(
       withCatalogFieldDefinitions(
-        getListingAttrSectionsForCategorySlug(selectedCategory?.slug ?? ''),
+        getListingAttrSectionsForCategorySlug(selectedCategory?.rootSlug ?? selectedCategory?.slug ?? ''),
         catalogSchema?.categoryId === categoryId ? catalogSchema.value : null,
       ),
       catalogChoices?.categoryId === categoryId ? catalogChoices.values : [],
@@ -934,7 +934,7 @@ function Step1WhatToSell(props: {
                         : undefined
                     }
                   >
-                    <span>{c.title}</span>
+                    <span>{c.parentId ? `${allCats.find((parent) => parent.id === c.parentId)?.title ?? 'Категория'} · ` : ''}{c.title}</span>
                     {isPicked ? (
                       <Check
                         size={16}

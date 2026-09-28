@@ -40,6 +40,7 @@ describe('ranked database pages', () => {
         {
           provide: PrismaService,
           useValue: {
+            category: { findMany: jest.fn().mockResolvedValue([]) },
             listing: { findMany, count },
             sellerReview: { groupBy: jest.fn().mockResolvedValue([]) },
           },

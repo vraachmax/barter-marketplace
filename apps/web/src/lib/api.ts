@@ -35,6 +35,7 @@ export function resolveAssetUrl(
 
 export type Category = {
   barterAllowed?: boolean;
+  rootSlug?: string | null;
   id: string;
   slug: string;
   title: string;
@@ -470,5 +471,4 @@ export async function apiUploadFile(
     return { ok: false, status: 0, message: e?.message ?? 'network_error' };
   }
 }
-
 

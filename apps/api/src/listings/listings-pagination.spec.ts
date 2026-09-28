@@ -32,7 +32,7 @@ describe('explicit listing sort and pagination', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         ListingsService,
-        { provide: PrismaService, useValue: { listing: { findMany, count } } },
+        { provide: PrismaService, useValue: { category: { findMany: jest.fn().mockResolvedValue([]) }, listing: { findMany, count } } },
         {
           provide: MeilisearchService,
           useValue: { isEnabled: () => true, searchListings },

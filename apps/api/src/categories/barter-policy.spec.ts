@@ -78,8 +78,8 @@ describe('category barter policy', () => {
   });
   it('exposes authoritative availability in categories', async () => {
     expect(await categories.list()).toEqual([
-      { id: '1', slug: 'job', barterAllowed: false },
-      { id: '2', slug: 'services', barterAllowed: true },
+      { id: '1', slug: 'job', rootSlug: 'job', barterAllowed: false },
+      { id: '2', slug: 'services', rootSlug: 'services', barterAllowed: true },
     ]);
   });
   it('rejects a crafted create request before writing', async () => {

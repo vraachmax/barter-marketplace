@@ -16,7 +16,7 @@ async function main() {
   assert.equal(url.hostname, '127.0.0.1');
   assert.equal(url.pathname, '/barter_message_ci');
   const db = new PrismaClient();
-  let app, owner, outsider, category, wantedCategory, autoCategory;
+  let app, owner, outsider, category, wantedCategory, autoCategory, autoChild, autoGrandchild;
   let indexed = false;
   try {
     owner = await db.user.create({ data: { name: 'Trade mode fixture' } });
@@ -196,6 +196,31 @@ async function main() {
     assert.equal((await db.listing.findUniqueOrThrow({ where: { id: car.body.id } })).attributes.fuel, 'petrol');
     await patch(car.body.id, { attributes: { fuel: 'petrol', auto_make: 'bmw', auto_model: '3-series' } }).expect(200);
     await patch(car.body.id, { attributes: { fuel: 'petrol', auto_make: 'lada', auto_model: '3-series' } }).expect(400);
+    autoChild = await db.category.create({ data: { slug: 'auto-cars-fixture', title: 'Легковые', parentId: autoCategory.id } });
+    autoGrandchild = await db.category.create({ data: { slug: 'auto-sedans-fixture', title: 'Седаны', parentId: autoChild.id } });
+    const listedCategories = (await http().get('/categories').expect(200)).body;
+    assert.equal(listedCategories.find(c => c.id === autoGrandchild.id).rootSlug, 'auto');
+    assert.equal(listedCategories.find(c => c.id === autoGrandchild.id).barterAllowed, true);
+    assert.deepEqual((await http().get(`/categories/${autoGrandchild.id}/attribute-schema`).expect(200)).body.fields, schema.fields);
+    assert.deepEqual((await http().get(`/categories/${autoGrandchild.id}/attribute-options?fieldKey=fuel`).expect(200)).body, rootFuel);
+    assert.deepEqual((await http().get(`/categories/${autoGrandchild.id}/attribute-options?fieldKey=auto_model&parentFieldKey=auto_make&parentValue=bmw`).expect(200)).body, bmwModels);
+    const sedan = await http().post('/listings').set('x-fixture-user', owner.id).send({
+      title: 'Городской седан для обмена', description: 'Седан в хорошем состоянии с проверенной историей.',
+      city: 'Краснодар', categoryId: autoGrandchild.id, saleEnabled: true, barterEnabled: true,
+      attributes: { fuel: 'petrol', auto_make: 'bmw', auto_model: '3-series' },
+    }).expect(201);
+    await patch(sedan.body.id, { attributes: { fuel: 'coal' } }).expect(400);
+    for (const mode of ['market', 'barter']) {
+      for (const sort of ['relevant', 'new', 'cheap', 'expensive']) {
+        const results = (await http().get('/listings').query({ categoryId: autoCategory.id, mode, sort, limit: 1, page: 1 }).expect(200)).body;
+        assert.equal(results.total, mode === 'market' ? 2 : 1);
+        if (mode === 'barter') assert.equal(results.items[0].id, sedan.body.id);
+      }
+    }
+    indexed = true;
+    const parentText = (await http().get('/listings').query({ categoryId: autoCategory.id, mode: 'market', q: 'седан', sort: 'relevant' }).expect(200)).body;
+    assert(parentText.items.some(x => x.id === sedan.body.id));
+    indexed = false;
     console.log('PASS catalog choices endpoint, stored value and rejected unknown choice');
   } finally {
     if (app) await app.close();
@@ -207,6 +232,8 @@ async function main() {
     }
     if (category) await db.category.delete({ where: { id: category.id } });
     if (wantedCategory) await db.category.delete({ where: { id: wantedCategory.id } });
+    if (autoGrandchild) await db.category.delete({ where: { id: autoGrandchild.id } });
+    if (autoChild) await db.category.delete({ where: { id: autoChild.id } });
     if (autoCategory) await db.category.delete({ where: { id: autoCategory.id } });
     await db.user.deleteMany({ where: { id: { in: [owner?.id, outsider?.id].filter(Boolean) } } });
     await db.$disconnect();
