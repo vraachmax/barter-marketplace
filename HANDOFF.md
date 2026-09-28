@@ -1,18 +1,23 @@
 # Barter Clone — Handoff Context
 
-## 2026-09-28: TXT-03, определения полей (отдельная ветка)
+## 2026-09-28: TXT-03, определения полей, PR #37
 
-Ветка `feat/catalog-field-definitions` от master после PR #36. Добавлены
+PR #37 слит в master коммитом `2d7bafda40dc8e358d43364e3b64c9cdb888a799`.
+Добавлены
 `CategoryAttributeField`, `Category.catalogRevision`, аддитивная миграция,
 идемпотентный seed метаданных четырёх контролируемых полей авто и
 `GET /categories/:id/attribute-schema`. Форма читает подписи из этой схемы,
 сохраняя совместимость со старым API; значения по-прежнему поступают из
 `attribute-options`. PostgreSQL HTTP acceptance дополнен проверкой схемы.
-Локально: Prisma validate/generate, API build и 227 unit-тестов, web build и
-74 unit-теста. Миграция с PostgreSQL, CI, production и браузер с реальным
-аккаунтом для этой ветки пока не проверены. Следующий шаг: отправить ветку в PR,
-прогнать PostgreSQL/браузерный CI, затем продолжить подкатегории и источник
-марок/моделей. Аналитика TXT-09/10 после текущего каталога.
+Prisma validate/generate, API build и 227 unit-тестов, web build и
+74 unit-теста локально прошли. В CI успешно выполнены PostgreSQL migration
+rehearsal, HTTP acceptance, browser account/listings/messages и dependency
+audit. Vercel status success для merge-коммита. Render deploy
+`dep-dasvhgrncjis73euffp0` live: миграция `20260928030000` применена,
+Nest запущен; в коротком окне после запуска error-логов нет. Реальный
+авторизованный сценарий и iPhone не проверены. Следующий шаг:
+подкатегории и проверенный источник марок/моделей, затем единые фильтры/поиск.
+Аналитика TXT-09/10 после текущего каталога.
 
 ## 2026-09-28: TXT-03, PR #36 опубликован; продолжаем определения полей
 
