@@ -16,6 +16,14 @@ export const AUTO_ATTRIBUTE_OPTIONS = {
   drive: [['fwd', 'Передний'], ['rwd', 'Задний'], ['awd', 'Полный']],
 } as const;
 
+/** Published v1 field keys and values are stable; new catalog releases add keys. */
+export const AUTO_ATTRIBUTE_FIELDS = [
+  { key: 'fuel', label: 'Топливо' },
+  { key: 'transmission', label: 'Коробка передач' },
+  { key: 'body_type', label: 'Кузов' },
+  { key: 'drive', label: 'Привод' },
+] as const;
+
 export function invalidCatalogOption(
   attributes: Record<string, unknown>,
   options: ReadonlyArray<{ fieldKey: string; value: string; parentFieldKey?: string; parentValue?: string }>,

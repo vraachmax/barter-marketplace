@@ -79,6 +79,7 @@ model Category {
 
   slug  String @unique
   title String
+  catalogRevision Int @default(1)
 
   parentId String?
   parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
@@ -86,6 +87,24 @@ model Category {
 
   listings Listing[]
   attributeOptions CategoryAttributeOption[]
+  attributeFields CategoryAttributeField[]
+}
+
+/// Field metadata is owned by the category catalog; published values remain in Listing.attributes.
+model CategoryAttributeField {
+  id String @id @default(cuid())
+  categoryId String
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  key String
+  label String
+  sectionId String
+  sectionTitle String
+  fieldType String @default("select")
+  sortOrder Int @default(0)
+  isActive Boolean @default(true)
+
+  @@unique([categoryId, key])
+  @@index([categoryId, sectionId, sortOrder])
 }
 
 /// Allowed values for a category field. Stable value is stored in Listing.attributes.

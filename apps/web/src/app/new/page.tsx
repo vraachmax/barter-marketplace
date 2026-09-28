@@ -59,9 +59,11 @@ import {
 import ListingCategoryAttributesForm from '@/components/listing-category-attributes-form';
 import {
   getListingAttrSectionsForCategorySlug,
+  withCatalogFieldDefinitions,
   withCatalogOptions,
   changeCatalogAttribute,
   type CatalogAttributeOption,
+  type CatalogAttributeSchema,
   serializeListingAttributes,
   validateListingAttributes,
 } from '@/lib/listing-attributes-config';
@@ -244,6 +246,7 @@ export default function NewListingPage() {
   const [categoryId, setCategoryId] = useState<string>('');
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
   const [catalogChoices, setCatalogChoices] = useState<{ categoryId: string; values: CatalogAttributeOption[] } | null>(null);
+  const [catalogSchema, setCatalogSchema] = useState<{ categoryId: string; value: CatalogAttributeSchema } | null>(null);
 
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
@@ -306,16 +309,23 @@ export default function NewListingPage() {
       .then((result) => {
         if (alive && result.ok) setCatalogChoices({ categoryId, values: result.data });
       });
+    void apiFetchJson<CatalogAttributeSchema>(`/categories/${encodeURIComponent(categoryId)}/attribute-schema`)
+      .then((result) => {
+        if (alive && result.ok && result.data?.fields) setCatalogSchema({ categoryId, value: result.data });
+      });
     return () => { alive = false; };
   }, [categoryId]);
 
   const attrSections = useMemo(
     () => withCatalogOptions(
-      getListingAttrSectionsForCategorySlug(selectedCategory?.slug ?? ''),
+      withCatalogFieldDefinitions(
+        getListingAttrSectionsForCategorySlug(selectedCategory?.slug ?? ''),
+        catalogSchema?.categoryId === categoryId ? catalogSchema.value : null,
+      ),
       catalogChoices?.categoryId === categoryId ? catalogChoices.values : [],
       attrValues,
     ),
-    [selectedCategory, categoryId, catalogChoices, attrValues],
+    [selectedCategory, categoryId, catalogChoices, catalogSchema, attrValues],
   );
 
   const serializedAttributes = useMemo(
