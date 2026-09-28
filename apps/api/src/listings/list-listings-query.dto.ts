@@ -126,7 +126,7 @@ export function normalizeListingsQuery(query: ListListingsQueryDto) {
     if (!query.categoryId || !raw || typeof raw !== 'object' || Array.isArray(raw) ||
         Object.keys(raw).length < 1 || Object.keys(raw).length > 8 ||
         Object.entries(raw).some(([key, value]) => !/^[a-z][a-z0-9_]{0,63}$/.test(key) ||
-          typeof value !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,127}$/.test(value))) {
+          typeof value !== 'string' || !/^[a-z0-9][a-z0-9_/-]{0,127}$/.test(value))) {
       throw new BadRequestException('invalid_catalog_filters');
     }
     attrs = raw as Record<string, string>;

@@ -76,12 +76,18 @@ export class ListingsService {
       attributes[key] !== undefined && attributes[key] !== null && attributes[key] !== '');
     if (!attributes || !selected?.length) return;
     const ownerId = await catalogOwnerId(this.prisma, categoryId);
-    const rows = await this.prisma.categoryAttributeOption.findMany({
-      where: { categoryId: ownerId }, select: {
+    const [rows, fields] = await Promise.all([
+      this.prisma.categoryAttributeOption.findMany({
+      where: { categoryId: ownerId, fieldKey: { in: selected } }, select: {
         fieldKey: true, value: true,
         parentOption: { select: { categoryId: true, fieldKey: true, value: true } },
       },
-    });
+      }),
+      this.prisma.categoryAttributeField.findMany({
+        where: { categoryId: ownerId, key: { in: selected }, isActive: true, fieldType: 'select' },
+        select: { key: true },
+      }),
+    ]);
     const options = rows.filter(({ parentOption }) => !parentOption || parentOption.categoryId === ownerId)
       .map(({ parentOption, ...row }) => ({
       ...row,
@@ -90,7 +96,8 @@ export class ListingsService {
         : {}),
       }));
     for (const key of selected) {
-      if (key in AUTO_ATTRIBUTE_OPTIONS && !options.some((option) => option.fieldKey === key)) {
+      if ((key in AUTO_ATTRIBUTE_OPTIONS || fields.some(field => field.key === key)) &&
+          !options.some((option) => option.fieldKey === key)) {
         throw new BadRequestException(`invalid_catalog_option:${key}`);
       }
     }
@@ -753,7 +760,10 @@ export class ListingsService {
       const ownerId = await catalogOwnerId(this.prisma, params.categoryId);
       const [fields, options] = await Promise.all([
         this.prisma.categoryAttributeField.findMany({ where: { categoryId: ownerId, isActive: true, fieldType: 'select' }, select: { key: true } }),
-        this.prisma.categoryAttributeOption.findMany({ where: { categoryId: ownerId }, select: {
+        this.prisma.categoryAttributeOption.findMany({ where: {
+          categoryId: ownerId,
+          OR: Object.entries(params.attrs).map(([fieldKey, value]) => ({ fieldKey, value })),
+        }, select: {
           fieldKey: true, value: true, parentOption: { select: { fieldKey: true, value: true, categoryId: true } },
         } }),
       ]);

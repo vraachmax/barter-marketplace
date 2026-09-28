@@ -10,6 +10,7 @@ on:
       - 'apps/api/src/users/**'
       - 'apps/api/src/favorites/**'
       - 'apps/api/test/listing-trade-modes.cjs'
+      - 'apps/api/test/vehicle-catalog.cjs'
       - 'apps/api/prisma/**'
       - 'apps/api/test/messages-idempotency.cjs'
       - 'apps/api/test/messages-socket.cjs'
@@ -70,3 +71,5 @@ jobs:
         env:
           MEDIA_STORAGE_DRIVER: local
 
+      - name: VehiclesDB PostgreSQL import acceptance
+        run: node apps/api/test/vehicle-catalog.cjs

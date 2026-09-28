@@ -1090,6 +1090,8 @@ function Step2Description(props: {
             values={attrValues}
             onFieldChange={onAttrChange}
           />
+          {attrSections.some(section => section.fields.some(field => field.key === 'auto_make' && field.type === 'select')) ?
+            <p className="mt-3 text-xs text-muted-foreground">Справочник марок и моделей неполный. <Link href="/vehicle-data" className="underline">Источник данных</Link></p> : null}
         </div>
       ) : null}
     </section>

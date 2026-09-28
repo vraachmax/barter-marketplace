@@ -34,6 +34,7 @@ export function SiteFooter() {
               <li><Link href="/new" className="text-[#6b7280] hover:text-[#007AFF]">Разместить объявление</Link></li>
               <li><Link href="/profile" className="text-[#6b7280] hover:text-[#007AFF]">Личный кабинет</Link></li>
               <li><Link href="/profile/settings" className="text-[#6b7280] hover:text-[#007AFF]">Настройки</Link></li>
+              <li><Link href="/vehicle-data" className="text-[#6b7280] hover:text-[#007AFF]">Данные автомобилей</Link></li>
             </ul>
           </div>
 

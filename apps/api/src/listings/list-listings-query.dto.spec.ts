@@ -31,6 +31,8 @@ describe('listing search contract', () => {
   });
   it('accepts bounded catalog filters only with a category', async () => {
     await expect(parse({ categoryId: 'auto', attrs: '{"fuel":"petrol"}' })).resolves.toMatchObject({ attrs: { fuel: 'petrol' } });
+    await expect(parse({ categoryId: 'auto', attrs: '{"auto_make":"lada","auto_model":"lada/vesta"}' }))
+      .resolves.toMatchObject({ attrs: { auto_make: 'lada', auto_model: 'lada/vesta' } });
     for (const input of [
       { attrs: '{"fuel":"petrol"}' },
       { categoryId: 'auto', attrs: '{' },
