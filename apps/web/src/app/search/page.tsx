@@ -694,6 +694,7 @@ function FiltersSheet(props: {
   const [draftCategory, setDraftCategory] = useState(props.categoryId);
   const [draftAttrs, setDraftAttrs] = useState(props.attrs);
   const [catalog, setCatalog] = useState<{ categoryId: string; fields: CatalogAttributeSchema['fields']; options: CatalogAttributeOption[] } | null>(null);
+  const [dependentOptions, setDependentOptions] = useState<{ key: string; values: CatalogAttributeOption[] } | null>(null);
   const [draftSort, setDraftSort] = useState<SortMode>(props.sort);
   const [draftPriceMin, setDraftPriceMin] = useState(props.priceMin);
   const [draftPriceMax, setDraftPriceMax] = useState(props.priceMax);
@@ -709,8 +710,8 @@ function FiltersSheet(props: {
         const base = `/categories/${encodeURIComponent(draftCategory)}`;
         const schema = await apiGetJson<CatalogAttributeSchema>(`${base}/attribute-schema`);
         if (schema.optionsQueryVersion !== 1) return;
-        const fields = schema.fields.filter(field => field.fieldType === 'select' && !field.parentKey);
-        const options = (await Promise.all(fields.map(field =>
+        const fields = schema.fields.filter(field => field.fieldType === 'select');
+        const options = (await Promise.all(fields.filter(field => !field.parentKey).map(field =>
           apiGetJson<CatalogAttributeOption[]>(`${base}/attribute-options?fieldKey=${encodeURIComponent(field.key)}`)
         ))).flat();
         if (alive) setCatalog({ categoryId: draftCategory, fields, options });
@@ -719,6 +720,18 @@ function FiltersSheet(props: {
     return () => { alive = false; };
   }, [draftCategory]);
   const activeCatalog = catalog?.categoryId === draftCategory ? catalog : null;
+  const selectedMake = draftAttrs.auto_make;
+  const dependentKey = `${draftCategory}:${selectedMake ?? ''}`;
+  useEffect(() => {
+    if (!activeCatalog?.fields.some(field => field.key === 'auto_model' && field.parentKey === 'auto_make') || !selectedMake) return;
+    let alive = true;
+    const base = `/categories/${encodeURIComponent(draftCategory)}`;
+    const query = new URLSearchParams({ fieldKey: 'auto_model', parentFieldKey: 'auto_make', parentValue: selectedMake });
+    void apiGetJson<CatalogAttributeOption[]>(`${base}/attribute-options?${query}`)
+      .then(options => { if (alive) setDependentOptions({ key: dependentKey, values: options }); })
+      .catch(() => { if (alive) setDependentOptions({ key: dependentKey, values: [] }); });
+    return () => { alive = false; };
+  }, [activeCatalog, draftCategory, selectedMake, dependentKey]);
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId}
@@ -795,15 +808,20 @@ function FiltersSheet(props: {
 
           {activeCatalog && activeCatalog.fields.length > 0 ? <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Характеристики</p>
-            {activeCatalog.fields.map(field => <label key={field.key} className="block text-sm font-medium text-foreground">
+            {activeCatalog.fields.filter(field => !field.parentKey || draftAttrs[field.parentKey]).map(field => <label key={field.key} className="block text-sm font-medium text-foreground">
               {field.label}
-              <select value={draftAttrs[field.key] ?? ''} onChange={event => setDraftAttrs(current => ({ ...current, [field.key]: event.target.value }))}
+              <select value={draftAttrs[field.key] ?? ''} onChange={event => setDraftAttrs(current => {
+                const next = { ...current, [field.key]: event.target.value };
+                for (const child of activeCatalog.fields.filter(candidate => candidate.parentKey === field.key)) delete next[child.key];
+                return next;
+              })}
                 className="mt-1 min-h-12 w-full rounded-2xl border border-border bg-card px-4 text-base text-foreground">
                 <option value="">Любое</option>
-                {activeCatalog.options.filter(option => option.fieldKey === field.key).map(option =>
+                {(field.parentKey ? (dependentOptions?.key === dependentKey ? dependentOptions.values : []) : activeCatalog.options).filter(option => option.fieldKey === field.key).map(option =>
                   <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>)}
+            {activeCatalog.fields.some(field => field.key === 'auto_make') ? <p className="text-xs text-muted-foreground">Справочник марок и моделей неполный. <Link href="/vehicle-data" className="underline">Источник данных</Link></p> : null}
           </div> : null}
 
           {/* Sort */}

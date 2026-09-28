@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
 import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
 import { catalogOwnerId, categoryRoot } from './category-hierarchy';
+import carCatalog from './vehiclesdb-car-2026.09.1.json';
 
 @Injectable()
 export class CategoriesService {
@@ -108,6 +109,51 @@ export class CategoriesService {
           options.map(([value, label], sortOrder) => ({ categoryId: auto.id, fieldKey, value, label, sortOrder }))),
         skipDuplicates: true,
       });
+      await this.ensureCarCatalog(auto.id);
     }
+  }
+
+  /** Resume safely after an interrupted seed; publish the fields only after all options exist. */
+  private async ensureCarCatalog(categoryId: string) {
+    const category = await this.prisma.category.findUniqueOrThrow({
+      where: { id: categoryId }, select: { catalogRevision: true },
+    });
+    if (category.catalogRevision >= 2) return;
+
+    const batchSize = 400;
+    for (let offset = 0; offset < carCatalog.makes.length; offset += batchSize) {
+      await this.prisma.categoryAttributeOption.createMany({
+        data: carCatalog.makes.slice(offset, offset + batchSize).map((make, index) => ({
+          categoryId, fieldKey: 'auto_make', value: make.id, label: make.name,
+          sortOrder: offset + index,
+        })), skipDuplicates: true,
+      });
+    }
+    const makes = await this.prisma.categoryAttributeOption.findMany({
+      where: { categoryId, fieldKey: 'auto_make' }, select: { id: true, value: true },
+    });
+    const makeIds = new Map(makes.map(make => [make.value, make.id]));
+    if (carCatalog.makes.some(make => !makeIds.has(make.id))) throw new Error('VehiclesDB make import incomplete');
+    for (let offset = 0; offset < carCatalog.models.length; offset += batchSize) {
+      await this.prisma.categoryAttributeOption.createMany({
+        data: carCatalog.models.slice(offset, offset + batchSize).map((model, index) => ({
+          categoryId, fieldKey: 'auto_model', value: model.id, label: model.name,
+          parentOptionId: makeIds.get(model.makeId)!, sortOrder: offset + index,
+        })), skipDuplicates: true,
+      });
+    }
+    const imported = await this.prisma.categoryAttributeOption.count({
+      where: { categoryId, fieldKey: 'auto_model', value: { in: carCatalog.models.map(model => model.id) } },
+    });
+    if (imported !== carCatalog.models.length) throw new Error('VehiclesDB model import incomplete');
+    await this.prisma.$transaction(async tx => {
+      await tx.categoryAttributeField.createMany({
+        data: [
+          { categoryId, key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', sortOrder: 4 },
+          { categoryId, key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', sortOrder: 5, parentKey: 'auto_make' },
+        ], skipDuplicates: true,
+      });
+      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: 2 } });
+    });
   }
 }
