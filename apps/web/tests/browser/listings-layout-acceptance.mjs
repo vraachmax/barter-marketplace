@@ -61,6 +61,8 @@ async function waitForServer() {
 
 
 const category = { id: 'fixture-category', title: 'Электроника', slug: 'electronics', parentId: null };
+const autoCategory = { id: 'fixture-auto', title: 'Авто', slug: 'auto', parentId: null };
+const autoFields = [{ key: 'fuel', label: 'Топливо', dependsOnKey: null, options: ['petrol', 'diesel'].map(value => ({ value, label: value === 'petrol' ? 'Бензин' : 'Дизель', enabled: true, parentValue: null })) }];
 const serverUnexpected = [];
 // Home is server-rendered: its API must also stay on an isolated loopback fixture.
 assert(!process.env.NEXT_PUBLIC_API_URL, 'Run this suite without a public API override');
@@ -144,8 +146,9 @@ async function installFixture(context, state, theme) {
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
     if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1 });
-    if (path === '/categories') return json([category]);
-    if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
+    if (path === '/categories') return json([category, autoCategory]);
+    if (/^\/categories\/[^/]+\/attributes$/.test(path)) return json({ version: 1, fields: path.includes('/fixture-auto/') ? autoFields : [] });
+    if (path === '/listings') return json({ appliedAttributeFilters: url.searchParams.get('attributeFilters') || '', appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
     if (path === '/wallet/packages') return json(packages);
     if (path === '/wallet/pro-plans') return json(plans);
@@ -477,10 +480,20 @@ async function scenario(browserType, width, theme) {
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
     if (width === 360 || width === 1280) {
+      await visit('/search?categoryId=fixture-auto');
+      await page.getByRole('button', { name: /Фильтры/ }).click();
+      await page.getByLabel('Топливо', { exact: true }).selectOption('diesel');
+      await shot(page, key + '-catalog-filters', page.getByRole('dialog'));
+      await page.getByRole('button', { name: 'Показать результаты', exact: true }).click();
+      await expect.poll(() => new URL(page.url()).searchParams.get('attributeFilters')).toBe('{"fuel":"diesel"}');
+      await page.getByRole('navigation', { name: 'Маркет или Бартер' }).getByRole('link', { name: 'Бартер', exact: true }).click();
+      await expect(page).toHaveURL(/mode=barter/);
+      assert.equal(new URL(page.url()).searchParams.get('attributeFilters'), '{"fuel":"diesel"}');
       await visit('/new');
-      await page.getByPlaceholder('iPhone 14 Pro Max 256 ГБ').fill('iPhone для обмена');
-      await page.getByRole('button', { name: 'Электроника', exact: true }).first().click();
+      await page.getByPlaceholder('iPhone 14 Pro Max 256 ГБ').fill('Автомобиль для обмена');
+      await page.getByRole('button', { name: 'Авто', exact: true }).first().click();
       await page.getByRole('button', { name: 'Далее', exact: true }).click();
+      await page.getByLabel('Топливо', { exact: true }).selectOption('diesel');
       await page.getByRole('radio', { name: /^Только обмен/ }).check();
       await page.getByLabel('Оценочная стоимость, ₽').fill('18000');
       await page.getByLabel('Рассмотрю любые предложения', { exact: true }).uncheck();
@@ -495,6 +508,7 @@ async function scenario(browserType, width, theme) {
       await expect(page.getByRole('heading', { name: 'Объявление опубликовано', exact: true })).toBeVisible();
       const creates = state.writes.filter(x => x.path === '/listings');
       assert.equal(creates.length, 1);
+      assert.equal(creates[0].body.attributes.fuel, 'diesel');
       assert.equal(creates[0].body.saleEnabled, false);
       assert.equal(creates[0].body.barterEnabled, true);
       assert.equal(creates[0].body.priceRub, 18000);

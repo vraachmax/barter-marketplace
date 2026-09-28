@@ -1,3 +1,4 @@
+import { parseCatalogFilters, validateCatalogValues } from '../categories/catalog-schema';
 import { parseExchangePreferences } from './exchange-preferences';
 import { resolveListingModes } from './listing-modes';
 import {
@@ -466,6 +467,15 @@ export class ListingsService {
     }
   }
 
+  private async catalogFields(categorySlug: string) {
+    return this.prisma.catalogField.findMany({ where: { categorySlug }, include: { options: true } });
+  }
+
+  private async validateListingCatalog(categorySlug: string, attributes: Record<string, unknown> | null | undefined, previous?: Record<string, unknown>) {
+    if (!attributes) return;
+    validateCatalogValues(await this.catalogFields(categorySlug), attributes, previous);
+  }
+
   private async validateExchangePreferences(value: unknown, barterEnabled: boolean) {
     const preferences = parseExchangePreferences(value);
     if (preferences && !barterEnabled) throw new BadRequestException('exchange_preferences_require_barter');
@@ -485,6 +495,7 @@ export class ListingsService {
     if (!category) throw new NotFoundException('category_not_found');
     const modes = resolveListingModes(dto, undefined, categoryAllowsBarter(category.slug));
     const exchangePreferences = dto.exchangePreferences === undefined ? null : await this.validateExchangePreferences(dto.exchangePreferences, modes.barterEnabled);
+    await this.validateListingCatalog(category.slug, dto.attributes);
     await this.assertListingDailyLimit(userId);
     await this.assertActiveListingsLimit(userId);
     await this.assertNotDuplicateListingText(dto.title, dto.description);
@@ -674,6 +685,7 @@ export class ListingsService {
   }
 
   async list(params: {
+    attributeFilters?: string;
     mode?: 'market' | 'barter';
     q?: string;
     categoryId?: string;
@@ -741,7 +753,16 @@ export class ListingsService {
       where.longitude = { not: null };
     }
 
-    const databaseGuard = searchDatabaseEligibility(qTrim);
+    const catalogFilters = parseCatalogFilters(params.attributeFilters);
+    const catalogGuards: Prisma.ListingWhereInput[] = [];
+    if (Object.keys(catalogFilters).length) {
+      if (!params.categoryId) throw new BadRequestException('catalog_filter_requires_category');
+      const category = await this.prisma.category.findUnique({ where: { id: params.categoryId }, select: { slug: true } });
+      if (!category) throw new BadRequestException('category_not_found');
+      validateCatalogValues(await this.catalogFields(category.slug), catalogFilters, undefined, true);
+      for (const [key, value] of Object.entries(catalogFilters)) catalogGuards.push({ attributes: { path: [key], equals: value } });
+    }
+    const databaseGuard = [...searchDatabaseEligibility(qTrim), ...catalogGuards];
     if (databaseGuard.length) {
       where.AND = [...(Array.isArray(where.AND) ? where.AND : []), ...databaseGuard];
     }
@@ -1294,6 +1315,10 @@ export class ListingsService {
       ? current.attributes : {};
     const modes = resolveListingModes(dto, { ...current, attributes: currentAttributes }, categoryAllowsBarter(category.slug));
 
+    if (dto.attributes !== undefined || (dto.categoryId !== undefined && dto.categoryId !== current.categoryId)) {
+      await this.validateListingCatalog(category.slug, dto.attributes ?? currentAttributes,
+        dto.categoryId === undefined || dto.categoryId === current.categoryId ? currentAttributes : undefined);
+    }
     const nextTitle = dto.title ?? current.title;
     const nextDesc = dto.description ?? current.description;
     if (dto.title !== undefined || dto.description !== undefined) {
@@ -1567,5 +1592,4 @@ export class ListingsService {
     return { ok: true };
   }
 }
-
 

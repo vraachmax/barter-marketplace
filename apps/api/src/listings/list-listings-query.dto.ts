@@ -36,6 +36,11 @@ function optionalDecimal(value: unknown): unknown {
 
 export class ListListingsQueryDto {
   @IsOptional()
+  @IsString()
+  @MaxLength(2500)
+  attributeFilters?: string;
+
+  @IsOptional()
   @IsIn(['market', 'barter'])
   mode?: 'market' | 'barter';
 

@@ -587,3 +587,25 @@ model UserBehaviorEvent {
   @@index([type, createdAt])
 }
 
+
+model CatalogField {
+  id String @id
+  categorySlug String
+  key String
+  label String
+  dependsOnKey String?
+  sortOrder Int @default(0)
+  options CatalogOption[]
+  @@unique([categorySlug, key])
+}
+model CatalogOption {
+  id String @id
+  fieldId String
+  field CatalogField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value String
+  label String
+  parentValue String?
+  enabled Boolean @default(true)
+  sortOrder Int @default(0)
+  @@unique([fieldId, value])
+}

@@ -19,6 +19,7 @@
  */
 
 import Link from 'next/link';
+import { CatalogFields, CatalogSchemaStatus, useCatalogSchema } from '@/components/catalog-fields';
 import { useEffect, useId, useMemo, useRef, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,6 +72,7 @@ const SORT_LABELS: Record<SortMode, string> = {
 
 type ListingsResponse = {
   appliedMode?: string;
+  appliedAttributeFilters?: string;
   page: number;
   limit: number;
   total: number;
@@ -147,6 +149,7 @@ function SearchContent() {
   const initialPriceMin = searchParams.get('priceMin') ?? '';
   const initialPriceMax = searchParams.get('priceMax') ?? '';
   const initialCategoryId = searchParams.get('categoryId') ?? '';
+  const attributeFilters = searchParams.get('attributeFilters') ?? '';
 
   const [draftQuery, setDraftQuery] = useState(initialQ);
   const activeQuery = initialQ;
@@ -197,7 +200,7 @@ function SearchContent() {
 
   /* -------------------- результаты -------------------- */
   useEffect(() => {
-    if (!activeQuery && !categoryId && !priceMin && !priceMax && mode !== 'barter') {
+    if (!activeQuery && !categoryId && !priceMin && !priceMax && !attributeFilters && mode !== 'barter') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults(null);
       return;
@@ -210,6 +213,7 @@ function SearchContent() {
     if (city) params.set('city', city);
     if (activeQuery) params.set('q', activeQuery);
     if (categoryId) params.set('categoryId', categoryId);
+    if (attributeFilters) params.set('attributeFilters', attributeFilters);
     if (sort !== 'relevant') params.set('sort', sort);
     if (priceMin) params.set('priceMin', priceMin);
     if (priceMax) params.set('priceMax', priceMax);
@@ -217,6 +221,7 @@ function SearchContent() {
     void apiGetJson<ListingsResponse>(`/listings?${params.toString()}`, { signal: controller.signal })
       .then((data) => {
         assertCatalogMode(data, mode);
+        if (attributeFilters && data.appliedAttributeFilters !== attributeFilters) throw new Error('catalog_filter_unavailable');
         if (!controller.signal.aborted) setResults(data.items ?? []);
       })
       .catch((error: unknown) => {
@@ -224,7 +229,7 @@ function SearchContent() {
       })
       .finally(() => { if (!controller.signal.aborted) setLoadingResults(false); });
     return () => controller.abort();
-  }, [activeQuery, categoryId, sort, priceMin, priceMax, city, mode, retry]);
+  }, [activeQuery, categoryId, sort, priceMin, priceMax, city, mode, retry, attributeFilters]);
 
   /* -------------------- категории-подсказки локально -------------------- */
   const categorySuggestions = useMemo(
@@ -251,7 +256,7 @@ function SearchContent() {
     navigateFilters({ categoryId: id, q: draftQuery.trim() });
   }
 
-  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || Boolean(priceMin || priceMax) || mode === 'barter';
+  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || Boolean(priceMin || priceMax || attributeFilters) || mode === 'barter';
   const selectedCategory = useMemo(
     () => cats.find((c) => c.id === categoryId) ?? null,
     [cats, categoryId],
@@ -261,7 +266,7 @@ function SearchContent() {
     (priceMin ? 1 : 0) +
     (priceMax ? 1 : 0) +
     (sort !== 'relevant' ? 1 : 0) +
-    (categoryId ? 1 : 0);
+    (categoryId ? 1 : 0) + (attributeFilters ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
@@ -346,6 +351,7 @@ function SearchContent() {
             {priceMin ? (
               <FilterChip label={`от ${priceMin} ₽`} onRemove={() => setPriceMin('')} />
             ) : null}
+            {attributeFilters && attributeFilters !== '{}' ? <FilterChip label="Характеристики" onRemove={() => navigateFilters({ attributeFilters: '' })} /> : null}
             {priceMax ? (
               <FilterChip label={`до ${priceMax} ₽`} onRemove={() => setPriceMax('')} />
             ) : null}
@@ -356,7 +362,7 @@ function SearchContent() {
       {/* ===== BODY ===== */}
       <main className="mx-auto max-w-3xl page-content-spacing px-4 pt-4 md:px-6">
         <div className="mb-4">
-          <CatalogModeToggle mode={mode} syncPreference={false} path="/search" values={{ q: activeQuery, categoryId, sort, priceMin, priceMax, city }} />
+          <CatalogModeToggle mode={mode} syncPreference={false} path="/search" values={{ q: activeQuery, categoryId, sort, priceMin, priceMax, city, attributeFilters }} />
         </div>
         {/* Состояние «нет активного запроса» — empty state */}
         {!hasResults ? (
@@ -397,6 +403,7 @@ function SearchContent() {
       {filtersOpen ? (
         <FiltersSheet
           cats={cats}
+          attributeFilters={attributeFilters}
           categoryId={categoryId}
           sort={sort}
           priceMin={priceMin}
@@ -406,7 +413,7 @@ function SearchContent() {
             setFiltersOpen(false);
           }}
           onReset={() => {
-            navigateFilters({ categoryId: '', sort: 'relevant', priceMin: '', priceMax: '' });
+            navigateFilters({ categoryId: '', sort: 'relevant', priceMin: '', priceMax: '', attributeFilters: '' });
             setFiltersOpen(false);
           }}
           onClose={() => setFiltersOpen(false)}
@@ -672,17 +679,22 @@ function ResultsBlock(props: {
  *  FILTERS BOTTOM SHEET
  * ========================================================================== */
 function FiltersSheet(props: {
+  attributeFilters: string;
   cats: Category[];
   categoryId: string;
   sort: SortMode;
   priceMin: string;
   priceMax: string;
-  onApply: (next: { categoryId: string; sort: SortMode; priceMin: string; priceMax: string }) => void;
+  onApply: (next: { categoryId: string; sort: SortMode; priceMin: string; priceMax: string; attributeFilters: string }) => void;
   onReset: () => void;
   onClose: () => void;
 }) {
   const { cats, onApply, onReset, onClose } = props;
   const [draftCategory, setDraftCategory] = useState(props.categoryId);
+  const schema = useCatalogSchema(draftCategory);
+  const [draftAttributes, setDraftAttributes] = useState<Record<string, string>>(() => {
+    try { const v = JSON.parse(props.attributeFilters || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).filter(([, value]) => typeof value === 'string')) as Record<string, string> : {}; } catch { return {}; }
+  });
   const [draftSort, setDraftSort] = useState<SortMode>(props.sort);
   const [draftPriceMin, setDraftPriceMin] = useState(props.priceMin);
   const [draftPriceMax, setDraftPriceMax] = useState(props.priceMax);
@@ -723,7 +735,7 @@ function FiltersSheet(props: {
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button
                 type="button"
-                onClick={() => setDraftCategory('')}
+                onClick={() => { setDraftCategory(''); setDraftAttributes({}); }}
                 aria-pressed={draftCategory === ''}
                 className="min-h-12 min-w-0 rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition"
                 style={
@@ -744,7 +756,7 @@ function FiltersSheet(props: {
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => setDraftCategory(c.id)}
+                    onClick={() => { setDraftCategory(c.id); setDraftAttributes({}); }}
                     aria-pressed={isPicked}
                     className="min-h-12 min-w-0 rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition"
                     style={
@@ -764,6 +776,8 @@ function FiltersSheet(props: {
             </div>
           </div>
 
+          <CatalogSchemaStatus schema={schema} />
+          <CatalogFields fields={schema.fields} values={draftAttributes} onChange={setDraftAttributes} filters />
           {/* Sort */}
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -838,11 +852,12 @@ function FiltersSheet(props: {
           >
             Сбросить
           </Button>
-          <Button size="lg" disabled={invalidRange}
+          <Button size="lg" disabled={invalidRange || schema.loading || schema.error}
             type="button"
             onClick={() =>
               onApply({
                 categoryId: draftCategory,
+                attributeFilters: Object.values(draftAttributes).some(Boolean) ? JSON.stringify(Object.fromEntries(Object.entries(draftAttributes).filter(([, v]) => v))) : '',
                 sort: draftSort,
                 priceMin: draftPriceMin,
                 priceMax: draftPriceMax,

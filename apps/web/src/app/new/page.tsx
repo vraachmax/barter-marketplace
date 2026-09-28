@@ -1,6 +1,8 @@
 'use client';
 import { ListingTradeModeField } from '@/components/listing-trade-mode-field';
 import { ExchangePreferencesSummary } from '@/components/exchange-preferences-summary';
+import { CatalogFields, CatalogSchemaStatus, useCatalogSchema } from '@/components/catalog-fields';
+import { catalogSections } from '@/lib/catalog-schema';
 import { ExchangePreferencesField } from '@/components/exchange-preferences-field';
 import { emptyExchangePreferences, exchangePreferencesError, type ExchangePreferences } from '@/lib/exchange-preferences';
 import { listingTradeMode, tradeModeFields, tradeModeLabel, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
@@ -295,6 +297,7 @@ export default function NewListingPage() {
     [cats, categoryId],
   );
 
+  const catalog = useCatalogSchema(categoryId);
   const attrSections = useMemo(
     () => getListingAttrSectionsForCategorySlug(selectedCategory?.slug ?? ''),
     [selectedCategory],
@@ -329,9 +332,9 @@ export default function NewListingPage() {
     const pr = Number(price);
     if (price.trim().length > 0 && Number.isFinite(pr)) p.priceRub = pr;
     if (p.barterEnabled) p.exchangePreferences = exchangePreferences;
-    p.attributes = { ...serializedAttributes, isBarter: p.barterEnabled };
+    p.attributes = { ...serializedAttributes, ...Object.fromEntries(catalog.fields.filter(f => attrValues[f.key]).map(f => [f.key, attrValues[f.key]])), isBarter: p.barterEnabled };
     return p;
-  }, [title, description, city, categoryId, price, serializedAttributes, tradeMode, selectedCategory, exchangePreferences]);
+  }, [title, description, city, categoryId, price, serializedAttributes, tradeMode, selectedCategory, exchangePreferences, catalog.fields, attrValues]);
 
   const attributeError = validateListingAttributes(attrSections, attrValues, price);
   const exchangeError = tradeMode === 'sale' ? null : exchangePreferencesError(exchangePreferences);
@@ -342,7 +345,7 @@ export default function NewListingPage() {
   /** Проверка можно ли нажать «Далее» на текущем шаге. */
   function canGoNext(s: WizardStep): boolean {
     if (s === 1) return titleLen >= 3 && categoryId.length > 0;
-    if (s === 2) return descLen >= 10 && !attributeError && !exchangeError;
+    if (s === 2) return descLen >= 10 && !attributeError && !exchangeError && !catalog.loading && !catalog.error;
     if (s === 3) return true; // фото — необязательно
     if (s === 4) return city.trim().length >= 2;
     if (s === 5) return me !== 'loading' && me !== null;
@@ -352,6 +355,7 @@ export default function NewListingPage() {
   function nextStepHint(s: WizardStep): string {
     if (s === 1 && titleLen < 3) return 'Введите хотя бы 3 символа';
     if (s === 1 && !categoryId) return 'Выберите категорию из подсказок';
+    if (s === 2 && (catalog.loading || catalog.error)) return 'Дождитесь загрузки характеристик или повторите её.';
     if (s === 2 && exchangeError) return exchangeError;
     if (s === 2 && attributeError) return attributeError;
     if (s === 2 && descLen < 10) return 'Описание: минимум 10 символов';
@@ -424,7 +428,7 @@ export default function NewListingPage() {
 
   async function submit() {
     if (submitting.current) return;
-    const validationError = exchangeError ?? attributeError ?? validate();
+    const validationError = catalog.loading || catalog.error ? 'Характеристики не загружены. Вернитесь к описанию.' : exchangeError ?? attributeError ?? validate();
     if (validationError) {
       setSubmitStatus({ kind: 'error', msg: validationError });
       return;
@@ -584,6 +588,7 @@ export default function NewListingPage() {
 
         {step === 5 && payload.exchangePreferences ? <ExchangePreferencesSummary value={payload.exchangePreferences} categories={cats} /> : null}
 
+        {step === 2 ? <div className="space-y-4"><CatalogSchemaStatus schema={catalog} /><CatalogFields fields={catalog.fields} values={attrValues} onChange={setAttrValues} /></div> : null}
         {step === 2 ? (
           <Step2Description
             tradeMode={tradeMode}
@@ -598,7 +603,7 @@ export default function NewListingPage() {
             descLen={descLen}
             price={price}
             onPriceChange={setPrice}
-            attrSections={attrSections}
+            attrSections={catalogSections(attrSections, catalog.fields)}
             attrValues={attrValues}
             onAttrChange={(key, v) =>
               setAttrValues((prev) => ({ ...prev, [key]: v }))
@@ -1401,4 +1406,3 @@ function PostPublishScreen(props: {
     </div>
   );
 }
-

@@ -1,4 +1,5 @@
 'use client';
+import { CatalogFields, CatalogSchemaStatus, useCatalogSchema } from '@/components/catalog-fields';
 import { ExchangePreferencesField } from '@/components/exchange-preferences-field';
 import { exchangePreferencesError, type ExchangePreferences } from '@/lib/exchange-preferences';
 import { ListingTradeModeField } from '@/components/listing-trade-mode-field';
@@ -12,7 +13,7 @@ import Link from 'next/link';
 import type { Category } from '@/lib/api';
 import { canOfferBarter } from '@/lib/barter-category';
 
-type Fields = { title: string; description: string; city: string; categoryId: string; priceRub: string; tradeMode: ListingTradeMode; exchangePreferences: ExchangePreferences };
+type Fields = { title: string; description: string; city: string; categoryId: string; priceRub: string; tradeMode: ListingTradeMode; exchangePreferences: ExchangePreferences; attributes: Record<string, unknown> };
 
 /** Shared editor outside the desktop/mobile wrappers, with native modal focus. */
 export function ListingEditorDialog({ values, onChange, categories, onSave, onClose, saveError, authHref }: {
@@ -24,6 +25,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
   saveError?: string;
   authHref?: string;
 }) {
+  const catalog = useCatalogSchema(values.categoryId);
   const dialog = useRef<HTMLDialogElement>(null);
   const submitting = useRef(false);
   const id = useId();
@@ -41,7 +43,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
     </div>
     <form onSubmit={async (event) => {
       event.preventDefault();
-      if (submitting.current) return;
+      if (submitting.current || catalog.loading || catalog.error) return;
       const preferencesError = values.tradeMode === 'sale' ? null : exchangePreferencesError(values.exchangePreferences);
       if (preferencesError) { setError(preferencesError); return; }
       submitting.current = true;
@@ -61,13 +63,14 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
         <label className="block text-sm font-medium">{values.tradeMode === 'barter' ? 'Оценочная стоимость, ₽' : 'Цена, ₽'}<input type="number" min="0" max="2147483647" step="1" value={values.priceRub} onChange={(e) => change('priceRub', e.target.value)} className={inputClass} /></label>
         <ListingTradeModeField value={values.tradeMode} onChange={(mode) => change('tradeMode', mode)} barterAllowed={canOfferBarter(categories.find((category) => category.id === values.categoryId))} />
         {values.tradeMode !== 'sale' ? <ExchangePreferencesField value={values.exchangePreferences} onChange={v => change('exchangePreferences', v)} categories={categories} /> : null}
+        <CatalogSchemaStatus schema={catalog} />
+        <CatalogFields fields={catalog.fields} values={Object.fromEntries(Object.entries(values.attributes).filter(([, v]) => typeof v === 'string')) as Record<string, string>} onChange={attrs => change('attributes', { ...values.attributes, ...attrs })} />
       </fieldset>
       <div className="glass-panel sticky bottom-0 space-y-3 border-t border-border px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
       {saveError || error ? <p role="alert" className="text-sm text-destructive">{saveError || error}</p> : null}
       {authHref ? <Link href={authHref} className="inline-flex min-h-11 items-center text-primary underline">Войти снова</Link> : null}
-      <Button type="submit" size="lg" disabled={busy} aria-busy={busy} className="w-full">{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
+      <Button type="submit" size="lg" disabled={busy || catalog.loading || catalog.error} aria-busy={busy} className="w-full">{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
       </div>
     </form>
   </dialog>;
 }
-
