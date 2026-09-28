@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
-import { AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
+import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
 
 @Injectable()
 export class CategoriesService {
@@ -36,6 +36,21 @@ export class CategoriesService {
       }));
   }
 
+  async attributeSchema(categoryId: string) {
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+      select: {
+        catalogRevision: true,
+        attributeFields: {
+          where: { isActive: true },
+          orderBy: [{ sectionId: 'asc' }, { sortOrder: 'asc' }],
+          select: { key: true, label: true, sectionId: true, sectionTitle: true, fieldType: true },
+        },
+      },
+    });
+    return category ? { version: category.catalogRevision, fields: category.attributeFields } : null;
+  }
+
   async ensureSeed() {
     const count = await this.prisma.category.count();
     if (count === 0) await this.prisma.category.createMany({
@@ -54,6 +69,13 @@ export class CategoriesService {
 
     const auto = await this.prisma.category.findUnique({ where: { slug: 'auto' }, select: { id: true } });
     if (auto) {
+      await this.prisma.categoryAttributeField.createMany({
+        data: AUTO_ATTRIBUTE_FIELDS.map(({ key, label }, sortOrder) => ({
+          categoryId: auto.id, key, label, sectionId: 'auto_main',
+          sectionTitle: 'Автомобиль', sortOrder,
+        })),
+        skipDuplicates: true,
+      });
       await this.prisma.categoryAttributeOption.createMany({
         data: Object.entries(AUTO_ATTRIBUTE_OPTIONS).flatMap(([fieldKey, options]) =>
           options.map(([value, label], sortOrder) => ({ categoryId: auto.id, fieldKey, value, label, sortOrder }))),

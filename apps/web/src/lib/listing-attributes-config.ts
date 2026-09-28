@@ -27,6 +27,32 @@ export type CatalogAttributeOption = {
   parentFieldKey?: string; parentValue?: string;
 };
 
+export type CatalogAttributeSchema = {
+  version: number;
+  fields: { key: string; label: string; sectionId: string; sectionTitle: string; fieldType: string }[];
+};
+
+/** The database owns the labels of catalog-controlled fields. */
+export function withCatalogFieldDefinitions(
+  sections: ListingAttrSection[], schema: CatalogAttributeSchema | null,
+): ListingAttrSection[] {
+  if (!schema) return sections;
+  const fields = new Map(schema.fields.map((field) => [field.key, field]));
+  return sections.map((section) => {
+    const owned = schema.fields.find((field) => field.sectionId === section.id);
+    return {
+      ...section,
+      title: owned?.sectionTitle ?? section.title,
+      fields: section.fields.map((field) => {
+        const definition = fields.get(field.key);
+        return definition?.sectionId === section.id && definition.fieldType === 'select'
+          ? { ...field, label: definition.label, type: 'select' as const }
+          : field;
+      }),
+    };
+  });
+}
+
 /** Overlay server-owned choices without changing the existing field layout. */
 export function withCatalogOptions(
   sections: ListingAttrSection[],

@@ -145,6 +145,13 @@ async function main() {
     console.log('PASS exchange wishes persist, validate category/budget/owner, survive sale mode and clear explicitly');
 
     autoCategory = await db.category.create({ data: { slug: 'auto', title: 'Авто' } });
+    await db.categoryAttributeField.create({ data: {
+      categoryId: autoCategory.id, key: 'fuel', label: 'Топливо',
+      sectionId: 'auto_main', sectionTitle: 'Автомобиль', sortOrder: 0,
+    } });
+    const schema = (await http().get(`/categories/${autoCategory.id}/attribute-schema`).expect(200)).body;
+    assert.equal(schema.version, 1);
+    assert.deepEqual(schema.fields, [{ key: 'fuel', label: 'Топливо', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select' }]);
     await db.categoryAttributeOption.createMany({ data: [
       { categoryId: autoCategory.id, fieldKey: 'fuel', value: 'petrol', label: 'Бензин', sortOrder: 0 },
       { categoryId: autoCategory.id, fieldKey: 'fuel', value: 'electric', label: 'Электро', sortOrder: 1 },

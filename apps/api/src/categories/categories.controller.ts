@@ -14,5 +14,10 @@ export class CategoriesController {
   attributeOptions(@Param('id') id: string) {
     return this.categories.attributeOptions(id);
   }
+
+  @Get(':id/attribute-schema')
+  attributeSchema(@Param('id') id: string) {
+    return this.categories.attributeSchema(id);
+  }
 }
 

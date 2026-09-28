@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getListingAttrSectionsForCategorySlug as sections, serializeListingAttributes as serialize, validateListingAttributes as validate, formatListingAttributeValue as format, withCatalogOptions, changeCatalogAttribute } from '../src/lib/listing-attributes-config.ts';
+import { getListingAttrSectionsForCategorySlug as sections, serializeListingAttributes as serialize, validateListingAttributes as validate, formatListingAttributeValue as format, withCatalogFieldDefinitions, withCatalogOptions, changeCatalogAttribute } from '../src/lib/listing-attributes-config.ts';
+
+test('catalog field metadata controls the existing vehicle field without changing other categories', () => {
+  const schema = { version: 1, fields: [{ key: 'fuel', label: 'Тип топлива', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select' }] };
+  const configured = withCatalogFieldDefinitions(sections('auto'), schema);
+  assert.equal(configured.flatMap(section => section.fields).find(field => field.key === 'fuel').label, 'Тип топлива');
+  assert.equal(configured.flatMap(section => section.fields).find(field => field.key === 'auto_make').label, 'Марка');
+  assert.equal(sections('auto').flatMap(section => section.fields).find(field => field.key === 'fuel').label, 'Топливо');
+});
 
 test('server catalog choices drive vehicle select without changing other fields', () => {
   const configured = withCatalogOptions(sections('auto'), [{ fieldKey: 'fuel', value: 'hydrogen', label: 'Водород' }]);
