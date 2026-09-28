@@ -210,6 +210,24 @@ async function main() {
       attributes: { fuel: 'petrol', auto_make: 'bmw', auto_model: '3-series' },
     }).expect(201);
     await patch(sedan.body.id, { attributes: { fuel: 'coal' } }).expect(400);
+    const petrolFilter = JSON.stringify({ fuel: 'petrol' });
+    for (const mode of ['market', 'barter']) {
+      const expected = mode === 'market' ? [car.body.id, sedan.body.id].sort() : [sedan.body.id];
+      for (const sort of ['relevant', 'new', 'cheap', 'expensive']) {
+        const ids = [];
+        for (const page of [1, 2]) {
+          const response = await http().get('/listings').query({ categoryId: autoCategory.id, attrs: petrolFilter, mode, sort, limit: 1, page }).expect(200);
+          assert.deepEqual(response.body.appliedAttrs, { fuel: 'petrol' });
+          assert.equal(response.body.total, expected.length);
+          ids.push(...response.body.items.map(item => item.id));
+        }
+        assert.deepEqual(ids.sort(), expected);
+      }
+    }
+    assert.equal((await http().get('/listings').query({ categoryId: autoCategory.id, attrs: JSON.stringify({ fuel: 'electric' }) }).expect(200)).body.total, 0);
+    await http().get('/listings').query({ categoryId: autoCategory.id, attrs: JSON.stringify({ fuel: 'coal' }) }).expect(400);
+    await http().get('/listings').query({ categoryId: autoCategory.id, attrs: JSON.stringify({ unknown: 'petrol' }) }).expect(400);
+    await http().get('/listings').query({ attrs: petrolFilter }).expect(400);
     for (const mode of ['market', 'barter']) {
       for (const sort of ['relevant', 'new', 'cheap', 'expensive']) {
         const results = (await http().get('/listings').query({ categoryId: autoCategory.id, mode, sort, limit: 1, page: 1 }).expect(200)).body;

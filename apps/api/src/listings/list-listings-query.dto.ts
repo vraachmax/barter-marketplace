@@ -51,6 +51,11 @@ export class ListListingsQueryDto {
   @MaxLength(128)
   categoryId?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(600)
+  attrs?: string;
+
   @Transform(({ value }: { value: unknown }) => optionalText(value))
   @IsOptional()
   @IsString()
@@ -114,6 +119,18 @@ export class ListListingsQueryDto {
 
 /** Cross-field validation runs after Nest's global ValidationPipe. */
 export function normalizeListingsQuery(query: ListListingsQueryDto) {
+  let attrs: Record<string, string> | undefined;
+  if (query.attrs !== undefined) {
+    let raw: unknown;
+    try { raw = JSON.parse(query.attrs); } catch { throw new BadRequestException('invalid_catalog_filters'); }
+    if (!query.categoryId || !raw || typeof raw !== 'object' || Array.isArray(raw) ||
+        Object.keys(raw).length < 1 || Object.keys(raw).length > 8 ||
+        Object.entries(raw).some(([key, value]) => !/^[a-z][a-z0-9_]{0,63}$/.test(key) ||
+          typeof value !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,127}$/.test(value))) {
+      throw new BadRequestException('invalid_catalog_filters');
+    }
+    attrs = raw as Record<string, string>;
+  }
   if (
     query.priceMin != null &&
     query.priceMax != null &&
@@ -138,8 +155,10 @@ export function normalizeListingsQuery(query: ListListingsQueryDto) {
       message: 'Для поиска по расстоянию укажите широту и долготу вместе.',
     });
   }
+  const { attrs: _rawAttrs, ...rest } = query;
   return {
-    ...query,
+    ...rest,
+    ...(attrs ? { attrs } : {}),
     page: query.page ?? 1,
     limit: query.limit ?? 20,
     sort: query.sort ?? 'relevant',

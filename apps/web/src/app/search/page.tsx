@@ -22,7 +22,8 @@ import Link from 'next/link';
 import { useEffect, useId, useMemo, useRef, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { searchFilterHref, type SearchFilterChanges } from '@/lib/search-navigation';
+import { parseCatalogAttrs, searchFilterHref, type SearchFilterChanges } from '@/lib/search-navigation';
+import { type CatalogAttributeOption, type CatalogAttributeSchema } from '@/lib/listing-attributes-config';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Clock,
@@ -71,6 +72,7 @@ const SORT_LABELS: Record<SortMode, string> = {
 
 type ListingsResponse = {
   appliedMode?: string;
+  appliedAttrs?: Record<string, string>;
   page: number;
   limit: number;
   total: number;
@@ -147,6 +149,7 @@ function SearchContent() {
   const initialPriceMin = searchParams.get('priceMin') ?? '';
   const initialPriceMax = searchParams.get('priceMax') ?? '';
   const initialCategoryId = searchParams.get('categoryId') ?? '';
+  const attrs = searchParams.get('attrs') ?? '';
 
   const [draftQuery, setDraftQuery] = useState(initialQ);
   const activeQuery = initialQ;
@@ -210,6 +213,7 @@ function SearchContent() {
     if (city) params.set('city', city);
     if (activeQuery) params.set('q', activeQuery);
     if (categoryId) params.set('categoryId', categoryId);
+    if (attrs) params.set('attrs', attrs);
     if (sort !== 'relevant') params.set('sort', sort);
     if (priceMin) params.set('priceMin', priceMin);
     if (priceMax) params.set('priceMax', priceMax);
@@ -217,6 +221,7 @@ function SearchContent() {
     void apiGetJson<ListingsResponse>(`/listings?${params.toString()}`, { signal: controller.signal })
       .then((data) => {
         assertCatalogMode(data, mode);
+        if (attrs && JSON.stringify(data.appliedAttrs) !== JSON.stringify(parseCatalogAttrs(attrs))) throw new Error('catalog_filter_unavailable');
         if (!controller.signal.aborted) setResults(data.items ?? []);
       })
       .catch((error: unknown) => {
@@ -224,7 +229,7 @@ function SearchContent() {
       })
       .finally(() => { if (!controller.signal.aborted) setLoadingResults(false); });
     return () => controller.abort();
-  }, [activeQuery, categoryId, sort, priceMin, priceMax, city, mode, retry]);
+  }, [activeQuery, categoryId, attrs, sort, priceMin, priceMax, city, mode, retry]);
 
   /* -------------------- категории-подсказки локально -------------------- */
   const categorySuggestions = useMemo(
@@ -261,7 +266,8 @@ function SearchContent() {
     (priceMin ? 1 : 0) +
     (priceMax ? 1 : 0) +
     (sort !== 'relevant' ? 1 : 0) +
-    (categoryId ? 1 : 0);
+    (categoryId ? 1 : 0) +
+    Object.keys(parseCatalogAttrs(attrs)).length;
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
@@ -340,6 +346,7 @@ function SearchContent() {
                 }}
               />
             ) : null}
+            {attrs ? <FilterChip label={`Характеристики · ${Object.keys(parseCatalogAttrs(attrs)).length}`} onRemove={() => navigateFilters({ attrs: '' })} /> : null}
             {sort !== 'relevant' ? (
               <FilterChip label={SORT_LABELS[sort]} onRemove={() => setSort('relevant')} />
             ) : null}
@@ -356,7 +363,7 @@ function SearchContent() {
       {/* ===== BODY ===== */}
       <main className="mx-auto max-w-3xl page-content-spacing px-4 pt-4 md:px-6">
         <div className="mb-4">
-          <CatalogModeToggle mode={mode} syncPreference={false} path="/search" values={{ q: activeQuery, categoryId, sort, priceMin, priceMax, city }} />
+          <CatalogModeToggle mode={mode} syncPreference={false} path="/search" values={{ q: activeQuery, categoryId, sort, priceMin, priceMax, city, attrs }} />
         </div>
         {/* Состояние «нет активного запроса» — empty state */}
         {!hasResults ? (
@@ -401,12 +408,13 @@ function SearchContent() {
           sort={sort}
           priceMin={priceMin}
           priceMax={priceMax}
+          attrs={parseCatalogAttrs(attrs)}
           onApply={(next) => {
             navigateFilters(next);
             setFiltersOpen(false);
           }}
           onReset={() => {
-            navigateFilters({ categoryId: '', sort: 'relevant', priceMin: '', priceMax: '' });
+            navigateFilters({ categoryId: '', sort: 'relevant', priceMin: '', priceMax: '', attrs: '' });
             setFiltersOpen(false);
           }}
           onClose={() => setFiltersOpen(false)}
@@ -677,12 +685,15 @@ function FiltersSheet(props: {
   sort: SortMode;
   priceMin: string;
   priceMax: string;
-  onApply: (next: { categoryId: string; sort: SortMode; priceMin: string; priceMax: string }) => void;
+  attrs: Record<string, string>;
+  onApply: (next: { categoryId: string; sort: SortMode; priceMin: string; priceMax: string; attrs: string }) => void;
   onReset: () => void;
   onClose: () => void;
 }) {
   const { cats, onApply, onReset, onClose } = props;
   const [draftCategory, setDraftCategory] = useState(props.categoryId);
+  const [draftAttrs, setDraftAttrs] = useState(props.attrs);
+  const [catalog, setCatalog] = useState<{ categoryId: string; fields: CatalogAttributeSchema['fields']; options: CatalogAttributeOption[] } | null>(null);
   const [draftSort, setDraftSort] = useState<SortMode>(props.sort);
   const [draftPriceMin, setDraftPriceMin] = useState(props.priceMin);
   const [draftPriceMax, setDraftPriceMax] = useState(props.priceMax);
@@ -690,6 +701,24 @@ function FiltersSheet(props: {
   const titleId = useId();
   const invalidRange = Boolean(draftPriceMin && draftPriceMax && Number(draftPriceMin) > Number(draftPriceMax));
   useEffect(() => { dialog.current?.showModal(); }, []);
+  useEffect(() => {
+    if (!draftCategory) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const base = `/categories/${encodeURIComponent(draftCategory)}`;
+        const schema = await apiGetJson<CatalogAttributeSchema>(`${base}/attribute-schema`);
+        if (schema.optionsQueryVersion !== 1) return;
+        const fields = schema.fields.filter(field => field.fieldType === 'select' && !field.parentKey);
+        const options = (await Promise.all(fields.map(field =>
+          apiGetJson<CatalogAttributeOption[]>(`${base}/attribute-options?fieldKey=${encodeURIComponent(field.key)}`)
+        ))).flat();
+        if (alive) setCatalog({ categoryId: draftCategory, fields, options });
+      } catch { if (alive) setCatalog(null); }
+    })();
+    return () => { alive = false; };
+  }, [draftCategory]);
+  const activeCatalog = catalog?.categoryId === draftCategory ? catalog : null;
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId}
@@ -723,7 +752,7 @@ function FiltersSheet(props: {
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button
                 type="button"
-                onClick={() => setDraftCategory('')}
+                onClick={() => { setDraftCategory(''); setDraftAttrs({}); }}
                 aria-pressed={draftCategory === ''}
                 className="min-h-12 min-w-0 rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition"
                 style={
@@ -744,7 +773,7 @@ function FiltersSheet(props: {
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => setDraftCategory(c.id)}
+                    onClick={() => { if (c.id !== draftCategory) setDraftAttrs({}); setDraftCategory(c.id); }}
                     aria-pressed={isPicked}
                     className="min-h-12 min-w-0 rounded-2xl border px-3 py-3 text-left text-sm font-semibold transition"
                     style={
@@ -763,6 +792,19 @@ function FiltersSheet(props: {
               })}
             </div>
           </div>
+
+          {activeCatalog && activeCatalog.fields.length > 0 ? <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Характеристики</p>
+            {activeCatalog.fields.map(field => <label key={field.key} className="block text-sm font-medium text-foreground">
+              {field.label}
+              <select value={draftAttrs[field.key] ?? ''} onChange={event => setDraftAttrs(current => ({ ...current, [field.key]: event.target.value }))}
+                className="mt-1 min-h-12 w-full rounded-2xl border border-border bg-card px-4 text-base text-foreground">
+                <option value="">Любое</option>
+                {activeCatalog.options.filter(option => option.fieldKey === field.key).map(option =>
+                  <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>)}
+          </div> : null}
 
           {/* Sort */}
           <div>
@@ -846,6 +888,9 @@ function FiltersSheet(props: {
                 sort: draftSort,
                 priceMin: draftPriceMin,
                 priceMax: draftPriceMax,
+                attrs: Object.keys(draftAttrs).some(key => draftAttrs[key]) && activeCatalog
+                  ? JSON.stringify(Object.fromEntries(Object.entries(draftAttrs).filter(([key, value]) => value && activeCatalog.fields.some(field => field.key === key))))
+                  : '',
               })
             }
             className="w-full sm:flex-1"

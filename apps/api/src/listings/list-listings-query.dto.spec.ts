@@ -29,6 +29,16 @@ describe('listing search contract', () => {
       sort: 'relevant',
     });
   });
+  it('accepts bounded catalog filters only with a category', async () => {
+    await expect(parse({ categoryId: 'auto', attrs: '{"fuel":"petrol"}' })).resolves.toMatchObject({ attrs: { fuel: 'petrol' } });
+    for (const input of [
+      { attrs: '{"fuel":"petrol"}' },
+      { categoryId: 'auto', attrs: '{' },
+      { categoryId: 'auto', attrs: '{"fuel":4}' },
+      { categoryId: 'auto', attrs: '[]' },
+      { categoryId: 'auto', attrs: '{}' },
+    ]) await expect(parse(input)).rejects.toThrow(BadRequestException);
+  });
   it('treats empty form inputs as absent and preserves zero', async () => {
     await expect(
       parse({

@@ -76,7 +76,7 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
-    appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [],
+    appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
   else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)\/similar$/.test(url.pathname)) data = [];
   else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)$/.test(url.pathname)) {
@@ -100,7 +100,7 @@ function fixture(theme) {
       { ...base, id: 'fixture-pending', title: 'На модерации', status: 'PENDING', images: [image] },
       { ...base, id: 'fixture-sold', title: 'Проданное объявление', status: 'SOLD', duplicateImageFlag: true, images: [image] },
     ],
-    writes: [], unexpected: [], catalogReads: [], failListings: false, guest: false,
+    writes: [], unexpected: [], catalogReads: [], catalogSearchReads: [], failListings: false, guest: false,
   };
 }
 
@@ -157,7 +157,12 @@ async function installFixture(context, state, theme) {
       return json(url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : []);
     }
     if (path === '/categories/fixture-category/attribute-schema') return json(categorySchema);
-    if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
+    if (path === '/listings') {
+      state.catalogSearchReads.push(url.searchParams.get('attrs'));
+      return json({ appliedMode: url.searchParams.get('mode') || 'market',
+        ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}),
+        page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
+    }
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
     if (path === '/wallet/packages') return json(packages);
     if (path === '/wallet/pro-plans') return json(plans);
@@ -484,6 +489,18 @@ async function scenario(browserType, width, theme) {
     const searchBox = await contained(searchToggle);
     assert(Math.abs((searchBox.left + searchBox.right) / 2 - width / 2) <= 1, 'search toggle is off-center');
     checks.push('catalog and search centered, selected pill aligned, sort preserved');
+    if (width === 360 || width === 1280) {
+      await visit('/search?categoryId=fixture-category&mode=market');
+      await page.getByRole('button', { name: /^Фильтры/ }).click();
+      await page.getByRole('dialog').getByLabel('Состояние').selectOption('used_good');
+      await page.getByRole('button', { name: 'Показать результаты' }).click();
+      await expect(page).toHaveURL(/attrs=/);
+      await expect(page.getByText('Характеристики · 1')).toBeVisible();
+      await page.getByRole('navigation', { name: 'Маркет или Бартер' }).getByRole('link', { name: 'Бартер' }).click();
+      await expect(page).toHaveURL(/attrs=/);
+      assert(state.catalogSearchReads.includes(JSON.stringify({ condition: 'used_good' })), 'mode search keeps selected catalog option');
+      checks.push('catalog filter uses schema option and survives Market/Barter switch');
+    }
 
     state.failListings = true;
     await visit('/listings');

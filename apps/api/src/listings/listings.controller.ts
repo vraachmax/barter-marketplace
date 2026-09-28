@@ -71,7 +71,7 @@ export class ListingsController {
   async list(@Query() query: ListListingsQueryDto) {
     const params = normalizeListingsQuery(query);
     const result = await this.listings.list(params);
-    return { ...result, appliedMode: params.mode ?? 'market' };
+    return { ...result, appliedMode: params.mode ?? 'market', ...(params.attrs ? { appliedAttrs: params.attrs } : {}) };
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -201,4 +201,3 @@ export class ListingsController {
     return this.listings.reportListing(id, req.user.id, dto.reason);
   }
 }
-

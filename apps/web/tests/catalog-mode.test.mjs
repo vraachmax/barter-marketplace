@@ -14,6 +14,13 @@ describe('catalog mode contract', () => {
     assert.equal(url.pathname, '/search');
     assert.deepEqual(Object.fromEntries(url.searchParams), { q: 'айфон 14', city: '', categoryId: 'electronics', priceMin: '0', priceMax: '50000', sort: 'cheap', lat: '0', lon: '0', radiusKm: '25', mode: 'barter' });
   });
+  it('keeps selected catalog options across modes without emitting an empty filter', () => {
+    const attrs = JSON.stringify({ fuel: 'petrol' });
+    const preserved = new URL(catalogModeHref('/search', { categoryId: 'auto', attrs }, 'barter'), 'https://example.test');
+    assert.equal(preserved.searchParams.get('attrs'), attrs);
+    const plain = new URL(catalogModeHref('/search', { attrs: '' }, 'market'), 'https://example.test');
+    assert.equal(plain.searchParams.has('attrs'), false);
+  });
   it('supports older API responses only in Market', () => {
     const old = { items: [{ id: '1' }] };
     assert.equal(assertCatalogMode(old, 'market'), old);
