@@ -69,6 +69,7 @@ const api = createServer((req, res) => {
   let data;
   if (req.method === 'GET' && url.pathname === '/categories') data = [category];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = [];
+  else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
