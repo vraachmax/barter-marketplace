@@ -14,8 +14,8 @@ export function modeFromCookie(cookie: string): CatalogMode {
 
 export function catalogModeHref(path: '/' | '/search', values: Record<string, string>, mode: CatalogMode) {
   const query = new URLSearchParams();
-  for (const key of ['q', 'city', 'categoryId', 'priceMin', 'priceMax', 'sort', 'lat', 'lon', 'radiusKm']) {
-    if (values[key] !== undefined) query.set(key, values[key]);
+  for (const key of ['q', 'city', 'categoryId', 'priceMin', 'priceMax', 'sort', 'lat', 'lon', 'radiusKm', 'attrs']) {
+    if (values[key] !== undefined && (key !== 'attrs' || values[key])) query.set(key, values[key]);
   }
   query.set('mode', mode);
   return `${path}?${query}`;
@@ -47,6 +47,7 @@ export function catalogErrorMessage(error: unknown): string {
   }
   return error instanceof Error && error.message === 'barter_filter_unavailable'
     ? 'Режим «Бартер» появится после обновления сервера. Сейчас можно смотреть объявления в «Маркете».'
+    : error instanceof Error && error.message === 'catalog_filter_unavailable'
+      ? 'Фильтры характеристик пока не поддерживаются сервером. Выбранные значения сохранены в ссылке.'
     : 'Не удалось загрузить объявления. Проверьте фильтры и повторите попытку.';
 }
-

@@ -710,6 +710,7 @@ export class ListingsService {
     mode?: 'market' | 'barter';
     q?: string;
     categoryId?: string;
+    attrs?: Record<string, string>;
     city?: string;
     sort?: SortType;
     lat?: number;
@@ -747,6 +748,25 @@ export class ListingsService {
       ? categoryDescendantIds(params.categoryId, await this.prisma.category.findMany({ select: { id: true, slug: true, parentId: true } }))
       : [];
     if (params.categoryId) where.categoryId = categoryIds.length > 1 ? { in: categoryIds } : params.categoryId;
+    if (params.attrs) {
+      if (!params.categoryId) throw new BadRequestException('invalid_catalog_filters');
+      const ownerId = await catalogOwnerId(this.prisma, params.categoryId);
+      const [fields, options] = await Promise.all([
+        this.prisma.categoryAttributeField.findMany({ where: { categoryId: ownerId, isActive: true, fieldType: 'select' }, select: { key: true } }),
+        this.prisma.categoryAttributeOption.findMany({ where: { categoryId: ownerId }, select: {
+          fieldKey: true, value: true, parentOption: { select: { fieldKey: true, value: true, categoryId: true } },
+        } }),
+      ]);
+      const keys = new Set(fields.map(field => field.key));
+      for (const [key, value] of Object.entries(params.attrs)) {
+        if (!keys.has(key) || !options.some(option => option.fieldKey === key && option.value === value &&
+          (!option.parentOption || option.parentOption.categoryId === ownerId &&
+            params.attrs?.[option.parentOption.fieldKey] === option.parentOption.value))) {
+          throw new BadRequestException(`invalid_catalog_filter:${key}`);
+        }
+      }
+      where.AND = Object.entries(params.attrs).map(([key, value]) => ({ attributes: { path: [key], equals: value } }));
+    }
     if (params.city) where.city = { equals: params.city, mode: 'insensitive' };
     if (typeof params.priceMin === 'number' || typeof params.priceMax === 'number') {
       const min = typeof params.priceMin === 'number' ? Math.max(0, Math.floor(params.priceMin)) : undefined;
@@ -761,16 +781,16 @@ export class ListingsService {
     }
     if (qTrim.length > 0) {
       const groups = searchTermGroups(qTrim);
-      where.AND = groups.length
+      where.AND = [...(Array.isArray(where.AND) ? where.AND : []), ...(groups.length
         ? groups.map(terms => ({
             OR: terms.flatMap(term => [
-              { title: { contains: term, mode: 'insensitive' } },
-              { description: { contains: term, mode: 'insensitive' } },
-              { city: { contains: term, mode: 'insensitive' } },
-              { category: { title: { contains: term, mode: 'insensitive' } } },
+              { title: { contains: term, mode: 'insensitive' as const } },
+              { description: { contains: term, mode: 'insensitive' as const } },
+              { city: { contains: term, mode: 'insensitive' as const } },
+              { category: { title: { contains: term, mode: 'insensitive' as const } } },
             ]),
           }))
-        : [{ id: { in: [] } }];
+        : [{ id: { in: [] } }])];
     }
     if (sort === 'nearby') {
       where.latitude = { not: null };
@@ -796,7 +816,7 @@ export class ListingsService {
     // Keep explicit sorts on the authoritative database path: index relevance
     // and post-page promotion merging must not change their order or page size.
     // Barter also requires eligibility filtering before counting/pagination.
-    if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled() && categoryIds.length <= 1) {
+    if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled() && categoryIds.length <= 1 && !params.attrs) {
       // Recheck hard filters against current database rows, but leave text
       // matching to Meili so typo matches are not lost to SQL substring rules.
       const eligibilityWhere = { ...where };
