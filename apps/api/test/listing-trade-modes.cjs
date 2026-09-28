@@ -149,9 +149,17 @@ async function main() {
       categoryId: autoCategory.id, key: 'fuel', label: 'Топливо',
       sectionId: 'auto_main', sectionTitle: 'Автомобиль', sortOrder: 0,
     } });
+    await db.categoryAttributeField.create({ data: {
+      categoryId: autoCategory.id, key: 'auto_model', label: 'Модель',
+      sectionId: 'auto_main', sectionTitle: 'Автомобиль', parentKey: 'auto_make', sortOrder: 1,
+    } });
     const schema = (await http().get(`/categories/${autoCategory.id}/attribute-schema`).expect(200)).body;
     assert.equal(schema.version, 1);
-    assert.deepEqual(schema.fields, [{ key: 'fuel', label: 'Топливо', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select' }]);
+    assert.equal(schema.optionsQueryVersion, 1);
+    assert.deepEqual(schema.fields, [
+      { key: 'fuel', label: 'Топливо', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: null },
+      { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_make' },
+    ]);
     await db.categoryAttributeOption.createMany({ data: [
       { categoryId: autoCategory.id, fieldKey: 'fuel', value: 'petrol', label: 'Бензин', sortOrder: 0 },
       { categoryId: autoCategory.id, fieldKey: 'fuel', value: 'electric', label: 'Электро', sortOrder: 1 },

@@ -100,6 +100,7 @@ model CategoryAttributeField {
   sectionId String
   sectionTitle String
   fieldType String @default("select")
+  parentKey String?
   sortOrder Int @default(0)
   isActive Boolean @default(true)
 

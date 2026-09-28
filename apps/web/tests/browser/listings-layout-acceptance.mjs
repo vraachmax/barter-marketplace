@@ -61,6 +61,10 @@ async function waitForServer() {
 
 
 const category = { id: 'fixture-category', title: 'Электроника', slug: 'electronics', parentId: null };
+const categorySchema = { version: 1, optionsQueryVersion: 1, fields: [
+  { key: 'condition', label: 'Состояние', sectionId: 'condition_delivery', sectionTitle: 'Состояние и сделка', fieldType: 'select', parentKey: null },
+] };
+const conditionOptions = [{ fieldKey: 'condition', value: 'used_good', label: 'Б/у — хорошее' }];
 const serverUnexpected = [];
 // Home is server-rendered: its API must also stay on an isolated loopback fixture.
 assert(!process.env.NEXT_PUBLIC_API_URL, 'Run this suite without a public API override');
@@ -68,8 +72,8 @@ const api = createServer((req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1:3001');
   let data;
   if (req.method === 'GET' && url.pathname === '/categories') data = [category];
-  else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = [];
-  else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = { version: 1, fields: [] };
+  else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : [];
+  else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [],
@@ -96,7 +100,7 @@ function fixture(theme) {
       { ...base, id: 'fixture-pending', title: 'На модерации', status: 'PENDING', images: [image] },
       { ...base, id: 'fixture-sold', title: 'Проданное объявление', status: 'SOLD', duplicateImageFlag: true, images: [image] },
     ],
-    writes: [], unexpected: [], failListings: false, guest: false,
+    writes: [], unexpected: [], catalogReads: [], failListings: false, guest: false,
   };
 }
 
@@ -148,8 +152,11 @@ async function installFixture(context, state, theme) {
     }
     if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1 });
     if (path === '/categories') return json([category]);
-    if (path === '/categories/fixture-category/attribute-options') return json([]);
-    if (path === '/categories/fixture-category/attribute-schema') return json({ version: 1, fields: [] });
+    if (path === '/categories/fixture-category/attribute-options') {
+      state.catalogReads.push(url.searchParams.get('fieldKey'));
+      return json(url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : []);
+    }
+    if (path === '/categories/fixture-category/attribute-schema') return json(categorySchema);
     if (path === '/listings') return json({ appliedMode: url.searchParams.get('mode') || 'market', page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
     if (path === '/wallet/packages') return json(packages);
@@ -509,6 +516,8 @@ async function scenario(browserType, width, theme) {
       assert.equal(creates[0].body.exchangePreferences.wantedDescription, 'Фотоаппарат с объективом');
       assert.equal(creates[0].body.exchangePreferences.maxCashRub, 5000);
       assert.equal(creates[0].body.exchangePreferences.anyOffer, false);
+      assert(state.catalogReads.includes('condition'), 'catalog options requested for the controlled field');
+      assert(!state.catalogReads.includes(null), 'new schema avoids the unscoped catalog payload');
       checks.push('five-step publication sends exchange-only once with optional valuation');
     }
     state.guest = true;

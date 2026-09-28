@@ -29,7 +29,8 @@ export type CatalogAttributeOption = {
 
 export type CatalogAttributeSchema = {
   version: number;
-  fields: { key: string; label: string; sectionId: string; sectionTitle: string; fieldType: string }[];
+  optionsQueryVersion?: number;
+  fields: { key: string; label: string; sectionId: string; sectionTitle: string; fieldType: string; parentKey?: string | null }[];
 };
 
 /** The database owns the labels of catalog-controlled fields. */
@@ -46,7 +47,8 @@ export function withCatalogFieldDefinitions(
       fields: section.fields.map((field) => {
         const definition = fields.get(field.key);
         return definition?.sectionId === section.id && definition.fieldType === 'select'
-          ? { ...field, label: definition.label, type: 'select' as const }
+          ? { ...field, label: definition.label, type: 'select' as const,
+              dependsOn: definition.parentKey ?? undefined, options: [] }
           : field;
       }),
     };
@@ -85,17 +87,22 @@ export function withCatalogOptions(
 export function changeCatalogAttribute(
   values: Record<string, string>, key: string, value: string,
   choices: CatalogAttributeOption[],
+  schema: CatalogAttributeSchema | null = null,
 ): Record<string, string> {
   const next = { ...values, [key]: value };
   const queue = [key];
   const visited = new Set(queue);
   while (queue.length) {
     const parent = queue.shift();
-    for (const choice of choices) {
-      if (choice.parentFieldKey !== parent || visited.has(choice.fieldKey)) continue;
-      delete next[choice.fieldKey];
-      visited.add(choice.fieldKey);
-      queue.push(choice.fieldKey);
+    const descendants = [
+      ...choices.filter((choice) => choice.parentFieldKey === parent).map((choice) => choice.fieldKey),
+      ...(schema?.fields.filter((field) => field.parentKey === parent).map((field) => field.key) ?? []),
+    ];
+    for (const descendant of descendants) {
+      if (visited.has(descendant)) continue;
+      delete next[descendant];
+      visited.add(descendant);
+      queue.push(descendant);
     }
   }
   return next;
