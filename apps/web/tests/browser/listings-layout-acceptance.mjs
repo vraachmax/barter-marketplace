@@ -179,6 +179,9 @@ async function contained(locator) {
 
 
 async function spacingCheck(page, width, alignHeader = true) {
+  // During hydration the wallet can briefly render both its loading and loaded
+  // shells. Measure only after the transition has settled.
+  await expect(page.locator('.page-content-spacing')).toHaveCount(1);
   const metrics = await page.locator('.page-content-spacing').evaluate(el => {
     const r = el.getBoundingClientRect(), s = getComputedStyle(el);
     const header = document.querySelector('header > div');
