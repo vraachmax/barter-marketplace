@@ -11,6 +11,7 @@ export type ListingAttrField = {
   hint?: string;
   type: ListingAttrFieldType;
   options?: { value: string; label: string }[];
+  dependsOn?: string;
   placeholder?: string;
 };
 
@@ -20,6 +21,59 @@ export type ListingAttrSection = {
   subtitle?: string;
   fields: ListingAttrField[];
 };
+
+export type CatalogAttributeOption = {
+  fieldKey: string; value: string; label: string;
+  parentFieldKey?: string; parentValue?: string;
+};
+
+/** Overlay server-owned choices without changing the existing field layout. */
+export function withCatalogOptions(
+  sections: ListingAttrSection[],
+  choices: CatalogAttributeOption[],
+  values: Record<string, string> = {},
+): ListingAttrSection[] {
+  const byKey = new Map<string, CatalogAttributeOption[]>();
+  for (const choice of choices) {
+    const options = byKey.get(choice.fieldKey) ?? [];
+    options.push(choice);
+    byKey.set(choice.fieldKey, options);
+  }
+  return sections.map((section) => ({
+    ...section,
+    fields: section.fields.map((field) => {
+      const all = byKey.get(field.key);
+      if (!all) return field;
+      const dependsOn = all.find((choice) => choice.parentFieldKey)?.parentFieldKey;
+      const available = all.filter((choice) =>
+        !choice.parentFieldKey || values[choice.parentFieldKey] === choice.parentValue);
+      return {
+        ...field, type: 'select' as const, dependsOn,
+        options: available.map(({ value, label }) => ({ value, label })),
+      };
+    }),
+  }));
+}
+
+/** Changing a parent clears selected descendants before they reach the API. */
+export function changeCatalogAttribute(
+  values: Record<string, string>, key: string, value: string,
+  choices: CatalogAttributeOption[],
+): Record<string, string> {
+  const next = { ...values, [key]: value };
+  const queue = [key];
+  const visited = new Set(queue);
+  while (queue.length) {
+    const parent = queue.shift();
+    for (const choice of choices) {
+      if (choice.parentFieldKey !== parent || visited.has(choice.fieldKey)) continue;
+      delete next[choice.fieldKey];
+      visited.add(choice.fieldKey);
+      queue.push(choice.fieldKey);
+    }
+  }
+  return next;
+}
 
 /** Общие блоки для любой категории */
 export const LISTING_ATTR_COMMON_SECTIONS: ListingAttrSection[] = [
@@ -463,6 +517,9 @@ export function validateListingAttributes(sections: ListingAttrSection[], values
       const raw = (values[field.key] ?? '').trim();
       if (!raw) continue;
       if (raw.length > 500) return `«${field.label}»: не больше 500 символов.`;
+      if (field.type === 'select' && !field.options?.some((option) => option.value === raw)) {
+        return `«${field.label}»: выберите значение из списка.`;
+      }
       if (field.type === 'number') {
         const number = Number(raw.replace(/\s/g, '').replace(',', '.'));
         if (!Number.isFinite(number) || number < 0) return `«${field.label}»: укажите число не меньше нуля.`;

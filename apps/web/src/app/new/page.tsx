@@ -59,6 +59,9 @@ import {
 import ListingCategoryAttributesForm from '@/components/listing-category-attributes-form';
 import {
   getListingAttrSectionsForCategorySlug,
+  withCatalogOptions,
+  changeCatalogAttribute,
+  type CatalogAttributeOption,
   serializeListingAttributes,
   validateListingAttributes,
 } from '@/lib/listing-attributes-config';
@@ -240,6 +243,7 @@ export default function NewListingPage() {
   const [city, setCity] = useState('Москва');
   const [categoryId, setCategoryId] = useState<string>('');
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
+  const [catalogChoices, setCatalogChoices] = useState<{ categoryId: string; values: CatalogAttributeOption[] } | null>(null);
 
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
@@ -295,9 +299,23 @@ export default function NewListingPage() {
     [cats, categoryId],
   );
 
+  useEffect(() => {
+    if (!categoryId) return;
+    let alive = true;
+    void apiFetchJson<CatalogAttributeOption[]>(`/categories/${encodeURIComponent(categoryId)}/attribute-options`)
+      .then((result) => {
+        if (alive && result.ok) setCatalogChoices({ categoryId, values: result.data });
+      });
+    return () => { alive = false; };
+  }, [categoryId]);
+
   const attrSections = useMemo(
-    () => getListingAttrSectionsForCategorySlug(selectedCategory?.slug ?? ''),
-    [selectedCategory],
+    () => withCatalogOptions(
+      getListingAttrSectionsForCategorySlug(selectedCategory?.slug ?? ''),
+      catalogChoices?.categoryId === categoryId ? catalogChoices.values : [],
+      attrValues,
+    ),
+    [selectedCategory, categoryId, catalogChoices, attrValues],
   );
 
   const serializedAttributes = useMemo(
@@ -601,7 +619,10 @@ export default function NewListingPage() {
             attrSections={attrSections}
             attrValues={attrValues}
             onAttrChange={(key, v) =>
-              setAttrValues((prev) => ({ ...prev, [key]: v }))
+              setAttrValues((prev) => changeCatalogAttribute(
+                prev, key, v,
+                catalogChoices?.categoryId === categoryId ? catalogChoices.values : [],
+              ))
             }
             onChangeCategoryClick={() => setStep(1)}
           />
@@ -1401,4 +1422,3 @@ function PostPublishScreen(props: {
     </div>
   );
 }
-

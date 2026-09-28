@@ -85,6 +85,25 @@ model Category {
   children Category[] @relation("CategoryTree")
 
   listings Listing[]
+  attributeOptions CategoryAttributeOption[]
+}
+
+/// Allowed values for a category field. Stable value is stored in Listing.attributes.
+model CategoryAttributeOption {
+  id         String @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  fieldKey   String
+  value      String
+  label      String
+  sortOrder  Int    @default(0)
+  parentOptionId String?
+  parentOption CategoryAttributeOption? @relation("CatalogOptionTree", fields: [parentOptionId], references: [id], onDelete: Restrict)
+  childOptions CategoryAttributeOption[] @relation("CatalogOptionTree")
+
+  @@unique([categoryId, fieldKey, value])
+  @@index([categoryId, fieldKey, sortOrder])
+  @@index([parentOptionId])
 }
 
 model Listing {
