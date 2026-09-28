@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
 
@@ -15,6 +15,19 @@ export class CategoriesService {
       ...category,
       barterAllowed: categoryAllowsBarter(category.slug),
     }));
+  }
+
+  async attributes(categoryId: string) {
+    const category = await this.prisma.category.findUnique({ where: { id: categoryId }, select: { slug: true } });
+    if (!category) throw new NotFoundException('category_not_found');
+    const fields = await this.prisma.catalogField.findMany({
+      where: { categorySlug: category.slug }, orderBy: [{ sortOrder: 'asc' }, { key: 'asc' }],
+      select: { key: true, label: true, dependsOnKey: true, options: {
+        orderBy: [{ sortOrder: 'asc' }, { value: 'asc' }],
+        select: { value: true, label: true, parentValue: true, enabled: true },
+      } },
+    });
+    return { version: 1, fields };
   }
 
   async ensureSeed() {

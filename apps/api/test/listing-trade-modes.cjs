@@ -8,13 +8,15 @@ const { PrismaClient } = require('@prisma/client');
 const { ListingsService } = require('../dist/listings/listings.service');
 const { ListingsController } = require('../dist/listings/listings.controller');
 const { MediaStorageService } = require('../dist/storage/media-storage.service');
+const { CategoriesController } = require('../dist/categories/categories.controller');
+const { CategoriesService } = require('../dist/categories/categories.service');
 
 async function main() {
   const url = new URL(process.env.DATABASE_URL);
   assert.equal(url.hostname, '127.0.0.1');
   assert.equal(url.pathname, '/barter_message_ci');
   const db = new PrismaClient();
-  let app, owner, outsider, category, wantedCategory;
+  let app, owner, outsider, category, wantedCategory, autoCategory;
   let indexed = false;
   try {
     owner = await db.user.create({ data: { name: 'Trade mode fixture' } });
@@ -31,9 +33,10 @@ async function main() {
     };
     const service = new ListingsService(db, meili, { tryResolveUserId: () => null }, {});
     const module = await Test.createTestingModule({
-      controllers: [ListingsController],
+      controllers: [ListingsController, CategoriesController],
       providers: [
         { provide: ListingsService, useValue: service },
+        { provide: CategoriesService, useValue: new CategoriesService(db) },
         { provide: MediaStorageService, useValue: {} },
       ],
     }).overrideGuard(AuthGuard('jwt')).useValue({ canActivate(context) {
@@ -140,6 +143,45 @@ async function main() {
     await patch(exchange.id, { barterEnabled: true, exchangePreferences: null }).expect(200);
     assert.equal((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences, null);
     console.log('PASS exchange wishes persist, validate category/budget/owner, survive sale mode and clear explicitly');
+    autoCategory = await db.category.create({ data: { slug: 'auto', title: 'Авто' } });
+    const schema = (await http().get('/categories/' + autoCategory.id + '/attributes').expect(200)).body;
+    assert.equal(schema.version, 1);
+    assert.equal(schema.fields.length, 4);
+    assert(schema.fields.find(f => f.key === 'fuel').options.some(o => o.value === 'diesel'));
+    await http().get('/categories/missing/attributes').expect(404);
+    const cars = [];
+    for (const fuel of ['petrol', 'diesel']) {
+      const body = { title: 'Автомобиль ' + fuel, description: 'Исправный автомобиль для ежедневных поездок.', city: 'Краснодар', categoryId: autoCategory.id, priceRub: 500000, latitude: 45, longitude: 39, saleEnabled: true, barterEnabled: true, attributes: { fuel, drive: 'awd' } };
+      await http().post('/listings').set('x-fixture-user', owner.id).send({ ...body, attributes: { fuel: 'made-up' } }).expect(400);
+      cars.push((await http().post('/listings').set('x-fixture-user', owner.id).send(body).expect(201)).body);
+    }
+    await db.listingPromotion.create({ data: { listingId: cars[0].id, type: 'VIP', weight: 120, startsAt: new Date(0), endsAt: new Date('2099-01-01') } });
+    const attributeFilters = JSON.stringify({ fuel: 'diesel', drive: 'awd' });
+    for (const useIndex of [false, true]) {
+      indexed = useIndex;
+      for (const mode of ['market', 'barter']) for (const sort of ['relevant', 'new', 'cheap', 'expensive', 'nearby']) {
+        const query = { categoryId: autoCategory.id, attributeFilters, mode, sort, limit: 1, lat: 45, lon: 39, ...(useIndex ? { q: 'Краснодар' } : {}) };
+        const result = (await http().get('/listings').query(query).expect(200)).body;
+        assert.equal(result.appliedAttributeFilters, attributeFilters);
+        assert.equal(result.total, 1);
+        assert.deepEqual(result.items.map(x => x.id), [cars[1].id]);
+        assert(!result.vipStrip.some(x => x.id === cars[0].id));
+        const second = (await http().get('/listings').query({ ...query, page: 2 }).expect(200)).body;
+        assert.equal(second.total, 1);
+        assert.equal(second.items.length, 0);
+      }
+    }
+    for (const raw of ['null', '{"fuel":"wrong"}', '{"unknown":"value"}', '{"fuel":1}']) {
+      await http().get('/listings').query({ categoryId: autoCategory.id, attributeFilters: raw }).expect(400);
+    }
+    await http().get('/listings').query({ attributeFilters }).expect(400);
+    await patch(cars[1].id, { attributes: { fuel: 'wrong' } }).expect(400);
+    await patch(cars[1].id, { attributes: { fuel: 'electric', drive: 'fwd' } }).expect(200);
+    assert.equal((await http().get('/listings/' + cars[1].id).expect(200)).body.attributes.fuel, 'electric');
+    await db.listing.update({ where: { id: cars[0].id }, data: { attributes: { fuel: 'Legacy fuel' } } });
+    await patch(cars[0].id, { attributes: { fuel: 'Legacy fuel', mileage: 100 } }).expect(200);
+    await patch(cars[0].id, { attributes: { fuel: 'Different legacy' } }).expect(400);
+    console.log('PASS shared catalog schema, strict writes, legacy edit preservation, filters before paging/VIP/stale index in both modes');
   } finally {
     if (app) await app.close();
     if (owner) {
@@ -150,6 +192,7 @@ async function main() {
     }
     if (category) await db.category.delete({ where: { id: category.id } });
     if (wantedCategory) await db.category.delete({ where: { id: wantedCategory.id } });
+    if (autoCategory) await db.category.delete({ where: { id: autoCategory.id } });
     await db.user.deleteMany({ where: { id: { in: [owner?.id, outsider?.id].filter(Boolean) } } });
     await db.$disconnect();
   }

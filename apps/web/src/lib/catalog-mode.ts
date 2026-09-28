@@ -14,7 +14,7 @@ export function modeFromCookie(cookie: string): CatalogMode {
 
 export function catalogModeHref(path: '/' | '/search', values: Record<string, string>, mode: CatalogMode) {
   const query = new URLSearchParams();
-  for (const key of ['q', 'city', 'categoryId', 'priceMin', 'priceMax', 'sort', 'lat', 'lon', 'radiusKm']) {
+  for (const key of ['q', 'city', 'categoryId', 'priceMin', 'priceMax', 'sort', 'lat', 'lon', 'radiusKm', 'attributeFilters']) {
     if (values[key] !== undefined) query.set(key, values[key]);
   }
   query.set('mode', mode);
@@ -49,4 +49,3 @@ export function catalogErrorMessage(error: unknown): string {
     ? 'Режим «Бартер» появится после обновления сервера. Сейчас можно смотреть объявления в «Маркете».'
     : 'Не удалось загрузить объявления. Проверьте фильтры и повторите попытку.';
 }
-

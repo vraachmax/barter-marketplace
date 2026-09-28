@@ -73,6 +73,7 @@ function ListingsContent() {
     categoryId: '',
     priceRub: '',
     tradeMode: 'sale' as ListingTradeMode,
+    attributes: {} as Record<string, unknown>,
     exchangePreferences: emptyExchangePreferences(),
   });
 
@@ -134,6 +135,7 @@ function ListingsContent() {
       city: x.city,
       categoryId: x.category.id,
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
+      attributes: x.attributes ?? {},
       tradeMode: listingTradeMode(x),
       exchangePreferences: x.exchangePreferences ?? emptyExchangePreferences(),
     });
@@ -155,7 +157,7 @@ function ListingsContent() {
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
-      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: modes.barterEnabled },
+      attributes: { ...editForm.attributes, isBarter: modes.barterEnabled },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
     payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
@@ -359,4 +361,3 @@ export default function ListingsPage() {
     <ListingsLoading />
   </div>}><ListingsContent /></Suspense>;
 }
-

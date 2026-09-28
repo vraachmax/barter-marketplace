@@ -47,7 +47,7 @@ describe('GET /listings query validation', () => {
         page: '2',
         limit: '20',
       })
-      .expect(200, { items: [], appliedMode: 'market' });
+      .expect(200, { items: [], appliedMode: 'market', appliedAttributeFilters: '' });
 
     expect(list).toHaveBeenCalledTimes(1);
     expect(list).toHaveBeenCalledWith({
@@ -74,7 +74,7 @@ describe('GET /listings query validation', () => {
   it('acknowledges the requested exchange filter for older-client compatibility', async () => {
     await request(app.getHttpServer())
       .get('/listings?mode=barter')
-      .expect(200, { items: [], appliedMode: 'barter' });
+      .expect(200, { items: [], appliedMode: 'barter', appliedAttributeFilters: '' });
     expect(list).toHaveBeenCalledWith({
       mode: 'barter',
       page: 1,

@@ -96,6 +96,7 @@ async function installFixture(context, state, theme) {
       return json({ message: 'unexpected fixture mutation' }, 405);
     }
     if (path === '/categories') return json([state.category]);
+    if (/^\/categories\/[^/]+\/attributes$/.test(path)) return json({ version: 1, fields: [] });
     if (path === '/listings/my') return json([state.listing]);
     if (path === '/chats' || path === '/support/faq') return json([]);
     if (path === '/users/fixture-seller/profile') return json({
