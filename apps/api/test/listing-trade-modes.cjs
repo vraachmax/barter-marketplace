@@ -7,6 +7,8 @@ const request = require('supertest');
 const { PrismaClient } = require('@prisma/client');
 const { ListingsService } = require('../dist/listings/listings.service');
 const { ListingsController } = require('../dist/listings/listings.controller');
+const { CategoriesController } = require('../dist/categories/categories.controller');
+const { CategoriesService } = require('../dist/categories/categories.service');
 const { MediaStorageService } = require('../dist/storage/media-storage.service');
 
 async function main() {
@@ -14,7 +16,7 @@ async function main() {
   assert.equal(url.hostname, '127.0.0.1');
   assert.equal(url.pathname, '/barter_message_ci');
   const db = new PrismaClient();
-  let app, owner, outsider, category, wantedCategory;
+  let app, owner, outsider, category, wantedCategory, autoCategory;
   let indexed = false;
   try {
     owner = await db.user.create({ data: { name: 'Trade mode fixture' } });
@@ -31,9 +33,10 @@ async function main() {
     };
     const service = new ListingsService(db, meili, { tryResolveUserId: () => null }, {});
     const module = await Test.createTestingModule({
-      controllers: [ListingsController],
+      controllers: [ListingsController, CategoriesController],
       providers: [
         { provide: ListingsService, useValue: service },
+        { provide: CategoriesService, useValue: new CategoriesService(db) },
         { provide: MediaStorageService, useValue: {} },
       ],
     }).overrideGuard(AuthGuard('jwt')).useValue({ canActivate(context) {
@@ -140,6 +143,38 @@ async function main() {
     await patch(exchange.id, { barterEnabled: true, exchangePreferences: null }).expect(200);
     assert.equal((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences, null);
     console.log('PASS exchange wishes persist, validate category/budget/owner, survive sale mode and clear explicitly');
+
+    autoCategory = await db.category.create({ data: { slug: 'auto', title: 'Авто' } });
+    await db.categoryAttributeOption.createMany({ data: [
+      { categoryId: autoCategory.id, fieldKey: 'fuel', value: 'petrol', label: 'Бензин', sortOrder: 0 },
+      { categoryId: autoCategory.id, fieldKey: 'fuel', value: 'electric', label: 'Электро', sortOrder: 1 },
+    ] });
+    const bmw = await db.categoryAttributeOption.create({ data: {
+      categoryId: autoCategory.id, fieldKey: 'auto_make', value: 'bmw', label: 'BMW',
+    } });
+    await db.categoryAttributeOption.create({ data: {
+      categoryId: autoCategory.id, fieldKey: 'auto_make', value: 'lada', label: 'Lada',
+    } });
+    await db.categoryAttributeOption.create({ data: {
+      categoryId: autoCategory.id, fieldKey: 'auto_model', value: '3-series', label: '3 Series', parentOptionId: bmw.id,
+    } });
+    const choices = (await http().get(`/categories/${autoCategory.id}/attribute-options`).set('x-fixture-user', owner.id).expect(200)).body;
+    assert.deepEqual(choices.find(x => x.value === '3-series'), {
+      fieldKey: 'auto_model', value: '3-series', label: '3 Series', parentFieldKey: 'auto_make', parentValue: 'bmw',
+    });
+    assert.deepEqual(choices.filter(x => x.fieldKey === 'fuel').map(x => x.value), ['petrol', 'electric']);
+    const car = await http().post('/listings').set('x-fixture-user', owner.id).send({
+      title: 'Автомобиль городской электрический', description: 'Электромобиль с проверенной историей обслуживания.',
+      city: 'Краснодар', categoryId: autoCategory.id, priceRub: 800000,
+      attributes: { fuel: 'electric' },
+    }).expect(201);
+    assert.equal(car.body.attributes.fuel, 'electric');
+    await patch(car.body.id, { attributes: { fuel: 'coal' } }).expect(400);
+    await patch(car.body.id, { attributes: { fuel: 'petrol' } }).expect(200);
+    assert.equal((await db.listing.findUniqueOrThrow({ where: { id: car.body.id } })).attributes.fuel, 'petrol');
+    await patch(car.body.id, { attributes: { fuel: 'petrol', auto_make: 'bmw', auto_model: '3-series' } }).expect(200);
+    await patch(car.body.id, { attributes: { fuel: 'petrol', auto_make: 'lada', auto_model: '3-series' } }).expect(400);
+    console.log('PASS catalog choices endpoint, stored value and rejected unknown choice');
   } finally {
     if (app) await app.close();
     if (owner) {
@@ -150,6 +185,7 @@ async function main() {
     }
     if (category) await db.category.delete({ where: { id: category.id } });
     if (wantedCategory) await db.category.delete({ where: { id: wantedCategory.id } });
+    if (autoCategory) await db.category.delete({ where: { id: autoCategory.id } });
     await db.user.deleteMany({ where: { id: { in: [owner?.id, outsider?.id].filter(Boolean) } } });
     await db.$disconnect();
   }

@@ -1,6 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getListingAttrSectionsForCategorySlug as sections, serializeListingAttributes as serialize, validateListingAttributes as validate, formatListingAttributeValue as format } from '../src/lib/listing-attributes-config.ts';
+import { getListingAttrSectionsForCategorySlug as sections, serializeListingAttributes as serialize, validateListingAttributes as validate, formatListingAttributeValue as format, withCatalogOptions, changeCatalogAttribute } from '../src/lib/listing-attributes-config.ts';
+
+test('server catalog choices drive vehicle select without changing other fields', () => {
+  const configured = withCatalogOptions(sections('auto'), [{ fieldKey: 'fuel', value: 'hydrogen', label: 'Водород' }]);
+  const fuel = configured.flatMap(section => section.fields).find(field => field.key === 'fuel');
+  assert.deepEqual(fuel.options, [{ value: 'hydrogen', label: 'Водород' }]);
+  assert.deepEqual(serialize(configured, { fuel: 'hydrogen', auto_year: '2024' }), { fuel: 'hydrogen', auto_year: 2024 });
+  assert.match(validate(configured, { fuel: 'petrol' }), /выберите значение из списка/);
+  assert.equal(validate(configured, { fuel: 'hydrogen' }), null);
+  assert.ok(sections('auto').flatMap(section => section.fields).find(field => field.key === 'fuel').options.length > 1);
+});
+
+test('dependent model options follow the selected make and clear on parent change', () => {
+  const choices = [
+    { fieldKey: 'auto_make', value: 'bmw', label: 'BMW' },
+    { fieldKey: 'auto_make', value: 'lada', label: 'Lada' },
+    { fieldKey: 'auto_model', value: '3-series', label: '3 Series', parentFieldKey: 'auto_make', parentValue: 'bmw' },
+    { fieldKey: 'auto_model', value: 'vesta', label: 'Vesta', parentFieldKey: 'auto_make', parentValue: 'lada' },
+  ];
+  const fields = withCatalogOptions(sections('auto'), choices, { auto_make: 'bmw' }).flatMap(section => section.fields);
+  assert.equal(fields.find(field => field.key === 'auto_make').type, 'select');
+  assert.deepEqual(fields.find(field => field.key === 'auto_model').options, [{ value: '3-series', label: '3 Series' }]);
+  assert.match(validate([{ id: 'auto', title: 'Авто', fields }], { auto_make: 'bmw', auto_model: 'vesta' }), /выберите значение/);
+  assert.deepEqual(changeCatalogAttribute({ auto_make: 'bmw', auto_model: '3-series' }, 'auto_make', 'lada', choices), { auto_make: 'lada' });
+});
 
 test('job has meaningful vacancy fields and no product condition or delivery', () => {
   const keys = sections('job').flatMap(section => section.fields.map(field => field.key));

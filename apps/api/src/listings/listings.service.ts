@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { categoryAllowsBarter } from '../categories/barter-policy';
+import { AUTO_ATTRIBUTE_OPTIONS, invalidCatalogOption } from '../categories/attribute-options';
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
 import { searchTermGroups } from '../search/search-synonyms';
@@ -67,6 +68,33 @@ export class ListingsService {
     private readonly analytics: AnalyticsService,
     private readonly mediaStorage: MediaStorageService,
   ) {}
+
+  private async validateCategoryOptions(categoryId: string, attributes?: Record<string, unknown>) {
+    const managedKeys = [...Object.keys(AUTO_ATTRIBUTE_OPTIONS), 'auto_make', 'auto_model', 'auto_generation'];
+    const selected = attributes && managedKeys.filter((key) =>
+      attributes[key] !== undefined && attributes[key] !== null && attributes[key] !== '');
+    if (!attributes || !selected?.length) return;
+    const rows = await this.prisma.categoryAttributeOption.findMany({
+      where: { categoryId }, select: {
+        fieldKey: true, value: true,
+        parentOption: { select: { categoryId: true, fieldKey: true, value: true } },
+      },
+    });
+    const options = rows.filter(({ parentOption }) => !parentOption || parentOption.categoryId === categoryId)
+      .map(({ parentOption, ...row }) => ({
+      ...row,
+      ...(parentOption
+        ? { parentFieldKey: parentOption.fieldKey, parentValue: parentOption.value }
+        : {}),
+      }));
+    for (const key of selected) {
+      if (key in AUTO_ATTRIBUTE_OPTIONS && !options.some((option) => option.fieldKey === key)) {
+        throw new BadRequestException(`invalid_catalog_option:${key}`);
+      }
+    }
+    const invalid = invalidCatalogOption(attributes, options);
+    if (invalid) throw new BadRequestException(`invalid_catalog_option:${invalid}`);
+  }
 
   private startOfUtcDay(d: Date): Date {
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
@@ -483,6 +511,7 @@ export class ListingsService {
       where: { id: dto.categoryId }, select: { slug: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
+    await this.validateCategoryOptions(dto.categoryId, dto.attributes);
     const modes = resolveListingModes(dto, undefined, categoryAllowsBarter(category.slug));
     const exchangePreferences = dto.exchangePreferences === undefined ? null : await this.validateExchangePreferences(dto.exchangePreferences, modes.barterEnabled);
     await this.assertListingDailyLimit(userId);
@@ -1290,6 +1319,7 @@ export class ListingsService {
       where: { id: dto.categoryId ?? current.categoryId }, select: { slug: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
+    await this.validateCategoryOptions(dto.categoryId ?? current.categoryId, dto.attributes);
     const currentAttributes = current.attributes && typeof current.attributes === 'object' && !Array.isArray(current.attributes)
       ? current.attributes : {};
     const modes = resolveListingModes(dto, { ...current, attributes: currentAttributes }, categoryAllowsBarter(category.slug));
@@ -1567,5 +1597,3 @@ export class ListingsService {
     return { ok: true };
   }
 }
-
-

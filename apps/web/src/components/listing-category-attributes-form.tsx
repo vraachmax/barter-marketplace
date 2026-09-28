@@ -26,10 +26,10 @@ export default function ListingCategoryAttributesForm({ sections, values, onFiel
                   {field.hint ? (
                     <p className="mb-1.5 text-xs text-muted-foreground">{field.hint}</p>
                   ) : null}
-                  {field.type === 'select' && field.options?.length ? (
-                    <select value={values[field.key] ?? ''} onChange={(event) => onFieldChange(field.key, event.target.value)} className="min-h-12 w-full min-w-0 rounded-2xl border border-border bg-muted/50 px-3 text-base outline-none focus:ring-2 focus:ring-primary/30">
-                      <option value="">Не выбрано</option>
-                      {field.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  {field.type === 'select' ? (
+                    <select value={values[field.key] ?? ''} disabled={Boolean(field.dependsOn && !values[field.dependsOn])} onChange={(event) => onFieldChange(field.key, event.target.value)} className="min-h-12 w-full min-w-0 rounded-2xl border border-border bg-muted/50 px-3 text-base outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60">
+                      <option value="">{field.dependsOn && !values[field.dependsOn] ? 'Сначала выберите предыдущее поле' : 'Не выбрано'}</option>
+                      {field.options?.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
                   ) : null}
                   {field.type === 'textarea' ? <textarea maxLength={500} rows={3} value={values[field.key] ?? ''} onChange={(event) => onFieldChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-28 w-full resize-y rounded-2xl border border-border bg-muted/50 px-3 py-3 text-base outline-none focus:ring-2 focus:ring-primary/30" /> : null}
