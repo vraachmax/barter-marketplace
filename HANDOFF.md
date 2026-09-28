@@ -1,5 +1,18 @@
 # Barter Clone — Handoff Context
 
+## 2026-09-28: TXT-03, VehiclesDB выпущен PR #46
+
+PR #46 слит в `2668d73ee7014957ff123ddad0f7de532f5f430c`.
+Проверки dependency, PostgreSQL import acceptance и web browser CI успешны;
+Vercel production status success, Render `dep-data3cgu01pc73frph80` live,
+ошибок запуска в проверенном окне логов нет. CI подтвердил 308 марок,
+5 455 моделей, scoped 38 моделей Lada и идемпотентность. Прямой подсчёт строк
+production-БД не выполнен: read-only инструмент вернул INVALID_ARGUMENT.
+Нет поколений/комплектаций, полной РФ-полноты, редактора и обменного matching;
+TXT-03 продолжается. Не переходить к аналитике TXT-09/10 до следующего решения
+о границе этого блока. База Render free имеет указанный платформой срок
+окончания 2026-10-03 — проверить план/сохранность отдельно.
+
 ## 2026-09-28: TXT-03, импорт VehiclesDB в текущей ветке
 
 Полный blob закреплённого VehiclesDB v2026.09.1 проверен: 308 марок,
