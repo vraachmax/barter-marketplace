@@ -1,0 +1,12 @@
+{$SITE_DOMAIN} {
+    encode zstd gzip
+
+    @socket path /socket.io /socket.io/*
+    handle @socket {
+        reverse_proxy api:3001
+    }
+
+    handle {
+        reverse_proxy web:3000
+    }
+}

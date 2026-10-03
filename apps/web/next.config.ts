@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 // 127.0.0.1: на Windows localhost → ::1, Nest на IPv4 — нормализуем хост
 const rawApi =
+  process.env.API_INTERNAL_URL?.replace(/\/+$/, "") ||
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
   "http://127.0.0.1:3001";
 const apiUrl = rawApi.replace(/^http:\/\/localhost(?=:)/i, "http://127.0.0.1");
