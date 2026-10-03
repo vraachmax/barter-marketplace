@@ -4,7 +4,7 @@
 
 Максим отказался оплачивать восстановление Render PostgreSQL и разрешил начать
 с пустой базы: старые аккаунты, объявления, чаты и фото не переносим. Создана
-ветка `feat/yandex-portable-stack` от `origin/master`: VM-стек Docker Compose
+ветка `feat/yandex-portable-stack` от `origin/master`, draft PR #48: VM-стек Docker Compose
 для Next/Nest/PostgreSQL/Meilisearch/Caddy, постоянные тома БД/медиа/поиска,
 применение миграций при запуске и разделение внутреннего адреса API от
 публичного same-origin пути в Next.js. Инструкция `deploy/yandex/README.md`.
