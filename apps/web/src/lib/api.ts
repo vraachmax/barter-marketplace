@@ -13,14 +13,16 @@ const isServer = typeof window === 'undefined';
 
 /** Локальный API: 127.0.0.1, не localhost — иначе на Windows Node fetch часто бьёт в ::1, Nest на IPv4 → ECONNREFUSED / «fetch failed» */
 const LOCAL_API_ORIGIN = 'http://127.0.0.1:3001';
+const internalApiUrl = isServer ? normalizeApiOrigin(process.env.API_INTERNAL_URL) : undefined;
 
 // For local/dev without explicit public API URL:
-// - server components call local API directly
-// - browser calls same-origin paths (works behind reverse proxy/tunnel)
-export const API_URL = explicitApiUrl ?? (isServer ? LOCAL_API_ORIGIN : '/api/backend');
+// - server fetches use the internal container address
+// - rendered links and browser fetches use the public same-origin proxy
+export const API_URL = explicitApiUrl ?? '/api/backend';
+const requestApiUrl = isServer ? (internalApiUrl ?? explicitApiUrl ?? LOCAL_API_ORIGIN) : API_URL;
 const browserHost = typeof window !== 'undefined' ? window.location.hostname : '';
 const localhostBrowser = browserHost === 'localhost' || browserHost === '127.0.0.1';
-export const SOCKET_URL = explicitApiUrl ?? (isServer || localhostBrowser ? LOCAL_API_ORIGIN : '');
+export const SOCKET_URL = explicitApiUrl ?? (localhostBrowser && !internalApiUrl ? LOCAL_API_ORIGIN : '');
 
 export function resolveAssetUrl(
   url: string | null | undefined,
@@ -329,13 +331,13 @@ export type ProSubscription = {
 };
 
 export async function apiGetJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = `${API_URL}${path}`;
+  const url = `${requestApiUrl}${path}`;
   let res: Response;
   try {
     res = await fetch(url, { cache: 'no-store', ...init });
   } catch (e) {
     const hint =
-      API_URL && !explicitApiUrl
+      !internalApiUrl && !explicitApiUrl
         ? ` Проверьте, что API запущен (npm run dev:api) и порт 3001 свободен.`
         : '';
     const msg = e instanceof Error ? e.message : String(e);
@@ -358,7 +360,7 @@ export async function apiFetchJson<T>(
     const token = getClientToken();
     const authHeaders: Record<string, string> = {};
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${requestApiUrl}${path}`, {
       ...init,
       credentials: 'include',
       headers: {
@@ -405,7 +407,7 @@ export async function apiUploadImage(
     const token = getClientToken();
     const authHeaders: Record<string, string> = {};
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${requestApiUrl}${path}`, {
       method: 'POST',
       body: fd,
       credentials: 'include',
@@ -446,7 +448,7 @@ export async function apiUploadFile(
     const token = getClientToken();
     const authHeaders: Record<string, string> = {};
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${requestApiUrl}${path}`, {
       method: 'POST',
       body: fd,
       signal: options?.signal,
@@ -471,4 +473,3 @@ export async function apiUploadFile(
     return { ok: false, status: 0, message: e?.message ?? 'network_error' };
   }
 }
-
