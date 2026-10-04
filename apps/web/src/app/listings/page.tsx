@@ -24,6 +24,7 @@ import {
   type MyListing,
 } from '@/lib/api';
 import ListingPlaceholder from '@/components/listing-placeholder';
+import { attributeFormValues } from '@/lib/listing-attributes-config';
 import { ListingEditorDialog } from '@/components/listing-editor-dialog';
 import { useListingActions } from '@/lib/use-listing-actions';
 
@@ -74,6 +75,7 @@ function ListingsContent() {
     priceRub: '',
     tradeMode: 'sale' as ListingTradeMode,
     exchangePreferences: emptyExchangePreferences(),
+    attributeValues: {} as Record<string, string>,
   });
 
   function setListingTab(tab: ListingTab) {
@@ -136,10 +138,11 @@ function ListingsContent() {
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
       tradeMode: listingTradeMode(x),
       exchangePreferences: x.exchangePreferences ?? emptyExchangePreferences(),
+      attributeValues: attributeFormValues(x.attributes),
     });
   }
 
-  async function saveEdit(id: string) {
+  async function saveEdit(id: string, attributes: Record<string, unknown>) {
     const category = categories.find((item) => item.id === editForm.categoryId);
     if (!category) return false;
     setModeError('');
@@ -155,7 +158,7 @@ function ListingsContent() {
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
-      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: modes.barterEnabled },
+      attributes: { ...attributes, isBarter: modes.barterEnabled },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
     payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
@@ -233,7 +236,7 @@ function ListingsContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AccountScreenHeader title="Мои объявления" subtitle="Публикация и управление" backHref="/" backLabel="Назад в ленту" width="wide" />
-      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={modeError || (actionError ? actionNotice : undefined)} authHref={actionNeedsLogin ? '/auth?next=%2Flistings' : undefined} /> : null}
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} originalAttributes={listings.find(item => item.id === editingId)?.attributes ?? {}} originalCategoryId={listings.find(item => item.id === editingId)?.category.id ?? ''} onSave={(attributes) => saveEdit(editingId, attributes)} onClose={() => setEditingId(null)} saveError={modeError || (actionError ? actionNotice : undefined)} authHref={actionNeedsLogin ? '/auth?next=%2Flistings' : undefined} /> : null}
       {promoteTarget ? <PromoteDialog open onOpenChange={(open) => { if (!open) setPromoteTarget(null); }} listingId={promoteTarget.id} listingTitle={promoteTarget.title} onSuccess={() => void loadData()} /> : null}
 
       <main className="mx-auto max-w-6xl page-content-spacing px-4 pt-6 md:px-6">
@@ -359,4 +362,3 @@ export default function ListingsPage() {
     <ListingsLoading />
   </div>}><ListingsContent /></Suspense>;
 }
-

@@ -25,5 +25,9 @@ describe('catalog attribute choices', () => {
     expect(invalidCatalogOption({ auto_make: 'bmw', auto_model: '3-series' }, hierarchy)).toBeNull();
     expect(invalidCatalogOption({ auto_make: 'lada', auto_model: '3-series' }, hierarchy)).toBe('auto_model');
     expect(invalidCatalogOption({ auto_model: '3-series' }, hierarchy)).toBe('auto_model');
+    const legacy = { auto_make: 'bmw', auto_model: 'retired-model' };
+    expect(invalidCatalogOption(legacy, hierarchy, legacy)).toBeNull();
+    expect(invalidCatalogOption(legacy, hierarchy)).toBe('auto_model');
+    expect(invalidCatalogOption({ ...legacy, auto_make: 'lada' }, hierarchy, legacy)).toBe('auto_model');
   });
 });

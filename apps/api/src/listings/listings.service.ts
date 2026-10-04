@@ -70,7 +70,7 @@ export class ListingsService {
     private readonly mediaStorage: MediaStorageService,
   ) {}
 
-  private async validateCategoryOptions(categoryId: string, attributes?: Record<string, unknown>) {
+  private async validateCategoryOptions(categoryId: string, attributes?: Record<string, unknown>, previous?: Record<string, unknown>) {
     const managedKeys = [...Object.keys(AUTO_ATTRIBUTE_OPTIONS), 'auto_make', 'auto_model', 'auto_generation'];
     const selected = attributes && managedKeys.filter((key) =>
       attributes[key] !== undefined && attributes[key] !== null && attributes[key] !== '');
@@ -85,7 +85,7 @@ export class ListingsService {
       }),
       this.prisma.categoryAttributeField.findMany({
         where: { categoryId: ownerId, key: { in: selected }, isActive: true, fieldType: 'select' },
-        select: { key: true },
+        select: { key: true, parentKey: true },
       }),
     ]);
     const options = rows.filter(({ parentOption }) => !parentOption || parentOption.categoryId === ownerId)
@@ -96,12 +96,14 @@ export class ListingsService {
         : {}),
       }));
     for (const key of selected) {
+      const parent = fields.find(field => field.key === key)?.parentKey;
+      if (previous && attributes[key] === previous[key] && (!parent || attributes[parent] === previous[parent])) continue;
       if ((key in AUTO_ATTRIBUTE_OPTIONS || fields.some(field => field.key === key)) &&
           !options.some((option) => option.fieldKey === key)) {
         throw new BadRequestException(`invalid_catalog_option:${key}`);
       }
     }
-    const invalid = invalidCatalogOption(attributes, options);
+    const invalid = invalidCatalogOption(attributes, options, previous);
     if (invalid) throw new BadRequestException(`invalid_catalog_option:${invalid}`);
   }
 
@@ -1356,9 +1358,10 @@ export class ListingsService {
       where: { id: dto.categoryId ?? current.categoryId }, select: { slug: true, parentId: true },
     });
     if (!category) throw new NotFoundException('category_not_found');
-    await this.validateCategoryOptions(dto.categoryId ?? current.categoryId, dto.attributes);
     const currentAttributes = current.attributes && typeof current.attributes === 'object' && !Array.isArray(current.attributes)
       ? current.attributes : {};
+    await this.validateCategoryOptions(dto.categoryId ?? current.categoryId, dto.attributes,
+      !dto.categoryId || dto.categoryId === current.categoryId ? currentAttributes : undefined);
     const rootSlug = category.parentId ? (await categoryLineage(this.prisma, dto.categoryId ?? current.categoryId)).at(-1)!.slug : category.slug;
     const modes = resolveListingModes(dto, { ...current, attributes: currentAttributes }, categoryAllowsBarter(rootSlug));
 

@@ -56,14 +56,11 @@ import {
   type AuthMe,
   type Category,
 } from '@/lib/api';
+import { useListingAttributeCatalog } from '@/hooks/use-listing-attribute-catalog';
 import ListingCategoryAttributesForm from '@/components/listing-category-attributes-form';
 import {
   getListingAttrSectionsForCategorySlug,
-  withCatalogFieldDefinitions,
-  withCatalogOptions,
   changeCatalogAttribute,
-  type CatalogAttributeOption,
-  type CatalogAttributeSchema,
   serializeListingAttributes,
   validateListingAttributes,
 } from '@/lib/listing-attributes-config';
@@ -245,8 +242,6 @@ export default function NewListingPage() {
   const [city, setCity] = useState('Москва');
   const [categoryId, setCategoryId] = useState<string>('');
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
-  const [catalogChoices, setCatalogChoices] = useState<{ categoryId: string; values: CatalogAttributeOption[] } | null>(null);
-  const [catalogSchema, setCatalogSchema] = useState<{ categoryId: string; value: CatalogAttributeSchema } | null>(null);
 
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
@@ -302,74 +297,8 @@ export default function NewListingPage() {
     [cats, categoryId],
   );
 
-  useEffect(() => {
-    if (!categoryId) return;
-    let alive = true;
-    void (async () => {
-      const base = `/categories/${encodeURIComponent(categoryId)}`;
-      const result = await apiFetchJson<CatalogAttributeSchema>(`${base}/attribute-schema`);
-      if (!alive) return;
-      if (result.ok && Array.isArray(result.data?.fields)) {
-        setCatalogSchema({ categoryId, value: result.data });
-      }
-      if (result.ok && Array.isArray(result.data?.fields) && result.data.optionsQueryVersion === 1) {
-        setCatalogChoices({ categoryId, values: [] });
-        const roots = result.data.fields.filter((field) => field.fieldType === 'select' && !field.parentKey);
-        const responses = await Promise.all(roots.map((field) =>
-          apiFetchJson<CatalogAttributeOption[]>(`${base}/attribute-options?fieldKey=${encodeURIComponent(field.key)}`)));
-        if (alive) setCatalogChoices({ categoryId, values: responses.flatMap((response) =>
-          response.ok && Array.isArray(response.data) ? response.data : []) });
-      } else {
-        // Older API: retain the original all-options contract until it is upgraded.
-        const legacy = await apiFetchJson<CatalogAttributeOption[]>(`${base}/attribute-options`);
-        if (alive && legacy.ok) setCatalogChoices({ categoryId, values: legacy.data });
-      }
-    })();
-    return () => { alive = false; };
-  }, [categoryId]);
-
-  const parentSignature = JSON.stringify(
-    catalogSchema?.categoryId === categoryId
-      ? Object.fromEntries(catalogSchema.value.fields.filter((field) => field.parentKey)
-          .map((field) => [field.parentKey, attrValues[field.parentKey!] ?? '']))
-      : {},
-  );
-
-  useEffect(() => {
-    if (!categoryId || catalogSchema?.categoryId !== categoryId) return;
-    const dependents = catalogSchema.value.fields.filter((field) => field.fieldType === 'select' && field.parentKey);
-    if (dependents.length === 0) return;
-    const selected = JSON.parse(parentSignature) as Record<string, string>;
-    const keys = new Set(dependents.map((field) => field.key));
-    setCatalogChoices((current) => current?.categoryId === categoryId
-      ? { ...current, values: current.values.filter((choice) => !keys.has(choice.fieldKey)) }
-      : current);
-    let alive = true;
-    void (async () => {
-      const responses = await Promise.all(dependents.filter((field) => selected[field.parentKey!]).map(async (field) => {
-        const query = new URLSearchParams({ fieldKey: field.key, parentFieldKey: field.parentKey!, parentValue: selected[field.parentKey!] });
-        return apiFetchJson<CatalogAttributeOption[]>(`/categories/${encodeURIComponent(categoryId)}/attribute-options?${query}`);
-      }));
-      if (!alive) return;
-      setCatalogChoices((current) => current?.categoryId === categoryId
-        ? { ...current, values: [...current.values.filter((choice) => !keys.has(choice.fieldKey)),
-            ...responses.flatMap((response) => response.ok && Array.isArray(response.data) ? response.data : [])] }
-        : current);
-    })();
-    return () => { alive = false; };
-  }, [categoryId, catalogSchema, parentSignature]);
-
-  const attrSections = useMemo(
-    () => withCatalogOptions(
-      withCatalogFieldDefinitions(
-        getListingAttrSectionsForCategorySlug(selectedCategory?.rootSlug ?? selectedCategory?.slug ?? ''),
-        catalogSchema?.categoryId === categoryId ? catalogSchema.value : null,
-      ),
-      catalogChoices?.categoryId === categoryId ? catalogChoices.values : [],
-      attrValues,
-    ),
-    [selectedCategory, categoryId, catalogChoices, catalogSchema, attrValues],
-  );
+  const catalog = useListingAttributeCatalog(categoryId, selectedCategory?.rootSlug ?? selectedCategory?.slug ?? '', attrValues);
+  const attrSections = catalog.sections;
 
   const serializedAttributes = useMemo(
     () => serializeListingAttributes(attrSections, attrValues),
@@ -404,7 +333,7 @@ export default function NewListingPage() {
     return p;
   }, [title, description, city, categoryId, price, serializedAttributes, tradeMode, selectedCategory, exchangePreferences]);
 
-  const attributeError = validateListingAttributes(attrSections, attrValues, price);
+  const attributeError = catalog.error || (catalog.loading ? 'Загружаем характеристики…' : validateListingAttributes(attrSections, attrValues, price));
   const exchangeError = tradeMode === 'sale' ? null : exchangePreferencesError(exchangePreferences);
 
   const titleLen = title.trim().length;
@@ -674,13 +603,14 @@ export default function NewListingPage() {
             onAttrChange={(key, v) =>
               setAttrValues((prev) => changeCatalogAttribute(
                 prev, key, v,
-                catalogChoices?.categoryId === categoryId ? catalogChoices.values : [],
-                catalogSchema?.categoryId === categoryId ? catalogSchema.value : null,
+                catalog.choices, catalog.schema,
               ))
             }
             onChangeCategoryClick={() => setStep(1)}
           />
         ) : null}
+
+        {step === 2 && catalog.error ? <Button type="button" variant="outline" onClick={catalog.retry}>Повторить загрузку характеристик</Button> : null}
 
         {step === 3 ? (
           <Step3Photos

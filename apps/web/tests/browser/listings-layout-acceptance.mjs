@@ -65,6 +65,16 @@ const categorySchema = { version: 1, optionsQueryVersion: 1, fields: [
   { key: 'condition', label: 'Состояние', sectionId: 'condition_delivery', sectionTitle: 'Состояние и сделка', fieldType: 'select', parentKey: null },
 ] };
 const conditionOptions = [{ fieldKey: 'condition', value: 'used_good', label: 'Б/у — хорошее' }];
+const autoCategory = { id: 'fixture-auto', title: 'Авто', slug: 'auto', parentId: null };
+const autoSchema = { version: 2, optionsQueryVersion: 1, fields: [
+  { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: null },
+  { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_make' },
+] };
+const autoOptions = [
+  { fieldKey: 'auto_make', value: 'bmw', label: 'BMW' }, { fieldKey: 'auto_make', value: 'lada', label: 'Lada' },
+  { fieldKey: 'auto_model', value: 'bmw/3', label: '3 Series', parentFieldKey: 'auto_make', parentValue: 'bmw' },
+  { fieldKey: 'auto_model', value: 'lada/vesta', label: 'Vesta', parentFieldKey: 'auto_make', parentValue: 'lada' },
+];
 const serverUnexpected = [];
 // Home is server-rendered: its API must also stay on an isolated loopback fixture.
 assert(!process.env.NEXT_PUBLIC_API_URL, 'Run this suite without a public API override');
@@ -138,7 +148,10 @@ async function installFixture(context, state, theme) {
       assert(listing, 'Unknown mutation target');
       state.writes.push({ path, body });
       if (body.publishFromModeration) listing.status = 'ACTIVE';
-      else Object.assign(listing, body);
+      else {
+        Object.assign(listing, body);
+        if (body.categoryId) listing.category = [category, autoCategory].find(c => c.id === body.categoryId);
+      }
       return json(listing);
     }
     if (method === 'POST' && path === '/listings') {
@@ -151,7 +164,10 @@ async function installFixture(context, state, theme) {
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
     if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1 });
-    if (path === '/categories') return json([category]);
+    if (path === '/categories') return json([category, autoCategory]);
+    if (path === '/categories/fixture-auto/attribute-schema') return state.failCatalog ? json({}, 503) : json(autoSchema);
+    if (path === '/categories/fixture-auto/attribute-options') return json(autoOptions.filter(option =>
+      option.fieldKey === url.searchParams.get('fieldKey') && (!option.parentValue || option.parentValue === url.searchParams.get('parentValue'))));
     if (path === '/categories/fixture-category/attribute-options') {
       state.catalogReads.push(url.searchParams.get('fieldKey'));
       return json(url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : []);
@@ -314,6 +330,7 @@ async function scenario(browserType, width, theme) {
     await card.getByRole('button', { name: 'Редактировать', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByLabel('Название', { exact: true })).toHaveValue(state.listings[0].title);
+    await page.getByLabel('Состояние', { exact: true }).selectOption('used_good');
     const exchangeOnly = page.getByRole('radio', { name: /^Только обмен/ });
     await exchangeOnly.check();
     await page.getByLabel('Пожелания к обмену', { exact: true }).fill('Рассмотрю фотоаппарат или велосипед');
@@ -337,6 +354,7 @@ async function scenario(browserType, width, theme) {
     await edited.locator('summary').click();
     await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
     await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
+    await expect(page.getByLabel('Состояние', { exact: true })).toHaveValue('used_good');
     await expect(page.getByLabel('Пожелания к обмену', { exact: true })).toHaveValue('Рассмотрю фотоаппарат или велосипед');
     await expect(page.getByLabel('Моя доплата до, ₽', { exact: true })).toHaveValue('15000');
     await expect(page.getByLabel('Готов принять доплату', { exact: true })).toBeChecked();
@@ -344,6 +362,34 @@ async function scenario(browserType, width, theme) {
     await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
     state.writes.length = 0;
     checks.push('exchange-only edit persists after reload; old API cannot silently accept it');
+    await visit('/listings?tab=NEEDS_ACTION');
+    await edited.locator('summary').click();
+    await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
+    state.failCatalog = true;
+    await page.getByLabel('Категория', { exact: true }).selectOption(autoCategory.id);
+    await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Не удалось загрузить');
+    await expect(page.getByRole('button', { name: 'Сохранить', exact: true })).toBeDisabled();
+    state.failCatalog = false;
+    await page.getByRole('button', { name: 'Повторить загрузку характеристик' }).click();
+    await page.getByLabel('Марка', { exact: true }).selectOption('bmw');
+    await page.getByLabel('Модель', { exact: true }).selectOption('bmw/3');
+    await page.getByLabel('Марка', { exact: true }).selectOption('lada');
+    await expect(page.getByLabel('Модель', { exact: true })).toHaveValue('');
+    await page.getByLabel('Модель', { exact: true }).selectOption('lada/vesta');
+    await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    assert.deepEqual(state.writes.at(-1).body.attributes, { auto_make: 'lada', auto_model: 'lada/vesta', isBarter: true });
+    await visit('/listings?tab=NEEDS_ACTION');
+    const autoCard = page.locator('main li').filter({ hasText: state.listings[0].title });
+    await autoCard.locator('summary').click();
+    await autoCard.getByRole('button', { name: 'Редактировать', exact: true }).click();
+    await expect(page.getByLabel('Модель', { exact: true })).toHaveValue('lada/vesta');
+    await page.getByLabel('Модель', { exact: true }).selectOption('');
+    await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    assert.equal(state.writes.at(-1).body.attributes.auto_model, undefined);
+    state.writes.length = 0;
+    checks.push('editor catalog failure/retry, category reset, dependent selection, reload and clearing');
     const pending = page.locator('main li').filter({ hasText: 'На модерации' });
     await pending.locator('summary').click();
     await pending.getByRole('button', { name: 'Подтвердить публикацию', exact: true }).click();
