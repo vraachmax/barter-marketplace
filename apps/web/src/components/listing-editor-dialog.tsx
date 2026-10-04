@@ -79,6 +79,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
         <fieldset disabled={catalog.loading || Boolean(catalog.error)}>
           <ListingCategoryAttributesForm sections={sections} values={values.attributeValues} onFieldChange={(key, value) => change('attributeValues', changeCatalogAttribute(values.attributeValues, key, value, catalog.choices, catalog.schema))} />
         </fieldset>
+        {catalog.schema?.fields.some(field => field.key === 'auto_make') ? <p className="text-xs text-muted-foreground">Справочник марок и моделей неполный. <Link href="/vehicle-data" target="_blank" rel="noopener noreferrer" className="underline">Источник данных</Link></p> : null}
       </fieldset>
       <div className="glass-panel sticky bottom-0 space-y-3 border-t border-border px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
       {saveError || error ? <p role="alert" className="text-sm text-destructive">{saveError || error}</p> : null}
