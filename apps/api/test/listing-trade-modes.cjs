@@ -256,10 +256,13 @@ async function main() {
       { categoryId: autoGrandchild.id, attributes: { auto_make: 'bmw', auto_model: '3-series', fuel: 'petrol' } },
     ] };
     assert.equal((await http().get('/listings/capabilities').expect(200)).body.structuredWishesVersion, 1);
+    // Previous scenarios have filled all five free active slots. Retire their
+    // sale-only fixture before testing creation; keep the production limit intact.
+    await db.listing.update({ where: { id: listings[0].id }, data: { status: 'ARCHIVED' } });
     const withWishes = await http().post('/listings').set('x-fixture-user', owner.id).send({
       title: 'Коллекция марок для обмена на автомобиль', description: 'Большая личная коллекция, состав и условия обсудим при встрече.',
       city: 'Краснодар', categoryId: category.id, saleEnabled: false, barterEnabled: true, exchangePreferences: concrete,
-    }).expect(201);
+    }).expect(res => assert.equal(res.status, 201, JSON.stringify(res.body)));
     assert.deepEqual(withWishes.body.exchangePreferences.wantedItems, concrete.wantedItems);
     await patch(exchange.id, { exchangePreferences: concrete }).expect(200);
     assert.deepEqual((await http().get('/listings/' + exchange.id).expect(200)).body.exchangePreferences, concrete);
