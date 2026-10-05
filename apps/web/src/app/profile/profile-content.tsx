@@ -1,5 +1,5 @@
 'use client';
-import { emptyExchangePreferences, type ExchangePreferences } from '@/lib/exchange-preferences';
+import { emptyExchangePreferences, supportsStructuredWishes, type ExchangePreferences } from '@/lib/exchange-preferences';
 import { listingTradeMode, tradeModeFields, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
 
 import Link from 'next/link';
@@ -177,12 +177,16 @@ export function ProfileContent() {
     const category = categories.find((item) => item.id === editForm.categoryId);
     if (!category) return false;
     setModeError('');
-    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number; structuredWishesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
     if (!capability.ok || capability.data?.tradeModesVersion !== 1 || capability.data?.exchangePreferencesVersion !== 1) {
       setModeError(TRADE_MODES_UNAVAILABLE);
       return false;
     }
     const modes = tradeModeFields(canOfferBarter(category) ? editForm.tradeMode : 'sale');
+    if (modes.barterEnabled && !supportsStructuredWishes(capability.data, editForm.exchangePreferences)) {
+      setModeError('Сервер пока не поддерживает конкретные пожелания. Заполненные поля сохранены. Повторите позже.');
+      return false;
+    }
     const payload: Record<string, unknown> = {
       ...modes,
       ...(modes.barterEnabled ? { exchangePreferences: editForm.exchangePreferences } : {}),

@@ -2,7 +2,7 @@
 import { ListingTradeModeField } from '@/components/listing-trade-mode-field';
 import { ExchangePreferencesSummary } from '@/components/exchange-preferences-summary';
 import { ExchangePreferencesField } from '@/components/exchange-preferences-field';
-import { emptyExchangePreferences, exchangePreferencesError, type ExchangePreferences } from '@/lib/exchange-preferences';
+import { emptyExchangePreferences, exchangePreferencesError, supportsStructuredWishes, type ExchangePreferences } from '@/lib/exchange-preferences';
 import { listingTradeMode, tradeModeFields, tradeModeLabel, TRADE_MODES_UNAVAILABLE, type ListingTradeMode } from '@/lib/listing-trade-mode';
 
 import { canOfferBarter } from '@/lib/barter-category';
@@ -239,6 +239,7 @@ export default function NewListingPage() {
   const [price, setPrice] = useState<string>('');
   const [tradeMode, setTradeMode] = useState<ListingTradeMode>('sale');
   const [exchangePreferences, setExchangePreferences] = useState(emptyExchangePreferences);
+  const [wishesBlocked, setWishesBlocked] = useState(false);
   const [city, setCity] = useState('Москва');
   const [categoryId, setCategoryId] = useState<string>('');
   const [attrValues, setAttrValues] = useState<Record<string, string>>({});
@@ -334,7 +335,7 @@ export default function NewListingPage() {
   }, [title, description, city, categoryId, price, serializedAttributes, tradeMode, selectedCategory, exchangePreferences]);
 
   const attributeError = catalog.error || (catalog.loading ? 'Загружаем характеристики…' : validateListingAttributes(attrSections, attrValues, price));
-  const exchangeError = tradeMode === 'sale' ? null : exchangePreferencesError(exchangePreferences);
+  const exchangeError = tradeMode === 'sale' ? null : exchangePreferencesError(exchangePreferences) || (wishesBlocked ? 'Дождитесь загрузки справочника пожеланий или исправьте недоступный вариант.' : null);
 
   const titleLen = title.trim().length;
   const descLen = description.trim().length;
@@ -432,11 +433,17 @@ export default function NewListingPage() {
     submitting.current = true;
     setBusy(true);
     setSubmitStatus({ kind: 'idle' });
-    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number; structuredWishesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
     if (!capability.ok || capability.data?.tradeModesVersion !== 1 || capability.data?.exchangePreferencesVersion !== 1) {
       submitting.current = false;
       setBusy(false);
       setSubmitStatus({ kind: 'error', msg: TRADE_MODES_UNAVAILABLE });
+      return;
+    }
+    if (!supportsStructuredWishes(capability.data, payload.exchangePreferences)) {
+      submitting.current = false;
+      setBusy(false);
+      setSubmitStatus({ kind: 'error', msg: 'Сервер пока не поддерживает конкретные пожелания. Заполненные поля сохранены. Повторите позже.' });
       return;
     }
     const photosSnapshot = [...pendingPhotos];
@@ -590,6 +597,7 @@ export default function NewListingPage() {
             onTradeModeChange={setTradeMode}
             exchangePreferences={exchangePreferences}
             onExchangePreferencesChange={setExchangePreferences}
+            onWishesCatalogStatusChange={setWishesBlocked}
             categories={cats}
             title={title}
             selectedCategory={selectedCategory}
@@ -888,6 +896,7 @@ function Step1WhatToSell(props: {
 function Step2Description(props: {
   exchangePreferences: ExchangePreferences;
   onExchangePreferencesChange: (value: ExchangePreferences) => void;
+  onWishesCatalogStatusChange: (blocked: boolean) => void;
   categories: Category[];
   tradeMode: ListingTradeMode;
   onTradeModeChange: (value: ListingTradeMode) => void;
@@ -945,7 +954,7 @@ function Step2Description(props: {
       </div>
 
       <ListingTradeModeField value={props.tradeMode} onChange={props.onTradeModeChange} barterAllowed={canOfferBarter(selectedCategory)} />
-      {props.tradeMode !== 'sale' ? <ExchangePreferencesField value={props.exchangePreferences} onChange={props.onExchangePreferencesChange} categories={props.categories} /> : null}
+      {props.tradeMode !== 'sale' ? <ExchangePreferencesField value={props.exchangePreferences} onChange={props.onExchangePreferencesChange} categories={props.categories} onCatalogStatusChange={props.onWishesCatalogStatusChange} /> : null}
       {/* Price */}
       <div>
         <label htmlFor="listing-price" className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-foreground">
