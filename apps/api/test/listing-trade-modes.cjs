@@ -196,6 +196,15 @@ async function main() {
     assert.equal((await db.listing.findUniqueOrThrow({ where: { id: car.body.id } })).attributes.fuel, 'petrol');
     await patch(car.body.id, { attributes: { fuel: 'petrol', auto_make: 'bmw', auto_model: '3-series' } }).expect(200);
     await patch(car.body.id, { attributes: { fuel: 'petrol', auto_make: 'lada', auto_model: '3-series' } }).expect(400);
+    // Existing catalog values may have been retired since publication.
+    const legacyAttributes = { fuel: 'retired-fuel', auto_make: 'bmw', auto_model: 'retired-model', mileage_km: 100 };
+    await db.listing.update({ where: { id: car.body.id }, data: { attributes: legacyAttributes } });
+    await patch(car.body.id, { attributes: { ...legacyAttributes, mileage_km: 200 } }).expect(200);
+    assert.equal((await http().get('/listings/' + car.body.id).expect(200)).body.attributes.mileage_km, 200);
+    await patch(car.body.id, { attributes: { ...legacyAttributes, auto_make: 'lada' } }).expect(400);
+    await patch(car.body.id, { categoryId: category.id, attributes: legacyAttributes }).expect(400);
+    await patch(car.body.id, { attributes: { fuel: 'petrol', auto_make: 'bmw', auto_model: '3-series' } }).expect(200);
+    console.log('PASS unchanged legacy catalog values survive editing, changed parent/category cannot reuse them');
     autoChild = await db.category.create({ data: { slug: 'auto-cars-fixture', title: 'Легковые', parentId: autoCategory.id } });
     autoGrandchild = await db.category.create({ data: { slug: 'auto-sedans-fixture', title: 'Седаны', parentId: autoChild.id } });
     const listedCategories = (await http().get('/categories').expect(200)).body;

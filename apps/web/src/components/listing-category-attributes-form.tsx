@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useId } from 'react';
 import type { ListingAttrSection } from '@/lib/listing-attributes-config';
 
 type Props = {
@@ -10,8 +10,9 @@ type Props = {
 };
 
 export default function ListingCategoryAttributesForm({ sections, values, onFieldChange }: Props) {
+  const id = useId();
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 [color-scheme:light] dark:[color-scheme:dark]">
       {sections.map((section) => (
         <Fragment key={section.id}>
           <div className="border-t border-border pt-6 first:border-t-0 first:pt-0">
@@ -22,19 +23,20 @@ export default function ListingCategoryAttributesForm({ sections, values, onFiel
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {section.fields.map((field) => (
                 <label key={field.key} className={field.type === 'text' || field.type === 'textarea' ? 'min-w-0 sm:col-span-2' : 'min-w-0'}>
-                  <div className="mb-1.5 text-sm font-medium text-foreground">{field.label}</div>
+                  <div id={`${id}-${field.key}-label`} className="mb-1.5 text-sm font-medium text-foreground">{field.label}</div>
                   {field.hint ? (
-                    <p className="mb-1.5 text-xs text-muted-foreground">{field.hint}</p>
+                    <p id={`${id}-${field.key}-hint`} className="mb-1.5 text-xs text-muted-foreground">{field.hint}</p>
                   ) : null}
                   {field.type === 'select' ? (
-                    <select value={values[field.key] ?? ''} disabled={Boolean(field.dependsOn && !values[field.dependsOn])} onChange={(event) => onFieldChange(field.key, event.target.value)} className="min-h-12 w-full min-w-0 rounded-2xl border border-border bg-muted/50 px-3 text-base outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60">
+                    <select aria-labelledby={`${id}-${field.key}-label`} aria-describedby={field.hint ? `${id}-${field.key}-hint` : undefined} value={values[field.key] ?? ''} disabled={Boolean(field.dependsOn && !values[field.dependsOn])} onChange={(event) => onFieldChange(field.key, event.target.value)} className="min-h-12 w-full min-w-0 rounded-2xl border border-border bg-muted/50 px-3 text-base outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60">
                       <option value="">{field.dependsOn && !values[field.dependsOn] ? 'Сначала выберите предыдущее поле' : 'Не выбрано'}</option>
                       {field.options?.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
                   ) : null}
-                  {field.type === 'textarea' ? <textarea maxLength={500} rows={3} value={values[field.key] ?? ''} onChange={(event) => onFieldChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-28 w-full resize-y rounded-2xl border border-border bg-muted/50 px-3 py-3 text-base outline-none focus:ring-2 focus:ring-primary/30" /> : null}
+                  {field.type === 'textarea' ? <textarea aria-labelledby={`${id}-${field.key}-label`} aria-describedby={field.hint ? `${id}-${field.key}-hint` : undefined} maxLength={500} rows={3} value={values[field.key] ?? ''} onChange={(event) => onFieldChange(field.key, event.target.value)} placeholder={field.placeholder} className="min-h-28 w-full resize-y rounded-2xl border border-border bg-muted/50 px-3 py-3 text-base outline-none focus:ring-2 focus:ring-primary/30" /> : null}
                   {field.type === 'text' ? (
                     <input
+                      aria-labelledby={`${id}-${field.key}-label`} aria-describedby={field.hint ? `${id}-${field.key}-hint` : undefined}
                       className="min-h-12 w-full min-w-0 rounded-2xl border border-border bg-muted/50 px-3 text-base outline-none transition focus:border-primary/30 focus:bg-card focus:ring-2 focus:ring-primary/30"
                       maxLength={500}
                       value={values[field.key] ?? ''}
@@ -44,6 +46,7 @@ export default function ListingCategoryAttributesForm({ sections, values, onFiel
                   ) : null}
                   {field.type === 'number' ? (
                     <input
+                      aria-labelledby={`${id}-${field.key}-label`} aria-describedby={field.hint ? `${id}-${field.key}-hint` : undefined}
                       className="min-h-12 w-full min-w-0 rounded-2xl border border-border bg-muted/50 px-3 text-base outline-none transition focus:border-primary/30 focus:bg-card focus:ring-2 focus:ring-primary/30"
                       value={values[field.key] ?? ''}
                       onChange={(e) => onFieldChange(field.key, e.target.value.replace(/[^\d.,\s-]/g, ''))}

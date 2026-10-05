@@ -27,6 +27,7 @@ export const AUTO_ATTRIBUTE_FIELDS = [
 export function invalidCatalogOption(
   attributes: Record<string, unknown>,
   options: ReadonlyArray<{ fieldKey: string; value: string; parentFieldKey?: string; parentValue?: string }>,
+  previous?: Record<string, unknown>,
 ): string | null {
   const allowed = new Map<string, typeof options>();
   for (const option of options) {
@@ -35,6 +36,8 @@ export function invalidCatalogOption(
   for (const [key, choices] of allowed) {
     const value = attributes[key];
     if (value === undefined || value === null || value === '') continue;
+    if (previous && value === previous[key] && choices.every(choice =>
+      !choice.parentFieldKey || attributes[choice.parentFieldKey] === previous[choice.parentFieldKey])) continue;
     if (typeof value !== 'string' || !choices.some((choice) =>
       choice.value === value && (!choice.parentFieldKey || attributes[choice.parentFieldKey] === choice.parentValue))) return key;
   }

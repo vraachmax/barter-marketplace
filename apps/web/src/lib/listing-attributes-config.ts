@@ -567,3 +567,28 @@ export function validateListingAttributes(sections: ListingAttrSection[], values
   }
   return null;
 }
+
+export function attributeFormValues(attributes?: Record<string, unknown> | null): Record<string, string> {
+  return Object.fromEntries(Object.entries(attributes ?? {})
+    .filter(([, value]) => typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    .map(([key, value]) => [key, String(value)]));
+}
+
+/** Keep a retired value visible only while its original parent is unchanged. */
+export function withUnchangedAttributeValues(sections: ListingAttrSection[], values: Record<string, string>, original: Record<string, string>) {
+  return sections.map(section => ({ ...section, fields: section.fields.map(field => {
+    const value = values[field.key];
+    return field.type === 'select' && value && value === original[field.key] &&
+      (!field.dependsOn || values[field.dependsOn] === original[field.dependsOn]) &&
+      !field.options?.some(option => option.value === value)
+      ? { ...field, options: [...field.options ?? [], { value, label: `${value} (сохранённое значение)` }] }
+      : field;
+  }) }));
+}
+
+/** Replace visible fields so clearing a field does not resurrect its old value. */
+export function editedListingAttributes(sections: ListingAttrSection[], values: Record<string, string>, original: Record<string, unknown>) {
+  const result = { ...original };
+  for (const section of sections) for (const field of section.fields) delete result[field.key];
+  return { ...result, ...serializeListingAttributes(sections, values) };
+}

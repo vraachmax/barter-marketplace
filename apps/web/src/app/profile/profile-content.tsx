@@ -7,6 +7,7 @@ import { useListingActions } from '@/lib/use-listing-actions';
 import { Card } from '@/components/ui/card';
 import { AccountScreenHeader } from '@/components/account-screen-header';
 import { useAuth } from '@/components/auth-provider';
+import { attributeFormValues } from '@/lib/listing-attributes-config';
 import { ListingEditorDialog } from '@/components/listing-editor-dialog';
 import { canOfferBarter } from '@/lib/barter-category';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,7 @@ export function ProfileContent() {
     priceRub: string;
     tradeMode: ListingTradeMode;
     exchangePreferences: ExchangePreferences;
+    attributeValues: Record<string, string>;
   }>({
     title: '',
     description: '',
@@ -97,6 +99,7 @@ export function ProfileContent() {
     priceRub: '',
     tradeMode: 'sale',
     exchangePreferences: emptyExchangePreferences(),
+    attributeValues: {},
   });
   const [promoteTarget, setPromoteTarget] = useState<{ id: string; title: string } | null>(null);
 
@@ -166,10 +169,11 @@ export function ProfileContent() {
       priceRub: x.priceRub == null ? '' : String(x.priceRub),
       tradeMode: listingTradeMode(x),
       exchangePreferences: x.exchangePreferences ?? emptyExchangePreferences(),
+      attributeValues: attributeFormValues(x.attributes),
     });
   }
 
-  async function saveEdit(id: string) {
+  async function saveEdit(id: string, attributes: Record<string, unknown>) {
     const category = categories.find((item) => item.id === editForm.categoryId);
     if (!category) return false;
     setModeError('');
@@ -185,7 +189,7 @@ export function ProfileContent() {
       title: editForm.title.trim(),
       city: editForm.city.trim(),
       categoryId: editForm.categoryId,
-      attributes: { ...listings.find((item) => item.id === id)?.attributes, isBarter: modes.barterEnabled },
+      attributes: { ...attributes, isBarter: modes.barterEnabled },
     };
     if (editForm.description.trim().length >= 10) payload.description = editForm.description.trim();
     payload.priceRub = editForm.priceRub.trim() ? Number(editForm.priceRub) : null;
@@ -960,7 +964,7 @@ export function ProfileContent() {
         ) : null}
       </div>
 
-      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} onSave={() => saveEdit(editingId)} onClose={() => setEditingId(null)} saveError={modeError || (actionError ? actionNotice : undefined)} authHref={actionNeedsLogin ? '/auth?next=%2Fprofile' : undefined} /> : null}
+      {editingId ? <ListingEditorDialog key={editingId} values={editForm} onChange={setEditForm} categories={categories} originalAttributes={listings.find(item => item.id === editingId)?.attributes ?? {}} originalCategoryId={listings.find(item => item.id === editingId)?.category.id ?? ''} onSave={(attributes) => saveEdit(editingId, attributes)} onClose={() => setEditingId(null)} saveError={modeError || (actionError ? actionNotice : undefined)} authHref={actionNeedsLogin ? '/auth?next=%2Fprofile' : undefined} /> : null}
       <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
 
       {promoteTarget ? (
@@ -978,4 +982,3 @@ export function ProfileContent() {
     </div>
   );
 }
-
