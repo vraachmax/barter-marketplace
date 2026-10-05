@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
 import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
 import { catalogOwnerId, categoryRoot } from './category-hierarchy';
-import carCatalog from './vehiclesdb-car-2026.09.1.json';
+import { carCatalog, CAR_CATALOG_REVISION } from './car-catalog';
 
 @Injectable()
 export class CategoriesService {
@@ -118,7 +118,7 @@ export class CategoriesService {
     const category = await this.prisma.category.findUniqueOrThrow({
       where: { id: categoryId }, select: { catalogRevision: true },
     });
-    if (category.catalogRevision >= 2) return;
+    if (category.catalogRevision >= CAR_CATALOG_REVISION) return;
 
     const batchSize = 400;
     for (let offset = 0; offset < carCatalog.makes.length; offset += batchSize) {
@@ -153,7 +153,7 @@ export class CategoriesService {
           { categoryId, key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', sortOrder: 5, parentKey: 'auto_make' },
         ], skipDuplicates: true,
       });
-      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: 2 } });
+      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: CAR_CATALOG_REVISION } });
     });
   }
 }
