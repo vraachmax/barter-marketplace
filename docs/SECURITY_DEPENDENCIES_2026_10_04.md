@@ -6,7 +6,7 @@ the available runtime/build updates rather than carrying the old versions.
 
 - Next.js and eslint-config-next: 16.3.6, GHSA-vcvr-r3jv-pc5j patch.
 - Multer: 2.4.0, including the Nest platform dependency override.
-- Engine.IO: 6.6.11; verify OSV before release.
+- Engine.IO: 6.6.11; final OSV full/new-vulnerability scans passed on 2026-10-05.
 - brace-expansion and fast-uri: patched versions in their existing major lines.
 
 ## Temporary dev-only exception
