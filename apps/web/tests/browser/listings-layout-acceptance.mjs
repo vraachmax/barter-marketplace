@@ -349,7 +349,7 @@ async function scenario(browserType, width, theme) {
     assert.equal(state.writes.at(-1).body.saleEnabled, false);
     assert.equal(state.writes.at(-1).body.barterEnabled, true);
     await visit('/listings?tab=NEEDS_ACTION');
-    const edited = page.locator('main li').filter({ hasText: state.listings[0].title });
+    let edited = page.locator('main li').filter({ hasText: state.listings[0].title });
     tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
     await edited.locator('summary').click();
     await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
@@ -363,6 +363,7 @@ async function scenario(browserType, width, theme) {
     state.writes.length = 0;
     checks.push('exchange-only edit persists after reload; old API cannot silently accept it');
     await visit('/listings?tab=NEEDS_ACTION');
+    edited = page.locator('main li').filter({ hasText: state.listings[0].title });
     await edited.locator('summary').click();
     await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
     state.failCatalog = true;
@@ -381,6 +382,7 @@ async function scenario(browserType, width, theme) {
     assert.deepEqual(state.writes.at(-1).body.attributes, { auto_make: 'lada', auto_model: 'lada/vesta', isBarter: true });
     await visit('/listings?tab=NEEDS_ACTION');
     const autoCard = page.locator('main li').filter({ hasText: state.listings[0].title });
+    tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
     await autoCard.locator('summary').click();
     await autoCard.getByRole('button', { name: 'Редактировать', exact: true }).click();
     await expect(page.getByRole('combobox', { name: 'Модель', exact: true })).toHaveValue('lada/vesta');
