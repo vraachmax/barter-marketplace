@@ -2,3 +2,8 @@
 id = "GHSA-38f7-945m-qr2g"
 ignoreUntil = 2027-03-01
 reason = "Prisma 6.19.2 uses effect only in its build-time config loader; the vulnerable concurrent RPC/AsyncLocalStorage path is not reachable in the application runtime. Remove this exception when upgrading Prisma."
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2026-11-04
+reason = "braces 3.0.3 has no upstream fix as of 2026-10-04. It is dev-only via micromatch/fast-glob in ESLint, processing repository file patterns, not application requests. CI check-security-exceptions.cjs rejects production inclusion or a version change. See docs/SECURITY_DEPENDENCIES_2026_10_04.md; remove on a patched release."

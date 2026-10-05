@@ -371,11 +371,11 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByRole('button', { name: 'Сохранить', exact: true })).toBeDisabled();
     state.failCatalog = false;
     await page.getByRole('button', { name: 'Повторить загрузку характеристик' }).click();
-    await page.getByLabel('Марка', { exact: true }).selectOption('bmw');
-    await page.getByLabel('Модель', { exact: true }).selectOption('bmw/3');
-    await page.getByLabel('Марка', { exact: true }).selectOption('lada');
-    await expect(page.getByLabel('Модель', { exact: true })).toHaveValue('');
-    await page.getByLabel('Модель', { exact: true }).selectOption('lada/vesta');
+    await page.getByRole('combobox', { name: 'Марка', exact: true }).selectOption('bmw');
+    await page.getByRole('combobox', { name: 'Модель', exact: true }).selectOption('bmw/3');
+    await page.getByRole('combobox', { name: 'Марка', exact: true }).selectOption('lada');
+    await expect(page.getByRole('combobox', { name: 'Модель', exact: true })).toHaveValue('');
+    await page.getByRole('combobox', { name: 'Модель', exact: true }).selectOption('lada/vesta');
     await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     assert.deepEqual(state.writes.at(-1).body.attributes, { auto_make: 'lada', auto_model: 'lada/vesta', isBarter: true });
@@ -383,8 +383,8 @@ async function scenario(browserType, width, theme) {
     const autoCard = page.locator('main li').filter({ hasText: state.listings[0].title });
     await autoCard.locator('summary').click();
     await autoCard.getByRole('button', { name: 'Редактировать', exact: true }).click();
-    await expect(page.getByLabel('Модель', { exact: true })).toHaveValue('lada/vesta');
-    await page.getByLabel('Модель', { exact: true }).selectOption('');
+    await expect(page.getByRole('combobox', { name: 'Модель', exact: true })).toHaveValue('lada/vesta');
+    await page.getByRole('combobox', { name: 'Модель', exact: true }).selectOption('');
     await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     assert.equal(state.writes.at(-1).body.attributes.auto_model, undefined);

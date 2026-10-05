@@ -16,6 +16,20 @@ permissions:
   security-events: write
 
 jobs:
+  exception-scope:
+    name: Validate temporary exception scope
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/check-security-exceptions.cjs
+
   full-scan:
     name: Full OSV dependency scan
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.5.0
