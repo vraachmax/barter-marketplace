@@ -1,5 +1,33 @@
 # Barter Clone — Handoff Context
 
+## 2026-10-05: редактор TXT-03, PR #49 слит
+
+Merge `81332c9e896598902ebb7ab14f6ed33764021df8`. Общий справочник теперь
+работает в создании и редакторах списка/профиля. Зависимые значения сбрасываются
+при смене родителя; очистка удаляет поле; старые неизменённые значения сохраняются
+только в той же категории с прежними родителями. Ошибка загрузки блокирует
+сохранение и предлагает повтор. Атрибуция и предупреждение о неполноте сохранены.
+
+Финальный head `5ab781aa52b0870a9d41fdc406a61597e5173c0e`:
+- Web quality 37260072497 success: 80 unit, build/TypeScript, 6 account +
+  10 layout + 6 messages browser scenarios. Проверены category reset, dependent
+  make/model, reload/clear, failure/retry. Снимки WebKit светлой/тёмной темы
+  просмотрены: исправлены доступные имена и native color-scheme.
+- PostgreSQL acceptance 37260072413 success: 176 API unit, миграции, HTTP
+  legacy attributes, Socket.IO, multipart media и VehiclesDB import.
+- Dependency audit 37260072903 success. Исправленные версии и ограниченное
+  dev-only исключение braces до 4 ноября: docs/SECURITY_DEPENDENCIES_2026_10_04.md.
+  Проверка не означает отсутствия всех рисков: OSV учитывает два явных исключения.
+- Физический iPhone и сохранение под реальным production-аккаунтом не проверены.
+
+Production: Vercel success на merge SHA; Render `dep-db1hp6ivcj2c73a90980`
+live 2026-10-05 03:44:19 UTC на том же SHA. Внешний `/health` ответил 200,
+`ok:true`, mediaStorage persistent. В error-логах окна запуска записей нет.
+
+Следующий шаг: поколения/пробелы покрытия авто и структурированные пожелания
+на тех же ID. TXT-03 остаётся открытым; после него TXT-09/10. Яндекс на паузе,
+draft PR #48 не сливать. Новая free Render БД истекает 2 ноября, 23:23 МСК.
+
 ## 2026-10-05: PR #49, исправления после первой CI-приёмки
 
 PR #49 открыт, не слит. PostgreSQL/HTTP приёмка предыдущего head прошла,
