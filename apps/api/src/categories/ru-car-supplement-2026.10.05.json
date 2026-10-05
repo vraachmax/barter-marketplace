@@ -1,0 +1,22 @@
+{
+  "version": "2026.10.05",
+  "checkedAt": "2026-10-05",
+  "scope": "Individually verified make/model names only; no generations, specifications or completeness claim",
+  "makes": [
+    { "id": "tank", "name": "TANK", "source": "https://tank.ru/models/" },
+    { "id": "belgee", "name": "Belgee", "source": "https://belgee.ru/" },
+    { "id": "exeed", "name": "EXEED", "source": "https://exeed.ru/cars/" }
+  ],
+  "models": [
+    { "id": "tank/300", "makeId": "tank", "name": "300", "source": "https://tank.ru/" },
+    { "id": "tank/500", "makeId": "tank", "name": "500", "source": "https://tank.ru/" },
+    { "id": "belgee/x50", "makeId": "belgee", "name": "X50", "source": "https://belgee.ru/model/belgee-x50-new/" },
+    { "id": "belgee/x70", "makeId": "belgee", "name": "X70", "source": "https://belgee.ru/model/belgee-x70-facelift/" },
+    { "id": "exeed/lx", "makeId": "exeed", "name": "LX", "source": "https://exeed.ru/cars/" },
+    { "id": "exeed/txl", "makeId": "exeed", "name": "TXL", "source": "https://exeed.ru/cars/" },
+    { "id": "geely/monjaro", "makeId": "geely", "name": "Monjaro", "source": "https://www.geely-motors.com/model/monjaro/" },
+    { "id": "geely/coolray", "makeId": "geely", "name": "Coolray", "source": "https://www.geely-motors.com/model/" },
+    { "id": "haval/m6", "makeId": "haval", "name": "M6", "source": "https://haval.ru/models/haval-m6/" },
+    { "id": "moskvich/3", "makeId": "moskvich", "name": "3", "source": "https://moskvich.ru/" }
+  ]
+}
