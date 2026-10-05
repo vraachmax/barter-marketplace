@@ -39,6 +39,8 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
   const id = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [wishesBlocked, setWishesBlocked] = useState(false);
+  const loadingWishes = values.tradeMode !== 'sale' && wishesBlocked;
   useEffect(() => { dialog.current?.showModal(); }, []);
   const inputClass = 'mt-1 min-h-12 w-full rounded-2xl border border-border bg-muted/50 px-4 py-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-primary';
   function change<K extends keyof Fields>(key: K, value: Fields[K]) { onChange({ ...values, [key]: value }); }
@@ -51,7 +53,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
     </div>
     <form onSubmit={async (event) => {
       event.preventDefault();
-      if (submitting.current || catalog.loading || catalog.error) return;
+      if (submitting.current || catalog.loading || catalog.error || loadingWishes) return;
       const attributeError = validateListingAttributes(sections, values.attributeValues, values.priceRub);
       if (attributeError) { setError(attributeError); return; }
       const preferencesError = values.tradeMode === 'sale' ? null : exchangePreferencesError(values.exchangePreferences);
@@ -73,7 +75,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
         {values.categoryId !== originalCategoryId ? <p className="text-sm text-muted-foreground">Категория изменена. Заполните характеристики заново.</p> : null}
         <label className="block text-sm font-medium">{values.tradeMode === 'barter' ? 'Оценочная стоимость, ₽' : 'Цена, ₽'}<input type="number" min="0" max="2147483647" step="1" value={values.priceRub} onChange={(e) => change('priceRub', e.target.value)} className={inputClass} /></label>
         <ListingTradeModeField value={values.tradeMode} onChange={(mode) => change('tradeMode', mode)} barterAllowed={canOfferBarter(categories.find((category) => category.id === values.categoryId))} />
-        {values.tradeMode !== 'sale' ? <ExchangePreferencesField value={values.exchangePreferences} onChange={v => change('exchangePreferences', v)} categories={categories} /> : null}
+        {values.tradeMode !== 'sale' ? <ExchangePreferencesField value={values.exchangePreferences} onChange={v => change('exchangePreferences', v)} categories={categories} onCatalogStatusChange={setWishesBlocked} /> : null}
         {catalog.loading ? <p role="status" className="text-sm text-muted-foreground">Загружаем характеристики…</p> : null}
         {catalog.error ? <div><p role="alert" className="text-sm text-destructive">{catalog.error}</p><Button type="button" variant="outline" onClick={catalog.retry}>Повторить загрузку характеристик</Button></div> : null}
         <fieldset disabled={catalog.loading || Boolean(catalog.error)}>
@@ -84,7 +86,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
       <div className="glass-panel sticky bottom-0 space-y-3 border-t border-border px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
       {saveError || error ? <p role="alert" className="text-sm text-destructive">{saveError || error}</p> : null}
       {authHref ? <Link href={authHref} className="inline-flex min-h-11 items-center text-primary underline">Войти снова</Link> : null}
-      <Button type="submit" size="lg" disabled={busy || catalog.loading || Boolean(catalog.error)} aria-busy={busy} className="w-full">{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
+      <Button type="submit" size="lg" disabled={busy || catalog.loading || Boolean(catalog.error) || loadingWishes} aria-busy={busy} className="w-full">{busy ? 'Сохраняем…' : 'Сохранить'}</Button>
       </div>
     </form>
   </dialog>;

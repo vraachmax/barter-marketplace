@@ -505,14 +505,43 @@ export class ListingsService {
     }
   }
 
-  private async validateExchangePreferences(value: unknown, barterEnabled: boolean) {
+  private async validateExchangePreferences(value: unknown, barterEnabled: boolean, previous?: unknown) {
+    // Older clients can update cash/text without silently erasing structured wishes.
+    // Explicit wantedItems: [] clears them; exchangePreferences: null clears all.
+    if (value && typeof value === 'object' && !Array.isArray(value) &&
+      !Object.hasOwn(value, 'wantedItems') && previous && typeof previous === 'object' &&
+      'wantedItems' in previous) value = { ...value, wantedItems: previous.wantedItems };
     const preferences = parseExchangePreferences(value);
     if (preferences && !barterEnabled) throw new BadRequestException('exchange_preferences_require_barter');
-    if (preferences?.wantedCategoryIds.length) {
+    const wantedIds = [...(preferences?.wantedCategoryIds ?? []), ...(preferences?.wantedItems ?? []).map(item => item.categoryId)];
+    if (wantedIds.length) {
       const all = await this.prisma.category.findMany({ select: { id: true, slug: true, parentId: true } });
       const byId = new Map(all.map((c) => [c.id, c]));
-      if (preferences.wantedCategoryIds.some(id => !byId.has(id) || !categoryAllowsBarter(categoryRoot(byId.get(id)!, byId)?.slug ?? ''))) {
+      if (wantedIds.some(id => !byId.has(id) || !categoryAllowsBarter(categoryRoot(byId.get(id)!, byId)?.slug ?? ''))) {
         throw new BadRequestException('invalid_exchange_categories');
+      }
+    }
+    for (const item of preferences?.wantedItems ?? []) {
+      const ownerId = await catalogOwnerId(this.prisma, item.categoryId);
+      const fields = await this.prisma.categoryAttributeField.findMany({
+        where: { categoryId: ownerId, isActive: true, fieldType: 'select' }, select: { key: true, parentKey: true },
+      });
+      const keys = Object.keys(item.attributes);
+      if (keys.some(key => !fields.some(field => field.key === key)) ||
+        fields.some(field => item.attributes[field.key] && field.parentKey && !item.attributes[field.parentKey])) {
+        throw new BadRequestException('invalid_wanted_attributes');
+      }
+      const options = await this.prisma.categoryAttributeOption.findMany({
+        where: { categoryId: ownerId, fieldKey: { in: keys } },
+        select: { fieldKey: true, value: true, parentOption: { select: { categoryId: true, fieldKey: true, value: true } } },
+      });
+      for (const [key, value] of Object.entries(item.attributes)) {
+        const field = fields.find(field => field.key === key)!;
+        if (!options.some(option => option.fieldKey === key && option.value === value &&
+          (!field.parentKey ? !option.parentOption : option.parentOption?.categoryId === ownerId &&
+            option.parentOption.fieldKey === field.parentKey && item.attributes[field.parentKey] === option.parentOption.value))) {
+          throw new BadRequestException('invalid_wanted_attributes');
+        }
       }
     }
     return preferences;
@@ -1373,7 +1402,7 @@ export class ListingsService {
 
     const data: Prisma.ListingUncheckedUpdateInput = { ...modes };
     if (dto.exchangePreferences !== undefined) {
-      const preferences = await this.validateExchangePreferences(dto.exchangePreferences, modes.barterEnabled);
+      const preferences = await this.validateExchangePreferences(dto.exchangePreferences, modes.barterEnabled, current.exchangePreferences);
       data.exchangePreferences = preferences === null ? Prisma.DbNull : preferences;
     }
     if (typeof dto.title === 'string') data.title = dto.title;

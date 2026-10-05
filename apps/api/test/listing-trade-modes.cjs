@@ -249,6 +249,41 @@ async function main() {
     assert(parentText.items.some(x => x.id === sedan.body.id));
     indexed = false;
     console.log('PASS catalog choices endpoint, stored value and rejected unknown choice');
+    await db.categoryAttributeField.create({ data: {
+      categoryId: autoCategory.id, key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль',
+    } });
+    const concrete = { ...wishes, wantedCategoryIds: [], wantedDescription: '', wantedItems: [
+      { categoryId: autoGrandchild.id, attributes: { auto_make: 'bmw', auto_model: '3-series', fuel: 'petrol' } },
+    ] };
+    assert.equal((await http().get('/listings/capabilities').expect(200)).body.structuredWishesVersion, 1);
+    const withWishes = await http().post('/listings').set('x-fixture-user', owner.id).send({
+      title: 'Коллекция марок для обмена на автомобиль', description: 'Большая личная коллекция, состав и условия обсудим при встрече.',
+      city: 'Краснодар', categoryId: category.id, saleEnabled: false, barterEnabled: true, exchangePreferences: concrete,
+    }).expect(201);
+    assert.deepEqual(withWishes.body.exchangePreferences.wantedItems, concrete.wantedItems);
+    await patch(exchange.id, { exchangePreferences: concrete }).expect(200);
+    assert.deepEqual((await http().get('/listings/' + exchange.id).expect(200)).body.exchangePreferences, concrete);
+    await patch(exchange.id, { priceRub: 777 }).expect(200);
+    assert.deepEqual((await http().get('/listings/my').set('x-fixture-user', owner.id).expect(200)).body.find(x => x.id === exchange.id).exchangePreferences, concrete);
+    // An old client omits the additive key while updating text/cash.
+    const { wantedItems, ...oldClient } = concrete;
+    await patch(exchange.id, { exchangePreferences: { ...oldClient, maxCashRub: 20000 } }).expect(200);
+    assert.deepEqual((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences.wantedItems, wantedItems);
+    for (const badItem of [
+      { ...wantedItems[0], categoryId: 'nonexistent' },
+      { ...wantedItems[0], categoryId: category.id },
+      { ...wantedItems[0], attributes: { auto_model: '3-series' } },
+      { ...wantedItems[0], attributes: { auto_make: 'lada', auto_model: '3-series' } },
+      { ...wantedItems[0], attributes: { auto_make: 'invented' } },
+      { ...wantedItems[0], attributes: { title: 'bmw' } },
+    ]) await patch(exchange.id, { exchangePreferences: { ...concrete, wantedItems: [badItem] } }).expect(400);
+    await patch(exchange.id, { exchangePreferences: concrete }, outsider).expect(403);
+    await patch(exchange.id, { barterEnabled: false, saleEnabled: true }).expect(200);
+    assert.deepEqual((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences.wantedItems, wantedItems);
+    await patch(exchange.id, { barterEnabled: true, exchangePreferences: { ...concrete, anyOffer: true, wantedItems: [] } }).expect(200);
+    assert.deepEqual((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences.wantedItems, []);
+    await patch(exchange.id, { exchangePreferences: null }).expect(200);
+    console.log('PASS cross-category structured wishes, inherited catalog, exact parents, old client preservation and explicit clearing');
   } finally {
     if (app) await app.close();
     if (owner) {
