@@ -44,7 +44,7 @@ export function ListingEditorDialog({ values, onChange, categories, onSave, onCl
   function change<K extends keyof Fields>(key: K, value: Fields[K]) { onChange({ ...values, [key]: value }); }
 
   return <dialog ref={dialog} aria-labelledby={id} onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}
-    className="fixed inset-0 m-auto max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-border bg-background p-0 text-foreground shadow-xl backdrop:bg-black/40 backdrop:backdrop-blur-sm">
+    className="fixed inset-0 m-auto max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-border bg-background p-0 text-foreground shadow-xl [color-scheme:light] dark:[color-scheme:dark] backdrop:bg-black/40 backdrop:backdrop-blur-sm">
     <div className="glass-panel sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
       <h2 id={id} className="text-lg font-semibold">Редактировать объявление</h2>
       <Button variant="ghost" size="icon" type="button" disabled={busy} onClick={onClose} aria-label="Закрыть"><X size={20} aria-hidden /></Button>

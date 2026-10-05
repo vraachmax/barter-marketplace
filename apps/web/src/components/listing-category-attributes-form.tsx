@@ -12,7 +12,7 @@ type Props = {
 export default function ListingCategoryAttributesForm({ sections, values, onFieldChange }: Props) {
   const id = useId();
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 [color-scheme:light] dark:[color-scheme:dark]">
       {sections.map((section) => (
         <Fragment key={section.id}>
           <div className="border-t border-border pt-6 first:border-t-0 first:pt-0">

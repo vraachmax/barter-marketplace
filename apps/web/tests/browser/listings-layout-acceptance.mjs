@@ -367,6 +367,7 @@ async function scenario(browserType, width, theme) {
     await edited.locator('summary').click();
     await edited.getByRole('button', { name: 'Редактировать', exact: true }).click();
     state.failCatalog = true;
+    assert.equal(await page.getByLabel('Категория', { exact: true }).evaluate(el => getComputedStyle(el).colorScheme), theme);
     await page.getByLabel('Категория', { exact: true }).selectOption(autoCategory.id);
     await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Не удалось загрузить');
     await expect(page.getByRole('button', { name: 'Сохранить', exact: true })).toBeDisabled();
@@ -377,6 +378,7 @@ async function scenario(browserType, width, theme) {
     await page.getByRole('combobox', { name: 'Марка', exact: true }).selectOption('lada');
     await expect(page.getByRole('combobox', { name: 'Модель', exact: true })).toHaveValue('');
     await page.getByRole('combobox', { name: 'Модель', exact: true }).selectOption('lada/vesta');
+    await shot(page, key + '-auto-editor', page.getByRole('combobox', { name: 'Модель', exact: true }));
     await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     assert.deepEqual(state.writes.at(-1).body.attributes, { auto_make: 'lada', auto_model: 'lada/vesta', isBarter: true });
