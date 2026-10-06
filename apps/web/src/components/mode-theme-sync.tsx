@@ -2,6 +2,7 @@
 
 import { THEME_EVENT } from '@/lib/theme';
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { CATALOG_MODE_EVENT, modeFromCookie } from '@/lib/catalog-mode';
 
 type Mode = 'barter' | 'market';
@@ -36,11 +37,17 @@ const COLOR_BY_MODE: Record<Mode, string> = {
  * инлайновым `<script>` внутри <head> в layout.tsx.
  */
 export function ModeThemeSync() {
+  const pathname = usePathname();
+
   useEffect(() => {
     const html = document.documentElement;
 
     const applyMetaThemeColor = (mode: Mode) => {
-      const color = html.getAttribute('data-theme') === 'dark' ? '#10131b' : COLOR_BY_MODE[mode];
+      const color = pathname.startsWith('/games/barter-dash')
+        ? '#060914'
+        : html.getAttribute('data-theme') === 'dark'
+          ? '#10131b'
+          : COLOR_BY_MODE[mode];
       // Основной meta[name="theme-color"]
       let meta = document.querySelector<HTMLMetaElement>(
         'meta[name="theme-color"]:not([media])'
@@ -85,7 +92,7 @@ export function ModeThemeSync() {
       window.removeEventListener(EVENT, onChange);
       window.removeEventListener(THEME_EVENT, onTheme);
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }
