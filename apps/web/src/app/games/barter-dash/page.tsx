@@ -79,7 +79,6 @@ export default function BarterDashPage() {
       <button
         type="button"
         onClick={() => {
-          if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
           if (window.history.length > 1) router.back();
           else router.push('/profile');
         }}
