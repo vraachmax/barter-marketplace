@@ -997,7 +997,8 @@ const FACE = {
   uBrowP: { value: new THREE.Vector2(.072, .862) },        // брови: отступ от середины, высота
   uFaceAmp: { value: 1 },                           // сила мимики рта и бровей (у моделей разный масштаб)
   uFurOn: { value: 1 },                             // ворс в шейдере: у зверька да, у монстрика мех вылеплен в сетке
-  uQS: { value: 1 }, uQO: { value: new THREE.Vector3() },   // распаковка сжатых позиций модели (int16 → единицы модели)};
+  uQS: { value: 1 }, uQO: { value: new THREE.Vector3() },   // распаковка сжатых позиций модели (int16 → единицы модели)
+};
 const FACE_FOX = JSON.parse(JSON.stringify({ e0: FACE.uEC0.value, x0: FACE.uEX0.value, y0: FACE.uEY0.value, e1: FACE.uEC1.value, x1: FACE.uEX1.value, y1: FACE.uEY1.value }));
 // параметры лица по умолчанию для персонажа: у монстрика — свои, замеренные по его модели; у зверька приходят с моделью
 function faceDefaults(fc) {
@@ -1996,7 +1997,8 @@ function protoTow(oncoming) {
   for (const x of [-.85, .85]) {
     outer.add(flat(G.plane, M.beam, 1.6, 9, x, .05, 4.6));
     outer.add(mesh(G.plane, M.glowSprite, 1.3, 1.3, 1, x, .82, .3));
-  }  outer.add(flat(G.plane, M.markRed, 2.5, 3, 0, .045, 1.6));
+  }
+  outer.add(flat(G.plane, M.markRed, 2.5, 3, 0, .045, 1.6));
   return outer;
 }
 // встречная легковушка или фургон: перед смотрит на игрока (+z), фары горят, свет на асфальте
@@ -2995,7 +2997,8 @@ function poseRig(dt) {
   if (Math.abs(thigh) + Math.abs(calf) + Math.abs(arm) > .002) {
     bones.L_Thigh.rotateX(thigh); bones.R_Thigh.rotateX(thigh * .85);
     if (bones.L_Calf) { bones.L_Calf.rotateX(calf); bones.R_Calf.rotateX(calf * .85); }
-    if (bones.L_Upperarm) {      const tk = W.tuck, free = arm * (1 - tk);
+    if (bones.L_Upperarm) {
+      const tk = W.tuck, free = arm * (1 - tk);
       if (free) { bones.L_Upperarm.rotateX(free); bones.R_Upperarm.rotateX(free * .92); }
       if (tk > .01) {                                                  // поджатые руки поднимаются строго вперёд-вверх
         bones.L_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(RIG.arm.L.AX, -arm * tk));
@@ -3994,7 +3997,8 @@ function moveWorld(shift, dt) {
       populate(c, S.mode !== 'menu');
     }
   }
-}function physics(dt, shift) {
+}
+function physics(dt, shift) {
   for (const k in S.pw) if (S.pw[k] > 0) S.pw[k] = Math.max(0, S.pw[k] - dt);
   if (S.magnet > 0) S.magnet = Math.max(0, S.magnet - dt);
   if (S.stumble > 0) { S.stumble -= dt; if (S.stumble <= 0) setDanger(false); }
