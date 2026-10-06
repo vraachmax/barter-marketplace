@@ -14,3 +14,6 @@ uploads/
 .mcp.json
 awesome-design-md/
 $null
+
+# Generated from the packed Barter Dash source asset during web build
+apps/web/public/games/barter-dash/barter-mascot-v6.glb
