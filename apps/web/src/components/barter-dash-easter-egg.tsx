@@ -7,12 +7,13 @@ import { useEffect, useRef, useState } from 'react';
 import { getBarterDashProgress, unlockBarterDash } from '@/lib/barter-dash';
 
 const REQUIRED_TAPS = 5;
-const TAP_WINDOW_MS = 2400;
+const TAP_RESET_MS = 10000;
 
 export function BarterDashEasterEgg() {
   const [unlocked, setUnlocked] = useState(false);
   const [foundNow, setFoundNow] = useState(false);
-  const taps = useRef<number[]>([]);
+  const tapCount = useRef(0);
+  const lastTapAt = useRef(0);
 
   useEffect(() => {
     setUnlocked(getBarterDashProgress().unlocked);
@@ -21,9 +22,11 @@ export function BarterDashEasterEgg() {
   function tapLogo() {
     if (unlocked) return;
     const now = Date.now();
-    taps.current = [...taps.current.filter((stamp) => now - stamp <= TAP_WINDOW_MS), now];
+    if (now - lastTapAt.current > TAP_RESET_MS) tapCount.current = 0;
+    lastTapAt.current = now;
+    tapCount.current += 1;
 
-    if (taps.current.length >= 3) {
+    if (tapCount.current >= 3) {
       try {
         navigator.vibrate?.(18);
       } catch {
@@ -31,9 +34,10 @@ export function BarterDashEasterEgg() {
       }
     }
 
-    if (taps.current.length < REQUIRED_TAPS) return;
+    if (tapCount.current < REQUIRED_TAPS) return;
 
-    taps.current = [];
+    tapCount.current = 0;
+    lastTapAt.current = 0;
     unlockBarterDash();
     setUnlocked(true);
     setFoundNow(true);
@@ -47,11 +51,11 @@ export function BarterDashEasterEgg() {
   return (
     <>
       <div className="space-y-5">
-        <div className="rounded-3xl border border-border bg-muted/40 p-5 text-center sm:p-7">
+        <div className="rounded-3xl border border-border bg-muted/40 p-3 text-center sm:p-4">
           <button
             type="button"
             onClick={tapLogo}
-            className="mx-auto grid min-h-24 min-w-24 place-items-center rounded-3xl p-3 transition active:scale-95 focus-visible:outline-2 focus-visible:outline-primary"
+            className="w-full touch-manipulation select-none rounded-3xl p-3 transition active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-primary sm:p-4"
             aria-label="Логотип БАРТЕР"
           >
             <Image
@@ -60,13 +64,13 @@ export function BarterDashEasterEgg() {
               width={160}
               height={192}
               unoptimized
-              className="h-auto w-16 object-contain sm:w-20"
+              className="mx-auto h-auto w-16 select-none object-contain sm:w-20"
               draggable={false}
             />
+            <span className="mt-2 block text-base font-bold text-foreground">БАРТЕР</span>
+            <span className="mt-1 block text-sm text-muted-foreground">Маркетплейс продажи и обмена</span>
+            <span className="mt-3 block text-xs text-muted-foreground">Alpha · Bubble B</span>
           </button>
-          <p className="mt-2 text-base font-bold text-foreground">БАРТЕР</p>
-          <p className="mt-1 text-sm text-muted-foreground">Маркетплейс продажи и обмена</p>
-          <p className="mt-3 text-xs text-muted-foreground">Alpha · Bubble B</p>
         </div>
 
         {unlocked ? (
