@@ -404,6 +404,7 @@
 <section class="modal" id="settingsModal" hidden>
   <div class="sheet">
     <h3>Настройки</h3>
+    <div class="set"><span>Персонаж</span><div class="seg" id="charSeg"><button data-v="fox">Зверёк</button><button data-v="monster">Монстрик</button></div></div>
     <div class="set"><span>Графика</span><div class="seg" id="gfxSeg"><button data-v="auto">Авто</button><button data-v="high">Высокая</button><button data-v="low">Экономная</button></div></div>
     <label class="set"><span>Музыка</span><input type="checkbox" id="setMusic"></label>
     <label class="set"><span>Звуки</span><input type="checkbox" id="setSfx"></label>
@@ -446,7 +447,7 @@ window.__bdStarted = true;
 
 /* ═══════════ настройки ═══════════ */
 const CFG = {
-  modelUrl: './barter-mascot-v6.glb', modelScale: 2.21,
+  modelUrl: './barter-fox-v1.js', modelScale: 1.75,
   lanes: [-3, 0, 3], chunkLength: 48, chunkCount: 6,
   speedStart: 15, speedMax: 30, speedAccel: .19, menuSpeed: 7.5,
   gravity: -62, jumpSpeed: 18, superJump: 26.5, padSpeed: 27, flyHeight: 8.6,
@@ -458,7 +459,8 @@ const CFG = {
 const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ''));
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const Q = { shadows: !MOBILE, dpr: Math.min(devicePixelRatio || 1, MOBILE ? 1.6 : 2), cones: !MOBILE, bloom: true };
+// потолок чёткости: выше 1.5 разницы на глаз почти нет, а пикселей в 1.8 раза больше (телефоны с DPR 3, «ретина»-мониторы)
+const Q = { shadows: !MOBILE, dpr: Math.min(devicePixelRatio || 1, 1.5), cones: !MOBILE, bloom: true };
 
 /* ═══════════ утилиты ═══════════ */
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -476,7 +478,7 @@ const store = {
 const SET = (() => {
   let o = {};
   try { o = JSON.parse(store.get('settings', '{}')) || {}; } catch { o = {}; }
-  return Object.assign({ gfx: 'auto', music: true, sfx: true, vib: true }, o);
+  return Object.assign({ gfx: 'auto', music: true, sfx: true, vib: true, char: 'fox' }, o);
 })();
 const saveSettings = () => store.set('settings', JSON.stringify(SET));
 const vibrate = ms => { if (!SET.vib) return; try { navigator.vibrate && navigator.vibrate(ms); } catch { /* недоступно */ } };
@@ -494,7 +496,7 @@ renderer.setPixelRatio(Q.dpr);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = .95;
 renderer.shadowMap.enabled = Q.shadows;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;                 // мягкая тень (PCFSoft) заметно дороже, а на скорости разницы не видно
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, 1, .1, 700);
@@ -978,58 +980,88 @@ function bake(root, { cast = false, recv = false } = {}) {
 /* ═══════════ мимика маскота: всё в шейдере, костей лица в модели нет ═══════════
    Глаза рисуются процедурно поверх раскраски: белок, радужка, зрачок, блик — зрачки смотрят, веки моргают
    и прищуриваются. Рот и брови двигаются смещением вершин в позе связывания (до скиннинга).
-   Координаты — в единицах модели (рост 0.82), замерены по цветам вершин. */
+   Координаты — в единицах модели; положение глаз, рта и бровей приходит вместе с моделью (extras). */
 const FACE = {
-  uEC0: { value: new THREE.Vector3(-.0615, .6458, .1056) }, uEX0: { value: new THREE.Vector3(.9115, 0, .4113) }, uEY0: { value: new THREE.Vector3(.1016, .969, -.2252) },
-  uEC1: { value: new THREE.Vector3(.065, .6462, .1031) }, uEX1: { value: new THREE.Vector3(.904, 0, -.4275) }, uEY1: { value: new THREE.Vector3(-.0987, .973, -.2087) },
-  uER: { value: new THREE.Vector2(.039, .033) },
-  uLid0: { value: new THREE.Color(.85, .143, .012) }, uLid1: { value: new THREE.Color(.011, .335, .765) },
-  uBlink: { value: new THREE.Vector2(0, 0) },       // верхние веки: 0 — открыт, 1 — закрыт (левый, правый)
+  uEC0: { value: new THREE.Vector3(-.068, .79, .164) }, uEX0: { value: new THREE.Vector3(1, 0, 0) }, uEY0: { value: new THREE.Vector3(0, 1, 0) },
+  uEC1: { value: new THREE.Vector3(.068, .79, .164) }, uEX1: { value: new THREE.Vector3(1, 0, 0) }, uEY1: { value: new THREE.Vector3(0, 1, 0) },
+  uER: { value: new THREE.Vector2(.044, .05) },
+  uLid0: { value: new THREE.Color(.745, .162, .023) }, uLid1: { value: new THREE.Color(.745, .162, .023) },
+  uBlink: { value: new THREE.Vector2(0, 0) },       // верхние веки: 0 — открыт, 1 — закрыт (правый, левый)
   uSquint: { value: 0 },                            // нижние веки вверх
   uLook: { value: new THREE.Vector2(0, 0) },        // взгляд: x вправо, y вверх, −1…1
   uPupil: { value: 1 },                             // размер зрачка
   uJaw: { value: 0 },                               // рот: >0 открыть, <0 сомкнуть
   uSmile: { value: 0 },                             // уголки рта вверх
-  uBrow: { value: new THREE.Vector3(0, 0, 0) },     // брови: подъём левой, правой, сведение к переносице
-  uQS: { value: 1 }, uQO: { value: new THREE.Vector3() },   // распаковка сжатых позиций модели (int16 → метры модели)
-};
+  uBrow: { value: new THREE.Vector3(0, 0, 0) },     // брови: подъём правой, левой, сведение к переносице
+  uMouth: { value: new THREE.Vector3(.684, .045, .12) },   // рот: высота, полуширина, где начинается лицевая сторона (z)
+  uBrowP: { value: new THREE.Vector2(.072, .862) },        // брови: отступ от середины, высота
+  uFaceAmp: { value: 1 },                           // сила мимики рта и бровей (у моделей разный масштаб)
+  uFurOn: { value: 1 },                             // ворс в шейдере: у зверька да, у монстрика мех вылеплен в сетке
+  uQS: { value: 1 }, uQO: { value: new THREE.Vector3() },   // распаковка сжатых позиций модели (int16 → единицы модели)};
+const FACE_FOX = JSON.parse(JSON.stringify({ e0: FACE.uEC0.value, x0: FACE.uEX0.value, y0: FACE.uEY0.value, e1: FACE.uEC1.value, x1: FACE.uEX1.value, y1: FACE.uEY1.value }));
+// параметры лица по умолчанию для персонажа: у монстрика — свои, замеренные по его модели; у зверька приходят с моделью
+function faceDefaults(fc) {
+  if (fc) {
+    faceFromModel(fc);
+    FACE.uLid0.value.fromArray(fc.lids[0]); FACE.uLid1.value.fromArray(fc.lids[1]);
+    FACE.uFaceAmp.value = fc.amp || 1; FACE.uFurOn.value = fc.fur === undefined ? 1 : fc.fur;
+  } else { FACE.uFaceAmp.value = 1; FACE.uFurOn.value = 1; }
+}
+// параметры лица приходят вместе с моделью (extras): глаза, веки, рот, брови
+function faceFromModel(fc) {
+  const e = fc.eyes;
+  if (e && e.length === 2) {
+    FACE.uEC0.value.fromArray(e[0].c); FACE.uEX0.value.fromArray(e[0].x); FACE.uEY0.value.fromArray(e[0].y);
+    FACE.uEC1.value.fromArray(e[1].c); FACE.uEX1.value.fromArray(e[1].x); FACE.uEY1.value.fromArray(e[1].y);
+  }
+  if (fc.er) FACE.uER.value.fromArray(fc.er);
+  if (fc.lid) { FACE.uLid0.value.fromArray(fc.lid); FACE.uLid1.value.fromArray(fc.lid); }
+  if (fc.mouth) FACE.uMouth.value.fromArray(fc.mouth);
+  if (fc.brow) FACE.uBrowP.value.fromArray(fc.brow);
+}
 const FACE_VERT_HEAD = `
-uniform vec3 uEC0, uEX0, uEY0, uEC1, uEX1, uEY1; uniform vec2 uER; uniform float uJaw, uSmile, uQS; uniform vec3 uBrow, uQO;
-varying vec3 vE0; varying vec3 vE1;`;
+uniform vec3 uEC0, uEX0, uEY0, uEC1, uEX1, uEY1; uniform vec2 uER; uniform float uJaw, uSmile, uQS, uFaceAmp; uniform vec3 uBrow, uQO, uMouth; uniform vec2 uBrowP;
+varying vec3 vE0; varying vec3 vE1; varying vec3 vFurP;`;
 const FACE_VERT_BODY = `
   {
     vec3 pp = position * uQS + uQO;
-    float iq = 1.0 / uQS;                 // смещения считаем в метрах модели, вершины — в единицах сжатия
+    vFurP = pp;
+    float iq = uFaceAmp / uQS;            // смещения считаем в единицах модели, вершины — в единицах сжатия
     // глаз — только на лицевой поверхности: точки затылка и щёк дальше от плоскости глаза отсекаются
     vec3 n0 = normalize(cross(uEX0, uEY0)), n1 = normalize(cross(uEX1, uEY1));
-    // третья компонента — расстояние от плоскости глаза; отсечение в пикселе, чтобы интерполяция не давала пятен
     vE0 = vec3(vec2(dot(pp - uEC0, uEX0), dot(pp - uEC0, uEY0)) / uER, dot(pp - uEC0, n0));
     vE1 = vec3(vec2(dot(pp - uEC1, uEX1), dot(pp - uEC1, uEY1)) / uER, dot(pp - uEC1, n1));
-    float ax = abs(pp.x), front = smoothstep(.0, .05, pp.z);
+    float ax = abs(pp.x), front = smoothstep(uMouth.z - .03, uMouth.z + .02, pp.z), my = uMouth.x, mw = uMouth.y;
     // нижняя губа и подбородок уходят вниз, сильнее в центре
-    float jw = (1.0 - smoothstep(.06, .1, ax)) * (1.0 - smoothstep(.565, .59, pp.y)) * smoothstep(.47, .53, pp.y) * front;
-    transformed.y -= uJaw * .024 * jw * iq;
-    transformed.z -= uJaw * .006 * jw * iq;
+    float jw = (1.0 - smoothstep(mw * .55, mw * 1.15, ax)) * (1.0 - smoothstep(my - .004, my + .006, pp.y)) * smoothstep(my - .075, my - .03, pp.y) * front;
+    transformed.y -= uJaw * .016 * jw * iq;
+    transformed.z -= uJaw * .004 * jw * iq;
     // уголки рта
-    float sm = smoothstep(.025, .07, ax) * (1.0 - smoothstep(.08, .11, ax)) * exp(-pow((pp.y - .58) / .028, 2.0)) * front;
-    transformed.y += uSmile * .01 * sm * iq;
-    transformed.x += sign(pp.x) * uSmile * .005 * sm * iq;
+    float sm = smoothstep(mw * .3, mw * .7, ax) * (1.0 - smoothstep(mw * .85, mw * 1.25, ax)) * exp(-pow((pp.y - my - .006) / .016, 2.0)) * front;
+    transformed.y += uSmile * .007 * sm * iq;
+    transformed.x += sign(pp.x) * uSmile * .003 * sm * iq;
     // брови: подъём и сведение внутренних концов
-    float bw = exp(-pow((ax - .062) / .05, 2.0) - pow((pp.y - .69) / .024, 2.0)) * front;
+    float bw = exp(-pow((ax - uBrowP.x) / .032, 2.0) - pow((pp.y - uBrowP.y) / .018, 2.0)) * front;
     float side = pp.x < 0.0 ? uBrow.x : uBrow.y;
-    transformed.y += (side * .013 * bw - uBrow.z * .01 * bw * (1.0 - smoothstep(.03, .09, ax))) * iq;
+    transformed.y += (side * .01 * bw - uBrow.z * .008 * bw * (1.0 - smoothstep(.03, .08, ax))) * iq;
   }`;
 const FACE_FRAG_HEAD = `
-uniform vec2 uBlink, uLook; uniform float uSquint, uPupil; uniform vec3 uLid0, uLid1;
-varying vec3 vE0; varying vec3 vE1;
+uniform vec2 uBlink, uLook; uniform float uSquint, uPupil, uFurOn; uniform vec3 uLid0, uLid1;
+varying vec3 vE0; varying vec3 vE1; varying vec3 vFurP;
+float furHash(vec3 p) { p = fract(p * .3183099 + .1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float furNoise(vec3 x) {                                       // гладкий шум значений
+  vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(furHash(i), furHash(i + vec3(1, 0, 0)), f.x), mix(furHash(i + vec3(0, 1, 0)), furHash(i + vec3(1, 1, 0)), f.x), f.y),
+             mix(mix(furHash(i + vec3(0, 0, 1)), furHash(i + vec3(1, 0, 1)), f.x), mix(furHash(i + vec3(0, 1, 1)), furHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}
 vec3 faceEye(vec2 e, float blink, vec3 lid, vec3 col, float inward) {
   float r = length(e);
   if (r > 1.12) return col;
   vec2 q = e - uLook * vec2(.34, .28) - vec2(inward * .27, -.03);       // зрачки чуть сведены к носу — смотрит прямо, а не врозь
   float d = length(q);
   vec3 c = vec3(.93, .93, .9) * (1.0 - .35 * smoothstep(.55, 1.0, r));
-  vec3 iris = mix(vec3(.035, .035, .04), vec3(.16, .17, .2), smoothstep(.25, .55, d));
-  c = mix(c, iris, 1.0 - smoothstep(.54, .58, d));
+  vec3 iris = mix(vec3(.03, .015, .01), vec3(.36, .17, .06), smoothstep(.3, .62, d));   // тёплая карая радужка
+  c = mix(c, iris, 1.0 - smoothstep(.62, .66, d));
   float pr = .27 * uPupil;
   c = mix(c, vec3(.005), 1.0 - smoothstep(pr - .03, pr, d));
   c = mix(c, vec3(1.2), 1.0 - smoothstep(.1, .14, length(q - vec2(-.2, .24))));
@@ -1045,6 +1077,18 @@ vec3 faceEye(vec2 e, float blink, vec3 lid, vec3 col, float inward) {
 }`;
 const FACE_FRAG_BODY = `
   diffuseColor.rgb = pow(diffuseColor.rgb, vec3(2.2));            // цвет вершин хранится в гамме (8 бит без полос) — в линейный
+  #ifdef USE_COLOR_ALPHA
+  {                                                                // ворс: вытянутые вниз пряди и мелкий подшёрсток там, где мех (альфа цвета)
+    float fm = vColor.a * uFurOn;
+    if (fm > .01) {
+      float strands = furNoise(vFurP * vec3(260.0, 70.0, 260.0)) * .65 + furNoise(vFurP * vec3(620.0, 180.0, 620.0)) * .35;
+      diffuseColor.rgb *= mix(1.0, .72 + .5 * strands, fm);
+    } else if (uFurOn > .5) {                                     // ткань: лёгкая фактура
+      diffuseColor.rgb *= .94 + .1 * furNoise(vFurP * 400.0);
+    }
+    diffuseColor.a = 1.0;
+  }
+  #endif
   if (abs(vE0.z) < .03) diffuseColor.rgb = faceEye(vE0.xy, uBlink.x, uLid0, diffuseColor.rgb, 1.0);
   if (abs(vE1.z) < .03) diffuseColor.rgb = faceEye(vE1.xy, uBlink.y, uLid1, diffuseColor.rgb, -1.0);`;
 function faceShader(shader) {
@@ -1087,6 +1131,28 @@ const PARTS = (() => {
       ['rbox', [.035, .27, .2], 'jpBlue', [x * 1.9, -.13, .15], [0, 0, x > 0 ? -.28 : .28]],   // кили
     );
   }
+  // ранец зверька: два компактных бака по бокам рюкзака, перемычка под ним, без спинной пластины и лямок
+  // (рюкзак у зверька свой). Начало координат — задняя стенка рюкзака, +z — назад, единицы — метры
+  const jet_fox = [
+    ['rbox', [.62, .05, .06], 'jpDark', [0, -.17, .02]],                  // перемычка под рюкзаком
+    ['rbox', [.2, .07, .05], 'jpBlue', [0, -.17, .05]],
+    ['sphere', [.016], 'jpLed', [-.05, -.17, .078]], ['sphere', [.016], 'jpLed', [.05, -.17, .078]],
+  ];
+  for (const x of [-.27, .27]) {
+    jet_fox.push(
+      ['capsule', [.085, .28], 'jpShell', [x, 0, -.08]],                     // бак
+      ['cyl', [.088, .088, .04], 'jpWhite', [x, .07, -.08]],                 // белая полоса
+      ['torus', [.087, .011, TAU], 'jpBlue', [x, .16, -.08], [HP, 0, 0]],    // хомуты
+      ['torus', [.087, .011, TAU], 'jpBlue', [x, -.11, -.08], [HP, 0, 0]],
+      ['cyl', [.03, .03, .05], 'jpMetal', [x, .25, -.08]],                   // вентиль
+      ['cyl', [.045, .045, .02], 'jpBlue', [x, .28, -.08]],
+      ['cyl', [.045, .052, .04], 'jpMetal', [x, -.2, -.08]],                 // переходник
+      ['lathe', [[.048, 0], [.05, -.02], [.06, -.05], [.075, -.08], [.088, -.11], [.093, -.12]], 'jpNozzle', [x, -.215, -.08]],
+      ['torus', [.092, .009, TAU], 'jpMetal', [x, -.335, -.08], [HP, 0, 0]],
+      ['disc', [.075], 'nozGlow', [x, -.31, -.08], [HP, 0, 0]],              // раскалённое горло сопла
+      ['rbox', [.024, .2, .13], 'jpBlue', [x * 1.36, -.09, -.08], [0, 0, x > 0 ? -.3 : .3]],   // кили
+    );
+  }
   // бонусы: значок в центре (около начала координат), вокруг — светящееся кольцо и пузырь
   const halo = k => [['torus', [.66, .04, TAU], 'pwRing_' + k, [0, 0, 0]], ['sphere', [.6], 'pwBubble_' + k, [0, 0, 0]]];
   const pw_jump = [...halo('jump'),
@@ -1124,7 +1190,7 @@ const PARTS = (() => {
     ['cyl', [.078, .078, .1], 'pwWhite', [-.2, -.23, 0]],                    // полюса
     ['cyl', [.078, .078, .1], 'pwWhite', [.2, -.23, 0]],
   ];
-  return { jet, pw_jump, pw_fly, pw_shield, pw_magnet };
+  return { jet, jet_fox, pw_jump, pw_fly, pw_shield, pw_magnet };
 })();
 //</parts>
 
@@ -1734,9 +1800,9 @@ function buildDecor() {
   // провода и билборд над дорогой
   for (const czz of MOBILE ? [-len * .5] : [-len * .3, -len * .75]) {
     // провода выше полёта на ранце (8.6 м)
-    bx(g, M.dark, 26, .05, .05, 0, 13.2, czz, 0, 0, 0, true);
-    bx(g, M.dark, 26, .04, .04, 0, 12.6, czz + .5, 0, 0, 0, true);
-    if (!MOBILE && Math.random() < .6) for (let i = 0; i < 9; i++) g.add(mesh(G2.ball, MC.bulb, .09, .09, .09, -7 + i * 1.75, 13.05 - Math.sin(i / 8 * Math.PI) * .5, czz));
+    bx(g, M.dark, 26, .05, .05, 0, 14.8, czz, 0, 0, 0, true);      // провода выше камеры в полёте
+    bx(g, M.dark, 26, .04, .04, 0, 14.3, czz + .5, 0, 0, 0, true);
+    if (!MOBILE && Math.random() < .6) for (let i = 0; i < 9; i++) g.add(mesh(G2.ball, MC.bulb, .09, .09, .09, -7 + i * 1.75, 14.65 - Math.sin(i / 8 * Math.PI) * .5, czz));
   }
   { const bz = -rnd(8, len - 8);
     // ферма с билбордом над дорогой — заметно выше полёта на ранце, чтобы не закрывала маскота
@@ -1930,8 +1996,7 @@ function protoTow(oncoming) {
   for (const x of [-.85, .85]) {
     outer.add(flat(G.plane, M.beam, 1.6, 9, x, .05, 4.6));
     outer.add(mesh(G.plane, M.glowSprite, 1.3, 1.3, 1, x, .82, .3));
-  }
-  outer.add(flat(G.plane, M.markRed, 2.5, 3, 0, .045, 1.6));
+  }  outer.add(flat(G.plane, M.markRed, 2.5, 3, 0, .045, 1.6));
   return outer;
 }
 // встречная легковушка или фургон: перед смотрит на игрока (+z), фары горят, свет на асфальте
@@ -2591,41 +2656,50 @@ shieldBall.position.y = .95; shieldBall.scale.set(1.15, 1.22, 1.1); shieldBall.v
    логотип на хребте; пламя — шейдер с бегущим шумом, плюс свечение и искры.
    Спина маскота в беге наклонена вперёд примерно на 30°, ранец лежит на ней */
 const jets = new THREE.Group();
-jets.add(buildParts(PARTS.jet));
-jets.position.set(0, 1.08, 0); jets.rotation.x = -.6;
-const NOZ = [-.19, .19], NOZ_Y = -.5, NOZ_Z = .2;
+const JETK = { NOZ: [-.19, .19], NOZ_Y: -.5, NOZ_Z: .2, fs: 1 };
 const _flameGeo = new THREE.CylinderGeometry(.12, .045, 1, 20, 8, true).translate(0, -.5, 0);   // верх у сопла, длина 1 вниз
 const _coreGeo = new THREE.CylinderGeometry(.06, .01, 1, 16, 6, true).translate(0, -.5, 0);
+const _flameMat = flameMaterial(new THREE.Color(3, 2.6, 1.8), new THREE.Color(2.8, 1.25, .3), new THREE.Color(1.6, .35, .08));
+const _coreMat = flameMaterial(new THREE.Color(3, 3, 2.8), new THREE.Color(3, 2.2, 1.1), new THREE.Color(2.4, 1, .25));
 const flames = [];
-for (const x of NOZ) {
-  const out = new THREE.Mesh(_flameGeo, flameMaterial(new THREE.Color(3, 2.6, 1.8), new THREE.Color(2.8, 1.25, .3), new THREE.Color(1.6, .35, .08)));
-  const core = new THREE.Mesh(_coreGeo, flameMaterial(new THREE.Color(3, 3, 2.8), new THREE.Color(3, 2.2, 1.1), new THREE.Color(2.4, 1, .25)));
-  out.position.set(x, NOZ_Y, NOZ_Z); core.position.set(x, NOZ_Y, NOZ_Z);
-  const glow = mesh(G.plane, M.glowSprite, 1.1, 1.1, 1, x, NOZ_Y - .25, NOZ_Z + .05);
-  jets.add(out, core, glow);
-  flames.push({ out, core, glow, x });
-}
 const sparkN = 44, sparkPos = new Float32Array(sparkN * 3), sparkLife = new Float32Array(sparkN);
 const sparkGeo = new THREE.BufferGeometry();
 sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
 const sparks = new THREE.Points(sparkGeo, reg(new THREE.PointsMaterial({ size: .12, color: new THREE.Color(2.6, 1.1, .3),
   transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending })));
 sparks.frustumCulled = false;
-jets.add(sparks);
+// ранец под персонажа: у монстрика — большая спинная пластина с баками, у зверька — баки по бокам рюкзака
+function buildJets(kind) {
+  jets.clear(); flames.length = 0;
+  const fox = kind === 'fox';
+  Object.assign(JETK, fox ? { NOZ: [-.27, .27], NOZ_Y: -.335, NOZ_Z: -.08, fs: .72 } : { NOZ: [-.19, .19], NOZ_Y: -.5, NOZ_Z: .2, fs: 1 });
+  jets.add(buildParts(fox ? PARTS.jet_fox : PARTS.jet));
+  for (const x of JETK.NOZ) {
+    const out = new THREE.Mesh(_flameGeo, _flameMat), core = new THREE.Mesh(_coreGeo, _coreMat);
+    out.position.set(x, JETK.NOZ_Y, JETK.NOZ_Z); core.position.set(x, JETK.NOZ_Y, JETK.NOZ_Z);
+    const glow = mesh(G.plane, M.glowSprite, 1.1 * JETK.fs, 1.1 * JETK.fs, 1, x, JETK.NOZ_Y - .25 * JETK.fs, JETK.NOZ_Z + .05);
+    jets.add(out, core, glow);
+    flames.push({ out, core, glow, x });
+  }
+  jets.add(sparks);
+}
+buildJets('monster');
+jets.position.set(0, 1.08, 0); jets.rotation.x = -.6;
 jets.visible = false;
 body.add(jets);
 function jetsUpdate(t, dt) {
+  const fs = JETK.fs;
   for (let n = 0; n < flames.length; n++) {
     const f = flames[n], w1 = Math.sin(t * 31 + n * 2.1), w2 = Math.sin(t * 53 + n);
-    f.out.scale.set(1 + w2 * .06, 1.25 + w1 * .22, 1 + w2 * .06);
-    f.core.scale.set(1, .6 + w2 * .1, 1);
-    const gs = 1.1 + w1 * .18; f.glow.scale.set(gs, gs, 1);
+    f.out.scale.set((1 + w2 * .06) * fs, (1.25 + w1 * .22) * fs, (1 + w2 * .06) * fs);
+    f.core.scale.set(fs, (.6 + w2 * .1) * fs, fs);
+    const gs = (1.1 + w1 * .18) * fs; f.glow.scale.set(gs, gs, 1);
   }
   for (let i = 0; i < sparkN; i++) {
     sparkLife[i] -= dt;
     if (sparkLife[i] <= 0) {
       sparkLife[i] = rnd(.2, .55);
-      sparkPos[i * 3] = NOZ[i & 1] + rnd(-.06, .06); sparkPos[i * 3 + 1] = NOZ_Y - .1; sparkPos[i * 3 + 2] = NOZ_Z;
+      sparkPos[i * 3] = JETK.NOZ[i & 1] + rnd(-.06, .06) * fs; sparkPos[i * 3 + 1] = JETK.NOZ_Y - .1 * fs; sparkPos[i * 3 + 2] = JETK.NOZ_Z;
     } else {
       sparkPos[i * 3 + 1] -= dt * rnd(5, 9); sparkPos[i * 3 + 2] += dt * rnd(-.5, 1.5); sparkPos[i * 3] += dt * rnd(-.7, .7);
     }
@@ -2636,7 +2710,7 @@ function jetsUpdate(t, dt) {
 // заглушка, пока грузится модель
 let limbs = null;
 {
-  const add = (sx, sy, sz, x, y, z, mat = M.body) => { const m = mesh(G.rbox, mat, sx, sy, sz, x, y, z); body.add(m); return m; };
+  const add = (sx, sy, sz, x, y, z, mat = M.body) => { const m = mesh(G.rbox, mat, sx, sy, sz, x, y, z); m.userData.stub = true; body.add(m); return m; };
   add(.7, .95, .42, 0, 1.15, 0); add(.46, .46, .46, 0, 1.87, 0); add(.82, .26, .3, 0, .78, .05, M.orange);
   limbs = { legL: add(.24, .72, .26, -.18, .36, 0), legR: add(.24, .72, .26, .18, .36, 0),
     armL: add(.2, .62, .2, -.48, 1.2, 0), armR: add(.2, .62, .2, .48, 1.2, 0) };
@@ -2674,57 +2748,75 @@ function learnMeanPose(clip) {
   mixer.setTime(0);
 }
 /* ── бег с ключевыми позами (вместо сгенерированного клипа) ──
-   Кривые подобраны по скелету: в опоре стопа стоит на земле, в махе поднимается на 25–40 см,
-   колено сгибается в махе и пружинит после касания, руки идут противофазно, корпус слегка скручивается,
-   таз подпрыгивает дважды за шаг. Правая нога у модели от генератора длиннее — выравниваем её. */
+   Кривые подобраны по скелету: в опоре стопа стоит на земле, колено сгибается в махе и пружинит после касания,
+   руки идут противофазно, корпус слегка скручивается, таз подпрыгивает дважды за шаг. */
+/* ── два персонажа: зверёк (своя модель, свой скелет) и монстрик (модель от генератора) ──
+   у каждого свои кривые шага, таз, руки, стойка на доске и ранец; переключается в настройках */
+const Q4 = a => new THREE.Quaternion(a[0], a[1], a[2], a[3]), V3 = a => new THREE.Vector3(a[0], a[1], a[2]).normalize();
+const RIGS = {
+  fox: {
+    name: 'Зверёк', url: './models/barter-fox-v2.js', scale: 1.75, inline: 'fox',
+    hipc: [-0.00358, 0, 0, -0.00909, -0.02555, 0, 0, -0.00123, -0.00134],
+    leg: { A: .62, T0: .1, T1: .3, K0: .25, K1: .85 }, hipUp: 'y', swaySign: -1,
+    runk: { swing: .6, flex: -.18, pelvis: .12, twist: .15, sway: .008, lean: .1 },
+    arm: { L: { TU: Q4([-.0285, .042, .2027, .9779]), TF: Q4([.4257, -.4196, .161, .7853]), AX: V3([-1, 0, 0]), HX: V3([.6915, -.6742, .2592]) },
+           R: { TU: Q4([-.0285, -.042, -.2027, .9779]), TF: Q4([.4257, .4196, -.161, .7853]), AX: V3([-1, 0, 0]), HX: V3([.6915, .6742, -.2592]) } },
+    bq: { Lu: Q4([.1635, -.1691, -.0838, .9683]), Lf: Q4([.0812, -.075, -.0123, .9938]), Ru: Q4([-.0279, -.0195, .1264, .9914]), Rf: Q4([.0616, .0464, .0983, .9922]) },
+    baxz: { L: V3([0, 0, -1]), R: V3([0, 0, -1]) }, abd: -1, boardLift: .14, palm: null, flyPitch: -1.05, tuckAlways: true,
+    jets: { bone: 'Spine02', pos: [0, -.04, .235], rotX: 0 },
+  },
+  monster: {
+    name: 'Монстрик', url: './models/barter-mascot-v6.js', scale: 2.21, inline: 'monster',
+    hipc: [-0.02077, -0.0095, 0.00175, -0.0127, 0.00207, -0.00061, 0.00039, 0.00097, -0.00111],
+    leg: { A: .7, T0: .12, T1: .3, K0: .22, K1: .3 }, hipUp: 'z', swaySign: 1,
+    runk: { swing: .56, flex: -.15, pelvis: .11, twist: .16, sway: .006, lean: 0 },
+    arm: { L: { TU: Q4([.2364, -.0095, -.6461, .7256]), TF: Q4([.6668, .0663, .2557, .6969]), AX: V3([.1694, .9846, -.044]), HX: V3([.9634, .0003, .268]) },
+           R: { TU: Q4([.2852, -.0326, .5929, .7524]), TF: Q4([.6773, -.0159, -.2024, .7072]), AX: V3([.009, -.9983, -.058]), HX: V3([.9643, -.0002, -.2647]) } },
+    bq: { Lu: Q4([.2264, .0001, .3219, .9193]), Lf: Q4([-.2281, 0, -.3243, .9181]), Ru: Q4([-.0097, 0, -.2483, .9686]), Rf: Q4([-.258, 0, .4293, .8655]) },
+    baxz: { L: V3([-.5971, .1381, .7902]), R: V3([.6128, -.0403, .7892]) }, abd: 1, boardLift: .2, palm: [.87, -1.13], flyPitch: -1.35, tuckAlways: false,
+    jets: null,
+    face: { eyes: [{ c: [-.0615, .6458, .1056], x: [.9115, 0, .4113], y: [.1016, .969, -.2252] }, { c: [.065, .6462, .1031], x: [.904, 0, -.4275], y: [-.0987, .973, -.2087] }],
+      er: [.039, .033], lids: [[.85, .143, .012], [.011, .335, .765]], mouth: [.585, .095, .03], brow: [.062, .69], amp: 1.45, fur: 0 },
+  },
+};
+let RIG = RIGS[(typeof SET !== 'undefined' && SET.char) || 'fox'] || RIGS.fox;
 const RUN = { phase: 0, amp: 1 };
-const HIPC = [-0.02077, -0.0095, 0.00175, -0.0127, 0.00207, -0.00061, 0.00039, 0.00097, -0.00111];   // таз: опорная стопа всегда на земле
 const bumpF = (x, c, w) => { const dd = ((x - c + .5) % 1 + 1) % 1 - .5; return Math.abs(dd) < w / 2 ? .5 + .5 * Math.cos(TAU * dd / w) : 0; };
-// шаг частый и невысокий: ноги у маскота короткие, а тело низко — высокий захлёст пятки уводил стопу в живот и в зад.
-// Стопа в махе поднимается до 5 см модели и выносится вперёд, а не назад-вверх
-const legT = ph => .7 * Math.cos(TAU * (ph - .02)) + .12 + .3 * bumpF(ph, .8, .35);
-const legK = ph => -(.22 + .3 * bumpF(ph, .7, .55) + .22 * bumpF(ph, .12, .25));
-function hipLift(ph) { let v = HIPC[0]; for (let k = 1; k <= 4; k++) v += HIPC[2 * k - 1] * Math.cos(TAU * k * ph) + HIPC[2 * k] * Math.sin(TAU * k * ph); return v; }
+// бедро: вперёд к касанию, назад в толчке, хлёст вперёд в махе; колено: сгиб в махе и пружина после касания
+const legT = ph => RIG.leg.A * Math.cos(TAU * (ph - .02)) + RIG.leg.T0 + RIG.leg.T1 * bumpF(ph, .8, .35);
+const legK = ph => -(RIG.leg.K0 + RIG.leg.K1 * bumpF(ph, .7, .55) + .22 * bumpF(ph, .12, .25));
+function hipLift(ph) { const c = RIG.hipc; let v = c[0]; for (let k = 1; k <= 4; k++) v += c[2 * k - 1] * Math.cos(TAU * k * ph) + c[2 * k] * Math.sin(TAU * k * ph); return v; }
 function restPose() {                                       // все кости — в среднюю позу (клип больше не играет)
   for (const k in meanQ) bones[k].quaternion.copy(meanQ[k]);
   if (hipMean && bones.Hip) bones.Hip.position.copy(hipMean);
 }
-/* руки в беге: локти прижаты к бокам, предплечья вперёд под прямым углом, ладони к телу.
-   Базовая поза плеча и предплечья подобрана по скелету (TU/TF), мах идёт строго вперёд-назад —
-   вокруг поперечной оси модели в системе ключицы (AX), сгиб локтя — вокруг оси шарнира в системе плеча (HX):
-   рука впереди — локоть чуть раскрывается, сзади — сгибается сильнее, как у бегуна. */
-const ARM = {
-  L: { TU: new THREE.Quaternion(.2364, -.0095, -.6461, .7256), TF: new THREE.Quaternion(.6668, .0663, .2557, .6969),
-    AX: new THREE.Vector3(.1694, .9846, -.044), HX: new THREE.Vector3(.9634, .0003, .268) },
-  R: { TU: new THREE.Quaternion(.2852, -.0326, .5929, .7524), TF: new THREE.Quaternion(.6773, -.0159, -.2024, .7072),
-    AX: new THREE.Vector3(.009, -.9983, -.058), HX: new THREE.Vector3(.9643, -.0002, -.2647) },
-};
-for (const k in ARM) { ARM[k].AX.normalize(); ARM[k].HX.normalize(); }
+/* руки в беге: локти у боков, предплечья вперёд под прямым углом, кулачки перед животом.
+   Мах — поворот вокруг поперечной оси в системе ключицы (AX), сгиб локтя — вокруг оси шарнира в системе плеча (HX);
+   базовые повороты TU/TF подобраны по скелету каждого персонажа. */
 const _qs = new THREE.Quaternion();
-const RUNK = { swing: .56, flex: -.15, pelvis: .11, twist: .16, sway: .006 };
 function runCycle(w, tuck) {
   if (!bones.L_Thigh) return;
   const ph = RUN.phase % 1, a = RUN.amp * w, pL = ph, pR = (ph + .5) % 1;
   if (w > .01) {
     bones.L_Thigh.rotateX(legT(pL) * a); bones.R_Thigh.rotateX(legT(pR) * a);
     if (bones.L_Calf) { bones.L_Calf.rotateX(legK(pL) * a); bones.R_Calf.rotateX(legK(pR) * a); }
-    // таз поворачивается за выносимой ногой, плечи — навстречу, голова держит направление взгляда
-    if (bones.Pelvis) bones.Pelvis.rotateY(-RUNK.pelvis * Math.cos(TAU * (ph - .02)) * a);
-    const tw = RUNK.twist * Math.cos(TAU * ph);
-    if (bones.Spine01) bones.Spine01.rotateY(tw * a);
-    if (bones.Head) bones.Head.rotateY(-tw * .8 * a);
+    // таз поворачивается за выносимой ногой, плечи — навстречу, корпус чуть наклонён вперёд, голова держит взгляд
+    const RK = RIG.runk;
+    if (bones.Pelvis) bones.Pelvis.rotateY(-RK.pelvis * Math.cos(TAU * (ph - .02)) * a);
+    const tw = RK.twist * Math.cos(TAU * ph);
+    if (bones.Spine01) { bones.Spine01.rotateY(tw * a); if (RK.lean) bones.Spine01.rotateX(-RK.lean * a); }
+    if (bones.Head) { bones.Head.rotateY(-tw * .8 * a); if (RK.lean) bones.Head.rotateX(RK.lean * .8 * a); }
     if (bones.Hip && hipMean) {
-      bones.Hip.position.z += hipLift(ph) * a;                          // у кости таза локальная z — вверх
-      bones.Hip.position.x += RUNK.sway * Math.cos(TAU * (ph - .2)) * a; // вес переносится на опорную ногу
+      bones.Hip.position[RIG.hipUp] += hipLift(ph) * a;                 // ось «вверх» у кости таза своя у каждого скелета
+      bones.Hip.position.x += RIG.swaySign * RK.sway * Math.cos(TAU * (ph - .2)) * a;   // вес переносится на опорную ногу
     }
   }
-  // руки прижаты к бокам всегда, кроме доски, полёта и падения; мах — только в беге
   if (tuck > .01 && bones.L_Upperarm && bones.L_Forearm) {
     const arm = Math.cos(TAU * (ph + .48));                           // +1 — левая рука впереди (противофазно левой ноге)
     for (const [k, sg] of [['L', 1], ['R', -1]]) {
-      const c = ARM[k], u = bones[k + '_Upperarm'], f = bones[k + '_Forearm'], sw = arm * sg;
-      u.quaternion.copy(meanQ[k + '_Upperarm']).slerp(c.TU, tuck).premultiply(_qs.setFromAxisAngle(c.AX, -RUNK.swing * sw * a));
-      f.quaternion.copy(meanQ[k + '_Forearm']).slerp(c.TF, tuck).premultiply(_qs.setFromAxisAngle(c.HX, RUNK.flex * sw * a));
+      const c = RIG.arm[k], u = bones[k + '_Upperarm'], f = bones[k + '_Forearm'], sw = arm * sg * (w > .01 ? a : 0);
+      u.quaternion.copy(meanQ[k + '_Upperarm']).slerp(c.TU, tuck).premultiply(_qs.setFromAxisAngle(c.AX, -RIG.runk.swing * sw));
+      f.quaternion.copy(meanQ[k + '_Forearm']).slerp(c.TF, tuck).premultiply(_qs.setFromAxisAngle(c.HX, RIG.runk.flex * sw));
     }
   }
 }
@@ -2873,12 +2965,7 @@ function faceUpdate(dt) {
 // поза рук на доске: добавочные повороты к средней позе бега (x, y, z, w)
 // подобрано по скелету с игровой камеры: корпус развёрнут на 43°, задняя рука в сторону и вниз, передняя — вперёд-в сторону,
 // локти мягко согнуты к груди; с камеры сзади руки читаются разведёнными влево и вправо
-const BQ = { Lu: new THREE.Quaternion(.2264, .0001, .3219, .9193), Lf: new THREE.Quaternion(-.2281, 0, -.3243, .9181),
-  Ru: new THREE.Quaternion(-.0097, 0, -.2483, .9686), Rf: new THREE.Quaternion(-.258, 0, .4293, .8655) };
-const BAXZ = { L: new THREE.Vector3(-.5971, .1381, .7902).normalize(), R: new THREE.Vector3(.6128, -.0403, .7892).normalize() };
 const _qb = new THREE.Quaternion();
-// предплечья развёрнуты ладонями к телу, как у бегущего человека (подобрано по скелету: 50° и −65°)
-const PALM_L = .87, PALM_R = -1.13;
 // пружины: крен при смене полосы с лёгким перехлёстом, кивок и присед при приземлении, разгиб при толчке
 const SPR = { lean: { x: 0, v: 0 }, yaw: { x: 0, v: 0 }, pitch: { x: 0, v: 0 }, knee: { x: 0, v: 0 } };
 function spring(s, target, k, d, dt) {
@@ -2901,45 +2988,55 @@ function poseRig(dt) {
   const cr = dead && S.crash ? CR : null;
   const rise = clamp(S.vy / 15, -.5, 1);
   // полёт на ранце — поза супермена: тело горизонтально, руки вытянуты вперёд, ноги прямые и вместе
-  const thigh = a * (.3 + rise * .15) + r * 1.55 + kn * .45 - ext * .25 + (cr ? cr.thigh : 0) - f * .12;
-  const calf = -a * (.45 - rise * .1) - r * 1.9 - kn * .75 + ext * .3 + (cr ? cr.calf : 0) - f * .22;
-  const arm = a * (.55 + rise * .35) + r * .9 - kn * .4 + (cr ? cr.arm : 0) + f * (2.85 + Math.sin(S.t * 3) * .05);
+  const thigh = a * (.3 + rise * .15) + r * 1.55 + kn * .45 - ext * .25 + (cr ? cr.thigh : 0) - (RIG.palm ? f : 0) * .12;
+  const calf = -a * (.45 - rise * .1) - r * 1.9 - kn * .75 + ext * .3 + (cr ? cr.calf : 0) - (RIG.palm ? f : 0) * .22;
+  const fm = RIG.palm ? f : 0;                                         // у зверька полёт собирает foxFly
+  const arm = a * (.55 + rise * .35) + r * .9 - kn * .4 + (cr ? cr.arm : 0) + fm * (2.85 + Math.sin(S.t * 3) * .05);
   if (Math.abs(thigh) + Math.abs(calf) + Math.abs(arm) > .002) {
     bones.L_Thigh.rotateX(thigh); bones.R_Thigh.rotateX(thigh * .85);
     if (bones.L_Calf) { bones.L_Calf.rotateX(calf); bones.R_Calf.rotateX(calf * .85); }
-    if (bones.L_Upperarm) {
-      const tk = W.tuck, free = arm * (1 - tk);
+    if (bones.L_Upperarm) {      const tk = W.tuck, free = arm * (1 - tk);
       if (free) { bones.L_Upperarm.rotateX(free); bones.R_Upperarm.rotateX(free * .92); }
       if (tk > .01) {                                                  // поджатые руки поднимаются строго вперёд-вверх
-        bones.L_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(ARM.L.AX, -arm * tk));
-        bones.R_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(ARM.R.AX, -arm * .92 * tk));
+        bones.L_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(RIG.arm.L.AX, -arm * tk));
+        bones.R_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(RIG.arm.R.AX, -arm * .92 * tk));
       }
     }
   }
   if (bones.L_Forearm) {
-    bones.L_Forearm.rotateY(PALM_L); bones.R_Forearm.rotateY(PALM_R);
-    const elbow = (cr ? cr.elbow || 0 : 0) + f * .8;                 // в беге сгиб локтя задаёт runCycle
-    if (elbow) { bones.L_Forearm.rotateX(elbow); bones.R_Forearm.rotateX(elbow); }
+    if (RIG.palm) {                                                    // монстрик: предплечья ладонями к телу, локоть — поворотом
+      bones.L_Forearm.rotateY(RIG.palm[0]); bones.R_Forearm.rotateY(RIG.palm[1]);
+      const elbow = (cr ? cr.elbow || 0 : 0) + f * .8;
+      if (elbow) { bones.L_Forearm.rotateX(elbow); bones.R_Forearm.rotateX(elbow); }
+    } else {                                                           // зверёк: руки выпрямляются, когда упирается при падении
+      const straight = (cr ? cr.elbow || 0 : 0) * 1.6 * W.tuck;
+      if (straight) {
+        bones.L_Forearm.quaternion.premultiply(_qs.setFromAxisAngle(RIG.arm.L.HX, -straight));
+        bones.R_Forearm.quaternion.premultiply(_qs.setFromAxisAngle(RIG.arm.R.HX, -straight));
+      }
+    }
   }
+  if (RIG.palm === null && f > .01) foxFly(f);
   // голова держит горизонт: когда корпус клюёт вперёд, она отклоняется назад (у головы +X — назад)
-  if (bones.Head) bones.Head.rotateX(cr ? cr.head : S.roll > 0 ? 0 : clamp(-SPR.pitch.x * .55, -.35, .35) * (1 - f) + f * 1.0);   // в полёте смотрит вперёд
+  if (bones.Head) bones.Head.rotateX(cr ? cr.head : S.roll > 0 ? 0 : clamp(-SPR.pitch.x * .55, -.35, .35) * (1 - f) + f * (RIG.palm ? 1.0 : .7));   // в полёте смотрит вперёд
   // доска: стойка боком как у сёрфера — колени согнуты, ноги вдоль доски, руки в стороны для баланса, взгляд по ходу
   const wb = W.board;
   if (wb > .01 && bones.L_Thigh) {
     const sway = Math.sin(S.t * 2.3) * .14, lean = SPR.lean.x * 1.5;
-    bones.L_Thigh.rotateX(.7 * wb); bones.L_Thigh.rotateZ(.35 * wb);
-    bones.R_Thigh.rotateX(.7 * wb); bones.R_Thigh.rotateZ(-.35 * wb);
+    bones.L_Thigh.rotateX(.7 * wb); bones.L_Thigh.rotateZ(.35 * RIG.abd * wb);
+    bones.R_Thigh.rotateX(.7 * wb); bones.R_Thigh.rotateZ(-.35 * RIG.abd * wb);
     if (bones.L_Calf) { bones.L_Calf.rotateX(-1.2 * wb); bones.R_Calf.rotateX(-1.2 * wb); }
     if (bones.L_Upperarm && bones.L_Forearm) {
       // руки разведены в стороны и чуть вниз, локти почти прямые — подобрано по скелету (плечо и предплечье)
-      for (const [bone, q] of [[bones.L_Upperarm, BQ.Lu], [bones.R_Upperarm, BQ.Ru], [bones.L_Forearm, BQ.Lf], [bones.R_Forearm, BQ.Rf]])
+      for (const [bone, q] of [[bones.L_Upperarm, RIG.bq.Lu], [bones.R_Upperarm, RIG.bq.Ru], [bones.L_Forearm, RIG.bq.Lf], [bones.R_Forearm, RIG.bq.Rf]])
         bone.quaternion.multiply(_qb.identity().slerp(q, wb));
       const see = (sway + lean) * .5 * wb;                              // качели: одна рука вверх, другая вниз — ловит равновесие
-      bones.L_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(BAXZ.L, see));
-      bones.R_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(BAXZ.R, see));
+      bones.L_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(RIG.baxz.L, see));
+      bones.R_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(RIG.baxz.R, see));
     }
     if (bones.Head) bones.Head.rotateY(-.75 * wb);
   }
+  tailUpdate(dt, a, r, f, wb, cr, rise);
   if (FXS.g > .001 && bones.Head && S.mode === 'run' && W.board < .5) {                 // оглядка: голова и верх корпуса поворачиваются к камере
     const k = FXS.g * FXS.glanceDir;
     bones.Head.rotateY(1.35 * k); bones.Head.rotateX(.12 * FXS.g);
@@ -2947,12 +3044,44 @@ function poseRig(dt) {
     if (bones.Spine01) bones.Spine01.rotateY(.3 * k);
   }
 }
+/* ── полёт зверька: как супергерой — правый кулак вперёд, левая рука вдоль тела, одна нога согнута,
+   голова поднята и смотрит по ходу; руки и ноги чуть «гуляют» в потоке, при смене полосы тело кренится ── */
+function foxFly(f) {
+  const t = S.t, w = Math.sin(t * 2.2), w2 = Math.sin(t * 3.1 + 1), A = RIG.arm, lane = clamp(SPR.lean.x * 2, -.5, .5);
+  bones.R_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(A.R.AX, -(2.65 + .05 * w) * f));
+  bones.R_Forearm.quaternion.premultiply(_qs.setFromAxisAngle(A.R.HX, -1.45 * f));
+  bones.L_Upperarm.quaternion.premultiply(_qs.setFromAxisAngle(A.L.AX, (.45 + .06 * w2) * f));
+  bones.L_Forearm.quaternion.premultiply(_qs.setFromAxisAngle(A.L.HX, -1.0 * f));
+  bones.L_Upperarm.rotateZ(.25 * f);
+  bones.L_Thigh.rotateX((-.15 + .05 * w) * f); bones.L_Calf.rotateX(-.2 * f);
+  bones.R_Thigh.rotateX((.35 - .05 * w) * f); bones.R_Calf.rotateX((-1.0 + .08 * w2) * f);
+  if (bones.Spine01) { bones.Spine01.rotateX(.18 * f); bones.Spine01.rotateZ(lane * .3 * f); }
+}
+/* ── хвост: пушистый, живой ──
+   в беге качается из стороны в сторону за шагом и подпрыгивает вместе с тазом (каждый следующий сегмент — с запаздыванием),
+   при смене полосы заносится в обратную сторону, в прыжке задирается, в полёте вытягивается назад, при падении обмякает */
+const TAILS = ['Tail1', 'Tail2', 'Tail3', 'Tail4'];
+const TSPR = { side: { x: 0, v: 0 }, up: { x: 0, v: 0 } };
+function tailUpdate(dt, a, r, f, wb, cr, rise) {
+  if (!bones.Tail1) return;
+  const ph = RUN.phase, run = W.amp * RUN.amp;
+  spring(TSPR.side, -SPR.lean.x * 2.2 - SPR.yaw.x * 1.5, 60, 7, dt);
+  spring(TSPR.up, -a * (.35 + rise * .35) + r * .5 + f * .45 + wb * .25 + (cr ? .35 : 0), 45, 8, dt);
+  for (let i = 0; i < 4; i++) {
+    const b = bones[TAILS[i]], lag = i * .09, k = .55 + .2 * i;
+    const sway = Math.sin(TAU * (ph - lag)) * .2 * run + Math.sin(S.t * 1.7 - i * .6) * .05 * (1 - run);
+    const bob = Math.cos(TAU * 2 * (ph - lag)) * .07 * run;
+    b.rotateY((sway + TSPR.side.x * .5) * k);
+    b.rotateX(bob + TSPR.up.x * (i ? .45 : .9));
+  }
+}
 let modelState = 'loading';
-// В production модель хранится рядом со страницей как бинарный GLB.
+// модель лежит рядом со страницей как .js с base64 внутри: так её отдаёт любой хостинг, включая артефакты
 async function fetchModel(url, onProgress) {
   const res = await fetch(url);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const total = +res.headers.get('content-length') || 0;
+  let text;
   if (res.body && res.body.getReader && total) {
     const reader = res.body.getReader(), parts = [];
     let got = 0;
@@ -2965,21 +3094,27 @@ async function fetchModel(url, onProgress) {
     const all = new Uint8Array(got);
     let o = 0;
     for (const p of parts) { all.set(p, o); o += p.length; }
-    return all.buffer;
-  }
-  onProgress(.99, false);
-  return res.arrayBuffer();
+    text = new TextDecoder().decode(all);
+  } else text = await res.text();
+  if (!/^\s*export default "/.test(text)) throw new Error('не файл модели: ' + url);       // хостинг мог отдать страницу вместо файла
+  return b64ToBuffer(text.slice(text.indexOf('"') + 1, text.lastIndexOf('"')));
 }
 function b64ToBuffer(b64) {
   const bin = atob(b64), buf = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
   return buf.buffer;
 }
-function useModel(gltf) {
-  body.clear(); body.add(jets);
-  limbs = null;
+function useModel(gltf, kind) {
+  if (model) body.remove(model);
+  body.add(jets);
+  if (limbs) { for (const k in limbs) body.remove(limbs[k]); body.children.slice().forEach(o => { if (o.userData.stub) body.remove(o); }); limbs = null; }
+  for (const k in bones) delete bones[k];
+  for (const k in meanQ) delete meanQ[k];
+  hipMean = null;
+  RIG = RIGS[kind] || RIGS.fox;
+  faceDefaults(RIG.face);
   model = gltf.scene;
-  model.scale.setScalar(CFG.modelScale);
+  model.scale.setScalar(RIG.scale);
   model.rotation.y = Math.PI;                         // в glTF модель смотрит в +z, бежим в −z
   model.traverse(o => {
     if (o.isBone) bones[o.name] = o;
@@ -2987,12 +3122,19 @@ function useModel(gltf) {
     o.castShadow = Q.shadows;
     o.frustumCulled = false;
     const m = o.material;
+    if (m && m.map) {                                  // наклейки (логотип на рюкзаке, значок на груди): обычный материал с картинкой
+      m.metalness = 0; m.roughness = .7; m.transparent = true; m.depthWrite = false;
+      m.polygonOffset = true; m.polygonOffsetFactor = -2; m.polygonOffsetUnits = -2;
+      m.onBeforeCompile = bendVertex; m.needsUpdate = true; o.renderOrder = 2; o.castShadow = false;
+      return;
+    }
     if (m) {                                          // мех не металл: убираем металличность, оставляем шероховатость
       m.metalness = 0; m.metalnessMap = null;
       m.roughness = 1; m.envMapIntensity = .9;
-      // цвет меха — в вершинах (атласа нет: на телефоне его острова смешивались в трещины); подсветку цветом даёт шейдер
+      // цвет — в вершинах (атласа нет: на телефоне его острова смешивались в трещины); подсветку цветом даёт шейдер
       if (o.geometry.attributes.color) m.vertexColors = true;
-      if (o.userData.qs) { FACE.uQS.value = o.userData.qs; FACE.uQO.value.fromArray(o.userData.qo); }   // сжатая модель v4
+      if (o.userData.qs) { FACE.uQS.value = o.userData.qs; FACE.uQO.value.fromArray(o.userData.qo); }   // сжатая модель
+      if (o.userData.face) faceFromModel(o.userData.face);
       m.onBeforeCompile = charShader;
       m.customProgramCacheKey = () => 'bd-char';
       m.needsUpdate = true;
@@ -3002,17 +3144,59 @@ function useModel(gltf) {
   mixer = new THREE.AnimationMixer(model);
   const clip = gltf.animations[0];
   if (clip) { runAction = mixer.clipAction(clip); runAction.play(); learnMeanPose(clip); }
-  CLIP_POSE.length = 0;
-  for (const k in bones) CLIP_POSE.push({ b: bones[k], q: bones[k].quaternion.clone(), p: bones[k].position.clone() });
+  else {                                              // своя модель без клипа: средняя поза — поза связывания
+    for (const k in bones) meanQ[k] = bones[k].quaternion.clone();
+    if (bones.Hip) hipMean = bones.Hip.position.clone();
+  }
+  // ранец: у зверька крепится на рюкзак и двигается со спиной, у монстрика — на корпус
+  buildJets(kind);
+  const J = RIG.jets;
+  if (J && bones[J.bone]) {
+    bones[J.bone].add(jets);
+    jets.position.fromArray(J.pos); jets.rotation.set(J.rotX, 0, 0); jets.scale.setScalar(1 / RIG.scale);
+  } else {
+    body.add(jets); jets.position.set(0, 1.08, 0); jets.rotation.set(-.6, 0, 0); jets.scale.setScalar(1);
+  }
+  modelKind = kind;
   modelState = 'ready';
 }
-function loadModel(onProgress) {
-  const fail = err => { console.warn('Модель не загрузилась, работает заглушка:', err); modelState = 'failed'; onProgress(1, true); };
-  // автономная сборка: модель уже лежит внутри страницы (так файл запускается без сервера, двойным кликом)
-  const inline = typeof window !== 'undefined' && window.BD_MODEL;
-  (inline ? Promise.resolve(b64ToBuffer(inline)) : fetchModel(CFG.modelUrl, onProgress))
-    .then(buf => new GLTFLoader().parse(buf, '', gltf => { useModel(gltf); onProgress(1, true); }, fail))
+let modelKind = null, modelLoading = null;
+function loadModel(onProgress, kind, second) {
+  kind = RIGS[kind] ? kind : (RIGS[SET.char] ? SET.char : 'fox');
+  const rig = RIGS[kind];
+  modelLoading = kind;
+  const fail = err => {
+    console.warn('Модель не загрузилась:', err);
+    if (modelLoading !== kind) return;
+    const other = kind === 'fox' ? 'monster' : 'fox';
+    if (!second && !modelKind) { loadModel(onProgress, other, true); return; }   // не вышло — пробуем второго персонажа
+    modelState = modelKind ? 'ready' : 'failed';
+    if (typeof toast === 'function') toast('Персонаж не загрузился — проверьте интернет и обновите страницу', typeof ICON !== 'undefined' ? ICON.star : undefined);
+    onProgress(1, true);
+  };
+  // автономная сборка: модели уже лежат внутри страницы (так файл запускается без сервера, двойным кликом)
+  const W_ = typeof window !== 'undefined' ? window : {};
+  const inline = (W_.BD_MODELS && W_.BD_MODELS[rig.inline]) || (kind === 'fox' && W_.BD_MODEL);
+  // файл модели ищем в папке models/ и рядом со страницей (часть хостингов не отдаёт вложенные папки);
+  // при обрыве сети — ещё две попытки с паузой
+  const urls = [rig.url, rig.url.replace('./models/', './')];
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const tryFetch = (i, attempt) => fetchModel(urls[i], onProgress).catch(err =>
+    i + 1 < urls.length ? tryFetch(i + 1, attempt) : attempt < 2 ? wait(1200 * (attempt + 1)).then(() => tryFetch(0, attempt + 1)) : Promise.reject(err));
+  (inline ? Promise.resolve(b64ToBuffer(inline)) : tryFetch(0, 0))
+    .then(buf => new GLTFLoader().parse(buf, '', gltf => {
+      if (modelLoading !== kind) return;
+      try { useModel(gltf, kind); } catch (e) { fail(e); return; }
+      onProgress(1, true);
+    }, fail))
     .catch(fail);
+}
+// смена персонажа на лету (из настроек): модель грузится, пока на экране остаётся прежняя
+function switchCharacter(kind) {
+  if (!RIGS[kind] || kind === modelKind || kind === modelLoading && modelState === 'loading') return;
+  SET.char = kind; if (typeof saveSettings === 'function') saveSettings();
+  modelState = 'loading';
+  loadModel(() => {}, kind);
 }
 
 function animatePlayer(dt) {
@@ -3040,7 +3224,7 @@ function animatePlayer(dt) {
   } else {
     // наклон вперёд растёт со скоростью; в воздухе корпус следует за вертикальной скоростью
     const flyingNow = S.pw.fly > 0;
-    const target = flyingNow ? -1.35 + Math.sin(S.t * 2.2) * .04                     // полёт: лёжа на воздухе, лёгкое покачивание
+    const target = flyingNow ? RIG.flyPitch + Math.sin(S.t * 2.2) * .04                     // полёт: лёжа на воздухе, лёгкое покачивание
       : S.grounded ? (run ? -.05 - .07 * d : -.03) : clamp(-.12 - S.vy * .006, -.3, .15);
     let pitch = spring(SPR.pitch, target, flyingNow ? 45 : 120, flyingNow ? 12 : 14, dt);
     if (S.flip > 0) {                                   // сальто на трамплине
@@ -3082,7 +3266,8 @@ function animatePlayer(dt) {
     const runOn = S.grounded && S.roll <= 0 && !dead && !flying && !(S.board > 0);
     W.amp += ((runOn ? 1 : 0) - W.amp) * damp(10, dt);
     // каждый кадр поза собирается заново: средняя поза → бег → надстройки (прыжок, кувырок, удар, доска, мимика)
-    W.tuck += ((dead || flying || S.board > 0 ? 0 : 1) - W.tuck) * damp(9, dt);
+    const tuckOn = RIG.tuckAlways ? !(S.board > 0 && !dead && !flying) : !(dead || flying || S.board > 0);   // у зверька руки поджаты всегда, кроме доски
+    W.tuck += ((tuckOn ? 1 : 0) - W.tuck) * damp(9, dt);
     restPose();
     runCycle(W.amp, W.tuck);
     faceUpdate(dt);
@@ -3809,8 +3994,7 @@ function moveWorld(shift, dt) {
       populate(c, S.mode !== 'menu');
     }
   }
-}
-function physics(dt, shift) {
+}function physics(dt, shift) {
   for (const k in S.pw) if (S.pw[k] > 0) S.pw[k] = Math.max(0, S.pw[k] - dt);
   if (S.magnet > 0) S.magnet = Math.max(0, S.magnet - dt);
   if (S.stumble > 0) { S.stumble -= dt; if (S.stumble <= 0) setDanger(false); }
@@ -3971,7 +4155,8 @@ const GradeShader = {
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
-const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: MOBILE ? 0 : 4 }));
+// сглаживание: 4× MSAA в буфере с половинной точностью — самая дорогая часть кадра на ПК; оставляем 2× только на экранах с низкой плотностью
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: !MOBILE && (devicePixelRatio || 1) < 1.3 ? 2 : 0 }));
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), .52, .58, .92);
 composer.addPass(bloom);
@@ -3983,7 +4168,7 @@ function resize() {
   renderer.setSize(w, h, false);
   composer.setPixelRatio(renderer.getPixelRatio());
   composer.setSize(w, h);
-  bloom.setSize(w * (MOBILE ? .5 : 1), h * (MOBILE ? .5 : 1));
+  bloom.setSize(w * .5, h * .5);                                  // свечение в половинном разрешении: размыто всё равно
   camera.aspect = w / h;
   // в портрете немного расширяем поле зрения, чтобы полосы не обрезались по бокам
   camera.userData.base = w / h < .7 ? 64 : 60;
@@ -3997,14 +4182,17 @@ function cameraUpdate(dt) {
   const target = S.mode === 'menu' ? 0 : S.mode === 'intro' ? Math.min(1, S.introT / 1.05) : 1;
   camBlend = S.mode === 'intro' ? target : camBlend + (target - camBlend) * damp(6, dt);
   const e = camBlend < .5 ? 4 * camBlend ** 3 : 1 - Math.pow(-2 * camBlend + 2, 3) / 2;
-  camX += (S.x * .4 - camX) * damp(5, dt);
-  camY += (4.05 + S.ground * .6 + (S.pw.fly > 0 ? 6.2 : 0) - camY) * damp(2.6, dt);
+  // в полёте камера ближе и выше, поэтому идёт за персонажем по полосам почти полностью — иначе на крайней полосе он уходит за край кадра
+  camX += (S.x * (.4 + .5 * flyCam) - camX) * damp(5, dt);
+  // в полёте камера поднимается выше персонажа и смотрит сверху вниз, как в Subway Surfers: видна спина с ранцем и дорога внизу
+  camY += ((S.pw.fly > 0 ? Math.max(4.05, S.y + 4.4) : 4.05 + S.ground * .6) - camY) * damp(2.6, dt);
   flyCam += ((S.pw.fly > 0 ? 1 : 0) - flyCam) * damp(2.6, dt);
   const dying = S.mode === 'dying' || S.mode === 'over' ? Math.min(1, S.dieT * 1.6) : 0;
   // при падении камера подъезжает и смотрит на тело; если перелетел через препятствие — поднимается, чтобы оно не заслоняло
   const over = S.crash && S.crash.type === 'trip' ? 1 : 0;
-  _cp.set(camX, camY + dying * (over * 1.5 - .7), 7.9 - dying * (1.6 + over * .8) + player.position.z * dying * .5);
-  _cl.set(camX * .6, 1.55 + S.y * (.32 + .32 * flyCam) - dying * .9, -10 + dying * (4 + player.position.z));
+  _cp.set(camX, camY + dying * (over * 1.5 - .7), 7.9 - flyCam * 1.9 - dying * (1.6 + over * .8) + player.position.z * dying * .5);
+  const lookY = (1.55 + S.y * .32) * (1 - flyCam) + (S.y - 4.2) * flyCam;      // в полёте взгляд — вниз и вперёд, на дорогу под персонажем
+  _cl.set(camX * (.6 + .4 * flyCam), lookY - dying * .9, -10 - flyCam * 4 + dying * (4 + player.position.z));
   scene.fog.density = .0095 + .008 * flyCam;                      // в полёте дымка гуще: далёкую трассу не видно
   _mp.set(Math.sin(S.t * .25) * 1.3, 1.7, -6.3);               // меню: камера впереди, маскот бежит на нас
   _ml.set(0, 1.05, 0);
@@ -4029,30 +4217,43 @@ function cameraUpdate(dt) {
   grade.uniforms.uSpeed.value = live() ? difficulty() : 0;
 }
 
-/* ── автонастройка качества: если кадр не успевает, снижаем разрешение и выключаем свечение ── */
-const perf = { n: 0, acc: 0, level: 0, lock: false };
+/* ── автонастройка качества: динамическое разрешение ──
+   Следим за временем кадра: если не успеваем за 60 к/с, плавно снижаем чёткость (шагами, не чаще раза в секунду),
+   если запас есть — возвращаем. Упёрлись в нижнюю границу — выключаем свечение, потом пыль. */
+const perf = { n: 0, acc: 0, level: 0, lock: false, scale: 1, t: 0, good: 0, ema: 1 / 60 };
+const PERF_MIN = .62;
+function setScale(k) {
+  perf.scale = clamp(k, PERF_MIN, 1);
+  renderer.setPixelRatio(Math.max(.75, Q.dpr * perf.scale));
+  resize();
+}
 // ручная настройка графики: «высокая» — без автоснижения, «экономная» — сразу лёгкий режим
 function applyGfx() {
   perf.lock = SET.gfx !== 'auto';
   const lvl = SET.gfx === 'low' ? 2 : 0;
-  if (SET.gfx === 'auto' && perf.level > 0) return;
-  perf.level = lvl;
-  renderer.setPixelRatio(lvl === 2 ? 1 : Q.dpr);
+  perf.level = lvl; perf.good = 0; perf.t = 0;
   bloom.enabled = lvl === 0 && Q.bloom;
   dust.visible = lvl < 2;
-  resize();
+  if (Q.shadows) key.castShadow = lvl < 2;
+  setScale(lvl === 2 ? .7 : 1);
 }
 function perfTick(rawDt) {
-  if (S.mode !== 'run' || perf.level >= 2 || perf.lock) return;
-  perf.n++; perf.acc += rawDt;
-  if (perf.n < 150) return;
-  const avg = perf.acc / perf.n;
-  perf.n = 0; perf.acc = 0;
-  if (avg <= 1 / 44) return;
-  perf.level++;
-  if (perf.level === 1) { renderer.setPixelRatio(Math.max(1, Q.dpr * .72)); bloom.enabled = false; }
-  else { renderer.setPixelRatio(1); dust.visible = false; }
-  resize();
+  if (perf.lock || !(S.mode === 'run' || S.mode === 'menu' || S.mode === 'intro')) return;
+  if (rawDt > .25) return;                                   // вкладка была в фоне — не считаем
+  perf.ema += (rawDt - perf.ema) * .08;
+  perf.t += rawDt;
+  if (perf.t < 1) return;
+  perf.t = 0;
+  const ms = perf.ema * 1000;
+  if (ms > 19.5) {                                           // не успеваем: −12% чёткости, затем свечение, затем пыль
+    perf.good = 0;
+    if (perf.scale > PERF_MIN + .001) setScale(perf.scale * .88);
+    else if (bloom.enabled) { bloom.enabled = false; perf.level = 1; }
+    else if (key.castShadow) { key.castShadow = false; perf.level = 2; }   // тени — отдельный проход по всем препятствиям
+    else if (dust.visible) { dust.visible = false; perf.level = 3; }
+  } else if (ms < 14.5) {                                    // запас есть 4 секунды подряд — немного возвращаем
+    if (++perf.good >= 4 && perf.scale < 1) { perf.good = 0; setScale(perf.scale * 1.08); }
+  } else perf.good = 0;
 }
 
 /* ═══════════ цикл ═══════════ */
@@ -4091,8 +4292,18 @@ layoutChunks(true);
 menuStats(); soundLabels();
 resize();
 screen('menu');
+function prewarm() {
+  try {
+    const g = new THREE.Group(); g.position.set(0, -50, -30);
+    for (const k in PROTO) { const o = PROTO[k]; if (o && o.isObject3D) g.add(o.clone ? o.clone() : o); }
+    const jv = jets.visible; jets.visible = true;
+    scene.add(g);
+    if (renderer.compile) renderer.compile(scene, camera);
+    scene.remove(g); jets.visible = jv;
+  } catch (e) { console.warn('прогрев шейдеров:', e); }
+}
 loadModel((p, done) => {
-  if (done) { ui.play.disabled = false; ui.play.textContent = 'Играть'; if (!TOUCH) ui.play.focus({ preventScroll: true }); }
+  if (done) { prewarm(); ui.play.disabled = false; ui.play.textContent = 'Играть'; if (!TOUCH) ui.play.focus({ preventScroll: true }); }
   else ui.play.textContent = `Загрузка ${Math.round(p * 100)}%`;
 });
 setTimeout(() => { if (ui.play.disabled) { ui.play.disabled = false; ui.play.textContent = 'Играть'; } }, 12000);
@@ -4225,7 +4436,7 @@ function boardTick(dt) {
       deck.rotation.x = clamp(-S.vy * .018, -.35, .35);
     } else { deck.rotation.z = SPR.lean.x * .8 + Math.sin(S.t * 3) * .03; deck.rotation.x *= .8; }
   }
-  body.position.y = -.85 + .2 * W.board;
+  body.position.y = -.85 + RIG.boardLift * W.board;                                          // стопы — на деке доски
   body.rotation.y = .75 * W.board;                                                // стойка боком
 }
 
@@ -4391,15 +4602,21 @@ addEventListener('message', e => {
 });
 let runT0 = 0;
 // ── настройки ──
-const st = { modal: $('settingsModal'), gfx: $('gfxSeg'), music: $('setMusic'), sfx: $('setSfx'), vib: $('setVib') };
+const st = { modal: $('settingsModal'), gfx: $('gfxSeg'), char: $('charSeg'), music: $('setMusic'), sfx: $('setSfx'), vib: $('setVib') };
 function settingsUI() {
   for (const b of st.gfx.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v === SET.gfx);
+  if (st.char) for (const b of st.char.querySelectorAll('button')) b.classList.toggle('on', b.dataset.v === (SET.char || 'fox'));
   st.music.checked = SET.music; st.sfx.checked = SET.sfx; st.vib.checked = SET.vib;
 }
 function openSettings() { Sound.init(); Sound.click(); settingsUI(); st.modal.hidden = false; }
 $('settingsBtn').addEventListener('click', openSettings);
 $('settingsBtn2').addEventListener('click', openSettings);
 st.gfx.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; SET.gfx = b.dataset.v; saveSettings(); applyGfx(); settingsUI(); Sound.click(); });
+if (st.char) st.char.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  Sound.click(); switchCharacter(b.dataset.v); SET.char = b.dataset.v; saveSettings(); settingsUI();
+  toast(b.dataset.v === 'fox' ? 'Персонаж: зверёк' : 'Персонаж: монстрик', ICON.star);
+});
 for (const k of ['music', 'sfx', 'vib']) st[k].addEventListener('change', () => { SET[k] = st[k].checked; saveSettings(); Sound.applySettings(); if (k === 'vib' && SET.vib) vibrate(40); });
 $('resetTut').addEventListener('click', () => { PERSIST.tut = false; store.set('tut', '0'); toast('Обучение будет в следующем забеге', ICON.star); Sound.click(); });
 st.modal.addEventListener('click', e => { if (e.target === st.modal || e.target.closest('[data-close]')) { st.modal.hidden = true; Sound.click(); } });

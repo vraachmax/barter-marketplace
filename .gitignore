@@ -17,3 +17,5 @@ $null
 
 # Generated from the packed Barter Dash source asset during web build
 apps/web/public/games/barter-dash/barter-mascot-v6.glb
+apps/web/public/games/barter-dash/models/barter-fox-v2.js
+apps/web/public/games/barter-dash/models/barter-mascot-v6.js
