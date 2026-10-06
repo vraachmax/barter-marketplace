@@ -14,6 +14,3 @@ uploads/
 .mcp.json
 awesome-design-md/
 $null
-
-# Generated from compressed Barter Dash source payload during web build
-apps/web/public/games/barter-dash/
