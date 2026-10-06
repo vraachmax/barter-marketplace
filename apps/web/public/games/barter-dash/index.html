@@ -43,9 +43,16 @@
 
   /* ── табло ── */
   #hud {
-    position: fixed; left: 0; right: 0; top: 0; pointer-events: none;
-    padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 0;
-    display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+    position: fixed; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top, 0px) + 60px);
+    pointer-events: none;
+  }
+  #scoreChip {
+    position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px);
+    transform: translateX(-50%); z-index: 2;
+  }
+  #hud .right {
+    position: absolute; right: calc(env(safe-area-inset-right, 0px) + 8px);
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
   }
   .chip {
     position: relative; display: flex; align-items: center; gap: 8px; min-width: 0;
@@ -78,7 +85,7 @@
 
   #pills {
     position: fixed; left: 50%; transform: translateX(-50%); pointer-events: none;
-    top: calc(env(safe-area-inset-top, 0px) + 70px);
+    top: calc(env(safe-area-inset-top, 0px) + 66px);
     display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: min(92vw, 420px);
   }
   .pill {
@@ -284,6 +291,16 @@
   .seg button { border: 0; background: none; padding: 8px 10px; border-radius: 9px; cursor: pointer; font: 700 12px/1 var(--body); color: var(--dim); }
   .seg button.on { background: var(--gold); color: #2a1400; }
 
+  @media (max-width: 390px) {
+    #scoreChip { gap: 5px; padding: 6px 10px 6px 6px; }
+    #scoreChip .ico { width: 26px; height: 26px; }
+    #hud .right { gap: 5px; }
+    #hud .right .chip { gap: 5px; padding: 6px 8px 6px 6px; }
+    #hud .right .chip .ico { width: 26px; height: 26px; }
+    #hud .right .chip .lab { display: none; }
+    #pauseBtn { width: 40px; height: 40px; border-radius: 13px; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     #danger.on { animation: none; box-shadow: inset 0 0 90px 24px rgba(255,40,60,.5); }
     .pop, #toast.show, .record, #mult.bump { animation-duration: .01s; }
@@ -295,7 +312,7 @@
 <div class="layer" id="danger"></div>
 
 <div id="hud" hidden>
-  <div class="chip">
+  <div class="chip" id="scoreChip">
     <i class="ico" id="icoCoin"></i>
     <div><span class="lab">ОЧКИ</span><b class="val" id="scoreVal">0</b></div>
     <em id="mult">×1</em>
