@@ -50,6 +50,7 @@ import ProfileSidebar from '@/components/profile-sidebar';
 import { listingThumbPromoExtraClass } from '@/lib/listing-card-visuals';
 import { PromoteDialog } from '@/components/promote-dialog';
 import { SupportSheet } from '@/components/support-sheet';
+import { BarterDashProfileCard } from '@/components/barter-dash-profile-card';
 
 type ListingTab = 'ALL' | 'ACTIVE' | 'ARCHIVED' | 'SOLD';
 
@@ -531,6 +532,8 @@ export function ProfileContent() {
                 </Link>
               </Card>
 
+              <BarterDashProfileCard className="mt-5" />
+
               {/* Menu Items */}
               <div className="mt-5 space-y-2">
                 <Link
@@ -684,6 +687,8 @@ export function ProfileContent() {
                       </div>
                     </div>
                   </div>
+
+                  <BarterDashProfileCard />
 
                   {/* Tasks */}
                   {actionItems.length > 0 ? (
