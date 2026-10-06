@@ -20,7 +20,33 @@ export default function BarterDashPage() {
 
     setAllowed(true);
     const previousOverflow = document.body.style.overflow;
+    const previousBodyBackground = document.body.style.backgroundColor;
+    const previousHtmlBackground = document.documentElement.style.backgroundColor;
     document.body.style.overflow = 'hidden';
+    document.body.style.backgroundColor = '#060914';
+    document.documentElement.style.backgroundColor = '#060914';
+
+    const statusMeta =
+      document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]') ??
+      (() => {
+        const meta = document.createElement('meta');
+        meta.name = 'apple-mobile-web-app-status-bar-style';
+        document.head.appendChild(meta);
+        return meta;
+      })();
+    const previousStatusBarStyle = statusMeta.content;
+    statusMeta.content = 'black-translucent';
+
+    const themeMeta =
+      document.querySelector<HTMLMetaElement>('meta[name="theme-color"]') ??
+      (() => {
+        const meta = document.createElement('meta');
+        meta.name = 'theme-color';
+        document.head.appendChild(meta);
+        return meta;
+      })();
+    const previousThemeColor = themeMeta.content;
+    themeMeta.content = '#060914';
 
     const onGameMessage = (event: MessageEvent<unknown>) => {
       if (event.origin !== window.location.origin || typeof event.data !== 'object' || event.data === null) return;
@@ -32,6 +58,10 @@ export default function BarterDashPage() {
     window.addEventListener('message', onGameMessage);
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.style.backgroundColor = previousBodyBackground;
+      document.documentElement.style.backgroundColor = previousHtmlBackground;
+      statusMeta.content = previousStatusBarStyle;
+      themeMeta.content = previousThemeColor;
       window.removeEventListener('message', onGameMessage);
     };
   }, [router]);

@@ -48,7 +48,7 @@
   }
   #scoreChip {
     position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px);
-    transform: translateX(-50%); z-index: 3;
+    transform: translateX(-50%); z-index: 3; padding-right: 50px;
   }
   #hud .right { display: contents; }
   #bagChip {
@@ -69,13 +69,17 @@
   .chip .lab { display: block; font: 700 9px/1 var(--body); letter-spacing: .14em; color: var(--dim); }
   .chip .val { display: block; font: 800 19px/1.15 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
   #mult {
-    position: absolute; right: -9px; top: -8px; padding: 4px 7px; border-radius: 9px;
+    position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+    padding: 4px 7px; border-radius: 9px;
     font: 900 12px/1 var(--display); color: #2a1400;
     background: linear-gradient(180deg, #ffd47c, var(--gold-deep));
     box-shadow: 0 3px 12px rgba(240,138,18,.5);
   }
   #mult.bump { animation: bump .45s cubic-bezier(.2,1.6,.4,1); }
-  @keyframes bump { 0% { transform: scale(1.7); } 100% { transform: scale(1); } }
+  @keyframes bump {
+    0% { transform: translateY(-50%) scale(1.7); }
+    100% { transform: translateY(-50%) scale(1); }
+  }
   #bagVal { color: var(--gold); }
   .right { display: flex; align-items: center; gap: 8px; }
   .iconbtn {
@@ -297,7 +301,7 @@
   .seg button.on { background: var(--gold); color: #2a1400; }
 
   @media (max-width: 390px) {
-    #scoreChip { gap: 5px; padding: 6px 10px 6px 6px; }
+    #scoreChip { gap: 5px; padding: 6px 46px 6px 6px; }
     #scoreChip .ico { width: 26px; height: 26px; }
     #bagChip { gap: 5px; padding: 6px 10px 6px 6px; }
     #bagChip .ico { width: 24px; height: 24px; }
@@ -3902,7 +3906,19 @@ function showTip() {
   setTimeout(() => { ui.tip.hidden = true; }, 5200);
   PERSIST.tut = true; store.set('tut', '1');
 }
+function enterGameFullscreen() {
+  const el = document.documentElement;
+  if (document.fullscreenElement) return;
+  try {
+    const request = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (request) {
+      const result = request.call(el);
+      if (result && typeof result.catch === 'function') result.catch(() => {});
+    }
+  } catch { /* браузер не поддерживает настоящий fullscreen */ }
+}
 function startFromMenu() {
+  enterGameFullscreen();
   Sound.init(); Sound.click();
   newRunState();
   metaRunStart();
