@@ -1,0 +1,15 @@
+{
+  "version": "2026.10.05",
+  "checkedAt": "2026-10-05",
+  "source": "https://www.bmwgroup.com/en/news/general/2025/50-years-BMW-3-series.html",
+  "scope": "Seven historical generation families of BMW 3 Series from the manufacturer retrospective published 2025-07-11. Not individual chassis/body codes, facelifts, year restrictions or a complete current catalogue.",
+  "generations": [
+    { "id": "bmw/3-series/gen-1", "modelId": "bmw/3-series", "name": "I (семейство E21)" },
+    { "id": "bmw/3-series/gen-2", "modelId": "bmw/3-series", "name": "II (семейство E30)" },
+    { "id": "bmw/3-series/gen-3", "modelId": "bmw/3-series", "name": "III (семейство E36)" },
+    { "id": "bmw/3-series/gen-4", "modelId": "bmw/3-series", "name": "IV (семейство E46)" },
+    { "id": "bmw/3-series/gen-5", "modelId": "bmw/3-series", "name": "V (семейство E90)" },
+    { "id": "bmw/3-series/gen-6", "modelId": "bmw/3-series", "name": "VI (семейство F30)" },
+    { "id": "bmw/3-series/gen-7", "modelId": "bmw/3-series", "name": "VII (семейство G20)" }
+  ]
+}

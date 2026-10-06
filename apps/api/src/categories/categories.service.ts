@@ -4,6 +4,7 @@ import { categoryAllowsBarter } from './barter-policy';
 import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
 import { catalogOwnerId, categoryRoot } from './category-hierarchy';
 import { carCatalog, CAR_CATALOG_REVISION } from './car-catalog';
+import generationCatalog from './car-generations-2026.10.05.json';
 
 @Injectable()
 export class CategoriesService {
@@ -110,7 +111,29 @@ export class CategoriesService {
         skipDuplicates: true,
       });
       await this.ensureCarCatalog(auto.id);
+      await this.ensureGenerationCatalog(auto.id);
     }
+  }
+
+  /** Resume safely after an interrupted seed; publish the fields only after all options exist. */
+  private async ensureGenerationCatalog(categoryId: string) {
+    const category = await this.prisma.category.findUniqueOrThrow({ where: { id: categoryId }, select: { catalogRevision: true } });
+    if (category.catalogRevision >= 4) return;
+    const parents = await this.prisma.categoryAttributeOption.findMany({
+      where: { categoryId, fieldKey: 'auto_model', value: { in: generationCatalog.generations.map(row => row.modelId) } },
+      select: { id: true, value: true },
+    });
+    const ids = new Map(parents.map(row => [row.value, row.id]));
+    if (generationCatalog.generations.some(row => !ids.has(row.modelId))) throw new Error('Generation parent missing');
+    await this.prisma.$transaction(async tx => {
+      await tx.categoryAttributeOption.createMany({ data: generationCatalog.generations.map((row, sortOrder) => ({
+        categoryId, fieldKey: 'auto_generation', value: row.id, label: row.name,
+        parentOptionId: ids.get(row.modelId)!, sortOrder,
+      })), skipDuplicates: true });
+      await tx.categoryAttributeField.createMany({ data: [{ categoryId, key: 'auto_generation', label: 'Поколение',
+        sectionId: 'auto_main', sectionTitle: 'Автомобиль', parentKey: 'auto_model', sortOrder: 6 }], skipDuplicates: true });
+      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: 4 } });
+    });
   }
 
   /** Resume safely after an interrupted seed; publish the fields only after all options exist. */

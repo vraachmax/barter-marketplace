@@ -23,7 +23,7 @@ import { useEffect, useId, useMemo, useRef, useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { parseCatalogAttrs, searchFilterHref, type SearchFilterChanges } from '@/lib/search-navigation';
-import { type CatalogAttributeOption, type CatalogAttributeSchema } from '@/lib/listing-attributes-config';
+import { changeCatalogAttribute, type CatalogAttributeOption, type CatalogAttributeSchema } from '@/lib/listing-attributes-config';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Clock,
@@ -720,18 +720,22 @@ function FiltersSheet(props: {
     return () => { alive = false; };
   }, [draftCategory]);
   const activeCatalog = catalog?.categoryId === draftCategory ? catalog : null;
-  const selectedMake = draftAttrs.auto_make;
-  const dependentKey = `${draftCategory}:${selectedMake ?? ''}`;
+  const parentSignature = JSON.stringify(activeCatalog?.fields.filter(field => field.parentKey && draftAttrs[field.parentKey])
+    .map(field => [field.key, field.parentKey!, draftAttrs[field.parentKey!]]) ?? []);
+  const dependentKey = `${draftCategory}:${parentSignature}`;
   useEffect(() => {
-    if (!activeCatalog?.fields.some(field => field.key === 'auto_model' && field.parentKey === 'auto_make') || !selectedMake) return;
+    const parents = JSON.parse(parentSignature) as string[][];
+    if (!parents.length) return;
     let alive = true;
     const base = `/categories/${encodeURIComponent(draftCategory)}`;
-    const query = new URLSearchParams({ fieldKey: 'auto_model', parentFieldKey: 'auto_make', parentValue: selectedMake });
-    void apiGetJson<CatalogAttributeOption[]>(`${base}/attribute-options?${query}`)
+    void Promise.all(parents.map(([fieldKey, parentFieldKey, parentValue]) => {
+      const query = new URLSearchParams({ fieldKey, parentFieldKey, parentValue });
+      return apiGetJson<CatalogAttributeOption[]>(`${base}/attribute-options?${query}`);
+    })).then(groups => groups.flat())
       .then(options => { if (alive) setDependentOptions({ key: dependentKey, values: options }); })
       .catch(() => { if (alive) setDependentOptions({ key: dependentKey, values: [] }); });
     return () => { alive = false; };
-  }, [activeCatalog, draftCategory, selectedMake, dependentKey]);
+  }, [draftCategory, parentSignature, dependentKey]);
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId}
@@ -811,9 +815,7 @@ function FiltersSheet(props: {
             {activeCatalog.fields.filter(field => !field.parentKey || draftAttrs[field.parentKey]).map(field => <label key={field.key} className="block text-sm font-medium text-foreground">
               {field.label}
               <select value={draftAttrs[field.key] ?? ''} onChange={event => setDraftAttrs(current => {
-                const next = { ...current, [field.key]: event.target.value };
-                for (const child of activeCatalog.fields.filter(candidate => candidate.parentKey === field.key)) delete next[child.key];
-                return next;
+                return changeCatalogAttribute(current, field.key, event.target.value, [], { version: 1, fields: activeCatalog.fields });
               })}
                 className="mt-1 min-h-12 w-full rounded-2xl border border-border bg-card px-4 text-base text-foreground">
                 <option value="">Любое</option>

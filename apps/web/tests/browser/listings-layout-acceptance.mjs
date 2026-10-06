@@ -69,10 +69,12 @@ const autoCategory = { id: 'fixture-auto', title: 'Авто', slug: 'auto', pare
 const autoSchema = { version: 2, optionsQueryVersion: 1, fields: [
   { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: null },
   { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_make' },
+  { key: 'auto_generation', label: 'Поколение', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_model' },
 ] };
 const autoOptions = [
   { fieldKey: 'auto_make', value: 'bmw', label: 'BMW' }, { fieldKey: 'auto_make', value: 'lada', label: 'Lada' },
   { fieldKey: 'auto_model', value: 'bmw/3', label: '3 Series', parentFieldKey: 'auto_make', parentValue: 'bmw' },
+  { fieldKey: 'auto_generation', value: 'bmw/3/gen-5', label: 'V (семейство E90)', parentFieldKey: 'auto_model', parentValue: 'bmw/3' },
   { fieldKey: 'auto_model', value: 'lada/vesta', label: 'Vesta', parentFieldKey: 'auto_make', parentValue: 'lada' },
 ];
 const serverUnexpected = [];
@@ -375,8 +377,10 @@ async function scenario(browserType, width, theme) {
     await page.getByRole('button', { name: 'Повторить загрузку характеристик' }).click();
     await page.getByRole('combobox', { name: 'Марка', exact: true }).selectOption('bmw');
     await page.getByRole('combobox', { name: 'Модель', exact: true }).selectOption('bmw/3');
+    await page.getByRole('combobox', { name: 'Поколение', exact: true }).selectOption('bmw/3/gen-5');
     await page.getByRole('combobox', { name: 'Марка', exact: true }).selectOption('lada');
     await expect(page.getByRole('combobox', { name: 'Модель', exact: true })).toHaveValue('');
+    await expect(page.getByRole('combobox', { name: 'Поколение', exact: true })).toHaveValue('');
     await page.getByRole('combobox', { name: 'Модель', exact: true }).selectOption('lada/vesta');
     await shot(page, key + '-auto-editor', page.getByRole('combobox', { name: 'Модель', exact: true }));
     await page.getByRole('button', { name: 'Сохранить', exact: true }).click();
@@ -586,6 +590,21 @@ async function scenario(browserType, width, theme) {
       await expect(page).toHaveURL(/attrs=/);
       assert(state.catalogSearchReads.includes(JSON.stringify({ condition: 'used_good' })), 'mode search keeps selected catalog option');
       checks.push('catalog filter uses schema option and survives Market/Barter switch');
+      await visit('/search?categoryId=fixture-auto&mode=market');
+      await page.getByRole('button', { name: /^Фильтры/ }).click();
+      let filters = page.getByRole('dialog');
+      await filters.getByLabel('Марка', { exact: true }).selectOption('bmw');
+      await filters.getByLabel('Модель', { exact: true }).selectOption('bmw/3');
+      await filters.getByLabel('Поколение', { exact: true }).selectOption('bmw/3/gen-5');
+      await page.getByRole('button', { name: 'Показать результаты' }).click();
+      await expect(page).toHaveURL(/gen-5/);
+      await page.getByRole('button', { name: /^Фильтры/ }).click();
+      filters = page.getByRole('dialog');
+      await expect(filters.getByLabel('Поколение', { exact: true })).toHaveValue('bmw/3/gen-5');
+      await filters.getByLabel('Марка', { exact: true }).selectOption('lada');
+      await page.getByRole('button', { name: 'Показать результаты' }).click();
+      await expect(page).not.toHaveURL(/gen-5/);
+      checks.push('generation filter persists and changing make clears every descendant');
     }
 
     state.failListings = true;
@@ -610,11 +629,13 @@ async function scenario(browserType, width, theme) {
       await newWish.getByLabel('Категория желаемой вещи', { exact: true }).selectOption(autoCategory.id);
       await newWish.getByRole('combobox', { name: 'Марка', exact: true }).selectOption('bmw');
       await newWish.getByRole('combobox', { name: 'Модель', exact: true }).selectOption('bmw/3');
+      await newWish.getByRole('combobox', { name: 'Поколение', exact: true }).selectOption('bmw/3/gen-5');
       await page.getByPlaceholder('Состояние, комплект, дефекты, история покупки, способ передачи…').fill('Телефон в хорошем состоянии, полный комплект. Рассмотрю обмен на фотоаппарат.');
       for (let step = 2; step <= 4; step++) await page.getByRole('button', { name: 'Далее', exact: true }).click();
       await expect(page.getByText('Только обмен', { exact: true })).toBeVisible();
       await expect(page.getByText(/Оценка:.*18/)).toBeVisible();
       await expect(page.getByRole('region', { name: 'Условия обмена' })).toContainText('Марка: BMW');
+      await expect(page.getByRole('region', { name: 'Условия обмена' })).toContainText('Поколение: V (семейство E90)');
       await page.getByRole('button', { name: 'Опубликовать', exact: true }).click();
       await expect(page.getByRole('heading', { name: 'Объявление опубликовано', exact: true })).toBeVisible();
       const creates = state.writes.filter(x => x.path === '/listings');
@@ -625,7 +646,7 @@ async function scenario(browserType, width, theme) {
       assert.equal(creates[0].body.exchangePreferences.wantedDescription, 'Фотоаппарат с объективом');
       assert.equal(creates[0].body.exchangePreferences.maxCashRub, 5000);
       assert.equal(creates[0].body.exchangePreferences.anyOffer, false);
-      assert.deepEqual(creates[0].body.exchangePreferences.wantedItems, [{ categoryId: autoCategory.id, attributes: { auto_make: 'bmw', auto_model: 'bmw/3' } }]);
+      assert.deepEqual(creates[0].body.exchangePreferences.wantedItems, [{ categoryId: autoCategory.id, attributes: { auto_make: 'bmw', auto_model: 'bmw/3', auto_generation: 'bmw/3/gen-5' } }]);
       assert(state.catalogReads.includes('condition'), 'catalog options requested for the controlled field');
       assert(!state.catalogReads.includes(null), 'new schema avoids the unscoped catalog payload');
       checks.push('five-step publication sends exchange-only once with optional valuation');

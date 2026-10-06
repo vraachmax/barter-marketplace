@@ -11,11 +11,16 @@ async function main() {
     const service = new CategoriesService(db);
     await service.ensureSeed();
     const auto = await db.category.findUniqueOrThrow({ where: { slug: 'auto' } });
-    assert.equal(auto.catalogRevision, 3);
+    assert.equal(auto.catalogRevision, 4);
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_make' } }), 311);
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_model' } }), 5465);
     const schema = await service.attributeSchema(auto.id);
     assert.equal(schema.fields.find(field => field.key === 'auto_model').parentKey, 'auto_make');
+    assert.equal(schema.fields.find(field => field.key === 'auto_generation').parentKey, 'auto_model');
+    const generations = await service.attributeOptions(auto.id, { fieldKey: 'auto_generation', parentFieldKey: 'auto_model', parentValue: 'bmw/3-series' });
+    assert.equal(generations.length, 7);
+    assert(generations.every(row => row.parentValue === 'bmw/3-series'));
+    assert.equal((await service.attributeOptions(auto.id, { fieldKey: 'auto_generation', parentFieldKey: 'auto_model', parentValue: 'lada/vesta' })).length, 0);
     const makes = await service.attributeOptions(auto.id, { fieldKey: 'auto_make' });
     assert.equal(makes.length, 311);
     const models = await service.attributeOptions(auto.id, { fieldKey: 'auto_model', parentFieldKey: 'auto_make', parentValue: 'lada' });
@@ -35,6 +40,8 @@ async function main() {
     await db.category.update({ where: { id: auto.id }, data: { catalogRevision: 2 } });
     await service.ensureSeed();
     assert.equal((await db.categoryAttributeOption.findFirstOrThrow({ where: { categoryId: auto.id, value: 'lada' } })).id, old.id);
+    assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_generation' } }), 7);
+    assert.equal((await db.category.findUniqueOrThrow({ where: { id: auto.id } })).catalogRevision, 4);
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_model' } }), 5465);
     console.log('PASS 311 makes, 5465 parent-scoped models, RU supplement and resumable v2 upgrade');
   } finally {

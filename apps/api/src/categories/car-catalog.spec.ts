@@ -1,8 +1,17 @@
 import base from './vehiclesdb-car-2026.09.1.json';
 import supplement from './ru-car-supplement-2026.10.05.json';
 import { carCatalog } from './car-catalog';
+import generations from './car-generations-2026.10.05.json';
 
 describe('RU catalog supplement', () => {
+  it('keeps seven distinct generation families under the published BMW model', () => {
+    expect(generations.generations).toHaveLength(7);
+    expect(new Set(generations.generations.map(row => row.id)).size).toBe(7);
+    for (const row of generations.generations) {
+      expect(carCatalog.models.some(model => model.id === row.modelId && model.makeId === 'bmw')).toBe(true);
+      expect(row.id.startsWith(`${row.modelId}/`)).toBe(true);
+    }
+  });
   it('preserves the pinned base and adds traceable parent-scoped identifiers', () => {
     expect(carCatalog.makes.slice(0, base.makes.length)).toEqual(base.makes);
     expect(carCatalog.models.slice(0, base.models.length)).toEqual(base.models);
