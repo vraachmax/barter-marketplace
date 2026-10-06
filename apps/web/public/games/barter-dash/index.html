@@ -30,13 +30,15 @@
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body {
-    height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none;
+    width: 100%; min-width: 100%; height: 100dvh; min-height: 100dvh;
+    margin: 0; overflow: hidden; overscroll-behavior: none;
     background: var(--night); color: var(--ink);
     -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
     font: 400 15px/1.4 var(--body);
   }
-  button { font: inherit; color: inherit; }
-  #game { position: fixed; inset: 0; width: 100vw; height: 100%; display: block; touch-action: none; }
+  button { font: inherit; color: inherit; touch-action: manipulation; }
+  a, input, select, [role="button"] { touch-action: manipulation; }
+  #game { position: fixed; inset: 0; width: 100dvw; height: 100dvh; display: block; touch-action: none; }
 
   .layer { position: fixed; inset: 0; pointer-events: none; }
   #shade { background: linear-gradient(180deg, rgba(3,5,12,.6) 0%, transparent 20%, transparent 74%, rgba(3,5,12,.66) 100%); }
@@ -3906,19 +3908,7 @@ function showTip() {
   setTimeout(() => { ui.tip.hidden = true; }, 5200);
   PERSIST.tut = true; store.set('tut', '1');
 }
-function enterGameFullscreen() {
-  const el = document.documentElement;
-  if (document.fullscreenElement) return;
-  try {
-    const request = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (request) {
-      const result = request.call(el);
-      if (result && typeof result.catch === 'function') result.catch(() => {});
-    }
-  } catch { /* браузер не поддерживает настоящий fullscreen */ }
-}
 function startFromMenu() {
-  enterGameFullscreen();
   Sound.init(); Sound.click();
   newRunState();
   metaRunStart();
@@ -4205,7 +4195,9 @@ composer.addPass(new OutputPass());
 const grade = new ShaderPass(GradeShader);
 composer.addPass(grade);
 function resize() {
-  const w = innerWidth, h = innerHeight;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width));
+  const h = Math.max(1, Math.round(rect.height));
   renderer.setSize(w, h, false);
   composer.setPixelRatio(renderer.getPixelRatio());
   composer.setSize(w, h);
@@ -4216,6 +4208,7 @@ function resize() {
   camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
+visualViewport?.addEventListener('resize', resize);
 
 let camX = 0, camY = 4.05, camBlend = 0, flyCam = 0;
 const _cp = new THREE.Vector3(), _cl = new THREE.Vector3(), _mp = new THREE.Vector3(), _ml = new THREE.Vector3();
