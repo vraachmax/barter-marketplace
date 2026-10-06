@@ -43,16 +43,21 @@
 
   /* ── табло ── */
   #hud {
-    position: fixed; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top, 0px) + 60px);
+    position: fixed; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top, 0px) + 116px);
     pointer-events: none;
   }
   #scoreChip {
     position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px);
+    transform: translateX(-50%); z-index: 3;
+  }
+  #hud .right { display: contents; }
+  #bagChip {
+    position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 62px);
     transform: translateX(-50%); z-index: 2;
   }
-  #hud .right {
+  #pauseBtn {
     position: absolute; right: calc(env(safe-area-inset-right, 0px) + 8px);
-    top: calc(env(safe-area-inset-top, 0px) + 8px);
+    top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 3;
   }
   .chip {
     position: relative; display: flex; align-items: center; gap: 8px; min-width: 0;
@@ -85,7 +90,7 @@
 
   #pills {
     position: fixed; left: 50%; transform: translateX(-50%); pointer-events: none;
-    top: calc(env(safe-area-inset-top, 0px) + 66px);
+    top: calc(env(safe-area-inset-top, 0px) + 114px);
     display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: min(92vw, 420px);
   }
   .pill {
@@ -294,10 +299,9 @@
   @media (max-width: 390px) {
     #scoreChip { gap: 5px; padding: 6px 10px 6px 6px; }
     #scoreChip .ico { width: 26px; height: 26px; }
-    #hud .right { gap: 5px; }
-    #hud .right .chip { gap: 5px; padding: 6px 8px 6px 6px; }
-    #hud .right .chip .ico { width: 26px; height: 26px; }
-    #hud .right .chip .lab { display: none; }
+    #bagChip { gap: 5px; padding: 6px 10px 6px 6px; }
+    #bagChip .ico { width: 24px; height: 24px; }
+    #bagChip .lab { display: none; }
     #pauseBtn { width: 40px; height: 40px; border-radius: 13px; }
   }
 
@@ -318,7 +322,7 @@
     <em id="mult">×1</em>
   </div>
   <div class="right">
-    <div class="chip">
+    <div class="chip" id="bagChip">
       <i class="ico" id="icoBag"></i>
       <div><span class="lab">В СУМКЕ</span><b class="val" id="bagVal">0</b></div>
     </div>
