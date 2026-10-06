@@ -41,25 +41,35 @@ export default function BarterDashPage() {
   }
 
   return (
-    <main className="fixed inset-0 z-[2000] overflow-hidden bg-[#080b12]" data-barter-dash-shell>
+    <main
+      className="fixed inset-0 z-[2000] overflow-hidden bg-[#080b12]"
+      style={{ width: '100dvw', height: '100dvh', overscrollBehavior: 'none', touchAction: 'none' }}
+      data-barter-dash-shell
+    >
       <button
         type="button"
         onClick={() => {
+          if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
           if (window.history.length > 1) router.back();
           else router.push('/profile');
         }}
-        className="fixed left-3 z-[2020] inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-black/45 px-4 text-sm font-bold text-white shadow-lg backdrop-blur-md transition hover:bg-black/60 focus-visible:outline-2 focus-visible:outline-white"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+        className="fixed z-[2020] grid size-10 place-items-center rounded-full border border-white/10 bg-black/30 text-white/90 shadow-lg backdrop-blur-md transition hover:bg-black/50 hover:text-white focus-visible:outline-2 focus-visible:outline-white"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+          left: 'calc(env(safe-area-inset-left, 0px) + 8px)',
+        }}
         aria-label="Вернуться в БАРТЕР"
+        title="Назад"
       >
-        <ArrowLeft size={19} strokeWidth={2} aria-hidden />
-        Назад
+        <ArrowLeft size={20} strokeWidth={2} aria-hidden />
       </button>
       <iframe
         src="/games/barter-dash/index.html"
         title="Barter Dash"
-        className="h-full w-full border-0"
+        className="block border-0"
+        style={{ width: '100dvw', height: '100dvh' }}
         allow="autoplay; fullscreen"
+        allowFullScreen
       />
     </main>
   );
