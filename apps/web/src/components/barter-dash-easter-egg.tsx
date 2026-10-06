@@ -55,7 +55,7 @@ export function BarterDashEasterEgg() {
           <button
             type="button"
             onClick={tapLogo}
-            className="w-full rounded-3xl p-3 transition active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-primary sm:p-4"
+            className="w-full touch-manipulation select-none rounded-3xl p-3 transition active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-primary sm:p-4"
             aria-label="Логотип БАРТЕР"
           >
             <Image
