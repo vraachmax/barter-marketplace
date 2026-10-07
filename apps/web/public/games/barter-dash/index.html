@@ -3,9 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#060914">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json?v=bubble-b-3">
+<title>Barter Dash</title>
+<script>
+  (function () {
+    try {
+      if (localStorage.getItem('barter_dash_unlocked_v1') !== '1') {
+        location.replace('/profile/settings?section=about');
+      }
+    } catch (_) {}
+  })();
+</script>
 </head>
 <body>
-<title>Barter Dash</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700&family=Unbounded:wght@600;800;900&display=swap">
@@ -39,6 +52,23 @@
   button { font: inherit; color: inherit; touch-action: manipulation; }
   a, input, select, [role="button"] { touch-action: manipulation; }
   #game { position: fixed; inset: 0; width: 100dvw; height: 100dvh; display: block; touch-action: none; }
+  #appBackBtn {
+    position: fixed; z-index: 80;
+    top: calc(env(safe-area-inset-top, 0px) + 8px);
+    left: calc(env(safe-area-inset-left, 0px) + 8px);
+    width: 40px; height: 40px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(5,10,22,.52); color: #fff;
+    display: grid; place-items: center; padding: 0;
+    box-shadow: 0 6px 18px rgba(0,0,0,.26);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    touch-action: manipulation; cursor: pointer;
+  }
+  #appBackBtn::before {
+    content: ""; width: 11px; height: 11px;
+    border-left: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    transform: translateX(2px) rotate(45deg);
+  }
 
   .layer { position: fixed; inset: 0; pointer-events: none; }
   #shade { background: linear-gradient(180deg, rgba(3,5,12,.6) 0%, transparent 20%, transparent 74%, rgba(3,5,12,.66) 100%); }
@@ -317,6 +347,7 @@
   }
 </style>
 
+<button id="appBackBtn" type="button" aria-label="Вернуться в БАРТЕР" title="Назад"></button>
 <canvas id="game" aria-label="Игровое поле"></canvas>
 <div class="layer" id="shade"></div>
 <div class="layer" id="danger"></div>
@@ -3993,6 +4024,11 @@ canvas.addEventListener('pointerup', endSwipe);
 canvas.addEventListener('pointercancel', endSwipe);
 addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+document.getElementById('appBackBtn')?.addEventListener('click', () => {
+  if (history.length > 1) history.back();
+  else location.href = '/profile';
+});
 
 ui.play.addEventListener('click', startFromMenu);
 ui.again.addEventListener('click', restart);
