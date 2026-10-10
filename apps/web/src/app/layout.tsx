@@ -31,8 +31,8 @@ const SITE_DESC = 'Покупайте и продавайте легко: эле
 
 export const metadata: Metadata = {
   applicationName: 'БАРТЕР',
-  manifest: '/manifest.json?v=bubble-b-2',
-  appleWebApp: { capable: true, title: 'БАРТЕР', statusBarStyle: 'default' },
+  manifest: '/manifest.json?v=bubble-b-3',
+  appleWebApp: { capable: true, title: 'БАРТЕР', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
       { url: '/brand/bubble-b-v2/favicon-32.png', sizes: '32x32', type: 'image/png' },

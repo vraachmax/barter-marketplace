@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "icons:strip-bg": "node scripts/strip-icon-background.mjs"
+    "icons:strip-bg": "node scripts/strip-icon-background.mjs",
+    "prepare:barter-dash": "node scripts/prepare-barter-dash-model.mjs",
+    "prebuild": "npm run prepare:barter-dash",
+    "predev": "npm run prepare:barter-dash"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

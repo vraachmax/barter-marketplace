@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import {
   Bell, Building2, Camera, CheckCircle, ChevronRight, Lock, Mail, MessageSquare,
-  Monitor, Moon, Palette, Phone, Settings, Shield, Store, Sun, User,
+  Info, Monitor, Moon, Palette, Phone, Settings, Shield, Store, Sun, User,
 } from 'lucide-react';
 import { apiFetchJson, type AuthMe } from '@/lib/api';
 import { AccountScreenHeader } from '@/components/account-screen-header';
@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { PasswordSettings } from '@/components/password-settings';
 import { applyThemePreference, getStoredThemePreference, getCurrentThemePreference, subscribeTheme } from '@/lib/theme';
 import { buildSettingsPatch, autoReplyChanged, type SettingsForm, type SettingsSection as Section } from '@/lib/settings-patch';
+import { BarterDashEasterEgg } from '@/components/barter-dash-easter-egg';
 
 const stroke = 1.8;
 type AutoReply = { enabled: boolean; text: string };
@@ -37,6 +38,7 @@ const SECTIONS: Array<{
   { id: 'notifications', label: 'Уведомления', description: 'Сообщения и рассылки', icon: Bell },
   { id: 'privacy', label: 'Приватность', description: 'Публичный профиль', icon: Shield },
   { id: 'security', label: 'Безопасность', description: 'Защита аккаунта', icon: Lock },
+  { id: 'about', label: 'О приложении', description: 'Версия, бренд и детали', icon: Info },
 ];
 
 function isSection(s: string | null): s is Section {
@@ -46,7 +48,8 @@ function isSection(s: string | null): s is Section {
     s === 'appearance' ||
     s === 'notifications' ||
     s === 'privacy' ||
-    s === 'security'
+    s === 'security' ||
+    s === 'about'
   );
 }
 
@@ -149,7 +152,7 @@ export function ProfileSettingsContent() {
   }
 
   async function save() {
-    if (saveLock.current || !me || section === 'security') return;
+    if (saveLock.current || !me || section === 'security' || section === 'about') return;
     saveLock.current = true;
     setBusy(true);
     setSaved(false);
@@ -586,6 +589,8 @@ export function ProfileSettingsContent() {
 
                         {section === 'security' ? <PasswordSettings /> : null}
 
+                        {section === 'about' ? <BarterDashEasterEgg /> : null}
+
 
                 {error ? (
                   <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
@@ -594,7 +599,7 @@ export function ProfileSettingsContent() {
                   </div>
                 ) : null}
                 {saved ? <p role="status" className="flex items-center gap-2 rounded-2xl bg-muted p-4 text-sm"><CheckCircle size={18} aria-hidden />Настройки раздела сохранены</p> : null}
-                {section !== 'security' ? (
+                {section !== 'security' && section !== 'about' ? (
                   <div className="border-t border-border pt-6">
                     <Button type="button" size="lg" onClick={() => void save()} disabled={busy} aria-busy={busy} className="w-full sm:max-w-xs">
                       {busy ? 'Сохраняем…' : 'Сохранить'}

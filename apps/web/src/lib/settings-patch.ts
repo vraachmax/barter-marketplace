@@ -1,4 +1,4 @@
-export type SettingsSection = 'account' | 'storefront' | 'appearance' | 'notifications' | 'privacy' | 'security';
+export type SettingsSection = 'account' | 'storefront' | 'appearance' | 'notifications' | 'privacy' | 'security' | 'about';
 
 export type SettingsForm = {
   email: string;
@@ -22,6 +22,7 @@ const fields: Record<SettingsSection, readonly (keyof SettingsForm)[]> = {
   notifications: ['notificationsEnabled', 'marketingEnabled'],
   privacy: ['showEmailPublic', 'showPhonePublic'],
   security: [],
+  about: [],
 };
 
 /** Send only edits from the visible section. Missing contacts are not empty-string updates. */

@@ -1,5 +1,26 @@
 # Barter Clone — Handoff Context
 
+## 2026-10-10: PR #56, продолжение приёмки и сверка master
+
+Master 824b32d содержит 13 новых коммитов после bc6d122: Barter Dash,
+скрытое открытие пятью нажатиями, профиль/рекорд, две модели персонажей,
+адаптация HUD/PWA/iOS и переход со страницы Next на same-origin HTML без iframe.
+Все изменения объединены в рабочую ветку PR #56 без конфликтов. Игра не
+переписывалась; исходники и сборка не доказывают исправление на физическом iPhone.
+
+Предыдущий head #56: PG acceptance 37431984133 success; web 37431984138
+упал на точном доступном имени «Марка» в фильтре. Добавлен aria-label из схемы,
+строгий browser сценарий сохранён. Audit 37431985166 обнаружил proxy-addr,
+source-map-js и dev-only sprintf-js. Обновлены первые два; sprintf-js удалён
+через js-yaml 4.3.2 в Istanbul config loader, с regression YAML fixture.
+Новых OSV-исключений нет. Детали: docs/SECURITY_DEPENDENCIES_2026_10_10.md.
+
+Локально: чистая установка, 85 web tests, 248 API tests, обе сборки успешны.
+Модели игры восстановлены prebuild и их SHA-256 проверены штатным скриптом.
+Повторный remote CI и выпуск этого head ещё не подтверждены. Следующий шаг:
+проверить browser/PG/security CI PR #56, затем выпуск и production readback.
+TXT-03 не закрыт; аналитика/Яндекс/платежи не включались.
+
 ## 2026-10-06: поколения BMW 3 Series, подготовка
 
 Ветка feat/bmw-3-generations от master bc6d122c. Добавлены 7 исторических

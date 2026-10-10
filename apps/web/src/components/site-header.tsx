@@ -79,7 +79,7 @@ export function SiteHeader({ children, regionControl }: { children?: ReactNode; 
 
   return (
     <>
-      <header className="glass-panel sticky top-0 z-[100] border-b border-border">
+      <header className="glass-panel sticky top-0 z-[100] border-b border-border pt-[env(safe-area-inset-top)] md:pt-0">
         {/* ── Top utility bar — desktop only ─────────────────────────────── */}
         <div className="hidden border-b border-border/60 md:block">
           <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">

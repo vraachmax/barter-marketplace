@@ -51,6 +51,7 @@ const NAV_ITEMS: NavItem[] = [
 
 /** Маршруты, на которых нижняя навигация полностью скрывается. */
 const HIDE_ON_PATHS = new Set<string>(['/new']);
+const HIDE_ON_PREFIXES = ['/games/barter-dash'];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -64,7 +65,7 @@ export function MobileBottomNav() {
     [pathname],
   );
 
-  if (HIDE_ON_PATHS.has(pathname)) return null;
+  if (HIDE_ON_PATHS.has(pathname) || HIDE_ON_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return null;
 
   return (
     <nav className="magic-nav md:hidden" aria-label="Основная навигация">

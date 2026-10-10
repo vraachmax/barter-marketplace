@@ -814,7 +814,7 @@ function FiltersSheet(props: {
             <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Характеристики</p>
             {activeCatalog.fields.filter(field => !field.parentKey || draftAttrs[field.parentKey]).map(field => <label key={field.key} className="block text-sm font-medium text-foreground">
               {field.label}
-              <select value={draftAttrs[field.key] ?? ''} onChange={event => setDraftAttrs(current => {
+              <select aria-label={field.label} value={draftAttrs[field.key] ?? ''} onChange={event => setDraftAttrs(current => {
                 return changeCatalogAttribute(current, field.key, event.target.value, [], { version: 1, fields: activeCatalog.fields });
               })}
                 className="mt-1 min-h-12 w-full rounded-2xl border border-border bg-card px-4 text-base text-foreground">
