@@ -11,6 +11,10 @@ test('security updates remove sprintf-js and retain patched proxy/source-map ver
     assert(!path.endsWith('/node_modules/sprintf-js') && path !== 'node_modules/sprintf-js');
     if (path.endsWith('node_modules/proxy-addr')) assert.equal(pkg.version, '2.0.8');
     if (path.endsWith('node_modules/source-map-js')) assert.equal(pkg.version, '1.2.2');
+    if (path.endsWith('node_modules/handlebars')) assert.equal(pkg.version, '4.7.10');
+    if (path.endsWith('node_modules/shell-quote')) assert.equal(pkg.version, '1.11.0');
+    if (path.endsWith('node_modules/next')) assert.equal(pkg.version, '16.3.8');
+    if (path.endsWith('node_modules/sharp')) assert.equal(pkg.version, '0.35.5');
   }
 });
 

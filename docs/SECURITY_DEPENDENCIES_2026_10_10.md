@@ -26,3 +26,20 @@ through loadNycConfig: booleans, numbers, arrays and kebab-case config names.
 85 web tests, 248 API tests and both production builds passed locally.
 This does not establish a clean full OSV scan: remote repeat remains required.
 Existing braces/effect exceptions are unchanged, not broadened.
+
+## Repeat audit on current advisory database
+
+Run 38073718353 on b7a2239 removed the three previous findings, but found
+11 fixable advisories in four other packages. Updated Next/eslint-config-next
+16.3.6 → 16.3.8, sharp 0.35.4 → 0.35.5, handlebars 4.7.9 → 4.7.10 and
+shell-quote 1.9.0 → 1.11.0. No new exceptions. Primary advisory references:
+
+- https://github.com/advisories/GHSA-cjq9-62q9-8jv4
+- https://github.com/advisories/GHSA-wq5f-xc86-pv6w
+- https://github.com/advisories/GHSA-8r5x-fm3f-whwj
+- https://github.com/advisories/GHSA-pqg4-j6r4-53mv
+
+Next's additional IDs in that run: GHSA-39w2-rjm5-chcv, GHSA-3w37-wq28-93x7,
+GHSA-4jqv-mc3x-m676, GHSA-f87g-xv8r-7p7x, GHSA-mcj8-r9mp-w47p.
+Handlebars additional IDs: GHSA-p8wg-vrv2-v86f, GHSA-xw65-4hp5-5hc7.
+The final updated lockfile still requires a new remote audit before release.
