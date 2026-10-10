@@ -14,7 +14,7 @@ describe('VehiclesDB seed', () => {
           if (!rows.has(key)) rows.set(key, { ...item, id: key });
         }
       }),
-      findMany: jest.fn(async () => [...rows.values()].filter(row => row.fieldKey === 'auto_make')),
+      findMany: jest.fn(async ({ where }: { where: { fieldKey: string } }) => [...rows.values()].filter(row => row.fieldKey === where.fieldKey)),
       count: jest.fn(async () => [...rows.values()].filter(row => row.fieldKey === 'auto_model').length),
     };
     const field = { createMany: jest.fn(async ({ data }: { data: Array<{ key: string }> }) => {
@@ -29,7 +29,7 @@ describe('VehiclesDB seed', () => {
     };
     const prisma = {
       category, categoryAttributeOption: option, categoryAttributeField: field,
-      $transaction: async (fn: (tx: unknown) => Promise<void>) => fn({ category, categoryAttributeField: field }),
+      $transaction: async (fn: (tx: unknown) => Promise<void>) => fn({ category, categoryAttributeField: field, categoryAttributeOption: option }),
     } as unknown as PrismaService;
     const service = new CategoriesService(prisma);
     await service.ensureSeed();
@@ -37,10 +37,11 @@ describe('VehiclesDB seed', () => {
     const sample = catalog.models.find(model => model.makeId === 'lada');
     expect(sample).toBeDefined();
     expect(rows.get(`auto_model:${sample!.id}`)?.parentOptionId).toBe('auto_make:lada');
-    expect(order).toEqual(['fields', 'revision']);
+    expect(order).toEqual(['fields', 'revision', 'revision']);
+    expect(rows.get('auto_generation:bmw/3-series/gen-5')?.parentOptionId).toBe('auto_model:bmw/3-series');
     const calls = option.createMany.mock.calls.length;
     await service.ensureSeed();
     expect(option.createMany.mock.calls.length).toBe(calls + 1); // small starter fields remain idempotent
-    expect(revision).toBe(3);
+    expect(revision).toBe(4);
   });
 });

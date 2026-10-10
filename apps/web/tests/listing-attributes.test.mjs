@@ -11,6 +11,18 @@ test('catalog field metadata controls the existing vehicle field without changin
   assert.equal(sections('auto').flatMap(section => section.fields).find(field => field.key === 'fuel').label, 'Топливо');
 });
 
+test('new generation field follows its model and ancestor changes clear both descendants', () => {
+  const schema = { version: 4, fields: [
+    { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', fieldType: 'select' },
+    { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', fieldType: 'select', parentKey: 'auto_make' },
+    { key: 'auto_generation', label: 'Поколение', sectionId: 'auto_main', fieldType: 'select', parentKey: 'auto_model' },
+  ] };
+  const fields = withCatalogFieldDefinitions(sections('auto'), schema).flatMap(s => s.fields);
+  assert.equal(fields[fields.findIndex(f => f.key === 'auto_model') + 1].key, 'auto_generation');
+  assert.equal(fields.find(f => f.key === 'auto_generation').dependsOn, 'auto_model');
+  assert.deepEqual(changeCatalogAttribute({ auto_make: 'bmw', auto_model: 'bmw/3-series', auto_generation: 'bmw/3-series/gen-5' }, 'auto_make', 'lada', [], schema), { auto_make: 'lada' });
+});
+
 test('schema parent clears a selected child even before its options have loaded', () => {
   const schema = { version: 2, fields: [
     { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select' },

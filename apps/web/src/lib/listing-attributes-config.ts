@@ -41,10 +41,19 @@ export function withCatalogFieldDefinitions(
   const fields = new Map(schema.fields.map((field) => [field.key, field]));
   return sections.map((section) => {
     const owned = schema.fields.find((field) => field.sectionId === section.id);
+    const mergedFields = [...section.fields];
+    for (const definition of schema.fields.filter(field => field.sectionId === section.id && field.fieldType === 'select')) {
+      if (mergedFields.some(field => field.key === definition.key)) continue;
+      const parentIndex = mergedFields.findIndex(field => field.key === definition.parentKey);
+      mergedFields.splice(parentIndex < 0 ? mergedFields.length : parentIndex + 1, 0, {
+        key: definition.key, label: definition.label, type: 'select',
+        ...(definition.key === 'auto_generation' ? { hint: 'Семейство поколения, не код кузова. Пока заполнено только для BMW 3 Series.' } : {}),
+      });
+    }
     return {
       ...section,
       title: owned?.sectionTitle ?? section.title,
-      fields: section.fields.map((field) => {
+      fields: mergedFields.map((field) => {
         const definition = fields.get(field.key);
         return definition?.sectionId === section.id && definition.fieldType === 'select'
           ? { ...field, label: definition.label, type: 'select' as const,
@@ -508,6 +517,7 @@ export function getListingAttrFieldMeta(key: string): ListingAttrField | undefin
 }
 
 export function getListingAttrLabel(key: string): string {
+  if (key === 'auto_generation') return 'Поколение';
   if (key === 'isBarter') return 'Рассматриваю обмен';
   return getListingAttrFieldMeta(key)?.label ?? key.replace(/_/g, ' ');
 }
