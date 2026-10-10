@@ -173,7 +173,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <div className="break-words whitespace-pre-wrap text-base leading-7">{listing.description?.trim() || 'Продавец пока не добавил описание.'}</div>
             </section>
             {listing.barterEnabled && listing.exchangePreferences ? <ExchangePreferencesSummary value={listing.exchangePreferences} categories={categories} /> : null}
-            <ListingAttributesDisplay attributes={listing.attributes} />
+            <ListingAttributesDisplay attributes={listing.attributes} categoryId={listing.category?.id ?? ''} />
             <section aria-labelledby="listing-location" className="border-t border-border pt-6">
               <h2 id="listing-location" className="mb-3 text-xl font-semibold tracking-tight">Местоположение</h2>
               {listing.latitude != null && listing.longitude != null ? <ListingMiniMap latitude={listing.latitude} longitude={listing.longitude} city={listing.city} /> : <p className="text-base">{listing.city}</p>}
@@ -198,4 +198,3 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     </div>
   );
 }
-

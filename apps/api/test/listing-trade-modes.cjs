@@ -287,6 +287,21 @@ async function main() {
     assert.deepEqual((await db.listing.findUniqueOrThrow({ where: { id: exchange.id } })).exchangePreferences.wantedItems, []);
     await patch(exchange.id, { exchangePreferences: null }).expect(200);
     console.log('PASS cross-category structured wishes, inherited catalog, exact parents, old client preservation and explicit clearing');
+    const parentModel = await db.categoryAttributeOption.findFirstOrThrow({ where: { categoryId: autoCategory.id, fieldKey: 'auto_model', value: '3-series' } });
+    await db.categoryAttributeField.create({ data: { categoryId: autoCategory.id, key: 'auto_generation', label: 'Поколение', sectionId: 'auto_main', sectionTitle: 'Автомобиль', parentKey: 'auto_model' } });
+    await db.categoryAttributeOption.create({ data: { categoryId: autoCategory.id, fieldKey: 'auto_generation', value: 'bmw/3-series/gen-5', label: 'V (семейство E90)', parentOptionId: parentModel.id } });
+    const generationAttrs = { auto_make: 'bmw', auto_model: '3-series', auto_generation: 'bmw/3-series/gen-5' };
+    await patch(car.body.id, { attributes: generationAttrs }).expect(200);
+    assert.equal((await http().get('/listings/' + car.body.id).expect(200)).body.attributes.auto_generation, generationAttrs.auto_generation);
+    const filtered = await http().get('/listings').query({ categoryId: autoCategory.id, attrs: JSON.stringify(generationAttrs) }).expect(200);
+    assert.deepEqual(filtered.body.items.map(row => row.id), [car.body.id]);
+    await patch(car.body.id, { attributes: { ...generationAttrs, auto_model: 'missing' } }).expect(400);
+    await patch(car.body.id, { attributes: { auto_make: 'bmw', auto_generation: generationAttrs.auto_generation } }).expect(400);
+    await patch(exchange.id, { exchangePreferences: { ...concrete, wantedItems: [{ categoryId: autoGrandchild.id, attributes: generationAttrs }] } }).expect(200);
+    await patch(exchange.id, { exchangePreferences: { ...concrete, wantedItems: [{ categoryId: autoGrandchild.id, attributes: { ...generationAttrs, auto_model: 'missing' } }] } }).expect(400);
+    await patch(car.body.id, { attributes: { auto_make: 'bmw', auto_model: '3-series' } }).expect(200);
+    assert.equal((await http().get('/listings/' + car.body.id).expect(200)).body.attributes.auto_generation, undefined);
+    console.log('PASS generation save, public readback, exact filter, parent rejection, wishes and clearing');
   } finally {
     if (app) await app.close();
     if (owner) {

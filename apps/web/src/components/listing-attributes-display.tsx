@@ -1,14 +1,19 @@
+'use client';
 import { formatListingAttributeValue, getListingAttrLabel } from '@/lib/listing-attributes-config';
+import { useListingAttributeCatalog } from '@/hooks/use-listing-attribute-catalog';
 
 type Props = {
   attributes: unknown;
+  categoryId: string;
 };
 
 function isPlainRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-export default function ListingAttributesDisplay({ attributes }: Props) {
+export default function ListingAttributesDisplay({ attributes, categoryId }: Props) {
+  const values = isPlainRecord(attributes) ? Object.fromEntries(Object.entries(attributes).filter(([, value]) => typeof value === 'string')) as Record<string, string> : {};
+  const catalog = useListingAttributeCatalog(categoryId, '', values);
   if (!isPlainRecord(attributes)) return null;
   const entries = Object.entries(attributes).filter(
     ([, v]) => v !== null && v !== undefined && String(v).trim().length > 0,
@@ -24,9 +29,9 @@ export default function ListingAttributesDisplay({ attributes }: Props) {
             key={key}
             className="grid min-w-0 gap-1 py-3 sm:grid-cols-2 sm:gap-6"
           >
-            <dt className="text-sm text-muted-foreground">{getListingAttrLabel(key)}</dt>
+            <dt className="text-sm text-muted-foreground">{catalog.schema?.fields.find(field => field.key === key)?.label ?? getListingAttrLabel(key)}</dt>
             <dd className="break-words text-base font-medium text-foreground">
-              {formatListingAttributeValue(key, value)}
+              {catalog.choices.find(option => option.fieldKey === key && option.value === value && (!option.parentFieldKey || values[option.parentFieldKey] === option.parentValue))?.label ?? formatListingAttributeValue(key, value)}
             </dd>
           </div>
         ))}
