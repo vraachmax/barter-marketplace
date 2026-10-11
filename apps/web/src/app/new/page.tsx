@@ -238,6 +238,10 @@ export default function NewListingPage() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState<string>('');
   const [tradeMode, setTradeMode] = useState<ListingTradeMode>('sale');
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('tradeMode');
+    if (requested === 'sale' || requested === 'barter' || requested === 'both') setTradeMode(requested);
+  }, []);
   const [exchangePreferences, setExchangePreferences] = useState(emptyExchangePreferences);
   const [wishesBlocked, setWishesBlocked] = useState(false);
   const [city, setCity] = useState('Москва');

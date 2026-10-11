@@ -46,7 +46,7 @@ export function ModeThemeSync() {
       const color = pathname.startsWith('/games/barter-dash')
         ? '#060914'
         : html.getAttribute('data-theme') === 'dark'
-          ? '#10131b'
+          ? '#141519'
           : COLOR_BY_MODE[mode];
       // Основной meta[name="theme-color"]
       let meta = document.querySelector<HTMLMetaElement>(
