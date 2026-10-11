@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { THEME_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import { ThemeSync } from "@/components/theme-sync";
 import { ModeThemeSync } from "@/components/mode-theme-sync";
 import { GlobalChatWidget } from "@/components/global-chat-widget";
@@ -61,13 +62,12 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-// NB: themeColor намеренно убран — <meta name="theme-color"> управляется
-// динамически из ModeThemeSync, чтобы верхний system-bar окрашивался в
-// цвет текущего режима (Бартер = #E85D26, Маркет = #00AAFF).
+// Theme bootstrap sets browser chrome before paint; ModeThemeSync keeps it current.
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -80,13 +80,10 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=localStorage.getItem('barter_theme_pref');var r='light';if(p==='DARK')r='dark';else if(p==='LIGHT')r='light';else if(p==='SYSTEM'&&window.matchMedia('(prefers-color-scheme: dark)').matches)r='dark';var el=document.documentElement;el.setAttribute('data-theme',r);el.classList.toggle('dark',r==='dark');el.setAttribute('data-theme-pref',p||'LIGHT');}catch(e){}})();`,
+            __html: THEME_BOOTSTRAP,
           }}
         />
-        {/* Pre-paint mode bootstrap — ставим <html data-mode="..."> и meta[theme-color]
-            ДО первого кадра, чтобы не было вспышки не того цвета при загрузке.
-            theme-color всегда белый: по реф-дизайну (handoff-bundle/home.html)
-            мобильная шапка белая для обоих режимов. */}
+        {/* Restore the catalog independently from the display theme. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var m=new URLSearchParams(location.search).get('mode');if(m===null){var c=document.cookie.split(';').map(function(x){return x.trim()}).find(function(x){return x.indexOf('barter_catalog_mode=')===0});m=c?c.split('=')[1]:'market'}if(m!=='barter')m='market';document.documentElement.setAttribute('data-mode',m);}catch(e){}})();`,

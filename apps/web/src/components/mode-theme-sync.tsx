@@ -9,45 +9,20 @@ type Mode = 'barter' | 'market';
 
 const EVENT = CATALOG_MODE_EVENT;
 
-/**
- * Цвет system-bar (Safari/Chrome top bar).
- *
- * Решение от 2026-04-19: реф-дизайн (handoff-bundle/home.html) делает шапку
- * БЕЛОЙ для обоих режимов — акцент применяется только к мелким элементам.
- * Поэтому status-bar тоже остаётся белым, без режим-зависимого цвета.
- *
- * Если в будущем захочется режим-цветной status-bar — поменять обратно на
- * `barter: '#E85D26', market: '#00AAFF'`.
- */
-const COLOR_BY_MODE: Record<Mode, string> = {
-  barter: '#FFFFFF',
-  market: '#FFFFFF',
-};
-
-/**
- * Синхронизирует <html data-mode="..."> и <meta name="theme-color"> с режимом каталога.
- *
- * - При монтировании читает URL и cookie `barter_catalog_mode`.
- * - Проставляет `data-mode` на <html>, чтобы CSS-токены переопределились.
- * - Обновляет (и при необходимости создаёт) <meta name="theme-color">, чтобы
- *   верхний system-status-bar в iOS Safari / Android Chrome окрашивался в цвет режима.
- * - Подписан на событие CatalogModeToggle, меняет цвета без перезагрузки.
- *
- * Пре-пейнт установка (до первого кадра, чтобы не было FOUC) делается
- * инлайновым `<script>` внутри <head> в layout.tsx.
- */
+/** Keep catalog, browser chrome and restored home-screen pages in sync. */
 export function ModeThemeSync() {
   const pathname = usePathname();
 
   useEffect(() => {
     const html = document.documentElement;
 
-    const applyMetaThemeColor = (mode: Mode) => {
+    const applyMetaThemeColor = () => {
       const color = pathname.startsWith('/games/barter-dash')
         ? '#060914'
         : html.getAttribute('data-theme') === 'dark'
           ? '#141519'
-          : COLOR_BY_MODE[mode];
+          : '#FFFFFF';
+      html.style.colorScheme = html.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
       // Основной meta[name="theme-color"]
       let meta = document.querySelector<HTMLMetaElement>(
         'meta[name="theme-color"]:not([media])'
@@ -62,7 +37,7 @@ export function ModeThemeSync() {
 
     const apply = (mode: Mode) => {
       html.setAttribute('data-mode', mode);
-      applyMetaThemeColor(mode);
+      applyMetaThemeColor();
     };
 
     // Изначальный режим из URL/cookie, если пре-пейнт скрипт не отработал.
@@ -85,12 +60,17 @@ export function ModeThemeSync() {
       }
     };
     window.addEventListener(EVENT, onChange);
-    const onTheme = () => applyMetaThemeColor(html.getAttribute('data-mode') === 'barter' ? 'barter' : 'market');
+    const onTheme = () => applyMetaThemeColor();
+    const onVisible = () => { if (!document.hidden) onTheme(); };
     window.addEventListener(THEME_EVENT, onTheme);
+    window.addEventListener('pageshow', onTheme);
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       window.removeEventListener(EVENT, onChange);
       window.removeEventListener(THEME_EVENT, onTheme);
+      window.removeEventListener('pageshow', onTheme);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [pathname]);
 
