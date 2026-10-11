@@ -187,7 +187,7 @@ async function installFixture(context, state, theme) {
     if (path === '/wallet/pro/subscription') return json(null);
     if (path === '/wallet/balance') return state.guest ? json({}, 401) : json({ balanceKopecks: 0, balanceRub: 0, updatedAt: '2026-09-26T12:00:00Z' });
     if (path === '/wallet/transactions') return json([]);
-    if (path === '/chats' || path === '/support/faq') return json([]);
+    if (path === '/chats' || path === '/support/faq' || path === '/favorites') return json([]);
     state.unexpected.push(method + ' ' + path);
     return json({}, 404);
   });
@@ -318,6 +318,46 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     await headerCheck(page);
     await spacingCheck(page, width);
+    const dock = page.getByRole('navigation', { name: 'Основная навигация', exact: true });
+    if (width < 768) {
+      await expect(dock).toBeVisible();
+      for (const link of await dock.getByRole('link').all()) {
+        const bounds = await contained(link);
+        assert(bounds.width >= 44 && bounds.height >= 44, '44px navigation touch target');
+      }
+      const palette = await page.evaluate(() => {
+        const css = getComputedStyle(document.documentElement);
+        return ['--bg-page', '--bg-surface', '--bg-muted', '--fg-default', '--fg-muted', '--border-default'].map(key => css.getPropertyValue(key).trim());
+      });
+      if (theme === 'dark') assert.deepEqual(palette, ['#141519', '#202126', '#2b2d34', '#f4f5f7', '#a3a5ae', '#2e3036']);
+      await dock.getByRole('button', { name: 'Добавить объявление' }).click();
+      const compose = page.getByRole('dialog', { name: 'Новое объявление' });
+      await expect(compose).toBeVisible();
+      await contained(compose);
+      await expect(compose.getByRole('link', { name: /^Обменять/ })).toHaveAttribute('href', '/new?tradeMode=barter');
+      await shot(page, key + '-liquid-compose');
+      await page.keyboard.press('Escape');
+      await expect(compose).not.toBeVisible();
+      await expect(dock.getByRole('button', { name: 'Добавить объявление' })).toBeFocused();
+      await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
+      await expect(page).toHaveURL(/\/favorites$/);
+      await expect(dock.getByRole('link', { name: 'Избранное', exact: true })).toHaveAttribute('aria-current', 'page');
+      const target = await dock.getByRole('link', { name: 'Лента', exact: true }).boundingBox();
+      const from = await dock.getByRole('link', { name: 'Избранное', exact: true }).boundingBox();
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 12 });
+      await page.mouse.up();
+      await expect(page).toHaveURL(baseURL + '/');
+      await expect(dock.getByRole('link', { name: 'Лента', exact: true })).toHaveAttribute('aria-current', 'page');
+      await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
+      await expect(page).toHaveURL(/\/favorites$/);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      checks.push('single tap, drag/release, next tap, native menu dismissal, touch targets and graphite palette');
+      await visit('/listings?tab=NEEDS_ACTION');
+      await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
+    } else await expect(dock).not.toBeVisible();
     let tabs = page.getByRole('navigation', { name: 'Статусы объявлений' });
     await expect(tabs.getByRole('button', { name: 'Внимание 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(tabs.getByRole('button', { name: 'Завершены 1', exact: true })).toBeVisible();
@@ -614,11 +654,12 @@ async function scenario(browserType, width, theme) {
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
     if (width === 360 || width === 1280) {
-      await visit('/new');
+      await visit('/new?tradeMode=barter');
+      await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
       await page.getByPlaceholder('iPhone 14 Pro Max 256 ГБ').fill('iPhone для обмена');
       await page.getByRole('button', { name: 'Электроника', exact: true }).first().click();
       await page.getByRole('button', { name: 'Далее', exact: true }).click();
-      await page.getByRole('radio', { name: /^Только обмен/ }).check();
+      await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
       await page.getByLabel('Оценочная стоимость, ₽').fill('18000');
       await page.getByLabel('Рассмотрю любые предложения', { exact: true }).uncheck();
       await page.getByLabel('Пожелания к обмену', { exact: true }).fill('Фотоаппарат с объективом');

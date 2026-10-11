@@ -73,21 +73,21 @@ export function HomeNearbyControls({ radiusKm, geoActive }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-[#f0f0f0] p-3 md:flex-row md:items-center md:justify-between md:gap-4 md:p-3.5">
-      <div className="flex flex-wrap items-center gap-2 text-sm text-[#1a1a1a]">
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-[#007AFF] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+    <div className="flex flex-col gap-2 rounded-lg bg-muted p-3 md:flex-row md:items-center md:justify-between md:gap-4 md:p-3.5">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-foreground">
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
           <MapPin size={14} strokeWidth={1.8} className="shrink-0" aria-hidden />
           Рядом
         </span>
-        <span className="text-[#6b7280] text-xs">Объявления в радиусе от вас, сортировка по расстоянию.</span>
+        <span className="text-muted-foreground text-xs">Объявления в радиусе от вас, сортировка по расстоянию.</span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-1.5 text-xs font-semibold text-[#6b7280]">
+        <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <span>Радиус</span>
           <select
             value={RADIUS_OPTIONS.some((o) => o.value === radiusKm) ? radiusKm : '25'}
             onChange={(e) => onRadiusChange(e.target.value)}
-            className="h-9 rounded-lg bg-[#f7f7f7] px-2 text-sm font-medium text-[#1a1a1a]"
+            className="h-9 rounded-lg bg-background px-2 text-sm font-medium text-foreground"
           >
             {RADIUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -100,14 +100,14 @@ export function HomeNearbyControls({ radiusKm, geoActive }: Props) {
           type="button"
           disabled={busy}
           onClick={onLocate}
-          className="h-9 rounded-lg bg-[#007AFF] px-3 text-xs font-semibold text-white transition hover:bg-[#0066DD] disabled:opacity-60"
+          className="h-9 rounded-lg bg-primary px-3 text-xs font-semibold text-white transition hover:bg-primary-hover disabled:opacity-60"
         >
           {busy ? 'Определяем…' : 'Моё местоположение'}
         </button>
       </div>
       {err ? <p className="text-xs text-destructive md:w-full">{err}</p> : null}
       {!geoActive && searchParams.get('sort') === 'nearby' ? (
-        <p className="text-xs text-[#6b7280] md:w-full">
+        <p className="text-xs text-muted-foreground md:w-full">
           Выберите «Моё местоположение» или укажите lat/lon в ссылке — иначе лента показывается без геосортировки.
         </p>
       ) : null}

@@ -46,9 +46,9 @@ export function CatalogModeToggle({ mode, values, path = '/', syncPreference = t
     else document.documentElement.dataset.mode = mode;
   }, [mode, syncPreference]);
   return <nav aria-label="Маркет или Бартер" aria-busy={isPending}
-    className="glass-panel relative isolate mx-auto grid w-full min-w-0 max-w-sm grid-cols-2 shrink-0 rounded-full border border-border p-1">
+    className="catalog-mode-switch glass-panel relative isolate mx-auto grid w-full min-w-0 max-w-sm grid-cols-2 shrink-0 rounded-full border border-border p-1">
     <span aria-hidden data-mode={displayMode}
-      className="pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-4px)] translate-x-0 rounded-full bg-[#006bd6] transition-[translate,background-color] duration-200 ease-out data-[mode=barter]:translate-x-full data-[mode=barter]:bg-[#b84617] motion-reduce:transition-none" />
+      className="catalog-mode-switch__lens pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-4px)] translate-x-0 rounded-full transition-[translate,background-color] duration-200 ease-out data-[mode=barter]:translate-x-full motion-reduce:transition-none" />
     {(['market', 'barter'] as const).map((value) => {
       const Icon = value === 'market' ? Store : ArrowLeftRight;
       const href = catalogModeHref(path, values, value);
@@ -64,7 +64,7 @@ export function CatalogModeToggle({ mode, values, path = '/', syncPreference = t
           });
         }} aria-current={mode === value ? 'page' : undefined}
         data-selected={displayMode === value}
-        className="relative z-10 flex min-h-11 min-w-0 whitespace-nowrap items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-muted-foreground transition-colors duration-200 hover:text-foreground data-[selected=true]:text-white motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        className="catalog-mode-switch__link relative z-10 flex min-h-11 min-w-0 whitespace-nowrap items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-muted-foreground transition-colors duration-200 hover:text-foreground motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         <Icon size={18} strokeWidth={1.8} aria-hidden />{value === 'market' ? 'Маркет' : 'Бартер'}
       </Link>;
     })}
