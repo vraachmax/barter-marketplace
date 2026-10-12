@@ -555,6 +555,36 @@ async function scenario(browserType, width, theme) {
     assert(await logo.locator('img').evaluate(img => img.naturalWidth > 0));
     await contained(logo);
     await contained(logo.locator('img'));
+    if (width < 768) {
+      // Desktop WebKit has no physical notch. Exercise a nonzero safe area,
+      // without claiming this emulates the actual iPhone status-bar renderer.
+      await page.evaluate(() => document.documentElement.style.setProperty('--safe-area-top', '59px'));
+      const header = page.locator('.catalog-mobile-header');
+      const material = await header.evaluate(el => {
+        const css = getComputedStyle(el);
+        return { padding: css.paddingTop, blur: css.backdropFilter || css.webkitBackdropFilter,
+          background: css.backgroundColor, page: getComputedStyle(document.body).backgroundColor };
+      });
+      assert.equal(material.padding, '71px', '12px breathing room after the system inset');
+      assert.equal(material.blur, 'none', 'top-edge logo header has no backdrop blur');
+      assert.equal(material.background, material.page, 'system area is an opaque continuation of the page');
+      const logoBox = await logo.boundingBox();
+      assert(logoBox.y >= 71, 'logo stays below the safe area plus its own spacing');
+      assert(await logo.evaluate(el => {
+        const b = el.getBoundingClientRect();
+        return el.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2));
+      }), 'no overlay covers the logo');
+      // The catalog fixture is empty; give its shell a scrollable height.
+      await header.evaluate(el => { el.parentElement.style.minHeight = '1800px'; });
+      await page.evaluate(() => window.scrollTo(0, 240));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+      await expect.poll(async () => (await header.boundingBox()).y).toBeGreaterThanOrEqual(0);
+      assert((await logo.boundingBox()).y >= 71, 'scrolling keeps the logo below system chrome');
+      await header.evaluate(el => { el.parentElement.style.removeProperty('min-height'); });
+      await shot(page, key + '-header-safe-area');
+      await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
+      checks.push('opaque logo header, safe area plus 12px, and unobstructed branding');
+    }
     const markBox = await logo.locator('img').boundingBox();
     const wordBox = await logo.locator('span').last().boundingBox();
     assert(markBox.x + markBox.width <= wordBox.x, 'wordmark must not overlap the mark');

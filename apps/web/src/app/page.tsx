@@ -400,7 +400,7 @@ async function renderHome(sp: HomeSearchParams) {
         </SiteHeader>
       </div>
 
-      <header className="glass-panel sticky top-0 z-40 px-4 pb-3 pt-[max(12px,env(safe-area-inset-top))] md:hidden">
+      <header className="catalog-mobile-header sticky top-0 z-40 px-4 pb-3 md:hidden">
         <div className="mb-3 flex min-h-11 items-center justify-between gap-2">
           <BarterHomeLogo />
           <div className="flex min-w-0 items-center gap-1">
