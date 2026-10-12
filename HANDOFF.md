@@ -11,8 +11,20 @@
 горизонтальное движение выбирает кадр; отпускание возвращает обложку и не
 открывает объявление. Обычный tap и вертикальная прокрутка сохранены.
 Добавлены browser regression сценарии safe-area/list-thread/dock и touch photo.
-Локальные проверки и CI/выпуск выполняются; физический iPhone пока не проверен.
-Следующий шаг: дождаться CI и опубликовать, затем подтверждение на iPhone.
+86 unit tests и build/TypeScript успешны. Первый CI выявил Illegal constructor
+в новом тесте Touch в WebKit; заменено на переносимые синтетические DOM-события.
+Финальный head 869a4a68eb50d5131341c93c864ef40881e489c7: web CI 38298253158
+(6 account / 10 layout / 6 messages), security 38298253622 success.
+Снимки светлой/тёмной переписки с safe-area просмотрены; это fixture WebKit,
+не физический iPhone. PR #72 слит в b33950c04eebb25397d3e77dc43cc05653be2e7e.
+Production НЕ подтверждён: GitHub combined status пуст; Vercel get_deployment
+для web-one-blond-66.vercel.app в vraachmaxs-projects после принятой авторизации
+вернул 403 forbidden. CLI отсутствует. Preview первого head подтверждён ботом
+Vercel Ready (J4Z4MX1kqdxyqoiuBoJiaD6PWbUV), это не production.
+Ранее повторный live-browser просмотр был остановлен auto-review из-за лимита;
+обходов не выполняли. На физическом iPhone новые правки ещё не проверены.
+Следующий шаг: подтвердить production через доступ к команде Vercel, затем
+проверить шапку/хаб при переходах и удержание фото на установленном PWA.
 
 ## 2026-10-12: чёткость логотипа и закрепление мобильной шапки
 
