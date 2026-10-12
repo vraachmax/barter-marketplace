@@ -19,7 +19,7 @@ export function ScreenHeader({
 }: ScreenHeaderProps) {
   const maxWidth = { account: 'max-w-3xl', wide: 'max-w-6xl', catalog: 'max-w-7xl' }[width];
   return (
-    <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
+    <header className="screen-header sticky top-0 z-30 border-b border-border/60">
       <div className={`mx-auto flex min-h-16 items-center gap-3 px-4 py-2 md:px-6 ${maxWidth}`}>
         <Button render={<Link href={backHref} />} variant="secondary" size="icon" aria-label={backLabel}>
           <ArrowLeft size={20} className="size-5" strokeWidth={1.8} aria-hidden />

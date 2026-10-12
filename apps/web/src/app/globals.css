@@ -770,3 +770,27 @@ html[data-theme="dark"][data-mode="barter"] { --mode-primary-soft: #39261f; }
     padding-bottom: 0 !important;
   }
 }
+
+/* Full-height canvas also on short routes; the dock keeps one viewport anchor. */
+body { min-height: 100dvh; }
+.screen-header {
+  padding-top: var(--safe-area-top);
+  background: var(--bg-page);
+}
+.messages-screen {
+  box-sizing: border-box;
+  height: 100dvh;
+  padding-top: var(--safe-area-top);
+  padding-bottom: calc(112px + var(--safe-area-bottom));
+  overflow: hidden;
+}
+body:has(.messages-screen) { padding-bottom: 0 !important; }
+@media (min-width: 768px) {
+  .messages-screen { padding: 0; }
+}
+.photo-hold-preview {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.photo-hold-preview img { -webkit-user-drag: none; }

@@ -187,7 +187,8 @@ async function installFixture(context, state, theme) {
     if (path === '/wallet/pro/subscription') return json(null);
     if (path === '/wallet/balance') return state.guest ? json({}, 401) : json({ balanceKopecks: 0, balanceRub: 0, updatedAt: '2026-09-26T12:00:00Z' });
     if (path === '/wallet/transactions') return json([]);
-    if (path === '/chats' || path === '/support/faq' || path === '/favorites') return json([]);
+    if (path === '/favorites') return json(state.previewFavorites ?? []);
+    if (path === '/chats' || path === '/support/faq') return json([]);
     state.unexpected.push(method + ' ' + path);
     return json({}, 404);
   });
@@ -309,6 +310,46 @@ async function scenario(browserType, width, theme) {
   const key = browserType.name() + '-' + width + '-' + theme;
   const checks = [];
   try {
+    if (width < 768) {
+      const source = state.listings[1];
+      state.previewFavorites = [{ id: 'favorite-preview', listing: { ...source,
+        images: [source.images[0], { ...source.images[0], id: 'second', url: source.images[0].url.replace('dce6ef', 'ff9944') }] } }];
+      await visit('/favorites');
+      const thumb = page.locator('.photo-hold-preview').first();
+      await expect(thumb).toBeVisible();
+      const src = await thumb.locator('img').getAttribute('src');
+      const touch = async (type, dx = 0, dy = 0) => thumb.evaluate((el, { type, dx, dy }) => {
+        const r = el.getBoundingClientRect();
+        const point = new Touch({ identifier: 1, target: el, clientX: r.x + 12 + dx, clientY: r.y + 12 + dy });
+        return el.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true,
+          touches: type === 'touchend' || type === 'touchcancel' ? [] : [point], changedTouches: [point] }));
+      }, { type, dx, dy });
+      await touch('touchstart');
+      await expect(thumb).toHaveAttribute('data-photo-holding', 'true');
+      await expect(thumb.locator('img')).not.toHaveAttribute('src', src);
+      await touch('touchmove', 0, 1);
+      await expect(thumb).toHaveAttribute('data-photo-index', '1');
+      await touch('touchend');
+      // Browser-generated click after a hold must not open the listing.
+      assert.equal(await thumb.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))), false);
+      await expect(page).toHaveURL(/favorites$/);
+      await touch('touchstart');
+      assert.equal(await touch('touchmove', 0, 40), true, 'normal vertical swipe remains scrollable');
+      await page.waitForTimeout(400);
+      await expect(thumb).toHaveAttribute('data-photo-holding', 'false');
+      await touch('touchcancel');
+      await touch('touchstart');
+      await touch('touchend');
+      // Capture upstream so we can verify an ordinary click survives without navigating this fixture.
+      assert.equal(await thumb.evaluate(el => {
+        let prevented;
+        el.parentElement.addEventListener('click', event => { prevented = event.defaultPrevented; event.preventDefault(); event.stopPropagation(); }, { once: true });
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        return prevented;
+      }), false);
+      state.previewFavorites = [];
+      checks.push('photo hold changes image, consumes release click, permits swipe and next tap');
+    }
     documentTransition = 'server redirect';
     await visit('/profile/listings?tab=SOLD');
     await expect(page).toHaveURL(/\/listings\?tab=COMPLETED/);

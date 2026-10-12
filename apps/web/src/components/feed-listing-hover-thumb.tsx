@@ -50,6 +50,9 @@ export default function FeedListingHoverThumb({
   const rafRef = useRef<number | null>(null);
   const pendingXRef = useRef<number | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const suppressClick = useRef(false);
+  const touching = useRef(false);
+  const [holding, setHolding] = useState(false);
 
   const applyClientX = useCallback(
     (clientX: number) => {
@@ -79,14 +82,14 @@ export default function FeedListingHoverThumb({
 
   const onMouseEnter = useCallback(
     (e: React.MouseEvent) => {
-      applyClientX(e.clientX);
+      if (!touching.current) applyClientX(e.clientX);
     },
     [applyClientX],
   );
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      schedulePointerX(e.clientX);
+      if (!touching.current) schedulePointerX(e.clientX);
     },
     [schedulePointerX],
   );
@@ -100,6 +103,54 @@ export default function FeedListingHoverThumb({
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || n < 2) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cycle: ReturnType<typeof setInterval> | undefined;
+    let startX = 0, startY = 0, active = false;
+    const stopTimers = () => { clearTimeout(timer); clearInterval(cycle); };
+    const finish = () => {
+      stopTimers(); active = false; setHolding(false); setHoverIdx(0);
+      // Ignore synthetic mouse hover following a touch; the next mouse pointer
+      // explicitly restores desktop preview below.
+    };
+    const start = (event: TouchEvent) => {
+      finish(); touching.current = true; suppressClick.current = false;
+      if (event.touches.length !== 1) return;
+      startX = event.touches[0].clientX; startY = event.touches[0].clientY;
+      timer = setTimeout(() => {
+        active = true; suppressClick.current = true; setHolding(true);
+        setHoverIdx(index => (index + 1) % n);
+        cycle = setInterval(() => setHoverIdx(index => (index + 1) % n), 850);
+      }, 320);
+    };
+    const move = (event: TouchEvent) => {
+      if (event.touches.length !== 1) { finish(); return; }
+      const touch = event.touches[0];
+      if (!active) {
+        if (Math.hypot(touch.clientX - startX, touch.clientY - startY) > 10) stopTimers();
+        return; // A normal swipe scrolls the feed.
+      }
+      if (event.cancelable) event.preventDefault();
+      if (Math.abs(touch.clientX - startX) > 10) {
+        clearInterval(cycle);
+        applyClientX(touch.clientX);
+      }
+    };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: false });
+    el.addEventListener('touchend', finish);
+    el.addEventListener('touchcancel', finish);
+    return () => {
+      stopTimers();
+      el.removeEventListener('touchstart', start);
+      el.removeEventListener('touchmove', move);
+      el.removeEventListener('touchend', finish);
+      el.removeEventListener('touchcancel', finish);
+    };
+  }, [n, applyClientX]);
 
   if (n === 0) {
     return (
@@ -115,8 +166,16 @@ export default function FeedListingHoverThumb({
   return (
     <div
       ref={wrapRef}
-      className={thumbClassName}
+      className={`${thumbClassName}${n > 1 ? ' photo-hold-preview' : ''}`}
+      data-photo-index={hoverIdx}
+      data-photo-holding={holding}
       style={thumbStyle}
+      onPointerEnter={e => { if (e.pointerType === 'mouse') touching.current = false; }}
+      onClickCapture={e => {
+        if (suppressClick.current) { e.preventDefault(); e.stopPropagation(); suppressClick.current = false; }
+      }}
+      onContextMenu={e => { if (n > 1 && touching.current) e.preventDefault(); }}
+      onDragStart={e => e.preventDefault()}
       onMouseEnter={onMouseEnter}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}

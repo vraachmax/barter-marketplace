@@ -17,7 +17,7 @@ export default function FavoritesPage() {
   const [attempt, setAttempt] = useState(0);
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <header className="glass-panel sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]">
+      <header className="screen-header sticky top-0 z-30 border-b border-border/60">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="grid size-11 place-items-center rounded-2xl bg-muted text-foreground">
