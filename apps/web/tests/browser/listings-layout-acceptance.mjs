@@ -574,10 +574,13 @@ async function scenario(browserType, width, theme) {
         const b = el.getBoundingClientRect();
         return el.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2));
       }), 'no overlay covers the logo');
+      // The catalog fixture is empty; give its shell a scrollable height.
+      await header.evaluate(el => { el.parentElement.style.minHeight = '1800px'; });
       await page.evaluate(() => window.scrollTo(0, 240));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
       await expect.poll(async () => (await header.boundingBox()).y).toBeGreaterThanOrEqual(0);
-      assert(await page.evaluate(() => window.scrollY > 100), 'exercise a real page scroll');
       assert((await logo.boundingBox()).y >= 71, 'scrolling keeps the logo below system chrome');
+      await header.evaluate(el => { el.parentElement.style.removeProperty('min-height'); });
       await shot(page, key + '-header-safe-area');
       await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
       checks.push('opaque logo header, safe area plus 12px, and unobstructed branding');
