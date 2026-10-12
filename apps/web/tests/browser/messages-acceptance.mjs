@@ -135,6 +135,28 @@ async function scenario(type, width, theme) {
   try {
     await page.goto(baseURL + '/messages?chatId=a');
     await expect(page.getByText('Сообщение Анны', { exact: true })).toBeVisible();
+    if (width < 768) {
+      await page.evaluate(() => {
+        document.documentElement.style.setProperty('--safe-area-top', '59px');
+        document.documentElement.style.setProperty('--safe-area-bottom', '34px');
+      });
+      const dock = page.locator('.magic-nav');
+      const dockY = (await dock.boundingBox()).y;
+      await page.getByRole('button', { name: 'Назад к списку' }).click();
+      const title = page.getByRole('heading', { name: 'Сообщения', exact: true }).last();
+      assert((await title.boundingBox()).y >= 59, 'chat title clears the system area');
+      assert.equal(await page.evaluate(() => window.scrollY), 0);
+      await choose('Анна');
+      assert(Math.abs((await dock.boundingBox()).y - dockY) < 1, 'dock stays anchored across list/thread');
+      assert.equal(await page.evaluate(() => window.scrollY), 0, 'history scroll does not move the document');
+      assert.equal(await page.locator('body').evaluate(el => Math.round(el.getBoundingClientRect().height)), 956);
+      await page.screenshot({ path: join(output, key + '-safe-area.png') });
+      await page.evaluate(() => {
+        document.documentElement.style.removeProperty('--safe-area-top');
+        document.documentElement.style.removeProperty('--safe-area-bottom');
+      });
+      checks.push('safe-area title, full-height body and stable dock across thread transitions');
+    }
     await input.fill('Черновик Анне');
     await choose('Борис');
     await expect(page.getByText('Сообщение Бориса', { exact: true })).toBeVisible();

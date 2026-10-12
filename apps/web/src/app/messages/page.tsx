@@ -131,7 +131,7 @@ export default function MessagesPage() {
   const chatsRef = useRef<ChatSummary[]>([]);
   const typingStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const peerTypingResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
 
   function joinLoadedChats(list: ChatSummary[]) {
@@ -174,7 +174,10 @@ export default function MessagesPage() {
   }, [lastSeenByUserId, onlineByUserId, peerTyping, selectedChat?.peer?.id]);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesScrollRef.current;
+    if (container && container.clientHeight > 0) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
   }, []);
 
   useEffect(() => {
@@ -540,7 +543,7 @@ export default function MessagesPage() {
 
   return (
     <div
-      className="flex h-[calc(100dvh-112px-env(safe-area-inset-bottom,0px))] min-h-0 flex-col bg-background text-foreground antialiased md:h-dvh"
+      className="messages-screen flex min-h-0 flex-col bg-background text-foreground antialiased"
     >
       {/* Top bar — desktop */}
       <header className="hidden shrink-0 border-b border-border bg-card md:block">
@@ -820,7 +823,7 @@ export default function MessagesPage() {
               ) : null}
 
               {/* Messages */}
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-muted/30 px-3 py-5 md:px-5">
+              <div ref={messagesScrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-muted/30 px-3 py-5 md:px-5">
                 <div className="mx-auto max-w-3xl space-y-3">
                   {threadStatus === 'loading' ? <p role="status" className="py-8 text-center text-sm text-muted-foreground">Загрузка переписки…</p> : null}
                   {threadStatus === 'error' ? <div role="alert" className="rounded-2xl border border-border bg-card p-4 text-sm"><p>Не удалось загрузить переписку</p><Button variant="outline" className="mt-3" onClick={() => void loadMessages(selectedChatId)}>Обновить переписку</Button></div> : null}
@@ -922,7 +925,7 @@ export default function MessagesPage() {
                       </div>
                     );
                   })}
-                  <div ref={messagesEndRef} />
+
                 </div>
               </div>
 
