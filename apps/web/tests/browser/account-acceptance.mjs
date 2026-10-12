@@ -207,11 +207,15 @@ async function runScenario(browserType, mode, theme) {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
     await page.getByRole('button', { name: nextTheme === 'dark' ? /Тёмная/ : /Светлая/ }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', nextTheme);
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', nextTheme === 'dark' ? '#141519' : '#FFFFFF');
+    await expect(page.locator('meta[name="viewport"]')).toHaveAttribute('content', /viewport-fit=cover/);
     await save.click();
     await expect(page.getByRole('status').filter({ hasText: 'Настройки раздела сохранены' })).toBeVisible();
     assert.deepEqual(state.writes.at(-1).body, { appTheme: nextTheme.toUpperCase() });
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', nextTheme);
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', nextTheme === 'dark' ? '#141519' : '#FFFFFF');
+    await expect(page.locator('meta[name="viewport"]')).toHaveAttribute('content', /viewport-fit=cover/);
     await expect(page.getByRole('button', { name: nextTheme === 'dark' ? /Тёмная/ : /Светлая/ })).toHaveAttribute('aria-pressed', 'true');
     checks.push('theme switch, section payload and reload');
     await geometry(page, key + '/appearance');

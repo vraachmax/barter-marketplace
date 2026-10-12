@@ -345,6 +345,9 @@ async function scenario(browserType, width, theme) {
       const target = await dock.getByRole('link', { name: 'Лента', exact: true }).boundingBox();
       const from = await dock.getByRole('link', { name: 'Избранное', exact: true }).boundingBox();
       await page.emulateMedia({ reducedMotion: 'no-preference' });
+      // WebKit dispatches the media-query change asynchronously. Let the nav's
+      // intentional gesture cancellation on accessibility changes finish first.
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
       await page.mouse.down();
       await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 12 });
