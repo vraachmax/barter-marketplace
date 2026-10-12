@@ -320,9 +320,15 @@ async function scenario(browserType, width, theme) {
       const src = await thumb.locator('img').getAttribute('src');
       const touch = async (type, dx = 0, dy = 0) => thumb.evaluate((el, { type, dx, dy }) => {
         const r = el.getBoundingClientRect();
-        const point = new Touch({ identifier: 1, target: el, clientX: r.x + 12 + dx, clientY: r.y + 12 + dy });
-        return el.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true,
-          touches: type === 'touchend' || type === 'touchcancel' ? [] : [point], changedTouches: [point] }));
+        // WebKit exposes Touch but disallows constructing it. This checks our
+        // real DOM listeners with explicit touch data, not native iPhone gesture recognition.
+        const point = { identifier: 1, target: el, clientX: r.x + 12 + dx, clientY: r.y + 12 + dy };
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        Object.defineProperties(event, {
+          touches: { value: type === 'touchend' || type === 'touchcancel' ? [] : [point] },
+          changedTouches: { value: [point] },
+        });
+        return el.dispatchEvent(event);
       }, { type, dx, dy });
       await touch('touchstart');
       await expect(thumb).toHaveAttribute('data-photo-holding', 'true');
