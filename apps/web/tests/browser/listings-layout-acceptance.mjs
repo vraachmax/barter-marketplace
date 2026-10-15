@@ -805,6 +805,7 @@ async function scenario(browserType, width, theme) {
 try {
   await waitForServer();
   for (const theme of ['light', 'dark']) {
+    await scenario(chromium, 390, theme);
     for (const width of [360, 440, 768, 820, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
   }
   const browser = await chromium.launch();
@@ -824,4 +825,4 @@ try {
   await writeFile(join(output, 'server.log'), serverLogs.join(''));
   await writeFile(join(output, 'results.json'), JSON.stringify({ scope: 'Production web build with loopback SSR API and browser fixtures; no real account, payments or physical iPhone.', results }, null, 2));
 }
-if (results.length !== 10 || results.some(x => !x.passed)) process.exitCode = 1;
+if (results.length !== 12 || results.some(x => !x.passed)) process.exitCode = 1;
