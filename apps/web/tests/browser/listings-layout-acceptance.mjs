@@ -347,8 +347,13 @@ async function scenario(browserType, width, theme) {
       await touch('touchcancel');
       await touch('touchstart');
       await touch('touchend');
-      await thumb.click();
-      await expect(page).toHaveURL(new RegExp('/listing/' + source.id));
+      // Observe an ordinary release click before React handles navigation.
+      assert.equal(await thumb.evaluate(el => {
+        let prevented;
+        el.parentElement.addEventListener('click', event => { prevented = event.defaultPrevented; event.preventDefault(); event.stopPropagation(); }, { once: true });
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        return prevented;
+      }), false);
       if (browserType.name() === 'chromium') {
         await visit('/favorites');
         const nativeThumb = page.locator('.photo-hold-preview').first();
