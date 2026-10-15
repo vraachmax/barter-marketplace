@@ -6,6 +6,7 @@ import { ThemeSync } from "@/components/theme-sync";
 import { ModeThemeSync } from "@/components/mode-theme-sync";
 import { GlobalChatWidget } from "@/components/global-chat-widget";
 import { SupportWidget } from "@/components/support-widget";
+import { AppViewport } from "@/components/app-viewport";
 import { LiquidBottomNav } from "@/components/liquid-bottom-nav";
 import { PresenceProvider } from "@/components/presence-provider";
 import { AuthProvider } from "@/components/auth-provider";
@@ -99,7 +100,7 @@ export default function RootLayout({
           <PresenceProvider>
             <GlobalChatWidget />
             <SupportWidget />
-            {children}
+            <AppViewport>{children}</AppViewport>
             <LiquidBottomNav />
           </PresenceProvider>
         </AuthProvider>

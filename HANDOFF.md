@@ -1,3 +1,7 @@
+## 2026-10-15: mobile viewport, hold preview, filled navigation
+
+User reports PR72 still fails on iPhone. Separate the mobile safe-area inset from an inner scroll surface; keep the bottom dock outside it. Replace outlined dock icons with filled SVG silhouettes. Remove the native anchor around the photo gesture surface, retain tracked navigation on tap/Enter and the text link, and preload alternate photos. Add Chromium native touch hold regression alongside WebKit listener checks. Physical iPhone behavior is not yet verified. Build and unit validation in progress; release pending. Previous version remains in git; next step: browser CI and production release verification.
+
 # Barter Clone — Handoff Context
 
 ## 2026-10-13: публикация PR #72 подтверждена

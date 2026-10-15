@@ -5,8 +5,9 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import ListingPlaceholder from '@/components/listing-placeholder';
 
 /** A failed URL is remembered without replacing real photos or retrying forever. */
-export function ListingPhoto({ src, alt, className, style, categoryTitle, categorySlug, fallback }: {
+export function ListingPhoto({ src, alt, className, style, categoryTitle, categorySlug, fallback, eager = false }: {
   src: string | null;
+  eager?: boolean;
   alt: string;
   className?: string;
   style?: CSSProperties;
@@ -19,6 +20,6 @@ export function ListingPhoto({ src, alt, className, style, categoryTitle, catego
     return src ? <ListingPlaceholder categoryTitle={categoryTitle} categorySlug={categorySlug} unavailable />
       : fallback ?? <ListingPlaceholder categoryTitle={categoryTitle} categorySlug={categorySlug} />;
   }
-  return <Image key={src} src={src} alt={alt} fill unoptimized sizes="(max-width: 768px) 50vw, 25vw"
+  return <Image key={src} src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} fill unoptimized sizes="(max-width: 768px) 50vw, 25vw"
     className={className ?? 'object-cover'} style={style} onError={() => setFailedSrc(src)} />;
 }
