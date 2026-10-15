@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { trackBehaviorEvents } from '@/lib/behavior-track';
 import { Camera, MapPin } from 'lucide-react';
 import { TrackedListingLink } from '@/components/tracked-listing-link';
 import FeedListingHoverThumb from '@/components/feed-listing-hover-thumb';
@@ -64,6 +66,8 @@ type Props = {
  *  └──────────────────────┘
  */
 export function ListingCardComponent({ data, apiBase, thumbHeight, className }: Props) {
+  const router = useRouter();
+  const openListing = () => { void trackBehaviorEvents([{ type: 'click_item', listingId: data.id }]); router.push(`/listing/${data.id}`); };
   const promoRingClass = promoRing(data.promoType);
   const photoCount = data.images?.length ?? 0;
   const useSquareThumb = thumbHeight === undefined;
@@ -73,11 +77,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
     : 'relative w-full overflow-hidden rounded-2xl bg-muted';
 
   return (
-    <TrackedListingLink
-      href={`/listing/${data.id}`}
-      listingId={data.id}
-      className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-    >
+    <>
       <Card
         size="sm"
         className={cn(
@@ -87,6 +87,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
         )}
       >
         <FeedListingHoverThumb
+          onOpen={openListing}
           images={data.images}
           title={data.title}
           apiBase={apiBase}
@@ -128,7 +129,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
             </>
           }
         />
-        <div className="flex flex-col gap-1 px-0.5 pb-1 pt-2.5">
+        <TrackedListingLink href={`/listing/${data.id}`} listingId={data.id} className="flex flex-col gap-1 px-0.5 pb-1 pt-2.5">
           {(data.barterEnabled ?? data.isBarter) && data.saleEnabled !== false ? <span className="text-xs font-medium text-primary">Продажа или обмен</span> : null}
           <div className="text-[18px] leading-tight font-bold md:text-xl tracking-tight text-foreground">
             {data.saleEnabled === false ? 'Только обмен' : formatRub(data.priceRub, data.priceType)}
@@ -140,9 +141,9 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
             <MapPin size={14} className="shrink-0" aria-hidden /><span className="truncate">{data.city}
             {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}</span>
           </div>
-        </div>
+        </TrackedListingLink>
       </Card>
-    </TrackedListingLink>
+    </>
   );
 }
 

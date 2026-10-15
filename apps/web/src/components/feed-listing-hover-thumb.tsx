@@ -8,6 +8,7 @@ import { ListingPhoto } from '@/components/listing-photo';
 type Img = { url: string };
 
 type Props = {
+  onOpen: () => void;
   images?: Img[] | null;
   title: string;
   apiBase: string;
@@ -32,6 +33,7 @@ type Props = {
  * подставляется соответствующее фото (логика как у крупных маркетплейсов).
  */
 export default function FeedListingHoverThumb({
+  onOpen,
   images,
   title,
   apiBase,
@@ -154,17 +156,22 @@ export default function FeedListingHoverThumb({
 
   if (n === 0) {
     return (
-      <div ref={wrapRef} className={thumbClassName} style={thumbStyle}>
+      <div ref={wrapRef} className={thumbClassName} style={thumbStyle} role="link" tabIndex={0} aria-label={title} onClick={onOpen} onKeyDown={e => { if (e.key === 'Enter') onOpen(); }}>
         {placeholder}
         {badges}
       </div>
     );
   }
 
-  const current = list[hoverIdx] ?? list[0];
+  const openProps = {
+    role: 'link', tabIndex: 0, 'aria-label': title,
+    onClick: onOpen,
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); onOpen(); } },
+  };
 
   return (
     <div
+      {...openProps}
       ref={wrapRef}
       className={`${thumbClassName}${n > 1 ? ' photo-hold-preview' : ''}`}
       data-photo-index={hoverIdx}
@@ -180,7 +187,9 @@ export default function FeedListingHoverThumb({
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
     >
-      <ListingPhoto src={resolveAssetUrl(current.url, apiBase)} alt={title} categoryTitle={categoryTitle} categorySlug={categorySlug} className={imageClassName} style={imageStyle} fallback={placeholder} />
+      {list.map((photo, index) => <div key={photo.url} className="absolute inset-0 pointer-events-none" style={{ visibility: index === hoverIdx ? 'visible' : 'hidden' }} aria-hidden={index !== hoverIdx}>
+        <ListingPhoto src={resolveAssetUrl(photo.url, apiBase)} alt={title} categoryTitle={categoryTitle} categorySlug={categorySlug} className={imageClassName} style={imageStyle} fallback={placeholder} eager={n > 1} />
+      </div>)}
       {badges}
       {n > 1 ? (
         <>

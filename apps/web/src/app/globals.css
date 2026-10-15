@@ -794,3 +794,14 @@ body:has(.messages-screen) { padding-bottom: 0 !important; }
   user-select: none;
 }
 .photo-hold-preview img { -webkit-user-drag: none; }
+
+/* The opaque inset is outside the scrollport, including in standalone iOS. */
+@media (max-width: 767px) {
+  html:has(.app-viewport), body:has(.app-viewport) { overflow: hidden; height: 100%; }
+  body:has(.app-viewport) { padding: 0 !important; }
+  .app-viewport { position: fixed; inset: 0; padding-top: var(--safe-area-top); background: var(--bg-page); }
+  .app-scroll-root { height: 100%; overflow-y: auto; overflow-x: clip; overscroll-behavior-y: contain; }
+  .app-viewport .catalog-mobile-header { padding-top: 12px; }
+  .app-viewport .screen-header { padding-top: 0; }
+  .app-viewport .messages-screen { height: 100%; padding-top: 0; }
+}

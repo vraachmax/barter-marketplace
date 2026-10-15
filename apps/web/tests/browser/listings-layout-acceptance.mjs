@@ -262,7 +262,7 @@ async function headerCheck(page) {
 
 async function shot(page, key, scrollTarget) {
   if (scrollTarget) await scrollTarget.scrollIntoViewIfNeeded();
-  else await page.evaluate(() => window.scrollTo(0, 0));
+  else await page.evaluate(() => { window.scrollTo(0, 0); document.querySelector('.app-scroll-root')?.scrollTo(0, 0); });
   await page.screenshot({ path: join(output, key + '.png'), animations: 'disabled', fullPage: true });
   const preview = await page.screenshot({ type: 'jpeg', quality: 70, animations: 'disabled' });
   if (key.includes('-440-')) shots.push({ key, image: preview.toString('base64') });
@@ -317,7 +317,8 @@ async function scenario(browserType, width, theme) {
       await visit('/favorites');
       const thumb = page.locator('.photo-hold-preview').first();
       await expect(thumb).toBeVisible();
-      const src = await thumb.locator('img').getAttribute('src');
+      assert.equal(await thumb.evaluate(el => el.closest('a')), null, 'hold surface is not a native link preview target');
+      const src = await thumb.locator('div[aria-hidden="false"] img').getAttribute('src');
       const touch = async (type, dx = 0, dy = 0) => thumb.evaluate((el, { type, dx, dy }) => {
         const r = el.getBoundingClientRect();
         // WebKit exposes Touch but disallows constructing it. This checks our
@@ -332,7 +333,7 @@ async function scenario(browserType, width, theme) {
       }, { type, dx, dy });
       await touch('touchstart');
       await expect(thumb).toHaveAttribute('data-photo-holding', 'true');
-      await expect(thumb.locator('img')).not.toHaveAttribute('src', src);
+      await expect(thumb.locator('div[aria-hidden="false"] img')).not.toHaveAttribute('src', src);
       await touch('touchmove', 0, 1);
       await expect(thumb).toHaveAttribute('data-photo-index', '1');
       await touch('touchend');
@@ -346,13 +347,20 @@ async function scenario(browserType, width, theme) {
       await touch('touchcancel');
       await touch('touchstart');
       await touch('touchend');
-      // Capture upstream so we can verify an ordinary click survives without navigating this fixture.
-      assert.equal(await thumb.evaluate(el => {
-        let prevented;
-        el.parentElement.addEventListener('click', event => { prevented = event.defaultPrevented; event.preventDefault(); event.stopPropagation(); }, { once: true });
-        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-        return prevented;
-      }), false);
+      await thumb.click();
+      await expect(page).toHaveURL(new RegExp('/listing/' + source.id));
+      if (browserType.name() === 'chromium') {
+        await visit('/favorites');
+        const nativeThumb = page.locator('.photo-hold-preview').first();
+        await expect(nativeThumb).toBeVisible();
+        const bounds = await nativeThumb.boundingBox();
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: bounds.x + 30, y: bounds.y + 30 }] });
+        await expect(nativeThumb).toHaveAttribute('data-photo-index', '1');
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await expect(page).toHaveURL(/favorites$/);
+        await cdp.detach();
+      }
       state.previewFavorites = [];
       checks.push('photo hold changes image, consumes release click, permits swipe and next tap');
     }
@@ -612,7 +620,7 @@ async function scenario(browserType, width, theme) {
         return { padding: css.paddingTop, blur: css.backdropFilter || css.webkitBackdropFilter,
           background: css.backgroundColor, page: getComputedStyle(document.body).backgroundColor };
       });
-      assert.equal(material.padding, '71px', '12px breathing room after the system inset');
+      assert.equal(material.padding, '12px', '12px breathing room after the system inset');
       assert.equal(material.blur, 'none', 'top-edge logo header has no backdrop blur');
       assert.equal(material.background, material.page, 'system area is an opaque continuation of the page');
       const logoBox = await logo.boundingBox();
@@ -623,8 +631,8 @@ async function scenario(browserType, width, theme) {
       }), 'no overlay covers the logo');
       // The catalog fixture is empty; give its shell a scrollable height.
       await header.evaluate(el => { el.parentElement.style.minHeight = '1800px'; });
-      await page.evaluate(() => window.scrollTo(0, 240));
-      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+      await page.evaluate(() => document.querySelector('.app-scroll-root').scrollTo(0, 240));
+      await expect.poll(() => page.evaluate(() => document.querySelector('.app-scroll-root').scrollTop)).toBeGreaterThan(100);
       await expect.poll(async () => (await header.boundingBox()).y).toBeGreaterThanOrEqual(0);
       assert((await logo.boundingBox()).y >= 71, 'scrolling keeps the logo below system chrome');
       await header.evaluate(el => { el.parentElement.style.removeProperty('min-height'); });
