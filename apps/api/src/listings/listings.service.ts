@@ -745,7 +745,7 @@ export class ListingsService {
   }
 
   async list(params: {
-    mode?: 'market' | 'barter';
+    mode?: 'market' | 'barter' | 'both';
     q?: string;
     categoryId?: string;
     attrs?: Record<string, string>;
@@ -780,7 +780,7 @@ export class ListingsService {
       status: 'ACTIVE',
       ...(params.mode === 'barter'
         ? { barterEnabled: true }
-        : { saleEnabled: true }),
+        : params.mode === 'both' ? { OR: [{ saleEnabled: true }, { barterEnabled: true }] } : { saleEnabled: true }),
     };
     const categoryIds = params.categoryId
       ? categoryDescendantIds(params.categoryId, await this.prisma.category.findMany({ select: { id: true, slug: true, parentId: true } }))
@@ -857,7 +857,7 @@ export class ListingsService {
     // Keep explicit sorts on the authoritative database path: index relevance
     // and post-page promotion merging must not change their order or page size.
     // Barter also requires eligibility filtering before counting/pagination.
-    if (sort === 'relevant' && params.mode !== 'barter' && qTrim.length > 0 && this.meili.isEnabled() && categoryIds.length <= 1 && !params.attrs) {
+    if (sort === 'relevant' && params.mode !== 'barter' && params.mode !== 'both' && qTrim.length > 0 && this.meili.isEnabled() && categoryIds.length <= 1 && !params.attrs) {
       // Recheck hard filters against current database rows, but leave text
       // matching to Meili so typo matches are not lost to SQL substring rules.
       const eligibilityWhere = { ...where };
@@ -1200,7 +1200,7 @@ export class ListingsService {
    * Похожие объявления: та же категория, цена ±20% (если у базы задана цена > 0),
    * пересечение по ключевым словам (title + description). Сортировка: views+clicks, затем свежесть.
    */
-  async similar(id: string, limit = 10, excludeIds: string[] = [], mode?: 'market' | 'barter') {
+  async similar(id: string, limit = 10, excludeIds: string[] = [], mode?: 'market' | 'barter' | 'both') {
     const base = await this.prisma.listing.findUnique({
       where: { id },
       select: {

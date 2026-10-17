@@ -200,7 +200,7 @@ function SearchContent() {
 
   /* -------------------- результаты -------------------- */
   useEffect(() => {
-    if (!activeQuery && !categoryId && !priceMin && !priceMax && mode !== 'barter') {
+    if (!activeQuery && !categoryId && !priceMin && !priceMax && mode === 'market') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults(null);
       return;
@@ -256,7 +256,7 @@ function SearchContent() {
     navigateFilters({ categoryId: id, q: draftQuery.trim() });
   }
 
-  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || Boolean(priceMin || priceMax) || mode === 'barter';
+  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || Boolean(priceMin || priceMax) || mode === 'barter' || mode === 'both';
   const selectedCategory = useMemo(
     () => cats.find((c) => c.id === categoryId) ?? null,
     [cats, categoryId],

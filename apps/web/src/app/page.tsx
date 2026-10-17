@@ -425,7 +425,7 @@ async function renderHome(sp: HomeSearchParams) {
 
       <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-2 px-4 pt-4 md:px-6">
         <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
-        <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : 'Объявления с возможностью покупки'}</p>
+        <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : currentMode === 'both' ? 'Покупка и обмен в одной ленте' : 'Объявления с возможностью покупки'}</p>
       </div>
       <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
         {catRes.status === 'rejected' && !apiBackendDown ? (
@@ -434,14 +434,14 @@ async function renderHome(sp: HomeSearchParams) {
             <HomeRetryForm values={retryQuery} />
           </div>
         ) : null}
-        <div className="grid min-w-0 max-w-full grid-flow-col grid-rows-2 auto-cols-[8.5rem] gap-2 overflow-x-auto pb-2 [scrollbar-width:thin] md:gap-3">
+        <div className="home-category-strip">
           {availableCategories.map((cat) => (
             <Link
               key={cat.slug}
               scroll={false}
               href={{ pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
               aria-current={urlCategoryId === cat.categoryId ? 'true' : undefined}
-              className="group flex min-w-0 min-h-[7.75rem] flex-col items-center gap-2 rounded-3xl border border-border bg-card p-2 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary aria-[current=true]:border-primary aria-[current=true]:bg-primary/5"
+              className="home-category-tile"
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
               {cat.slug === 'all' ? <LayoutGrid size={40} strokeWidth={1.5} className="text-muted-foreground" aria-hidden /> : (
@@ -449,7 +449,7 @@ async function renderHome(sp: HomeSearchParams) {
                 <img src={`/categories/${cat.slug}.webp`} alt="" width={56} height={56} className="size-14 rounded-xl object-contain md:size-16" />
               )}
               </span>
-              <span className="min-h-10 w-full hyphens-auto break-words leading-5">{cat.name}</span>
+              <span className="category-title">{cat.name}</span>
             </Link>
           ))}
         </div>
@@ -458,7 +458,13 @@ async function renderHome(sp: HomeSearchParams) {
       {/* ===== MAIN CONTENT =====
           Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
           muted на десктопе ради контраста карточек. */}
-      <main className="relative z-20 bg-background">
+      {!currentQ && !urlCategoryId ? <section className="refresh-hero" aria-label="Возможности БАРТЕРА">
+        <div><h1>Меняй. Покупай.<br />Открывай новое.</h1><p>Нужные вещи. Новые возможности.<br />Находите своё на БАРТЕРЕ.</p><Link href="#feed" className="refresh-hero-cta">Смотреть объявления <span aria-hidden>→</span></Link></div>
+        {/* Marketing illustration, never a seller photo. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/visual-refresh/laptop.webp" alt="" width={500} height={500} />
+      </section> : null}
+      <main id="feed" className="relative z-20 bg-background">
         <div className="mx-auto max-w-7xl page-content-spacing px-4 pt-1 md:px-6">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
 

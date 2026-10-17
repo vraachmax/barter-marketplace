@@ -85,7 +85,7 @@ export class ListingsController {
     @Param('id') id: string,
     @Query('limit') limit?: string,
     @Query('excludeIds') excludeIds?: string,
-    @Query('mode') mode?: 'market' | 'barter',
+    @Query('mode') mode?: 'market' | 'barter' | 'both',
   ) {
     const excluded = (excludeIds ?? '')
       .split(',')

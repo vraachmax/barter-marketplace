@@ -1,3 +1,23 @@
+# Visual refresh QA — 2026-10-17
+
+final result: blocked
+
+Source: supplied archive home-light-v2 and desktop screenshots. Actual implementation
+could not be captured: cloud browser refused terminal.local under its URL policy.
+No policy bypass attempted. No pixel-fidelity or physical-iPhone claim is made.
+
+Implemented draft: home, shared cards, dock, combined catalog mode, desktop rail.
+Not complete: reference-faithful hero composition and logo, full detail/chat/profile/
+creation screens and analytics. The reference analytics values are fictional and
+were not copied into the application. Dark/mobile overflow and keyboard remain unverified.
+
+Builds: Next production and Nest pass. Tests: 87 web and 35 targeted API pass.
+Browser acceptance suite updated but unexecuted. Production remains unchanged.
+
+---
+
+## Previous QA record (before this refresh)
+
 # Crystal Catalog implementation QA • 2026-09-05
 
 ### Toggle follow-up, 2026-09-06
