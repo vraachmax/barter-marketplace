@@ -111,7 +111,7 @@ export default function ListingGallery({
   if (!images.length) return <>{placeholder}</>;
 
   return (
-    <div className="space-y-3">
+    <div className="listing-gallery space-y-3">
       <div className="relative overflow-hidden rounded-2xl border border-border bg-muted">
         <div
           role="presentation"
@@ -169,7 +169,7 @@ export default function ListingGallery({
       </div>
 
       {n > 1 ? (
-        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="listing-gallery-thumbnails flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {images.map((im, i) => (
             <button
               key={im.id}

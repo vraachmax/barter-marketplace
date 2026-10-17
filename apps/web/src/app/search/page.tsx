@@ -270,7 +270,7 @@ function SearchContent() {
     Object.keys(parseCatalogAttrs(attrs)).length;
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
+    <div className="search-screen min-h-screen bg-background text-foreground antialiased">
       {/* ===== STICKY HEADER ===== */}
       <header className="glass-panel sticky top-0 z-30 border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-3xl min-h-16 items-center gap-2 px-4 py-2 md:px-6">
@@ -740,7 +740,7 @@ function FiltersSheet(props: {
   return (
     <dialog ref={dialog} aria-labelledby={titleId}
       onCancel={(event) => { event.preventDefault(); onClose(); }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-3xl overflow-y-auto overscroll-contain rounded-3xl border border-border bg-background p-0 text-foreground backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      className="catalog-filter-sheet fixed inset-0 m-auto max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-3xl overflow-y-auto overscroll-contain rounded-3xl border border-border bg-background p-0 text-foreground backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div
         className="w-full"

@@ -21,7 +21,7 @@ export default function ListingAttributesDisplay({ attributes, categoryId }: Pro
   if (entries.length === 0) return null;
 
   return (
-    <section className="border-t border-border pt-6">
+    <section className="listing-attributes border-t border-border pt-6">
       <h2 className="text-xl font-semibold tracking-tight">Характеристики</h2>
       <dl className="mt-3 divide-y divide-border">
         {entries.map(([key, value]) => (

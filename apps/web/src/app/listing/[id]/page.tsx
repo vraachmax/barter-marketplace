@@ -115,7 +115,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="listing-detail min-h-screen bg-background text-foreground">
       <ScreenHeader
         title="Объявление"
         titleAs="p"
@@ -124,7 +124,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         width="wide"
         actions={<ListingShareButton title={listing.title} />}
       />
-      <main className="mx-auto max-w-6xl px-4 pb-28 pt-4 md:px-6 lg:pb-12">
+      <main className="listing-detail-main mx-auto max-w-6xl px-4 pb-28 pt-4 md:px-6 lg:pb-12">
         <ListingViewTracker listingId={listing.id} />
         <nav aria-label="Путь к объявлению" className="mb-3 flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
           <Link href={`/?categoryId=${listing.category.id}`} className="inline-flex min-h-11 items-center rounded-lg px-1 hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">
@@ -133,7 +133,8 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
           <ChevronRight size={14} aria-hidden />
           <span>{listing.city}</span>
         </nav>
-        <div className="mb-6 space-y-3">
+        <div className="listing-detail-heading mb-6 space-y-3">
+          <span className="detail-trade-label">{listing.saleEnabled === false ? "Обмен" : (listing.barterEnabled ?? listing.isBarter) ? "Обмен / Покупка" : "Покупка"}</span>
           <h1 className="max-w-4xl break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{listing.title}</h1>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5"><MapPin size={16} aria-hidden />{listing.city}</span>
@@ -143,19 +144,19 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
           {listing.status !== 'ACTIVE' ? <p role="status" className="rounded-2xl bg-muted p-4 text-sm">{statusLabel(listing.status, listing.duplicateImageFlag)}</p> : null}
         </div>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
-          <section aria-label="Фотографии объявления" className="min-w-0 lg:col-start-1 lg:row-start-1">
+        <div className="listing-detail-grid grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+          <section aria-label="Фотографии объявления" className="listing-detail-media min-w-0 lg:col-start-1 lg:row-start-1">
             <ListingGallery categoryTitle={listing.category.title} images={images} title={listing.title} apiBase={API_URL} placeholder={galleryPlaceholder} />
           </section>
 
-          <aside aria-label="Цена и связь с продавцом" className="min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <aside aria-label="Цена и связь с продавцом" className="listing-detail-seller min-w-0 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <Card className="gap-5 p-5 sm:p-6">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">{listing.category.slug === 'job' ? 'Зарплата' : 'Стоимость'}</p>
                 <p className="break-words text-3xl font-semibold leading-tight tracking-tight tabular-nums">{listing.saleEnabled === false ? 'Только обмен' : formatListingPrice(listing.priceRub, listing.priceType)}</p>
                 {listing.saleEnabled === false && listing.priceRub != null ? <p className="text-sm text-muted-foreground">Оценочная стоимость: {formatListingPrice(listing.priceRub, listing.priceType)}</p> : (listing.barterEnabled ?? listing.isBarter) && listing.saleEnabled !== false ? <p className="text-sm font-medium text-foreground">Продажа или обмен</p> : null}
               </div>
-              <ListingContactActions listingId={listing.id} sellerId={listing.owner.id} saleEnabled={listing.saleEnabled} active={listing.status === 'ACTIVE'} phone={listing.owner.phone} email={listing.owner.email} />
+              <ListingContactActions barterEnabled={Boolean(listing.barterEnabled ?? listing.isBarter)} listingId={listing.id} sellerId={listing.owner.id} saleEnabled={listing.saleEnabled} active={listing.status === 'ACTIVE'} phone={listing.owner.phone} email={listing.owner.email} />
               <div className="border-t border-border pt-5">
                 <Link href={`/seller/${listing.owner.id}`} className="group flex min-h-14 items-center gap-3 rounded-2xl focus-visible:outline-2 focus-visible:outline-primary">
                   <span className="grid size-12 shrink-0 place-items-center rounded-full bg-muted text-lg font-semibold" aria-hidden>{(listing.owner.name?.trim() || 'П').slice(0, 1).toUpperCase()}</span>
@@ -167,7 +168,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
             </Card>
           </aside>
 
-          <div className="min-w-0 space-y-7 lg:col-start-1 lg:row-start-2">
+          <div className="listing-detail-content min-w-0 space-y-7 lg:col-start-1 lg:row-start-2">
             <section aria-labelledby="listing-description">
               <h2 id="listing-description" className="mb-3 text-xl font-semibold tracking-tight">Описание</h2>
               <div className="break-words whitespace-pre-wrap text-base leading-7">{listing.description?.trim() || 'Продавец пока не добавил описание.'}</div>

@@ -747,7 +747,7 @@ export default function MessagesPage() {
           ) : (
             <>
               {/* Thread header — компактный для мобилки */}
-              <div className="glass-panel flex min-h-20 shrink-0 items-center gap-3 border-b border-border px-3 py-3 md:px-5">
+              <div className="thread-header flex min-h-20 shrink-0 items-center gap-3 border-b border-border px-3 py-3 md:px-5">
                 <button
                   type="button"
                   className="grid size-11 shrink-0 place-items-center rounded-full text-foreground transition active:bg-muted md:hidden"
@@ -774,7 +774,7 @@ export default function MessagesPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-base font-semibold leading-tight text-foreground">
-                    {selectedChat.listing?.title ?? 'Диалог'}
+                    {selectedChat.peer?.name ?? 'Собеседник'}
                   </div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
                     <span
@@ -787,8 +787,7 @@ export default function MessagesPage() {
  }`}
                     />
                     <span className="truncate">
-                      {selectedChat.peer?.name ?? selectedChat.peer?.email ?? 'Собеседник'}
-                      <span className="mx-1 text-muted-foreground/60">·</span>
+
                       <span className={peerTyping ? 'font-medium text-primary' : ''}>{peerStatus}</span>
                     </span>
                   </div>
@@ -862,7 +861,6 @@ export default function MessagesPage() {
                     const mediaFull = resolveAssetUrl(m.mediaUrl);
                     // Пузырь «моих» сообщений красим в цвет режима чата:
                     // оранжевый — если объявление барт., синий — если маркет.
-                    const myBubbleColor = MODE_COLOR[getChatMode(selectedChat.listing)];
                     return (
                       <div key={m.id} className={`flex ${isPeer ? 'justify-start' : 'justify-end'}`}>
                         <div
@@ -881,8 +879,8 @@ export default function MessagesPage() {
                             </div>
                           ) : null}
                           <div
-                            style={isPeer ? undefined : { background: myBubbleColor }}
-                            className={`min-w-0 rounded-[22px] px-4 py-3 text-[15px] shadow-sm ${
+                            data-direction={isPeer ? "incoming" : "outgoing"}
+                            className={`message-bubble min-w-0 rounded-[22px] px-4 py-3 text-[15px] shadow-sm ${
  isPeer
  ? 'rounded-bl-md border border-border/60 bg-card text-foreground'
  : 'rounded-br-md text-white'
