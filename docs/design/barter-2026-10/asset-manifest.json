@@ -1,0 +1,357 @@
+{
+  "version": "2026-10-17",
+  "status": "design-references-not-live",
+  "assets": [
+    {
+      "path": "screens/concept-v1/home.webp",
+      "source_name": "a_clean_product_mockup_phone_ui_scene_a_modern_ip_1.png",
+      "size_bytes": 221372,
+      "sha256": "31606e76ef33511d6629c04101a07aaad914c1b2955b4f2afb60f9fe9c339232",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Главная"
+    },
+    {
+      "path": "screens/concept-v1/catalog-smartphones.webp",
+      "source_name": "a_clean_product_ui_mockup_an_iphone_style_smartph_2_batch_1.png",
+      "size_bytes": 165212,
+      "sha256": "4b7d539296e74b7210f9f0b3c6ba83346ca48dd7c4f18675c389790d98bd5b71",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Каталог смартфонов"
+    },
+    {
+      "path": "screens/concept-v1/listing-detail.webp",
+      "source_name": "a_clean_product_detail_mobile_app_ui_mockup_iphon_3_batch_2.png",
+      "size_bytes": 181174,
+      "sha256": "d3076306da7b0e0d3c2696eb1a27ddcd44bea2bbd4f0aa06dc453e4383c215fb",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Карточка объявления"
+    },
+    {
+      "path": "screens/concept-v1/chat.webp",
+      "source_name": "a_clean_product_style_photo_cgi_of_a_modern_smartp_4_batch_3.png",
+      "size_bytes": 168546,
+      "sha256": "19206eb5982295c270ee28756f357f29edf9a38c133b7569592b2706e9403685",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Сообщения"
+    },
+    {
+      "path": "screens/concept-v1/exchange-offer.webp",
+      "source_name": "a_clean_product_ui_mockup_image_an_iphone_front_5_batch_4.png",
+      "size_bytes": 126610,
+      "sha256": "323115ebced903bdb4d0a3237100d35ba7b00f3f269e78005629c3ae6b6e11af",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Предложение обмена"
+    },
+    {
+      "path": "screens/concept-v1/create-listing.webp",
+      "source_name": "a_realistic_product_mockup_ui_screenshot_an_iph_6_batch_5.png",
+      "size_bytes": 116400,
+      "sha256": "e2ac8ba5c105e26970ccb14f19b9aa23c64e4907fee57041cf323c001a96872b",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Публикация объявления"
+    },
+    {
+      "path": "screens/concept-v1/filters.webp",
+      "source_name": "a_clean_product_style_app_ui_mockup_on_a_light_gra_7_batch_6.png",
+      "size_bytes": 126954,
+      "sha256": "2c84aec08df64c72cbfdfd2681abf00f29124577bc63ee6a6f65aa0aa5fea60e",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Фильтры"
+    },
+    {
+      "path": "screens/concept-v1/profile.webp",
+      "source_name": "a_clean_product_mockup_ux_screenshot_a_white_back_8_batch_7.png",
+      "size_bytes": 124218,
+      "sha256": "73c96bc348110f432e8ff678a640e81931e70a6abd674e5593c7c19022f53383",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Профиль"
+    },
+    {
+      "path": "screens/concept-v1/notifications.webp",
+      "source_name": "a_clean_product_ui_ux_mockup_a_realistic_iphone_s_9_batch_8.png",
+      "size_bytes": 169324,
+      "sha256": "e30434d47459c861d8ff74cb49a664d8c419fbcababa0f0ffb7948ec0bfbd927",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Уведомления"
+    },
+    {
+      "path": "screens/concept-v1/home-dark.webp",
+      "source_name": "a_dark_high_end_ui_mockup_scene_a_close_up_of_a_10_batch_9.png",
+      "size_bytes": 219118,
+      "sha256": "97a43e92d03c475d0e20bb8c1460e3e646edaf4da35f34c72f3b2abe1c3ab353",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Главная, тёмная тема"
+    },
+    {
+      "path": "screens/refined-v2/home.webp",
+      "source_name": "a_clean_product_render_ui_illustration_a_modern_i_1.png",
+      "size_bytes": 197746,
+      "sha256": "593378f8495f743b4eb7b28a3f516916b7a043d8793e049ff271aed9a17621ed",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Главная"
+    },
+    {
+      "path": "screens/refined-v2/catalog-smartphones.webp",
+      "source_name": "a_clean_product_ui_mockup_shown_inside_an_iphone_s_2_batch_1.png",
+      "size_bytes": 164208,
+      "sha256": "a17089c7610ec4b1032500eb73b624c61217fad7a0799ae94a309278b29382e5",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Каталог смартфонов"
+    },
+    {
+      "path": "screens/refined-v2/listing-detail.webp",
+      "source_name": "a_clean_product_app_ui_screenshot_on_a_smartphone_3_batch_2.png",
+      "size_bytes": 170054,
+      "sha256": "de0f4755e55a195a20b2f1aa19522bbdf20c168584faf3efbb436114c7f6faa8",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Карточка объявления"
+    },
+    {
+      "path": "screens/refined-v2/chat.webp",
+      "source_name": "a_clean_photorealistic_iphone_ui_mockup_on_a_light_4_batch_3.png",
+      "size_bytes": 153862,
+      "sha256": "29de969a2bd1a661d95d4996ef35b720fa56843ac727c5df4e09e1420651ec1b",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Сообщения"
+    },
+    {
+      "path": "screens/refined-v2/exchange-offer.webp",
+      "source_name": "a_clean_product_mockup_an_iphone_like_smartphone_5_batch_4.png",
+      "size_bytes": 125892,
+      "sha256": "acbc613143bde71ed98cb22ff659ad4794dd43739377d7a0072f8efd0a6d7ed1",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Предложение обмена"
+    },
+    {
+      "path": "screens/refined-v2/create-listing.webp",
+      "source_name": "a_clean_photorealistic_ui_render_of_a_smartphone_6_batch_5.png",
+      "size_bytes": 124248,
+      "sha256": "823d4ad3f8d12bfafd912cc72208e6064cca93d3304e87e514ec340e1a112680",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Публикация объявления"
+    },
+    {
+      "path": "screens/refined-v2/filters.webp",
+      "source_name": "a_clean_ui_mockup_photograph_graphic_a_modern_sma_7_batch_6.png",
+      "size_bytes": 113072,
+      "sha256": "3d2494d4707dff94ed83eaf9cfab046a8d41c573eb8cbc7a6d29fe999c6a23bd",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Фильтры"
+    },
+    {
+      "path": "screens/refined-v2/profile.webp",
+      "source_name": "a_clean_product_app_ui_mockup_a_realistic_iphone_8_batch_7.png",
+      "size_bytes": 126360,
+      "sha256": "90882998bf9be594cf418dddf1f46fc265efbad9f2a2f39306323eeb6687e8b7",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Профиль"
+    },
+    {
+      "path": "screens/refined-v2/notifications.webp",
+      "source_name": "a_clean_product_mockup_ui_screenshot_a_realisti_9_batch_8.png",
+      "size_bytes": 185630,
+      "sha256": "6a050b0e3510bfff807975ff548e89b8ce7186cf4b1f0631ead1bbb32803ffb8",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Уведомления"
+    },
+    {
+      "path": "screens/refined-v2/home-dark.webp",
+      "source_name": "a_photorealistic_high_fidelity_mockup_of_a_modern_10_batch_9.png",
+      "size_bytes": 231428,
+      "sha256": "20aabdf39513b94fb81c313db92299c2d1c858be5eeeebf06edf341ba9e88ab8",
+      "dimensions": "941x1672",
+      "kind": "screen",
+      "label": "Главная, тёмная тема"
+    },
+    {
+      "path": "assets/branding/wordmark-light.webp",
+      "source_name": "a_clean_minimalist_studio_like_graphic_on_a_white_1.png",
+      "size_bytes": 46240,
+      "sha256": "fcfed2465c189633a67795981b19ca1f2231b0de183da33cf9a919b54007f5c6",
+      "dimensions": "1448x1086",
+      "kind": "branding",
+      "label": "Логотип для светлого фона"
+    },
+    {
+      "path": "assets/branding/wordmark-dark.webp",
+      "source_name": "a_clean_minimal_high_resolution_logo_presentatio_2_batch_1.png",
+      "size_bytes": 42540,
+      "sha256": "a729ad36c527a11cfde0fcf17f10e87ec77db512cbac1d8fdb0bd07c744f57f9",
+      "dimensions": "1448x1086",
+      "kind": "branding",
+      "label": "Логотип для тёмного фона"
+    },
+    {
+      "path": "assets/branding/symbol-light.webp",
+      "source_name": "a_clean_minimalist_graphic_design_presentation_on_3_batch_2.png",
+      "size_bytes": 52868,
+      "sha256": "e858126e14978fdde3fd811c2a3d2f97e7bef69a7ec9cd9d5ec3eb7aee6e364b",
+      "dimensions": "1448x1086",
+      "kind": "branding",
+      "label": "Знак для светлого фона"
+    },
+    {
+      "path": "assets/branding/symbol-dark.webp",
+      "source_name": "a_clean_high_quality_minimal_graphic_design_pres_4_batch_3.png",
+      "size_bytes": 62528,
+      "sha256": "a5765f76b172f6e50df10296c788e626dc6da541af07baa9a5c0bfe431690091",
+      "dimensions": "1448x1086",
+      "kind": "branding",
+      "label": "Знак для тёмного фона"
+    },
+    {
+      "path": "assets/placeholders/gaming.webp",
+      "source_name": "a_clean_commercial_product_rendering_style_scene_15_batch_5.png",
+      "size_bytes": 143024,
+      "sha256": "d76f027f44788fedee423a578c044d4702e4a3acefdc3d8e8fb79bd248583596",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Игровые приставки"
+    },
+    {
+      "path": "assets/placeholders/real-estate.webp",
+      "source_name": "a_clean_high_end_3d_cgi_architectural_render_in_a_13_batch_3.png",
+      "size_bytes": 227842,
+      "sha256": "ad62675105c7b4046d536d912de8af270ac9904c5f10aa6faf27ccc992fc9c22",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Недвижимость"
+    },
+    {
+      "path": "assets/placeholders/miscellaneous.webp",
+      "source_name": "a_clean_high_end_3d_product_marketing_render_on_a_19_batch_4.png",
+      "size_bytes": 196820,
+      "sha256": "b2d06b7282ccc05651e2ab72e2f254c4582839f56aeb2fa1179aac555650e1ff",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Другое"
+    },
+    {
+      "path": "assets/placeholders/laptops.webp",
+      "source_name": "a_clean_high_end_product_render_style_scene_of_a_11_batch_1.png",
+      "size_bytes": 171088,
+      "sha256": "149cc4203fac5b94d22dacd1badb0c2ec9a51336f5c2779d00d16ee21ac9fcff",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Ноутбуки"
+    },
+    {
+      "path": "assets/placeholders/furniture.webp",
+      "source_name": "a_clean_high_end_studio_product_render_commercial_18_batch_3.png",
+      "size_bytes": 266638,
+      "sha256": "5e18e0a95e29ceaa189edfc99600be07decbe81b5186ee612727e47d663c88c2",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Мебель"
+    },
+    {
+      "path": "assets/placeholders/clothing.webp",
+      "source_name": "a_clean_product_studio_style_3d_render_scene_a_si_14_batch_4.png",
+      "size_bytes": 250028,
+      "sha256": "5dbda5d9b6d346e8a88008785214215bfee623651361242574cb8bef05a146b6",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Одежда"
+    },
+    {
+      "path": "assets/placeholders/services.webp",
+      "source_name": "a_clean_studio_3d_rendered_commercial_illustration_2_batch_2.png",
+      "size_bytes": 166310,
+      "sha256": "2b7c69014b5db65ad2cf0d8b1017b0ef1f5c911902bae8c8d008cee785492138",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Услуги"
+    },
+    {
+      "path": "assets/placeholders/watches.webp",
+      "source_name": "a_clean_studio_product_render_style_image_with_a_l_17_batch_2.png",
+      "size_bytes": 201754,
+      "sha256": "4f64bf31f89e9fd7a9b4ead5b16ef7856b1840f92058f460194850402c0f49f8",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Часы"
+    },
+    {
+      "path": "assets/placeholders/headphones.webp",
+      "source_name": "a_clean_studio_product_render_with_a_minimalist_p_16_batch_1.png",
+      "size_bytes": 131668,
+      "sha256": "a7f9e933b61b4fa5946c677decbcba4515d50a82ef1ffa2c67c8789c7d3ad3ee",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Наушники"
+    },
+    {
+      "path": "assets/placeholders/cars.webp",
+      "source_name": "a_clean_studio_product_visual_scene_a_high_end_p_12_batch_2.png",
+      "size_bytes": 195084,
+      "sha256": "a7b79b8d0af5e36ece95b15b2cf4bbeda4f5553aa941bd7bf0441834c1e5989c",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Автомобили"
+    },
+    {
+      "path": "assets/placeholders/heavy-machinery.webp",
+      "source_name": "high_quality_studio_product_render_illustration_sc_3_batch_1.png",
+      "size_bytes": 255692,
+      "sha256": "1a91bafd9625f5416d3c636683e464620fda03a0dc3e224fe7652002c617daa5",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Спецтехника"
+    },
+    {
+      "path": "assets/placeholders/smartphones.webp",
+      "source_name": "премиальный_смартфон_в_оранжевом_вихре.png",
+      "size_bytes": 133970,
+      "sha256": "be82932ca73ce389ec610065c463c4c34e0cf869cbd622263833f9d177145170",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Смартфоны"
+    },
+    {
+      "path": "assets/placeholders/services-alt.webp",
+      "source_name": "премиальный_набор_инструментов_с_оранжевой_лентой.png",
+      "size_bytes": 186228,
+      "sha256": "1e3b73926149576ec4e952d062367311ffaa2766368feb30127387adc033d010",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Услуги, альтернативный вариант"
+    },
+    {
+      "path": "assets/placeholders/heavy-machinery-alt.webp",
+      "source_name": "жёлтый_экскаватор_в_оранжевом_сиянии.png",
+      "size_bytes": 264020,
+      "sha256": "ba0ef57bc9c3d518a47ab989b6e95e402b32b6e3935caa3c9794387cacb6b37f",
+      "dimensions": "1254x1254",
+      "kind": "category_illustration",
+      "label": "Спецтехника, альтернативный вариант"
+    },
+    {
+      "path": "screens/initial-overview.webp",
+      "source_name": "a_clean_product_showcase_ui_design_mockup_a_mul.png",
+      "size_bytes": 279732,
+      "sha256": "4d95f79b3dc7c7cbb6b870aedd5b09e7af5452c6e79eb3c2481184e67e1ec956",
+      "dimensions": "1536x1024",
+      "kind": "screen",
+      "label": "Начальная сводная доска"
+    }
+  ]
+}
