@@ -1,3 +1,41 @@
+## 2026-10-17: screen refresh and real seller analytics (draft PR #75)
+
+Mobile detail now uses edge-to-edge gallery, rounded content sheet and compact
+attribute tiles. Profile identity/menu, chat bubble colors, full-screen filters,
+publication step indicator and mode controls updated. Desktop header now has one
+row, and publication has a live preview from the actual entered data and photos.
+Added authenticated /analytics/seller endpoint and /profile/analytics: owner-scoped
+recorded events, UTC daily buckets and own listing counters, bounded 7/30/90 days.
+Audience/offer tracking is unavailable and explicitly shown as unavailable.
+Checks: final web build PASS; API build PASS; 87 web tests PASS; 4 new analytics
+tests PASS (period validation, UTC boundaries, authenticated owner, query scoping).
+Browser verification remains blocked by the earlier cloud-browser URL-policy denial;
+no alternate execution surface used. No pixel-fidelity, iPhone or release claim.
+Generated logo extraction rejected for visible alpha artifacts, not added to app.
+Still open: exact logo/hero; publication step reconciliation/photo-first mobile flow;
+structured exchange-offer UI/backend; notification screen; analytics detail/audience;
+remaining supporting screens; screenshot comparison at mobile and desktop sizes.
+Next: resolve authorized visual-preview access, refine these gaps against references.
+This is incremental implementation, not completion of the all-pages request.
+
+## 2026-10-17: visual refresh, first implementation slice (draft)
+
+Branch: design/mobile-desktop-refresh-2026-10-17, based on master 43e8c17.
+Mobile: larger Cyrillic wordmark, single-row categories, marketing hero using supplied
+optimized artwork, shared listing cards, central branded create button with existing
+sale/barter/both links. New dock uses ordinary tabs rather than the old drag lens.
+Desktop: shared category strip/hero/cards and navigation rail without duplicate categories.
+Catalog: Purchase / Exchange / Both; combined mode implemented in DTO/service with
+SQL eligibility before pagination, and fail-closed client handling for older servers.
+Existing catalog/model work in a different local branch has not been touched.
+Validation: web production build and API build pass; 87 web tests and 35 targeted
+API tests pass. Browser suite adapted to new labels and tap navigation, NOT executed.
+Browser visual QA BLOCKED by cloud-browser URL policy after local preview startup.
+Do not merge/deploy this draft or claim iPhone/PWA acceptance. Remaining: visual comparison
+at 360/390/430 and desktop, refine hero/logo against source, detail/chat/profile/create
+screen-specific redesign, analytics real-data scope, full browser CI and physical iPhone.
+Next: restore authorized visual verification, finish mobile screens before desktop acceptance.
+
 ## 2026-10-15: mobile viewport, hold preview, filled navigation
 
 User reports PR72 still fails on iPhone. Separate the mobile safe-area inset from an inner scroll surface; keep the bottom dock outside it. Replace outlined dock icons with filled SVG silhouettes. Remove the native anchor around the photo gesture surface, retain tracked navigation on tap/Enter and the text link, and preload alternate photos. Add Chromium native touch hold regression alongside WebKit listener checks. Physical iPhone behavior is not yet verified. PR #73 merged as 9b468303bbd34a34eb3a3dad20f94611077080df. Production build and 86 unit tests pass. Web quality run 38775296117 passes: 6 account, 12 catalog/layout (including native Chromium touch at 390px in both themes), 6 messages scenarios; dependency audit 38775296674 passes. Backup: backup/pre-mobile-viewport-2026-10-15 at 570e233. Production Vercel deployment 6a6M5RK4MmStCZm834SK8kMgWQWC is SUCCESS. Cloud-browser reload of https://web-one-blond-66.vercel.app/ confirms app-viewport, all four SVG fills=currentColor, and actual two-photo Iphone preview outside an anchor. Test screenshots reviewed in both themes. Next step: physical iPhone safe-area/hold confirmation; native system chrome is not emulated by desktop WebKit.

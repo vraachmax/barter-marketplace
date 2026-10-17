@@ -72,6 +72,15 @@ describe('exchange eligibility', () => {
     },
   );
 
+  it('combines sale and exchange in the database before pagination, preserving search filters', async () => {
+    await service.list({ mode: 'both', q: 'велосипед', city: 'Краснодар', page: 2 });
+    expect(count).toHaveBeenCalledWith({ where: expect.objectContaining({
+      status: 'ACTIVE', OR: [{ saleEnabled: true }, { barterEnabled: true }],
+      city: { equals: 'Краснодар', mode: 'insensitive' },
+    }) });
+    expect(searchListings).not.toHaveBeenCalled();
+  });
+
   it('keeps the existing Market search path', async () => {
     await service.list({ mode: 'market', q: 'велосипед' });
     expect(searchListings).toHaveBeenCalledTimes(1);

@@ -200,7 +200,7 @@ function SearchContent() {
 
   /* -------------------- результаты -------------------- */
   useEffect(() => {
-    if (!activeQuery && !categoryId && !priceMin && !priceMax && mode !== 'barter') {
+    if (!activeQuery && !categoryId && !priceMin && !priceMax && mode === 'market') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults(null);
       return;
@@ -256,7 +256,7 @@ function SearchContent() {
     navigateFilters({ categoryId: id, q: draftQuery.trim() });
   }
 
-  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || Boolean(priceMin || priceMax) || mode === 'barter';
+  const hasResults = activeQuery.length > 0 || categoryId.length > 0 || Boolean(priceMin || priceMax) || mode === 'barter' || mode === 'both';
   const selectedCategory = useMemo(
     () => cats.find((c) => c.id === categoryId) ?? null,
     [cats, categoryId],
@@ -270,7 +270,7 @@ function SearchContent() {
     Object.keys(parseCatalogAttrs(attrs)).length;
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
+    <div className="search-screen min-h-screen bg-background text-foreground antialiased">
       {/* ===== STICKY HEADER ===== */}
       <header className="glass-panel sticky top-0 z-30 border-b border-border pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex max-w-3xl min-h-16 items-center gap-2 px-4 py-2 md:px-6">
@@ -740,7 +740,7 @@ function FiltersSheet(props: {
   return (
     <dialog ref={dialog} aria-labelledby={titleId}
       onCancel={(event) => { event.preventDefault(); onClose(); }}
-      className="fixed inset-0 m-auto max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-3xl overflow-y-auto overscroll-contain rounded-3xl border border-border bg-background p-0 text-foreground backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      className="catalog-filter-sheet fixed inset-0 m-auto max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-3xl overflow-y-auto overscroll-contain rounded-3xl border border-border bg-background p-0 text-foreground backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div
         className="w-full"

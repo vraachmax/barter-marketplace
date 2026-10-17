@@ -81,7 +81,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
       <Card
         size="sm"
         className={cn(
-          'group/card-listing gap-0 rounded-2xl bg-transparent py-0 shadow-none data-[size=sm]:gap-0 data-[size=sm]:py-0',
+          'refresh-listing-card group/card-listing gap-0 rounded-2xl bg-card py-0 shadow-none data-[size=sm]:gap-0 data-[size=sm]:py-0',
           promoRingClass,
           className,
         )}
@@ -100,6 +100,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
           placeholder={<ListingPlaceholder categoryTitle={data.category.title} categorySlug={data.category.slug} />}
           badges={
             <>
+              <span className="listing-trade-badge" data-exchange={Boolean(data.barterEnabled ?? data.isBarter)}>{data.saleEnabled === false ? "Обмен" : (data.barterEnabled ?? data.isBarter) ? "Покупка / Обмен" : "Покупка"}</span>
               {/* Продвижение обозначается независимо от режима каталога. */}
               {data.promoType === 'TOP' || data.isBoosted ? (
                 <Badge
@@ -129,14 +130,10 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
             </>
           }
         />
-        <TrackedListingLink href={`/listing/${data.id}`} listingId={data.id} className="flex flex-col gap-1 px-0.5 pb-1 pt-2.5">
-          {(data.barterEnabled ?? data.isBarter) && data.saleEnabled !== false ? <span className="text-xs font-medium text-primary">Продажа или обмен</span> : null}
-          <div className="text-[18px] leading-tight font-bold md:text-xl tracking-tight text-foreground">
-            {data.saleEnabled === false ? 'Только обмен' : formatRub(data.priceRub, data.priceType)}
-          </div>
-          <div className="line-clamp-2 text-[14px] leading-snug text-foreground md:text-[15px]">
-            {data.title}
-          </div>
+        <TrackedListingLink href={`/listing/${data.id}`} listingId={data.id} className="listing-card-copy flex flex-col gap-1 px-3 pb-3 pt-2.5">
+          <div className="line-clamp-2 text-[14px] leading-snug font-semibold text-foreground md:text-[15px]">{data.title}</div>
+          <div className="text-xs text-muted-foreground truncate">{data.category.title}</div>
+          <div className="text-[17px] leading-tight font-bold tracking-tight text-foreground">{data.saleEnabled === false ? 'Только обмен' : formatRub(data.priceRub, data.priceType)}</div>
           <div className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
             <MapPin size={14} className="shrink-0" aria-hidden /><span className="truncate">{data.city}
             {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}</span>

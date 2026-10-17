@@ -1,3 +1,21 @@
+## Exact reference fidelity, owner clarification 17 October 2026
+
+Implement the supplied references literally, down to layout, spacing, typography,
+asset composition and control geometry. Remove generation artifacts; do not copy
+fictional data or unsupported features. Mobile first, desktop afterward. Current
+branch is an incomplete draft, not an approved substitute. Compare rendered pages
+at matched content viewport sizes; hardware bezels are not app UI. Record every
+intentional difference. Do not assert pixel fidelity without screenshot comparison.
+
+## Draft refresh, 17 October 2026
+
+Owner requested implementation from the supplied mobile and desktop references.
+The new branch introduces central branded create action with four ordinary tabs,
+Purchase/Exchange/Both catalog, one category strip, and shared opaque listing cards.
+This supersedes drag-lens geometry only within the draft. Preserve safe-area isolation,
+real API data, existing routes and light/dark support. Visual acceptance is blocked;
+see design-qa.md. Do not treat the entire redesign as accepted or released.
+
 # Barter: стандарт интерфейса v1
 
 ## Актуальное дополнение: Liquid Glass, 2026-10-11

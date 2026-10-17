@@ -1,9 +1,9 @@
-export type CatalogMode = 'market' | 'barter';
+export type CatalogMode = 'market' | 'barter' | 'both';
 export const CATALOG_MODE_COOKIE = 'barter_catalog_mode';
 export const CATALOG_MODE_EVENT = 'barter:catalog-mode-change';
 
 export function parseCatalogMode(value?: string | null): CatalogMode {
-  return value === 'barter' ? 'barter' : 'market';
+  return value === 'barter' || value === 'both' ? value : 'market';
 }
 
 export function modeFromCookie(cookie: string): CatalogMode {
@@ -27,6 +27,7 @@ export function assertCatalogMode<T extends {
   items?: unknown[];
   vipStrip?: unknown[];
 }>(response: T, mode: CatalogMode): T {
+  if (mode === 'both' && response.appliedMode !== 'both') throw new Error('catalog_filter_unavailable');
   if (mode === 'barter') {
     const rows = [...(response.items ?? []), ...(response.vipStrip ?? [])];
     if (response.appliedMode !== 'barter' || rows.some((row) =>

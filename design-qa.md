@@ -1,3 +1,43 @@
+## 2026-10-17: screen refresh and real seller analytics (draft PR #75)
+
+Mobile detail now uses edge-to-edge gallery, rounded content sheet and compact
+attribute tiles. Profile identity/menu, chat bubble colors, full-screen filters,
+publication step indicator and mode controls updated. Desktop header now has one
+row, and publication has a live preview from the actual entered data and photos.
+Added authenticated /analytics/seller endpoint and /profile/analytics: owner-scoped
+recorded events, UTC daily buckets and own listing counters, bounded 7/30/90 days.
+Audience/offer tracking is unavailable and explicitly shown as unavailable.
+Checks: final web build PASS; API build PASS; 87 web tests PASS; 4 new analytics
+tests PASS (period validation, UTC boundaries, authenticated owner, query scoping).
+Browser verification remains blocked by the earlier cloud-browser URL-policy denial;
+no alternate execution surface used. No pixel-fidelity, iPhone or release claim.
+Generated logo extraction rejected for visible alpha artifacts, not added to app.
+Still open: exact logo/hero; publication step reconciliation/photo-first mobile flow;
+structured exchange-offer UI/backend; notification screen; analytics detail/audience;
+remaining supporting screens; screenshot comparison at mobile and desktop sizes.
+Next: resolve authorized visual-preview access, refine these gaps against references.
+This is incremental implementation, not completion of the all-pages request.
+
+# Visual refresh QA — 2026-10-17
+
+final result: blocked
+
+Source: supplied archive home-light-v2 and desktop screenshots. Actual implementation
+could not be captured: cloud browser refused terminal.local under its URL policy.
+No policy bypass attempted. No pixel-fidelity or physical-iPhone claim is made.
+
+Implemented draft: home, shared cards, dock, combined catalog mode, desktop rail.
+Not complete: reference-faithful hero composition and logo, full detail/chat/profile/
+creation screens and analytics. The reference analytics values are fictional and
+were not copied into the application. Dark/mobile overflow and keyboard remain unverified.
+
+Builds: Next production and Nest pass. Tests: 87 web and 35 targeted API pass.
+Browser acceptance suite updated but unexecuted. Production remains unchanged.
+
+---
+
+## Previous QA record (before this refresh)
+
 # Crystal Catalog implementation QA • 2026-09-05
 
 ### Toggle follow-up, 2026-09-06
