@@ -15,7 +15,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
 import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
 import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
-import { Search, Sparkles } from 'lucide-react';
+import { ChevronRight, Search, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   appliedMode?: CatalogMode;
@@ -516,12 +516,17 @@ async function renderHome(sp: HomeSearchParams) {
           <section>
             {/* MOBILE-only: design-style section header — «Свежие предложения · 234 за сегодня · рядом» */}
             {mergedFeed.length > 0 ? (
-              <div className="pt-1 pb-4 md:hidden">
-                <h2 className="m-0 text-[20px] font-bold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
-                <p className="mt-0.5 text-[13px] text-muted-foreground">
-                  {listings.total > 0 ? `${listings.total} ${pluralRu(listings.total, ['объявление', 'объявления', 'объявлений'])}` : 'Объявления'}
-                  {currentCity ? ` · ${currentCity}` : ''}
-                </p>
+              <div className="flex items-center justify-between gap-2 pt-1 pb-3 md:hidden">
+                <h2 className="m-0 text-[20px] font-extrabold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
+                {!currentQ && !urlCategoryId ? (
+                  <Link href="/search" className="inline-flex min-h-11 items-center gap-1 text-[11.5px] text-muted-foreground">
+                    Смотреть все <ChevronRight size={16} strokeWidth={2} aria-hidden />
+                  </Link>
+                ) : (
+                  <p className="text-[12px] text-muted-foreground">
+                    {listings.total > 0 ? `${listings.total} ${pluralRu(listings.total, ['объявление', 'объявления', 'объявлений'])}` : 'Объявления'}
+                  </p>
+                )}
               </div>
             ) : null}
 
