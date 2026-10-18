@@ -254,9 +254,9 @@ async function headerCheck(page) {
   const title = page.locator('header:visible h1');
   await expect(title).toHaveText('Мои объявления');
   const style = await title.evaluate(el => ({ font: getComputedStyle(el).fontSize, weight: getComputedStyle(el).fontWeight }));
-  assert.deepEqual(style, { font: '18px', weight: '600' });
+  assert.deepEqual(style, { font: '18px', weight: '700' });
   const box = await page.locator('header:visible').boundingBox();
-  assert(box.height >= 64);
+  assert(box.height >= (page.viewportSize().width < 768 ? 58 : 64));
   await contained(page.getByRole('navigation', { name: 'Статусы объявлений' }));
 }
 

@@ -567,6 +567,22 @@ export default function NewListingPage() {
       <main className="publication-main mx-auto max-w-3xl px-4 pb-32 pt-5 md:pb-24 md:pt-8">
         <div className="publication-form">
         {step === 1 ? (
+          <Step3Photos
+            pendingPhotos={pendingPhotos}
+            totalPhotos={totalPhotos}
+            dragOver={dragOver}
+            onDragEnterCapture={() => setDragOver(true)}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(files) => {
+              setDragOver(false);
+              addFiles(files);
+            }}
+            onPickFiles={(files) => addFiles(files)}
+            onRemovePending={removePending}
+            fileInputRef={fileInputRef}
+          />
+        ) : null}
+        {step === 1 ? (
           <Step1WhatToSell
             title={title}
             onTitleChange={setTitle}
@@ -577,6 +593,8 @@ export default function NewListingPage() {
             loadingCats={loadingCats}
           />
         ) : null}
+
+        {step === 1 ? <div className="mt-6"><ListingTradeModeField value={tradeMode} onChange={setTradeMode} barterAllowed={canOfferBarter(selectedCategory)} /></div> : null}
 
         {step === 5 && payload.exchangePreferences ? <ExchangePreferencesSummary value={payload.exchangePreferences} categories={cats} /> : null}
 
@@ -1063,7 +1081,7 @@ function Step3Photos(props: {
   } = props;
   const slotsLeft = Math.max(0, 10 - totalPhotos);
   return (
-    <section className="space-y-4">
+    <section className="publication-photos space-y-4">
       <p className="text-sm text-muted-foreground">
         До 10 фото. Первое — обложка в ленте. Чем чётче снимки — тем выше доверие.
       </p>

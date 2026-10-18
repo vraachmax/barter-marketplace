@@ -1,3 +1,17 @@
+## 2026-10-18: mobile release preparation, not yet deployed
+
+Owner now prioritizes deploying mobile. Restored checkout from remote a3d0204 after
+previous worktree metadata vanished. Added photo selection and trade mode to first
+publication step, two-row mobile logo/search header, fixed nonexistent bubble-b-v2
+asset references to existing checked-in brand assets (exact new logo still pending).
+Updated browser geometry assertions for the intentional 58px/700 mobile header and
+profile heading rather than old 64px/600 design. Retained overflow/tap-target checks.
+Prior CI a3d0204: account failed old geometry assertions, messages passed, listings
+suite skipped. Local production build passed before asset/header changes; final
+build/CI pending. Browser-policy block from prior session remains; no bypass.
+Next: pass release CI, then deploy the scoped mobile increment authorized by owner.
+Pixel-perfect all-pages completion remains open; do not conflate rollout with acceptance.
+
 ## 2026-10-17: screen refresh and real seller analytics (draft PR #75)
 
 Mobile detail now uses edge-to-edge gallery, rounded content sheet and compact

@@ -158,7 +158,7 @@ export function SiteHeader({ children, regionControl }: { children?: ReactNode; 
         </div>
 
         {/* ── Mobile row ─────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 px-4 py-2 md:hidden" style={{ minHeight: 56 }}>
+        <div className="mobile-market-header flex items-center gap-2 px-4 py-2 md:hidden" style={{ minHeight: 56 }}>
           <div className="shrink-0">
             <BarterHomeLogo />
           </div>
@@ -171,7 +171,7 @@ export function SiteHeader({ children, regionControl }: { children?: ReactNode; 
             <input
               type="text"
               name="q"
-              placeholder="Поиск по объявлениям"
+              placeholder="Поиск товаров, категорий, брендов..."
               className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
             />
           </form>
