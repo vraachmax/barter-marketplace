@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import ListingPlaceholder from '@/components/listing-placeholder';
+import FeedFavoriteAction from '@/components/feed-favorite-action';
 import { cn } from '@/lib/utils';
 import type { ListingCard as ListingCardData } from '@/lib/api';
 
@@ -124,17 +125,15 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
                   {photoCount}
                 </span>
               ) : null}
-              {/* Do not infer exchange availability from a cosmetic theme.
-                  Favorites remain available on the listing detail page until
-                  the feed has a real, synchronized favorite control. */}
+              <FeedFavoriteAction listingId={data.id} />
             </>
           }
         />
         <TrackedListingLink href={`/listing/${data.id}`} listingId={data.id} className="listing-card-copy flex flex-col gap-1 px-3 pb-3 pt-2.5">
-          <div className="line-clamp-2 text-[14px] leading-snug font-semibold text-foreground md:text-[15px]">{data.title}</div>
+          <div className="line-clamp-2 text-[16px] leading-snug font-bold text-foreground md:text-[15px]">{data.title}</div>
           <div className="text-xs text-muted-foreground truncate">{data.category.title}</div>
           <div className="text-[17px] leading-tight font-bold tracking-tight text-foreground">{data.saleEnabled === false ? 'Только обмен' : formatRub(data.priceRub, data.priceType)}</div>
-          <div className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
+          <div className="listing-card-location mt-1 flex items-center gap-1 text-[12px] text-muted-foreground">
             <MapPin size={14} className="shrink-0" aria-hidden /><span className="truncate">{data.city}
             {typeof data.distanceKm === 'number' ? ` · ${data.distanceKm} км` : ''}</span>
           </div>
