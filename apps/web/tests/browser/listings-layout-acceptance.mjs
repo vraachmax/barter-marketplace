@@ -118,10 +118,15 @@ const api = createServer((req, res) => {
     total: url.searchParams.get('sort') === 'expensive' ? 2 : 0,
     items: url.searchParams.get('sort') === 'expensive' ? visualFixtureListings() : [], vipStrip: [],
   };
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)\/similar$/.test(url.pathname)) data = [];
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)$/.test(url.pathname)) {
-    // Next Link prefetch also requests listing metadata through the server API.
-    const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id) ?? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true };
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail|visual-phone|visual-laptop)\/similar$/.test(url.pathname)) data = [];
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail|visual-phone|visual-laptop)$/.test(url.pathname)) {
+    // Next Link prefetch requests the same visual listing data as the catalog.
+    // Keep unknown IDs visible rather than silently replacing them with another fixture.
+    const listing = [...fixture('light').listings, ...visualFixtureListings()].find(x => url.pathname === '/listings/' + x.id)
+      ?? (url.pathname === '/listings/fixture-created'
+        ? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true }
+        : null);
+    assert(listing, 'Unexpected listing fixture: ' + url.pathname);
     data = url.pathname === '/listings/fixture-detail'
       ? { ...listing, id: 'fixture-detail', title: 'Тестовое объявление', status: 'ACTIVE', saleEnabled: true, barterEnabled: true,
           images: [
