@@ -391,7 +391,7 @@ async function scenario(browserType, width, theme) {
         const css = getComputedStyle(document.documentElement);
         return ['--bg-page', '--bg-surface', '--bg-muted', '--fg-default', '--fg-muted', '--border-default'].map(key => css.getPropertyValue(key).trim());
       });
-      if (theme === 'dark') assert.deepEqual(palette, ['#141519', '#202126', '#2b2d34', '#f4f5f7', '#a3a5ae', '#2e3036']);
+      if (theme === 'dark') assert.deepEqual(palette, ['#0e0e10', '#1a1a1d', '#1e1e22', '#f6f6f8', '#9a9aa6', '#2a2a2f']);
       await dock.getByRole('button', { name: 'Добавить объявление' }).click();
       const compose = page.getByRole('dialog', { name: 'Новое объявление' });
       await expect(compose).toBeVisible();

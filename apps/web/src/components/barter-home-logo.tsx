@@ -88,6 +88,7 @@ export function BarterHomeLogo() {
           className="h-9 w-8 shrink-0 object-contain md:h-10 md:w-9"
         />
         <Image src="/brand/claude-word.png" alt="БАРТЕР" width={377} height={66} unoptimized className="brand-reference-word h-[20px] w-auto object-contain md:h-[24px]" />
+        <span className="sr-only">БАРТЕР</span>
       </span>
     </Link>
   );
