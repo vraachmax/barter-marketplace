@@ -546,7 +546,7 @@ async function renderHome(sp: HomeSearchParams) {
           <section>
             {/* MOBILE-only: design-style section header — «Свежие предложения · 234 за сегодня · рядом» */}
             {mergedFeed.length > 0 && !categoryView ? (
-              <div className="flex items-center justify-between gap-2 pt-1 pb-3 md:hidden">
+              <div className="flex items-center justify-between gap-2 pt-1 pb-0 md:hidden">
                 <h2 className="m-0 text-[20px] font-extrabold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
                 {!currentQ && !urlCategoryId ? (
                   <Link href="/search" className="inline-flex min-h-11 items-center gap-1 text-[11.5px] text-muted-foreground">
