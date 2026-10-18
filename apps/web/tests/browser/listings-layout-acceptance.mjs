@@ -604,10 +604,15 @@ async function scenario(browserType, width, theme) {
     const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
     await expect(logo).toBeVisible();
     await expect(logo).toContainText('БАРТЕР');
-    await expect(logo.locator('img')).toHaveJSProperty('complete', true);
-    assert(await logo.locator('img').evaluate(img => img.naturalWidth > 0));
+    // The approved logo is two real image assets: mark + Cyrillic wordmark.
+    const brandImages = await logo.locator('img').all();
+    assert.equal(brandImages.length, 2, 'mark and wordmark');
+    for (const brandImage of brandImages) {
+      await expect(brandImage).toHaveJSProperty('complete', true);
+      assert(await brandImage.evaluate(img => img.naturalWidth > 0), 'brand artwork is loaded');
+      await contained(brandImage);
+    }
     await contained(logo);
-    await contained(logo.locator('img'));
     if (width < 768) {
       // Desktop WebKit has no physical notch. Exercise a nonzero safe area,
       // without claiming this emulates the actual iPhone status-bar renderer.
