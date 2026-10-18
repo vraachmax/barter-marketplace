@@ -508,7 +508,7 @@ export function ProfileContent() {
                 </div>
 
                 {/* Stats boxes */}
-                <div className="profile-identity-stats mt-5 grid grid-cols-2 gap-3">
+                <div className="profile-identity-stats mt-5 grid grid-cols-3 gap-2">
                   <Link href="/profile?tab=ACTIVE" className="rounded-2xl bg-muted/60 px-3 py-4 focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="text-xs font-medium text-muted-foreground">Активные</div>
                     <div className="mt-1 text-xl font-bold text-foreground">{activeCount}</div>
@@ -517,28 +517,16 @@ export function ProfileContent() {
                     <div className="text-xs font-medium text-muted-foreground">Продано</div>
                     <div className="mt-1 text-xl font-bold text-foreground">{soldCount}</div>
                   </Link>
+                  <Link href="/profile?tab=ARCHIVED" className="rounded-2xl bg-muted/60 px-3 py-4 focus-visible:ring-2 focus-visible:ring-ring">
+                    <div className="text-xs font-medium text-muted-foreground">В архиве</div>
+                    <div className="mt-1 text-xl font-bold text-foreground">{archivedCount}</div>
+                  </Link>
                 </div>
 
-                <Link
-                  href="/wallet"
-                  className="mt-4 flex min-h-11 items-center gap-3 rounded-2xl border border-border bg-background p-4 text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <Wallet size={24} strokeWidth={s} aria-hidden />
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">Кошелёк</div>
-                    <p className="mt-1 text-xs text-muted-foreground">Баланс и история операций</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Пополнение пока недоступно</p>
-                  </div>
-                  <ChevronRight size={20} aria-hidden />
-                </Link>
               </Card>
 
-              <BarterDashProfileCard className="mt-5" />
-
-              <Link href="/profile/analytics" className="analytics-profile-entry"><Eye size={26} aria-hidden /><span><strong>Аналитика</strong><span>Просмотры, сохранения и обращения</span></span><ChevronRight size={19} aria-hidden /></Link>
               {/* Menu Items */}
               <div className="profile-menu mt-5 space-y-2">
-                <Link href="/favorites" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left hover:bg-muted/50"><Heart size={24} aria-hidden /><span className="flex-1 text-sm font-semibold">Избранное</span><ChevronRight size={20} aria-hidden /></Link>
                 <Link
                   href="/listings"
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
@@ -547,6 +535,7 @@ export function ProfileContent() {
                   <span className="flex-1 text-sm font-semibold text-foreground">Мои объявления</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
+                <Link href="/favorites" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left hover:bg-muted/50"><Heart size={24} aria-hidden /><span className="flex-1 text-sm font-semibold">Избранное</span><ChevronRight size={20} aria-hidden /></Link>
 
                 <Link
                   href="/profile/orders"
@@ -566,6 +555,18 @@ export function ProfileContent() {
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
 
+                <Link
+                  href="/wallet"
+                  className="mt-4 flex min-h-11 items-center gap-3 rounded-2xl border border-border bg-background p-4 text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Wallet size={24} strokeWidth={s} aria-hidden />
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">Кошелёк</div>
+                    <p className="mt-1 text-xs text-muted-foreground">Баланс и история операций</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Пополнение пока недоступно</p>
+                  </div>
+                  <ChevronRight size={20} aria-hidden />
+                </Link>
                 <Link
                   href="/profile/settings"
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"
@@ -595,6 +596,9 @@ export function ProfileContent() {
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Button>
               </div>
+              <BarterDashProfileCard className="mt-5" />
+
+              <Link href="/profile/analytics" className="analytics-profile-entry"><Eye size={26} aria-hidden /><span><strong>Аналитика</strong><span>Просмотры, сохранения и обращения</span></span><ChevronRight size={19} aria-hidden /></Link>
                 </>
               )}
             </div>
