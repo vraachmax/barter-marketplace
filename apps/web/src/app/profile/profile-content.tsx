@@ -279,7 +279,7 @@ export function ProfileContent() {
   }
 
   return (
-    <div className="profile-screen min-h-screen bg-background text-foreground antialiased">
+    <div className="profile-screen min-h-screen bg-background text-foreground antialiased" data-profile-view={showListingsView ? 'listings' : 'menu'}>
       <AccountScreenHeader
         title={showListingsView ? 'Мои объявления' : 'Профиль'}
         subtitle={showListingsView ? 'Публикация и управление объявлениями' : 'Ваш аккаунт и активность'}
