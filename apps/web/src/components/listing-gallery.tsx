@@ -163,7 +163,14 @@ export default function ListingGallery({
             >
               <ChevronRight size={22} strokeWidth={1.8} className="text-white" aria-hidden />
             </button>
-            <span className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm tabular-nums text-white" aria-live="polite">{idx + 1} / {n}</span>
+            <span className="listing-gallery-count pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm tabular-nums text-white" aria-live="polite">{idx + 1} / {n}</span>
+            <div className="listing-gallery-mobile-dots" role="group" aria-label="Выбор фотографии">
+              {images.map((im, i) => (
+                <button key={im.id} type="button" aria-label={`Показать фото ${i + 1} из ${n}`} aria-pressed={i === idx} onClick={() => setIdx(i)}>
+                  <span aria-hidden="true" />
+                </button>
+              ))}
+            </div>
           </>
         ) : null}
       </div>
