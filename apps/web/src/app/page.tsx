@@ -359,6 +359,11 @@ async function renderHome(sp: HomeSearchParams) {
   };
     const availableCategories = getAvailableCatalogCategories(CATS, categories);
 
+  const categoryView = Boolean(urlCategoryId) && !currentQ;
+  const categorySubcategories = categories.filter(category => category.parentId === urlCategoryId);
+  const categoryFilterHref = (mode: CatalogMode, sort: string = 'relevant') =>
+    '/?' + new URLSearchParams({ ...preservedListQuery, categoryId: urlCategoryId, mode, sort }).toString();
+
   // Keep requested filters and sorting authoritative. Recommendations must
   // have a separate surface, rather than being injected into search results.
   const feedSeenIds = new Set<string>();
@@ -429,9 +434,33 @@ async function renderHome(sp: HomeSearchParams) {
       </header>
 
       <div className="home-mode-row mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-1 px-4 pt-2 md:px-6 md:pt-5">
-        <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
+        <div className={categoryView ? 'hidden w-full md:block' : 'contents'}>
+          <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
+        </div>
+        {categoryView ? (
+          <nav className="mobile-category-filters w-full md:hidden" aria-label="Быстрые фильтры категории">
+            {([
+              { label: 'Все', href: categoryFilterHref('both'), active: currentMode === 'both' && currentSort !== 'new' },
+              { label: 'Новые', href: categoryFilterHref('both', 'new'), active: currentMode === 'both' && currentSort === 'new' },
+              { label: 'Обмен', href: categoryFilterHref('barter'), active: currentMode === 'barter' },
+              { label: 'Покупка', href: categoryFilterHref('market'), active: currentMode === 'market' },
+            ] as const).map(filter => (
+              <Link key={filter.label} href={filter.href} aria-current={filter.active ? 'page' : undefined}
+                className="mobile-category-filter">{filter.label}</Link>
+            ))}
+            {categorySubcategories.length ? (
+              <div className="mobile-category-subfilters">
+                {categorySubcategories.slice(0, 8).map(category => (
+                  <Link key={category.id} href={{ pathname: '/', query: { ...preservedListQuery, categoryId: category.id } }}
+                    className="mobile-category-subfilter">{category.title}</Link>
+                ))}
+              </div>
+            ) : null}
+          </nav>
+        ) : null}
         <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : currentMode === 'both' ? 'Покупка и обмен в одной ленте' : 'Объявления с возможностью покупки'}</p>
       </div>
+      {!categoryView ? (
       <nav aria-label="Категории объявлений" className="home-categories mx-auto max-w-7xl px-4 py-3 md:px-6 md:py-5">
         {catRes.status === 'rejected' && !apiBackendDown ? (
           <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted p-4 text-foreground">
@@ -470,6 +499,7 @@ async function renderHome(sp: HomeSearchParams) {
           ))}
         </div>
       </nav>
+      ) : null}
 
       {/* ===== MAIN CONTENT =====
           Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
@@ -515,7 +545,7 @@ async function renderHome(sp: HomeSearchParams) {
           {/* ===== LISTINGS SECTION ===== */}
           <section>
             {/* MOBILE-only: design-style section header — «Свежие предложения · 234 за сегодня · рядом» */}
-            {mergedFeed.length > 0 ? (
+            {mergedFeed.length > 0 && !categoryView ? (
               <div className="flex items-center justify-between gap-2 pt-1 pb-3 md:hidden">
                 <h2 className="m-0 text-[20px] font-extrabold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
                 {!currentQ && !urlCategoryId ? (
