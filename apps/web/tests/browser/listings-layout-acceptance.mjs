@@ -956,12 +956,38 @@ async function scenario(browserType, width, theme) {
   } finally { await context.close(); await browser.close(); }
 }
 
+// Pixel-geometry evidence for the exact supplied Claude reference viewport.
+// These isolated fixture captures are NOT release screenshots or real account data.
+async function captureReferenceViewport(theme) {
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 393, height: 850 }, isMobile: true, hasTouch: true,
+      deviceScaleFactor: 1, colorScheme: theme,
+    });
+    try {
+      const state = fixture(theme);
+      await installFixture(context, state, theme);
+      const page = await context.newPage();
+      await page.goto(baseURL + '/?mode=both&sort=expensive', { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('.home-category-tile:visible')).toHaveCount(5);
+      await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
+      await expect(page.locator('.claude-mobile-hero:visible')).toHaveCount(1);
+      await page.evaluate(() => document.fonts.ready);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({ path: join(output, 'reference-393x850-' + theme + '.png') });
+      assert.deepEqual(state.unexpected, [], 'no unhandled reference viewport fixture requests');
+    } finally { await context.close(); }
+  } finally { await browser.close(); }
+}
+
 try {
   await waitForServer();
   for (const theme of ['light', 'dark']) {
     await scenario(chromium, 390, theme);
     for (const width of [360, 440, 768, 820, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
   }
+  for (const theme of ['light', 'dark']) await captureReferenceViewport(theme);
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage({ viewport: { width: 1200, height: 720 }, deviceScaleFactor: 1 });
