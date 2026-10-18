@@ -112,11 +112,17 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)\/similar$/.test(url.pathname)) data = [];
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)$/.test(url.pathname)) {
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)\/similar$/.test(url.pathname)) data = [];
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)$/.test(url.pathname)) {
     // Next Link prefetch also requests listing metadata through the server API.
     const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id) ?? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true };
-    data = { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
+    data = url.pathname === '/listings/fixture-detail'
+      ? { ...listing, id: 'fixture-detail', title: 'Тестовое объявление', status: 'ACTIVE', saleEnabled: true, barterEnabled: true,
+          images: [
+            { id: 'detail-photo-1', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#f5eee8"/></svg>'), sortOrder: 0 },
+            { id: 'detail-photo-2', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e4e8fc"/></svg>'), sortOrder: 1 },
+          ], description: 'Описание тестового объявления.', owner: { id: 'fixture-peer', name: 'Продавец', email: null, phone: null } }
+      : { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
   }
   else { serverUnexpected.push(req.method + ' ' + url.pathname); res.statusCode = 404; data = {}; }
   res.setHeader('Content-Type', 'application/json');
@@ -762,6 +768,25 @@ async function scenario(browserType, width, theme) {
       await page.getByRole('button', { name: 'Показать результаты' }).click();
       await expect(page).not.toHaveURL(/gen-5/);
       checks.push('generation filter persists and changing make clears every descendant');
+    }
+
+    // Claude detail acceptance: real gallery buttons and contact actions remain usable.
+    if (width === 390 || width === 1280) {
+      await visit('/listing/fixture-detail');
+      await expect(page.getByRole('heading', { name: 'Тестовое объявление', exact: true })).toBeVisible();
+      const galleryDots = page.locator('.listing-gallery-mobile-dots button');
+      await expect(galleryDots).toHaveCount(2);
+      await galleryDots.nth(1).click({ force: width >= 768 });
+      await expect(galleryDots.nth(1)).toHaveAttribute('aria-pressed', 'true');
+      if (width < 768) {
+        const footer = page.locator('.listing-detail .listing-primary-actions');
+        await expect(footer).toBeVisible();
+        const footerBounds = await footer.boundingBox();
+        assert(footerBounds && footerBounds.y > 600 && footerBounds.y + footerBounds.height >= 755,
+          'detail contact buttons must stay anchored near the bottom of the mobile viewport');
+        await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
+      }
+      checks.push('reference detail gallery indicators, real messaging CTA and mobile footer');
     }
 
     state.failListings = true;
