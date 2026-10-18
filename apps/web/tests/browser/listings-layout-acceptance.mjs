@@ -24,6 +24,25 @@ const shots = [];
 const delay = ms => new Promise(done => setTimeout(done, ms));
 
 
+async function assertApprovedOrangeMark(bytes) {
+  const sharp = webRequire('sharp');
+  const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let left = info.width, right = -1, top = info.height, bottom = -1, orange = 0, other = 0;
+  for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
+    const i = (y * info.width + x) * 4;
+    const [r, g, b, a] = data.subarray(i, i + 4);
+    if (a < 64 || Math.max(r, g, b) - Math.min(r, g, b) < 50) continue;
+    if (r > g && g > b) orange++; else other++;
+    left = Math.min(left, x); right = Math.max(right, x);
+    top = Math.min(top, y); bottom = Math.max(bottom, y);
+  }
+  assert(orange > info.width * info.height * 0.25, 'approved orange logo has meaningful visible area');
+  assert(other < orange / 10, 'no obsolete blue/orange mark remains');
+  assert(top <= 3 && bottom >= info.height - 4, 'logo uses almost the full reference canvas');
+  assert(Math.abs((left + right + 1) / 2 - info.width / 2) <= 2, 'orange logo centered on X');
+  assert(Math.abs((top + bottom + 1) / 2 - info.height / 2) <= 2, 'orange logo centered on Y');
+}
+
 async function assertArtwork(bytes, fill, transparent = false, maskable = false) {
   const sharp = webRequire('sharp');
   const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -650,7 +669,7 @@ async function scenario(browserType, width, theme) {
       'mark and name share a vertical center');
     const markResponse = await page.request.get(baseURL + '/brand/claude-mark.png');
     assert.equal(markResponse.status(), 200);
-    await assertArtwork(await markResponse.body(), 0.94, true);
+    await assertApprovedOrangeMark(await markResponse.body());
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
