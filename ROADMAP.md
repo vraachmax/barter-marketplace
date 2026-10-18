@@ -1,3 +1,7 @@
+## 2026-10-18: Claude visual reference integration, draft PR #76
+
+Working branch `design/claude-reference-fidelity-2026-10-18`, not merged. Unified orange Bubble B vector in header + dock, reshaped mobile bottom navigation, bubble categories, home/cards, and copied 12 ready-to-use illustration assets. Shared styles for profile, chat, listing detail, analytics and publishing. Genuine API/search/auth/exchange behavior retained; no seeded demo listings. Initial CI found three legacy tests expecting old placeholder paths; tests and category-title mapping updated and CI rerun requested. Pixel-by-pixel comparison and physical iPhone/PWA acceptance still pending; PWA PNG icons and hero art not exact. Full record: `docs/design/barter-2026-10/IMPLEMENTATION_2026-10-18.md`. Next: check CI, compare 390px screenshots and fix discrepancies before any merge/deploy.
+
 ## 2026-10-18: release CI follow-up
 
 251d45b: 6/6 account and 6/6 message browser scenarios passed. Catalog 8/12
