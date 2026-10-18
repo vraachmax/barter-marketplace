@@ -595,24 +595,47 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     gap:8px;
     background:transparent;
   }
-  .listing-detail-seller [data-slot='card'] > div:first-child > p:nth-child(2) {
-    font-size:27.5px;
-    font-weight:800;
-    letter-spacing:-.5px;
-    line-height:1.2;
+  .listing-detail-seller .listing-detail-price-block {
+    display:flex; flex-direction:column; gap:0;
+  }
+  .listing-detail-seller .listing-detail-price-label {
+    position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+  }
+  .listing-detail-seller .listing-detail-price-row {
+    display:flex; align-items:center; justify-content:space-between;
+    min-height:32px; gap:8px; margin-top:1px;
+  }
+  .listing-detail-seller .listing-detail-price {
+    flex:0 1 auto; min-width:0; margin:0;
+    font-size:27.5px; font-weight:800; letter-spacing:-.5px; line-height:32px;
+  }
+  .listing-detail-seller .listing-detail-kpis {
+    display:flex; align-items:center; justify-content:flex-end; gap:7px;
+    flex:none;
+  }
+  .listing-detail-seller .listing-detail-kpi {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    min-height:30px; padding:0 11px;
+    border-radius:12px; background:var(--bg-muted);
+    color:var(--fg-default); font-size:11.5px;
+  }
+  .listing-detail-seller .listing-detail-kpi svg { width:17px; height:17px; }
+  .listing-detail-seller .listing-detail-mobile-meta {
+    margin-top:11px; min-height:20px; font-size:12.5px;
   }
   .listing-detail-seller [data-slot='card'] > div:first-child > p:last-child:not(:first-child) {
     font-size:13px;
   }
   .listing-detail-seller [data-slot='card'] > div.border-t {
     border:0;
-    padding-top:6px;
+    padding-top:0;
+    margin-top:5px;
   }
   .listing-detail-seller [data-slot='card'] > div.border-t > a {
-    min-height:61px;
+    min-height:61px; height:61px;
     border:1px solid var(--border-default);
-    border-radius:18px;
-    padding:10px 12px;
+    border-radius:16px;
+    padding:0 11px;
   }
   .listing-detail-seller [data-slot='card'] > div.border-t > a > span:first-child {
     width:46px; height:46px; border-radius:50%;
@@ -624,8 +647,8 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     display:flex;
     flex-direction:row;
     gap:10px;
-    padding:12px max(16px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
-    background:linear-gradient(to top,var(--bg-page) 84%,rgba(255,255,255,0));
+    padding:12px max(16px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
+    background:linear-gradient(to top,var(--bg-page) 78%,rgba(255,255,255,0));
   }
   .listing-detail-seller .listing-primary-actions > * {
     display:flex;
@@ -659,10 +682,8 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     padding:9px 19px 12px;
   }
   .listing-detail-content .listing-attributes {
-    order:-2;
-    border:0;
-    margin-bottom:0;
-    padding:0;
+    order:-2; position:relative;
+    border:0; margin:0; padding:0;
   }
   .listing-detail-content .listing-attributes h2 { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
   .listing-detail-content .listing-attributes dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; gap:5px 8px; }
@@ -1540,13 +1561,9 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
    a second full-width favorite CTA when the real header heart is present. */
 @media (max-width: 767px) {
   .listing-detail .listing-detail-mobile-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px 13px;
-    margin-top: 7px;
-    color: var(--fg-muted);
-    font-size: 13px;
-    line-height: 1.35;
+    display:flex; flex-wrap:wrap; gap:5px 8px;
+    margin-top:11px; color:var(--fg-muted);
+    font-size:12.5px; line-height:20px;
   }
   .listing-detail .listing-detail-mobile-meta svg { flex: none; }
   .listing-detail .listing-detail-seller [data-slot='card'] > .border-t {
