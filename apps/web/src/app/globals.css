@@ -604,17 +604,9 @@ a.link:hover { color: var(--brand-primary-hover); }
 
   body { padding-bottom: 72px !important; }
 
-  .listing-detail-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  .listing-detail-grid > * {
-    position: relative !important;
-    width: 100% !important;
-  }
-  .listing-detail-main > * { margin-bottom: 12px; }
-  .listing-detail-main > *:last-child { margin-bottom: 0; }
+  /* The listing's approved mobile layout lives in reference-fidelity.css.
+     Never force flex here: it breaks display:contents and DOM visual order. */
+  .listing-detail-grid > * { min-width: 0; }
   .listing-detail-aside > * { margin-bottom: 12px; }
   .listing-detail-aside > *:last-child { margin-bottom: 0; }
 
