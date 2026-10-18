@@ -976,7 +976,42 @@ async function captureReferenceViewport(theme) {
       await expect(page.locator('.claude-mobile-hero:visible')).toHaveCount(1);
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => window.scrollTo(0, 0));
+      const geometricSelectors = {
+        logo: '.catalog-mobile-header a[aria-label="Бартер — на главную"]',
+        search: '.catalog-home-search-group',
+        modes: '.home-mode-row .catalog-mode-switch',
+        categories: '.home-category-strip',
+        firstCategory: '.home-category-tile:visible',
+        banner: '.claude-mobile-hero',
+        section: 'main#feed section h2',
+        grid: '.listing-grid',
+        firstCard: '.refresh-listing-card',
+        firstPhoto: '.refresh-listing-card[data-surface="home"] > [role="link"]:first-child',
+        firstTitle: '.refresh-listing-card .listing-card-copy > div:first-child',
+        dock: '.magic-nav',
+        fab: '.liquid-nav__add',
+      };
+      const geometry = await page.evaluate(selectors => {
+        const result = {};
+        for (const [name, selector] of Object.entries(selectors)) {
+          const el = document.querySelector(selector);
+          if (!el) continue;
+          const box = el.getBoundingClientRect();
+          const css = getComputedStyle(el);
+          result[name] = {
+            x: Number(box.x.toFixed(2)), y: Number(box.y.toFixed(2)),
+            width: Number(box.width.toFixed(2)), height: Number(box.height.toFixed(2)),
+            fontSize: css.fontSize, lineHeight: css.lineHeight,
+            background: css.backgroundColor,
+          };
+        }
+        return result;
+      }, geometricSelectors);
+      await writeFile(join(output, 'reference-393x850-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
       await page.screenshot({ path: join(output, 'reference-393x850-' + theme + '.png') });
+      await page.goto(baseURL + '/listing/fixture-visual-phone', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByRole('heading', { name: 'iPhone 15 Pro' })).toBeVisible();
+      await page.screenshot({ path: join(output, 'detail-393x850-' + theme + '.png') });
       assert.deepEqual(state.unexpected, [], 'no unhandled reference viewport fixture requests');
     } finally { await context.close(); }
   } finally { await browser.close(); }
