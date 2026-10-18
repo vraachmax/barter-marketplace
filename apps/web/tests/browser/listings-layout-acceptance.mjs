@@ -423,6 +423,11 @@ async function scenario(browserType, width, theme) {
         const bounds = await contained(link);
         assert(bounds.width >= 44 && bounds.height >= 44, '44px navigation touch target');
       }
+      // Regression: the fixed iPhone dock must touch the bottom edge, not
+      // float 50-70px above a black blank strip in standalone Safari.
+      const dockBox = await dock.boundingBox();
+      assert(dockBox && Math.abs(dockBox.y + dockBox.height - page.viewportSize().height) < 2,
+        'mobile dock must extend through the bottom safe area');
       const palette = await page.evaluate(() => {
         const css = getComputedStyle(document.documentElement);
         return ['--bg-page', '--bg-surface', '--bg-muted', '--fg-default', '--fg-muted', '--border-default'].map(key => css.getPropertyValue(key).trim());
@@ -781,12 +786,24 @@ async function scenario(browserType, width, theme) {
     }
 
     // Claude detail acceptance: real gallery buttons and contact actions remain usable.
-    if (width === 390 || width === 1280) {
+    if (width === 390 || width === 440 || width === 1280) {
       await visit('/listing/fixture-detail');
-      await expect(page.getByRole('heading', { name: 'Тестовое объявление', exact: true })).toBeVisible();
+      const detailTitle = page.getByRole('heading', { name: 'Тестовое объявление', exact: true });
+      await expect(detailTitle).toBeVisible();
       const galleryDots = page.locator('.listing-gallery-mobile-dots button');
       await expect(galleryDots).toHaveCount(2);
       if (width < 768) {
+        assert.equal(await page.locator('.listing-detail-grid').evaluate(el => getComputedStyle(el).display),
+          'contents', 'legacy !important must not interrupt the hero/sheet order');
+        const photoBox = await page.locator('.listing-detail-media').boundingBox();
+        const titleBox = await detailTitle.boundingBox();
+        assert(photoBox && titleBox && titleBox.y >= photoBox.y + photoBox.height - 46,
+          'title must render immediately after the image as the Claude sheet');
+        const share = page.getByRole('button', { name: 'Поделиться' });
+        const shareBox = await share.boundingBox();
+        assert(shareBox && shareBox.width <= 45 && shareBox.x >= 0 && shareBox.x + shareBox.width <= width,
+          'share must remain inside a round 40px button, not overlap the photo');
+        await expect(page.locator('.listing-detail-head-actions .listing-feed-favorite')).toBeVisible();
         await galleryDots.nth(1).click();
         await expect(galleryDots.nth(1)).toHaveAttribute('aria-pressed', 'true');
         const footer = page.locator('.listing-detail .listing-primary-actions');
@@ -795,8 +812,15 @@ async function scenario(browserType, width, theme) {
         assert(footerBounds && footerBounds.y > 600 && footerBounds.y + footerBounds.height >= 755,
           'detail contact buttons must stay anchored near the bottom of the mobile viewport');
         await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
+        await page.getByRole('button', { name: 'Открыть на весь экран' }).click();
+        const full = page.getByRole('dialog', { name: 'Просмотр фотографий' });
+        await expect(full).toBeVisible();
+        assert.equal(await full.evaluate(el => getComputedStyle(el).backgroundColor),
+          'rgb(0, 0, 0)', 'fullscreen viewer must be opaque, never leak listing text');
+        await page.getByRole('button', { name: 'Закрыть' }).click();
+        await expect(full).toHaveCount(0);
       }
-      checks.push('reference detail gallery indicators, real messaging CTA and mobile footer');
+      checks.push('hero before title, compact share/favorite, opaque viewer, working gallery and contact footer');
     }
 
     state.failListings = true;
