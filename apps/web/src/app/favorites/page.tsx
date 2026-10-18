@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { Heart, Home, LoaderCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Heart, Home, LoaderCircle, RefreshCw } from 'lucide-react';
 import { API_URL, apiFetchJson, type FavoriteItem } from '@/lib/api';
 import { favoritesReducer, initialFavoritesState } from '@/lib/favorites-state';
 import { useAuth } from '@/components/auth-provider';
@@ -128,14 +128,14 @@ function FavoritesContent({ onRetry }: { onRetry: () => void }) {
               const pending = state.pending.includes(id);
               return (
                 <div key={item.id} className="relative">
-                  <ListingCardComponent data={item.listing} apiBase={API_URL} thumbHeight={160} />
+                  <ListingCardComponent data={item.listing} apiBase={API_URL} thumbHeight={160} showFavoriteAction={false} />
                   <Button
                     variant="secondary" size="icon" disabled={pending} aria-busy={pending}
                     aria-label={`Удалить из избранного: ${item.listing.title}`}
                     onClick={() => void remove(id)}
-                    className="absolute right-2 top-2 z-[3] size-11 rounded-full bg-background/95 shadow-sm hover:bg-destructive/10 hover:text-destructive"
+                    className="absolute right-2 top-2 z-[12] size-11 rounded-full border-0 bg-white text-[#ff5a0a] shadow-sm hover:bg-white focus-visible:ring-2 focus-visible:ring-[#ff5a0a]"
                   >
-                    {pending ? <LoaderCircle size={18} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Trash2 size={18} aria-hidden />}
+                    {pending ? <LoaderCircle size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Heart size={21} strokeWidth={2} fill="currentColor" aria-hidden />}
                   </Button>
                   {state.errors[id] ? <p role="alert" className="mt-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">{state.errors[id]}</p> : null}
                 </div>
