@@ -452,7 +452,6 @@ async function renderHome(sp: HomeSearchParams) {
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
               {['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug) ? (
-                true ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-light.jpg`} width={124} height={124} alt="" />
@@ -464,7 +463,6 @@ async function renderHome(sp: HomeSearchParams) {
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? 'miscellaneous'}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
-                )
               )}
               </span>
               <span className="category-title">{cat.name}</span>
