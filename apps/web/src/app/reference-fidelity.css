@@ -136,3 +136,16 @@ html[data-theme='dark'] .message-bubble[data-direction='outgoing'] { background:
   .publication-actions { padding-bottom:calc(12px + env(safe-area-inset-bottom,0px)); }
   .messages-screen { padding-bottom:calc(88px + var(--safe-area-bottom)); }
 }
+
+/* Claude reference uses neutral near-black, not blue-graphite; keep all shared routes in sync. */
+html[data-theme='dark'] {
+  --bg-page:#0e0e10; --bg-section:#17171a; --bg-surface:#1a1a1d;
+  --bg-muted:#1e1e22; --bg-input:#1c1c20;
+  --fg-default:#f6f6f8; --fg-strong:#f6f6f8; --fg-title:#f6f6f8; --fg-muted:#9a9aa6;
+  --border-default:#2a2a2f; --border-subtle:#2a2a2f; --border-input:#2a2a2f;
+}
+@media(max-width:767px) {
+  html[data-theme='light'] .home-category-tile img { mix-blend-mode:multiply; }
+  html[data-theme='dark'] .home-category-tile > span:first-child { background:#f4f4f6; }
+  .home-category-tile:active { transform:scale(.98); }
+}
