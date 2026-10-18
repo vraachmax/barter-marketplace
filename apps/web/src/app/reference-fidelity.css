@@ -854,7 +854,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .profile-screen .profile-menu > a,
   .profile-screen .profile-menu > button {
     min-height: 60px;
-    padding: 13px 16px;
+    padding: 11px 16px;
     border: 0;
     border-radius: 18px;
     background: var(--bg-surface);
@@ -862,7 +862,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .profile-screen .profile-menu > a span.flex-1,
   .profile-screen .profile-menu > button span.flex-1 {
-    font-size: 16px;
+    font-size: 14.5px;
     font-weight: 500;
   }
   html[data-theme='dark'] .profile-screen .profile-identity-stats,
@@ -891,7 +891,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .profile-screen[data-profile-view='menu'] > .screen-header h1,
   .profile-screen[data-profile-view='menu'] > .screen-header p:first-child {
-    font-size:32px;
+    font-size:29px;
     font-weight:800;
     line-height:1.25;
     letter-spacing:-.6px;
