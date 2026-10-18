@@ -353,6 +353,10 @@ async function scenario(browserType, width, theme) {
       state.previewFavorites = [{ id: 'favorite-preview', listing: { ...source,
         images: [source.images[0], { ...source.images[0], id: 'second', url: source.images[0].url.replace('dce6ef', 'ff9944') }] } }];
       await visit('/favorites');
+      // Saved cards must have ONE tappable remove-heart, not a feed favorite
+      // floating above an inaccessible remove button.
+      await expect(page.locator('.listing-feed-favorite')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Удалить из избранного:/ })).toHaveCount(1);
       const thumb = page.locator('.photo-hold-preview').first();
       await expect(thumb).toBeVisible();
       assert.equal(await thumb.evaluate(el => el.closest('a')), null, 'hold surface is not a native link preview target');
