@@ -20,6 +20,8 @@ function illustrationKey(title: string, slug: string) {
   const value = title.toLowerCase();
   if (/спецтехник|экскаватор|самосвал|автокран|автовышк|погрузчик/.test(value)) return 'heavy-machinery';
   if (/услуг|ремонт|мастер|монтаж|уборк|обучени/.test(value)) return 'services';
+  if (/электрон/.test(value)) return 'laptops';
+  if (/детск|игрушк|ребёнк/.test(value)) return 'miscellaneous';
   if (/смартфон|телефон|iphone/.test(value)) return 'smartphones';
   if (/ноутбук|macbook|компьютер/.test(value)) return 'laptops';
   if (/приставк|игр|playstation|xbox/.test(value)) return 'gaming';
