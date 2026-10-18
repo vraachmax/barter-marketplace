@@ -17,8 +17,8 @@ export default function FavoritesPage() {
   const [attempt, setAttempt] = useState(0);
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <div className="mx-auto flex h-[52px] max-w-6xl items-center px-4 pt-1 md:hidden">
-        <h1 className="text-[32px] font-extrabold leading-tight tracking-[-.6px]">Избранное</h1>
+      <div className="mx-auto flex h-14 max-w-6xl items-center px-4 pt-1 md:hidden">
+        <h1 className="text-[29px] font-extrabold leading-tight tracking-[-.5px]">Избранное</h1>
       </div>
       <header className="screen-header sticky top-0 z-30 hidden border-b border-border/60 md:block">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
@@ -36,7 +36,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 pb-32 pt-2 md:pb-12 md:pt-5">
+      <main className="mx-auto max-w-6xl px-4 pb-32 pt-4 md:pb-12 md:pt-5">
         {ready ? (
           <FavoritesContent key={`${token ?? 'guest'}:${attempt}`} onRetry={() => setAttempt((value) => value + 1)} />
         ) : <FavoritesLoading />}
@@ -50,7 +50,7 @@ function FavoritesLoading() {
     <div role="status" aria-label="Загружаем избранное" aria-busy="true">
       <span className="sr-only">Загружаем избранное…</span>
       <div aria-hidden="true" className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 6 }, (_, i) => <ListingCardSkeleton key={i} thumbHeight={160} />)}
+        {Array.from({ length: 6 }, (_, i) => <ListingCardSkeleton key={i} thumbHeight={109} />)}
       </div>
     </div>
   );
@@ -136,7 +136,7 @@ function FavoritesContent({ onRetry }: { onRetry: () => void }) {
                     variant="secondary" size="icon" disabled={pending} aria-busy={pending}
                     aria-label={`Удалить из избранного: ${item.listing.title}`}
                     onClick={() => void remove(id)}
-                    className="absolute right-2 top-2 z-[12] size-11 rounded-full border-0 bg-white text-[#ff5a0a] shadow-sm hover:bg-white focus-visible:ring-2 focus-visible:ring-[#ff5a0a]"
+                    className="favorites-remove-action absolute right-0 top-0 z-[12] size-11 rounded-full border-0 bg-transparent text-[#ff5a0a] shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-[#ff5a0a]"
                   >
                     {pending ? <LoaderCircle size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Heart size={21} strokeWidth={2} fill="currentColor" aria-hidden />}
                   </Button>
