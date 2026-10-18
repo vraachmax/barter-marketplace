@@ -114,6 +114,7 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/reviews/listing/fixture-detail/eligibility') data = { canReview: false, reason: 'no_chat' };
   else if (req.method === 'GET' && url.pathname === '/presence/users/fixture-peer') data = { isOnline: false, lastSeenAt: null };
   else if (req.method === 'GET' && url.pathname === '/users/fixture-peer/profile') data = { user: { id: 'fixture-peer', name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] };
+  else if (req.method === 'GET' && url.pathname === '/chats') data = [];
   else if (req.method === 'GET' && url.pathname === '/favorites') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
