@@ -57,7 +57,7 @@ function getChatMode(listing: ChatSummary['listing']): 'barter' | 'market' {
 
 const MODE_COLOR: Record<'barter' | 'market', string> = {
   barter: '#ff5a0a',
-  market: '#ff5a0a', // The reference uses one orange brand, not blue mode accents.
+  market: '#8b8b98', // Sale-only is neutral; exchange keeps the orange accent.
 };
 
 const MODE_LABEL: Record<'barter' | 'market', string> = {
