@@ -812,6 +812,7 @@ async function scenario(browserType, width, theme) {
         assert(footerBounds && footerBounds.y > 600 && footerBounds.y + footerBounds.height >= 755,
           'detail contact buttons must stay anchored near the bottom of the mobile viewport');
         await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
+        await shot(page, key + '-listing-detail-fixed');
         await page.getByRole('button', { name: 'Открыть на весь экран' }).click();
         const full = page.getByRole('dialog', { name: 'Просмотр фотографий' });
         await expect(full).toBeVisible();
