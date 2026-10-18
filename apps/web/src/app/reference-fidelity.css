@@ -1214,3 +1214,152 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     font-weight: 600;
   }
 }
+
+
+/* Filters keep backend-driven category/attribute values; presentation follows
+   Claude's mobile sheet. No invented brands, models, prices or result counts. */
+@media (max-width: 767px) {
+  .catalog-filter-sheet {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--bg-page);
+  }
+  .catalog-filter-header {
+    min-height: 54px;
+    background: var(--bg-page);
+    border: 0;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .catalog-filter-fields {
+    gap: 22px;
+    padding: 10px 16px calc(112px + env(safe-area-inset-bottom,0px));
+  }
+  .catalog-filter-price { order: 1; }
+  .catalog-filter-category { order: 2; }
+  .catalog-filter-attributes { order: 3; }
+  .catalog-filter-sort { order: 4; }
+  .catalog-filter-fields p[class*='uppercase'] {
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-transform: none;
+    letter-spacing: -.2px;
+    color: var(--fg-default);
+    margin-bottom: 10px;
+  }
+  .catalog-filter-price > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    padding: 12px;
+    border-radius: 20px;
+    background: var(--bg-muted);
+    position: relative;
+  }
+  .catalog-filter-price > div::after {
+    content: '–';
+    position: absolute;
+    top: 21px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--fg-muted);
+    font-size: 18px;
+  }
+  .catalog-filter-price input {
+    height: 48px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--bg-surface);
+    font-size: 16px;
+    color: var(--fg-default);
+    padding-inline: 15px;
+    box-shadow: none;
+  }
+  .catalog-filter-category > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .catalog-filter-category > div > button {
+    min-height: 40px;
+    border: 1px solid var(--border-default);
+    border-radius: 22px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    background: var(--bg-surface);
+    color: var(--fg-default);
+  }
+  .catalog-filter-category > div > button[aria-pressed='true'] {
+    background: #ff5a0a !important;
+    color: #fff !important;
+    border-color: #ff5a0a !important;
+  }
+  .catalog-filter-attributes label {
+    display: block;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-top: 20px;
+  }
+  .catalog-filter-attributes select {
+    display: block;
+    width: 100%;
+    height: 48px;
+    margin-top: 10px;
+    border: 0;
+    border-radius: 15px;
+    background: var(--bg-muted);
+    padding: 0 14px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .catalog-filter-sort > div { display: flex; flex-wrap: wrap; gap: 8px; }
+  .catalog-filter-sort > div > button {
+    flex: 1 1 45%;
+    min-height: 42px;
+    border: 1px solid var(--border-default);
+    border-radius: 24px;
+    padding: 9px 15px;
+    background: var(--bg-muted);
+    font-weight: 500;
+  }
+  .catalog-filter-sort > div > button[aria-pressed='true'] {
+    background: #ff5a0a !important;
+    color: white !important;
+    border-color: #ff5a0a !important;
+  }
+  .catalog-filter-sheet .glass-panel.sticky.bottom-0 {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border: 0;
+    padding: 10px 16px max(12px,env(safe-area-inset-bottom,0px));
+    background: linear-gradient(to top,var(--bg-page) 80%,transparent);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .catalog-filter-sheet .glass-panel.sticky.bottom-0 button {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 26px;
+    font-size: 16px;
+    font-weight: 600;
+    background: #ff5a0a;
+    color: white;
+  }
+}
