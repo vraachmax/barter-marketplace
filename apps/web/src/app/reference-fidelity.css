@@ -9,9 +9,12 @@
   --liquid-active: #ff5a0a;
 }
 html[data-theme='dark'] {
-  --mode-primary: #ff681b;
-  --mode-accent: #ff681b;
-  --liquid-active: #ff681b;
+  --brand-primary: #ff5a0a;
+  --brand-primary-hover: #ec4d00;
+  --brand-primary-soft: #34231d;
+  --mode-primary: #ff5a0a;
+  --mode-accent: #ff5a0a;
+  --liquid-active: #ff5a0a;
 }
 html[data-theme='light'] { color-scheme: light; }
 .catalog-mobile-header { background: var(--bg-page); -webkit-backdrop-filter: none; backdrop-filter: none; }
