@@ -434,6 +434,12 @@ async function scenario(browserType, width, theme) {
       const dockBox = await dock.boundingBox();
       assert(dockBox && Math.abs(dockBox.y + dockBox.height - page.viewportSize().height) < 2,
         'mobile dock must extend through the bottom safe area');
+      const bottomPadding = await dock.evaluate(el => parseFloat(getComputedStyle(el).paddingBottom) || 0);
+      assert(Math.abs(dockBox.height - (55 + bottomPadding)) < 2,
+        'Claude v2 mobile dock is 55px plus safe-area, not the old 72px');
+      const plus = await dock.locator('.liquid-nav__add').boundingBox();
+      assert(plus && Math.abs(plus.width - 65) < 2 && Math.abs(plus.height - 65) < 2,
+        'Claude v2 center compose action must remain 65x65px');
       const palette = await page.evaluate(() => {
         const css = getComputedStyle(document.documentElement);
         return ['--bg-page', '--bg-surface', '--bg-muted', '--fg-default', '--fg-muted', '--border-default'].map(key => css.getPropertyValue(key).trim());
