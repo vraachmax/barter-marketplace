@@ -79,8 +79,10 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className, sh
   const useSquareThumb = thumbHeight === undefined;
   const thumbStyleProp = useSquareThumb ? undefined : { height: thumbHeight };
   const thumbClassName = useSquareThumb
-    ? 'relative w-full aspect-square overflow-hidden rounded-2xl bg-muted'
-    : 'relative w-full overflow-hidden rounded-2xl bg-muted';
+    ? surface === 'home'
+      ? 'relative w-full aspect-square overflow-hidden rounded-t-[18px] bg-muted'
+      : 'relative w-full aspect-[313/195] overflow-hidden rounded-t-[18px] bg-muted'
+    : 'relative w-full overflow-hidden rounded-t-[18px] bg-muted';
 
   return (
     <>
