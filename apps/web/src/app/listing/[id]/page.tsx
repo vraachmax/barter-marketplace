@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { apiGetJson, type ListingCard, API_URL, resolveAssetUrl } from '@/lib/api';
 import ListingContactActions from '@/components/listing-contact-actions';
+import FeedFavoriteAction from '@/components/feed-favorite-action';
 import { formatListingPrice } from '@/lib/listing-presentation';
 import SellerReviewForm from '@/components/seller-review-form';
 import ListingBotAssistant from '@/components/listing-bot-assistant';
@@ -122,7 +123,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         backHref="/"
         backLabel="Назад в ленту"
         width="wide"
-        actions={<ListingShareButton title={listing.title} />}
+        actions={<div className="listing-detail-head-actions"><FeedFavoriteAction listingId={listing.id} /><ListingShareButton title={listing.title} /></div>}
       />
       <main className="listing-detail-main mx-auto max-w-6xl px-4 pb-28 pt-4 md:px-6 lg:pb-12">
         <ListingViewTracker listingId={listing.id} />
