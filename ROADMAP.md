@@ -1,3 +1,25 @@
+## 2026-10-18: mobile increment RELEASED (not full visual acceptance)
+
+PR #75 merged as 5ddf37e3487a6be6001639febccbd486f7322867 at 12:22 UTC.
+Vercel production 8Zin4BeaGmHWoBkG7Qp7vHCCq9ye SUCCESS. Render API deploy
+dep-dbabk99srm7s73a95u10 LIVE at 12:25 UTC, same commit. Public logo asset
+returns HTTP 200; API /health returns ok:true; startup logs register analytics/seller.
+CI run 39126534943: all 6 account, 12 catalog/publication and 6 message browser
+scenarios pass. 87 web unit tests, web build, PostgreSQL message CI and security
+checks pass. Locally API build and 4 seller-analytics tests also pass.
+Reviewed existing CI screenshot contact sheets for both themes. Direct cloud browser
+access remains policy-blocked; no physical iPhone or pixel-exact acceptance claimed.
+Owner explicitly asked to prioritise a mobile deployment on 18 October; this scoped
+rollout supersedes the earlier blanket draft no-deploy note, not the fidelity target.
+
+Remaining: exact clean orange logo and composed hero; notification/exchange-offer
+flows; analytics item detail/audience; remaining reference sections and desktop
+fidelity. Existing two-color logo is packaged correctly but not the new target mark.
+Next concrete step: finish mobile brand/hero assets and match remaining screens
+against reference-sized captures once authorized visual access is available.
+These notes are saved on the design branch and PR #75 release record; main already
+contains the released implementation. Do not re-deploy the same implementation.
+
 ## 2026-10-18: release CI follow-up
 
 251d45b: 6/6 account and 6/6 message browser scenarios passed. Catalog 8/12
