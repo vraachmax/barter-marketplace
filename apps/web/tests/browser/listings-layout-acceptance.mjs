@@ -1014,6 +1014,33 @@ async function captureReferenceViewport(theme) {
       await page.screenshot({ path: join(output, 'reference-393x850-' + theme + '.png') });
       await page.goto(baseURL + '/listing/fixture-visual-phone', { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('heading', { name: 'iPhone 15 Pro' })).toBeVisible();
+      const detailSelectors = {
+        hero: '.listing-detail-media',
+        heading: '.listing-detail-heading',
+        title: '.listing-detail-heading h1',
+        trade: '.detail-trade-label',
+        price: '.listing-detail-price',
+        stats: '.listing-detail-kpis',
+        location: '.listing-detail-mobile-meta',
+        seller: '.listing-detail-seller [data-slot="card"] > div.border-t',
+        attributes: '.listing-detail-content .listing-attributes',
+        description: '#listing-description',
+        actions: '.listing-detail .listing-primary-actions',
+      };
+      const detailGeometry = await page.evaluate(selectors => {
+        const output = {};
+        for (const [key, selector] of Object.entries(selectors)) {
+          const node = document.querySelector(selector);
+          if (!node) continue;
+          const rect = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          output[key] = { x: +rect.x.toFixed(2), y: +rect.y.toFixed(2),
+            width: +rect.width.toFixed(2), height: +rect.height.toFixed(2),
+            fontSize: style.fontSize, lineHeight: style.lineHeight };
+        }
+        return output;
+      }, detailSelectors);
+      await writeFile(join(output, 'detail-393x850-' + theme + '-geometry.json'), JSON.stringify(detailGeometry, null, 2));
       await page.screenshot({ path: join(output, 'detail-393x850-' + theme + '.png') });
       assert.deepEqual(state.unexpected, [], 'no unhandled reference viewport fixture requests');
     } finally { await context.close(); }
