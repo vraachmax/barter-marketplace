@@ -48,7 +48,7 @@ html[data-theme='dark'] .refresh-hero { background:linear-gradient(120deg,#34231
 html[data-theme='dark'] .refresh-hero h1 { color:#fff; }
 html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 0 1px rgba(255,255,255,.12); }
 @media(max-width:767px) {
-  .app-viewport .catalog-mobile-header { padding-top:10px; padding-bottom:8px; }
+  .app-viewport .catalog-mobile-header { padding-top:12px; padding-bottom:8px; }
   .catalog-mobile-header >div:first-child { margin-bottom:8px; }
   .catalog-mobile-header [type='search'] { font-size:15px; }
   .home-mode-row { padding-top:8px; }
