@@ -796,6 +796,8 @@ async function scenario(browserType, width, theme) {
         assert.equal(await page.locator('.listing-detail-grid').evaluate(el => getComputedStyle(el).display),
           'contents', 'legacy !important must not interrupt the hero/sheet order');
         const photoBox = await page.locator('.listing-detail-media').boundingBox();
+        const heroFit = await page.locator('.listing-detail-media .listing-thumb-img').evaluate(img => getComputedStyle(img).objectFit);
+        assert.equal(heroFit, 'contain', 'full-size listing photos must not be cropped by legacy cover important');
         const titleBox = await detailTitle.boundingBox();
         assert(photoBox && titleBox && titleBox.y >= photoBox.y + photoBox.height - 46,
           'title must render immediately after the image as the Claude sheet');
