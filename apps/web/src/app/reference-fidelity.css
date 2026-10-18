@@ -1566,3 +1566,14 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     filter: none !important;
   }
 }
+
+
+/* Installed iPhone PWA fallback: WebKit may report zero safe-area for a
+   modal top layer while the translucent status bar still occupies pixels.
+   Keep gallery controls below Dynamic Island and above the home indicator. */
+@media (display-mode: standalone) and (max-width: 767px) {
+  .listing-fullscreen-dialog[open] {
+    padding-top: max(56px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(34px, env(safe-area-inset-bottom, 0px));
+  }
+}
