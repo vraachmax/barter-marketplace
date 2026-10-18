@@ -279,3 +279,66 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background:radial-gradient(circle at 28% 18%,#3a302d,#272326);
   }
 }
+
+/* Compact chat header/composer as in the supplied Claude prototype. */
+@media(max-width:767px) {
+  .messages-screen .thread-header {
+    min-height:56px;
+    padding-top:6px;
+    padding-bottom:6px;
+    gap:10px;
+    background:var(--bg-page);
+  }
+  .messages-screen .thread-header > div:nth-of-type(1) {
+    width:40px; height:40px;
+    border-radius:50%;
+  }
+  .messages-screen .message-bubble {
+    max-width:82%;
+    border-radius:19px;
+    padding:10px 13px 8px;
+    box-shadow:none;
+    font-size:15px;
+    line-height:1.3;
+  }
+  .messages-screen .message-bubble[data-direction='incoming'] {
+    border-radius:19px 19px 19px 7px;
+    background:var(--bg-muted);
+    border-color:transparent;
+    color:var(--fg-default);
+  }
+  .messages-screen .message-bubble[data-direction='outgoing'] {
+    border-radius:19px 19px 7px 19px;
+    background:#e3ebfd;
+    color:#192033;
+  }
+  .messages-screen .message-bubble[data-direction='outgoing'] [class*='text-white'] {
+    color:#5b6374;
+  }
+  .messages-screen .glass-panel:has(textarea[aria-label='Сообщение']) {
+    border-top:0;
+    background:var(--bg-page);
+    box-shadow:none;
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+    padding-top:8px;
+    padding-bottom:6px;
+  }
+  .messages-screen textarea[aria-label='Сообщение'] {
+    height:44px;
+    min-height:44px;
+    max-height:120px;
+    border-radius:22px;
+    background:var(--bg-muted);
+    border:0;
+    padding-block:10px;
+    line-height:24px;
+  }
+  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] {
+    background:#233553;
+    color:#f6f6f8;
+  }
+  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] [class*='text-white'] {
+    color:#a7b5d0;
+  }
+}

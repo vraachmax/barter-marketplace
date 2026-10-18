@@ -1048,7 +1048,7 @@ export default function MessagesPage() {
                   </label>
                   <textarea
                     ref={composerRef}
-                    rows={2}
+                    rows={1}
                     maxLength={4000}
                     aria-label="Сообщение"
                     className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-2.5 text-base leading-6 placeholder:text-muted-foreground transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
