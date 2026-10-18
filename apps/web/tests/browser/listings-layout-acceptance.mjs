@@ -123,8 +123,8 @@ const api = createServer((req, res) => {
     // Next Link prefetch requests the same visual listing data as the catalog.
     // Keep unknown IDs visible rather than silently replacing them with another fixture.
     const listing = [...fixture('light').listings, ...visualFixtureListings()].find(x => url.pathname === '/listings/' + x.id)
-      ?? (url.pathname === '/listings/fixture-created'
-        ? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true }
+      ?? (['/listings/fixture-created', '/listings/fixture-detail'].includes(url.pathname)
+        ? { ...fixture('light').listings[0], id: url.pathname.split('/').at(-1), saleEnabled: false, barterEnabled: true }
         : null);
     assert(listing, 'Unexpected listing fixture: ' + url.pathname);
     data = url.pathname === '/listings/fixture-detail'
