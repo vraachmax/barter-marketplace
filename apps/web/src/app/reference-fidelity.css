@@ -1113,3 +1113,104 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     color: #f6f6f8;
   }
 }
+
+
+/* Publication: preserve the real five-step validation workflow while
+   matching the selected Claude mobile layout on the opening photo/form step. */
+@media (max-width: 767px) {
+  .publication-header {
+    border: 0;
+    background: var(--bg-page);
+  }
+  .publication-header > div:first-child {
+    min-height: 54px;
+    padding: 7px 16px;
+  }
+  .publication-header h1 {
+    padding-right: 28px;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+  }
+  .publication-steps {
+    gap: 12px;
+    padding: 6px 16px 13px;
+    background: var(--bg-page);
+  }
+  .publication-steps li {
+    flex: 0 0 auto;
+    min-width: max-content;
+    font-size: 13px;
+    font-weight: 500;
+    gap: 6px;
+  }
+  .publication-steps li > span:first-child {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .publication-main {
+    padding-top: 2px;
+  }
+  .publication-form > .publication-photos:first-child {
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 21px;
+  }
+  .publication-form > .publication-photos:first-child > [role='button'] {
+    flex: 1 0 calc(50% - 6px);
+    min-width: 0;
+    min-height: 190px;
+    height: 190px;
+    padding: 12px 8px;
+    border: 1px dashed var(--border-default);
+    border-radius: 18px;
+    background: var(--bg-muted);
+    color: var(--fg-muted);
+  }
+  .publication-form > .publication-photos:first-child > [role='button'] > svg {
+    width: 22px;
+    height: 22px;
+    color: var(--fg-muted) !important;
+  }
+  .publication-form > .publication-photos:first-child li {
+    width: calc(50% - 6px);
+    aspect-ratio: 1/1.1;
+    border: 0;
+    border-radius: 18px;
+  }
+  .publication-form:has(> .publication-photos:first-child) > section:nth-child(2)::before {
+    content: 'Название';
+    display: block;
+    margin: 0 0 10px;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+    color: var(--fg-default);
+  }
+  .publication-form:has(> .publication-photos:first-child) > section:nth-child(2) > p:first-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .publication-form:has(> .publication-photos:first-child) > section:nth-child(2) .relative > svg:first-child {
+    display: none;
+  }
+  .publication-form:has(> .publication-photos:first-child) > section:nth-child(2) input {
+    padding-left: 16px;
+    border: 0;
+    border-radius: 16px;
+    background: var(--bg-muted);
+  }
+  .publication-actions {
+    box-shadow: none;
+    border-top: 0;
+  }
+  .publication-actions button:last-child {
+    border-radius: 26px;
+    font-weight: 600;
+  }
+}
