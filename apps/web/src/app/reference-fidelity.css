@@ -231,7 +231,8 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     box-shadow:none;
   }
   .home-categories { padding-top:14px; padding-bottom:3px; }
-  .home-category-strip { padding-block:0; gap:2px; grid-auto-columns:76px; }
+  .home-category-strip { padding-block:0; gap:2px; grid-auto-columns:calc((100% - 8px)/5); }
+  .home-category-tile[data-mobile-secondary='true'] { display:none; }
   .home-category-tile { min-height:94px; gap:8px; font-size:12px; font-weight:500; }
   .home-category-tile > span:first-child { width:70px; height:70px; }
   .claude-mobile-hero { margin-top:14px; margin-bottom:3px; }
@@ -251,7 +252,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
 
 /* Prevent Russian bubble labels from wrapping under 70px thumbnails. */
 @media(max-width:767px) {
-  .home-category-tile .category-title {white-space:nowrap;font-size:12px;letter-spacing:-.2px;}
+  .home-category-tile .category-title {white-space:nowrap;font-size:10.5px;letter-spacing:-.2px;}
 }
 @media(min-width:768px) {
   .home-category-tile[data-reference-bubble='true'] .category-title {
