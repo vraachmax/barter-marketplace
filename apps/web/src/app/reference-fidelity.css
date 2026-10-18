@@ -276,9 +276,25 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
 .listing-feed-favorite:focus-visible {outline:2px solid #ff5a0a;outline-offset:2px}
 .listing-feed-favorite[aria-busy="true"] {opacity:.7}
 @media(max-width:767px) {
-  .refresh-listing-card .photo-hold-preview, .refresh-listing-card [role="link"].aspect-square {aspect-ratio:1.16}
-  .refresh-listing-card .listing-card-copy {padding:10px 12px 13px;gap:3px}
+  .refresh-listing-card[data-surface='catalog'] > [role='link']:first-child,
+  .refresh-listing-card[data-surface='catalog'] .photo-hold-preview {
+    aspect-ratio:313/195;
+    height:auto;
+    min-height:0;
+  }
+  .refresh-listing-card .listing-card-copy {padding:10px 14px 8px;gap:0}
   .refresh-listing-card .listing-card-copy .listing-card-location {display:none}
+  /* Tappable area remains 44px; only the visual heart is 29px. */
+  .favorites-remove-action { padding:0; }
+  .favorites-remove-action::before {
+    content:""; position:absolute; z-index:0; inset:7.5px;
+    border-radius:50%; background:#fff;
+    box-shadow:0 2px 8px rgba(0,0,0,.10);
+  }
+  .favorites-remove-action svg {
+    position:relative; z-index:1;
+    width:16px; height:16px; stroke-width:2;
+  }
 }
 
 /* Prevent Russian bubble labels from wrapping under 70px thumbnails. */
