@@ -15,7 +15,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
 import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
 import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
-import { Heart, LayoutGrid, Search, Sparkles } from 'lucide-react';
+import { LayoutGrid, Search, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   appliedMode?: CatalogMode;
@@ -410,22 +410,20 @@ async function renderHome(sp: HomeSearchParams) {
       <header className="catalog-mobile-header sticky top-0 z-40 px-4 pb-3 md:hidden">
         <div className="mb-3 flex min-h-11 items-center justify-between gap-2">
           <BarterHomeLogo />
-          <div className="flex min-w-0 items-center gap-1">
+          <div className="catalog-home-city">
             <CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="city" />
-            <Link href="/favorites" aria-label="Избранное" className="grid size-11 shrink-0 place-items-center rounded-full text-foreground hover:bg-muted">
-              <Heart size={21} strokeWidth={1.7} aria-hidden />
-            </Link>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <form action="/" method="GET" className="glass-panel flex h-12 min-w-0 flex-1 border border-border items-center gap-2 rounded-full px-3 focus-within:ring-2 focus-within:ring-primary">
+        <div className="catalog-home-search-group flex h-[46px] min-w-0 items-center overflow-visible rounded-full bg-muted">
+          <form action="/" method="GET" className="flex h-full min-w-0 flex-1 items-center gap-2 pl-3 pr-1">
             {Object.entries(preservedListQuery).filter(([key]) => key !== 'q').map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />)}
             {urlCategoryId ? <input type="hidden" name="categoryId" value={urlCategoryId} /> : null}
-            <button type="submit" aria-label="Найти объявления" className="grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground">
-              <Search size={21} strokeWidth={1.7} aria-hidden />
+            <button type="submit" aria-label="Найти объявления" className="grid size-10 shrink-0 place-items-center text-muted-foreground">
+              <Search size={21} strokeWidth={1.8} aria-hidden />
             </button>
-            <input key={currentQ} name="q" type="search" aria-label="Поиск объявлений" enterKeyHint="search" defaultValue={currentQ} placeholder="Что ищете?" className="h-12 min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground" />
+            <input key={currentQ} name="q" type="search" aria-label="Поиск объявлений" enterKeyHint="search" defaultValue={currentQ} placeholder="Поиск товаров, категорий, брендов" className="h-full w-full min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground" />
           </form>
+          <span className="catalog-home-search-divider h-[22px] w-px shrink-0 bg-border" aria-hidden="true" />
           <CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="filters" />
         </div>
       </header>
