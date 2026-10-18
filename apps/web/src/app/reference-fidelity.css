@@ -60,7 +60,7 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   .refresh-hero p { max-width:175px; font-size:11px; line-height:1.35; }
   .refresh-hero img { width:50%; height:100%; right:-3%; opacity:1; object-fit:contain; object-position:right center; }
   .refresh-hero-cta { margin-top:10px; min-height:37px; padding:8px 12px; font-size:11px; white-space:nowrap; }
-  .page-content-spacing { padding-bottom:120px; }
+  .page-content-spacing { padding-bottom:116px; }
   .listing-grid { gap:12px; }
   .refresh-listing-card .listing-card-copy { padding:10px 12px 12px; }
   /* Full-width floating dock with central brand, as in the approved reference. */
