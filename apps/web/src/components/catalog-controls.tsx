@@ -75,7 +75,7 @@ export function CatalogControls({ categories, cities, values, categoryId, trigge
         </form>
         {!isCity ? <div className="mt-6 space-y-3 border-t border-border pt-4">
           <div className="flex items-center justify-between"><span className="text-sm font-medium">Светлая / тёмная тема</span><ThemeQuickToggle /></div>
-          <p className="text-xs text-muted-foreground">Синий акцент: Маркет. Оранжевый: Бартер. Режим меняется над каталогом.</p>
+          <p className="text-xs text-muted-foreground">Покупка, обмен или оба варианта выбираются над каталогом. Оранжевым выделено активное действие.</p>
         </div> : null}
       </div>
     </dialog>

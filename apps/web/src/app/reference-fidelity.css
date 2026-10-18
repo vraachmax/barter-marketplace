@@ -264,3 +264,18 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background:rgba(29,26,28,.92); color:#faf7f5;
   }
 }
+
+/* Consistent assets across every available category, not only the five hero bubbles. */
+.home-category-tile:not([data-reference-bubble='true']) > span:first-child img {
+  object-fit:contain; padding:2px; background:transparent;
+}
+@media(min-width:768px) {
+  .home-category-tile:not([data-reference-bubble='true']) { border-radius:16px; }
+  .home-category-tile:not([data-reference-bubble='true']) > span:first-child {
+    background:radial-gradient(circle at 28% 18%,#fffaf5,#f6e8db);
+    width:82px; height:82px;
+  }
+  html[data-theme='dark'] .home-category-tile:not([data-reference-bubble='true']) > span:first-child {
+    background:radial-gradient(circle at 28% 18%,#3a302d,#272326);
+  }
+}

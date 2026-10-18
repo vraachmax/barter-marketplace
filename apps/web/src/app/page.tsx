@@ -347,12 +347,15 @@ async function renderHome(sp: HomeSearchParams) {
     { name: 'Для дома', slug: 'home' },
     { name: 'Детям', slug: 'kids' },
     { name: 'Работа', slug: 'job' },
+    { name: 'Спецтехника', slug: 'special_equipment' },
     { name: 'Услуги', slug: 'services' },
     { name: 'Все категории', slug: 'all' },
   ];
   const DESKTOP_CATEGORY_IMAGES: Record<string, string> = {
     electronics: 'smartphones', auto: 'cars', realty: 'real-estate',
-    clothes: 'clothing', hobby: 'gaming',
+    clothes: 'clothing', hobby: 'gaming', home: 'furniture',
+    kids: 'miscellaneous', job: 'services', services: 'services',
+    special_equipment: 'heavy-machinery',
   };
     const availableCategories = getAvailableCatalogCategories(CATS, categories);
 
@@ -461,7 +464,7 @@ async function renderHome(sp: HomeSearchParams) {
                   </>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`/categories/${cat.slug}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
+                  <img src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? 'miscellaneous'}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
                 )
               )}
               </span>
