@@ -15,7 +15,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
 import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
 import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
-import { LayoutGrid, Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   appliedMode?: CatalogMode;
