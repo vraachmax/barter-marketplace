@@ -947,3 +947,169 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     box-shadow:0 4px 20px rgba(0,0,0,.24);
   }
 }
+
+
+/* Listing reference puts the swipable hero before the product sheet.
+   display:contents reorders the existing, API-backed sections on mobile
+   without duplicating DOM or changing the desktop layout. */
+@media (max-width: 767px) {
+  .listing-detail { position: relative; }
+  .listing-detail .screen-header {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 35;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+  .listing-detail .screen-header > div {
+    min-height: 54px;
+    padding: 7px 16px;
+    justify-content: space-between;
+  }
+  .listing-detail .screen-header > div > div:nth-child(2) {
+    display: none;
+  }
+  .listing-detail .screen-header a,
+  .listing-detail .screen-header button {
+    pointer-events: auto;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,.94);
+    color: #17171b;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .listing-detail .listing-detail-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    padding: 0 0 calc(108px + env(safe-area-inset-bottom,0px));
+  }
+  .listing-detail .listing-detail-main > nav {
+    display: none;
+  }
+  .listing-detail .listing-detail-grid {
+    display: contents;
+  }
+  .listing-detail .listing-detail-media {
+    order: 1;
+    width: 100%;
+  }
+  .listing-detail .listing-gallery {
+    margin: 0;
+  }
+  .listing-detail .listing-gallery > div:first-child {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--bg-muted);
+  }
+  .listing-detail .listing-gallery [class*='aspect-'] {
+    aspect-ratio: 390/335;
+  }
+  .listing-detail .listing-gallery-thumbnails {
+    display: none;
+  }
+  .listing-detail .listing-gallery-count {
+    left: auto;
+    right: 16px;
+    bottom: 16px;
+    transform: none;
+    border-radius: 16px;
+    font-size: 13px;
+  }
+  .listing-detail .listing-detail-heading {
+    position: relative;
+    z-index: 2;
+    order: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: -26px 0 0;
+    padding: 18px 16px 9px;
+    border-radius: 26px 26px 0 0;
+    background: var(--bg-page);
+  }
+  .listing-detail .listing-detail-heading h1 {
+    order: 1;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -.4px;
+  }
+  .listing-detail .listing-detail-heading .detail-trade-label {
+    order: 2;
+    width: fit-content;
+    border-radius: 12px;
+    background: #ff5a0a;
+    color: #fff;
+  }
+  .listing-detail .listing-detail-heading > div { order: 3; }
+  .listing-detail .listing-detail-heading > p { order: 4; }
+  .listing-detail .listing-detail-seller {
+    order: 3;
+    padding: 0 16px;
+  }
+  .listing-detail .listing-detail-seller [data-slot='card'] {
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .listing-detail .listing-detail-seller [data-slot='card'] > div:first-child > p:first-child {
+    display: none;
+  }
+  .listing-detail .listing-detail-seller [data-slot='card'] > div:first-child > p:nth-child(2) {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+  }
+  .listing-detail .listing-detail-content {
+    order: 4;
+    padding: 8px 16px 24px;
+  }
+  .listing-detail .listing-primary-actions {
+    position: fixed;
+    z-index: 45;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px max(12px,env(safe-area-inset-bottom,0px));
+    background: linear-gradient(to top,var(--bg-page) 78%,transparent);
+  }
+  .listing-detail .listing-primary-actions > * {
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    border-radius: 26px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .listing-detail .listing-primary-actions > :first-child:not(:last-child) {
+    background: #e9edfc;
+    color: #16161b;
+  }
+  .listing-detail .listing-primary-actions > :last-child {
+    background: #ff5a0a;
+    color: white;
+  }
+  html[data-theme='dark'] .listing-detail .listing-primary-actions > :first-child:not(:last-child) {
+    background: #222a44;
+    color: #f6f6f8;
+  }
+}
