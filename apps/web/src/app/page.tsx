@@ -423,11 +423,11 @@ async function renderHome(sp: HomeSearchParams) {
         </div>
       </header>
 
-      <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-2 px-4 pt-4 md:px-6">
+      <div className="home-mode-row mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-1 px-4 pt-2 md:px-6 md:pt-5">
         <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
         <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : currentMode === 'both' ? 'Покупка и обмен в одной ленте' : 'Объявления с возможностью покупки'}</p>
       </div>
-      <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
+      <nav aria-label="Категории объявлений" className="home-categories mx-auto max-w-7xl px-4 py-3 md:px-6 md:py-5">
         {catRes.status === 'rejected' && !apiBackendDown ? (
           <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted p-4 text-foreground">
             <p className="text-sm">Категории не загрузились. Объявления доступны ниже.</p>
@@ -446,7 +446,7 @@ async function renderHome(sp: HomeSearchParams) {
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
               {cat.slug === 'all' ? <LayoutGrid size={40} strokeWidth={1.5} className="text-muted-foreground" aria-hidden /> : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={`/categories/${cat.slug}.webp`} alt="" width={56} height={56} className="size-14 rounded-xl object-contain md:size-16" />
+                <img src={`/categories/${cat.slug}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
               )}
               </span>
               <span className="category-title">{cat.name}</span>
@@ -492,7 +492,7 @@ async function renderHome(sp: HomeSearchParams) {
             {/* MOBILE-only: design-style section header — «Свежие предложения · 234 за сегодня · рядом» */}
             {mergedFeed.length > 0 ? (
               <div className="pt-1 pb-4 md:hidden">
-                <h2 className="m-0 text-[20px] font-bold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Свежие объявления'}</h2>
+                <h2 className="m-0 text-[20px] font-bold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">
                   {listings.total > 0 ? `${listings.total} ${pluralRu(listings.total, ['объявление', 'объявления', 'объявлений'])}` : 'Объявления'}
                   {currentCity ? ` · ${currentCity}` : ''}

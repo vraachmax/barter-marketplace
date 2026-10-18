@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import "./reference-fidelity.css";
 import { THEME_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import { ThemeSync } from "@/components/theme-sync";
 import { ModeThemeSync } from "@/components/mode-theme-sync";

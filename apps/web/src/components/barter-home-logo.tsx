@@ -79,13 +79,13 @@ export function BarterHomeLogo() {
     >
       <span className="inline-flex items-center gap-2">
         <Image
-          src="/brand/bubble-b-v2/mark.png"
+          src="/brand/bubble-b-v3.svg"
           alt=""
-          width={160}
-          height={192}
+          width={100}
+          height={112}
           sizes="(min-width: 768px) 36px, 32px"
           unoptimized
-          className="h-auto w-8 shrink-0 object-contain md:w-9"
+          className="h-9 w-8 shrink-0 object-contain md:h-10 md:w-9"
         />
         <span className="whitespace-nowrap text-[23px] font-extrabold tracking-tight text-foreground md:text-[26px]">БАРТЕР</span>
       </span>
