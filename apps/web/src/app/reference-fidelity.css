@@ -103,3 +103,36 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
 @media(prefers-reduced-motion:reduce){
   .catalog-mode-switch__link,.liquid-nav__add{transition:none;}
 }
+
+
+/* Shared screen language: the same radii, type scale, actions and contrast across routes. */
+header.glass-panel { background:var(--bg-page); -webkit-backdrop-filter:none; backdrop-filter:none; }
+.screen-header { background:var(--bg-page); -webkit-backdrop-filter:none; backdrop-filter:none; }
+.profile-identity { background:var(--bg-surface); border:1px solid var(--border-default); border-radius:20px; }
+.profile-identity-stats { border-radius:16px; background:var(--bg-muted); }
+.profile-menu > a, .profile-menu > button { min-height:60px; border-radius:16px; background:var(--bg-surface); border:1px solid var(--border-default); box-shadow:0 2px 10px rgba(26,30,45,.035); }
+html[data-theme='dark'] .profile-menu > a, html[data-theme='dark'] .profile-menu > button { box-shadow:none; }
+.publication-screen .publication-steps li[aria-current='step'] > span:first-child,
+.publication-screen .publication-steps li[data-complete='true'] > span:first-child { background:#ff5a0a; color:#fff; }
+.publication-screen .publication-form input:not([type='radio']):not([type='checkbox']):not([type='file']),
+.publication-screen .publication-form textarea, .publication-screen .publication-form select { border-radius:16px; }
+.publication-screen .trade-mode-field label:has(input:checked) { background:#ff5a0a; color:#fff; }
+.publication-screen .trade-mode-field label:has(input:checked) :is(span,svg) { color:inherit; }
+.publication-screen .publication-actions { border-top:1px solid var(--border-default); }
+.publication-screen .publication-preview-card { box-shadow:0 4px 20px rgba(24,24,48,.06); }
+.listing-detail .listing-detail-seller [data-slot='card'] { border-radius:20px; }
+.listing-detail .listing-detail-content > section { border-radius:18px; }
+.listing-detail .listing-primary-actions a, .listing-detail .listing-primary-actions button { border-radius:999px; }
+.message-bubble { font-size:15px; line-height:1.35; }
+.message-bubble[data-direction='incoming'] { border-radius:18px 18px 18px 5px; }
+.message-bubble[data-direction='outgoing'] { background:#e3ebfd; border-radius:18px 18px 5px 18px; }
+html[data-theme='dark'] .message-bubble[data-direction='outgoing'] { background:#233553; color:#f6f6f8; }
+.thread-header { background:var(--bg-page); min-height:60px; }
+.analytics-tabs button[aria-pressed='true'] { background:#ff5a0a; color:#fff; }
+@media(max-width:767px){
+  .profile-identity { margin-inline:0; }
+  .profile-menu { gap:8px; }
+  .listing-detail .listing-detail-content > section { border:0; }
+  .publication-actions { padding-bottom:calc(12px + env(safe-area-inset-bottom,0px)); }
+  .messages-screen { padding-bottom:calc(88px + var(--safe-area-bottom)); }
+}
