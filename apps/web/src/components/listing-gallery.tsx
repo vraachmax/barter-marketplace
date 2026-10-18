@@ -29,6 +29,7 @@ export default function ListingGallery({
   const [fullscreen, setFullscreen] = useState(false);
   const startXRef = useRef(0);
   const activePointerRef = useRef<number | null>(null);
+  const suppressGalleryClickUntilRef = useRef(0);
 
   const main = images[idx] ?? images[0];
   const n = images.length;
@@ -88,6 +89,9 @@ export default function ListingGallery({
 
       const dx = e.clientX - startXRef.current;
       setPullPx(0);
+      // On iOS a swipe can still dispatch a click after pointerup.
+      // Do not open the viewer when the user intended to change photos.
+      if (Math.abs(dx) > 10) suppressGalleryClickUntilRef.current = Date.now() + 400;
 
       if (n <= 1) return;
       if (dx > SWIPE_THRESHOLD_PX) prev();
@@ -114,7 +118,18 @@ export default function ListingGallery({
     <div className="listing-gallery space-y-3">
       <div className="relative overflow-hidden rounded-2xl border border-border bg-muted">
         <div
-          role="presentation"
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            if (Date.now() < suppressGalleryClickUntilRef.current) return;
+            setFullscreen(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setFullscreen(true);
+            }
+          }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -123,7 +138,7 @@ export default function ListingGallery({
  n > 1 ? 'cursor-grab active:cursor-grabbing' : ''
  }`}
           style={{ touchAction: 'pan-y' }}
-          aria-label={n > 1 ? 'Потяните фото влево или вправо, чтобы перелистать' : undefined}
+          aria-label={n > 1 ? 'Открыть фотографии на весь экран, проведите в сторону для листания' : 'Открыть фотографию на весь экран'}
         >
           <ListingPhoto
             src={resolveAssetUrl(main.url, apiBase)}
@@ -140,7 +155,7 @@ export default function ListingGallery({
         <button
           type="button"
           onClick={() => setFullscreen(true)}
-          className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
+          className="absolute right-3 top-3 z-10 hidden h-11 w-11 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 md:grid"
           aria-label="Открыть на весь экран"
         >
           <Search size={20} strokeWidth={1.8} className="text-white drop-shadow" aria-hidden />
