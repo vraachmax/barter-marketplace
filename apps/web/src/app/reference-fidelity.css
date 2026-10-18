@@ -211,3 +211,28 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
 @media(min-width:768px) {
   .refresh-hero.hidden { display:flex !important; }
 }
+
+
+/* Claude exact mobile arrangement: distinct muted pills, one active orange
+   pill, no redundant secondary copy in the compact app shell. */
+@media (max-width:767px) {
+  .home-mode-row > p { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .home-mode-row { padding-block:0; }
+  .home-mode-row .catalog-mode-switch.glass-panel {
+    max-width:none; width:100%; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px; border:0; padding:0; background:transparent; border-radius:0;
+  }
+  .home-mode-row .catalog-mode-switch__link {
+    min-height:36px; height:36px; background:var(--bg-muted); border-radius:20px;
+    font-size:14px; font-weight:500; color:var(--fg-default); padding:0 8px;
+  }
+  .home-mode-row .catalog-mode-switch__link[data-selected="true"] {
+    background:linear-gradient(180deg,#ff6a14,#ff5300); color:#fff; font-weight:600;
+    box-shadow:none;
+  }
+  .home-categories { padding-top:14px; padding-bottom:3px; }
+  .home-category-strip { padding-block:0; gap:2px; grid-auto-columns:76px; }
+  .home-category-tile { min-height:94px; gap:8px; font-size:12px; font-weight:500; }
+  .home-category-tile > span:first-child { width:70px; height:70px; }
+  .claude-mobile-hero { margin-top:14px; margin-bottom:3px; }
+}

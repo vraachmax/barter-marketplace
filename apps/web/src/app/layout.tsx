@@ -34,14 +34,14 @@ const SITE_DESC = 'Покупайте и продавайте легко: эле
 
 export const metadata: Metadata = {
   applicationName: 'БАРТЕР',
-  manifest: '/manifest.json?v=bubble-b-3',
+  manifest: '/manifest.json?v=claude-1',
   appleWebApp: { capable: true, title: 'БАРТЕР', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
-      { url: '/brand/bubble-b-v2/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/brand/bubble-b-v2/favicon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/brand/claude-pwa/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/brand/claude-pwa/favicon-48.png', sizes: '48x48', type: 'image/png' },
     ],
-    apple: [{ url: '/brand/bubble-b-v2/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/brand/claude-pwa/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   title: {
     default: SITE_NAME,

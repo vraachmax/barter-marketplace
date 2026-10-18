@@ -59,7 +59,8 @@ async function assertArtwork(bytes, fill, transparent = false, maskable = false)
     if (maskable) assert(Math.hypot(x + 0.5 - info.width / 2, y + 0.5 - info.height / 2) < info.width * 0.4,
       'all colored pixels stay inside the maskable safe circle');
   }
-  assert(blue > 0 && orange > 0, 'both complete color shapes are present');
+  assert(orange > 50, 'approved orange logomark must remain visible');
+  assert(blue === 0, 'old blue brand must not appear in iOS/PWA artwork');
   assert(left > 0 && top > 0 && right < info.width - 1 && bottom < info.height - 1, 'artwork never touches a cut edge');
   assert(Math.abs((bottom - top + 1) / info.height - fill) < 0.05, 'visible mark occupies the intended height');
   assert(Math.abs((left + right + 1) / 2 - info.width / 2) <= 1.5, 'horizontal centering');
@@ -679,13 +680,13 @@ async function scenario(browserType, width, theme) {
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
-    assert.equal(appleHref, '/brand/bubble-b-v2/apple-touch-icon.png');
+    assert.equal(appleHref, '/brand/claude-pwa/apple-touch-icon.png');
     const appleResponse = await page.request.get(baseURL + appleHref);
     assert.equal(appleResponse.status(), 200);
     const appleBytes = await appleResponse.body();
     assert.equal(appleBytes.readUInt32BE(16), 180);
     assert.equal(appleBytes.readUInt32BE(20), 180);
-    await assertArtwork(appleBytes, 0.84);
+    await assertArtwork(appleBytes, 0.65);
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const manifestResponse = await page.request.get(baseURL + manifestHref);
     assert.equal(manifestResponse.status(), 200);
@@ -700,15 +701,15 @@ async function scenario(browserType, width, theme) {
       const [w, h] = icon.sizes.split('x').map(Number);
       assert.equal(bytes.readUInt32BE(16), w);
       assert.equal(bytes.readUInt32BE(20), h);
-      await assertArtwork(bytes, icon.purpose === 'maskable' ? 0.60 : 0.84, false, icon.purpose === 'maskable');
+      await assertArtwork(bytes, icon.purpose === 'maskable' ? 0.52 : 0.65, false, icon.purpose === 'maskable');
     }
     assert.equal(await page.locator('link[href="/favicon.svg"]').count(), 0);
     for (const link of await page.locator('link[rel="icon"]').all()) {
       const href = await link.getAttribute('href');
-      assert(href.startsWith('/brand/bubble-b-v2/'), 'no stale icon candidate');
+      assert(href.startsWith('/brand/claude-pwa/'), 'no stale icon candidate');
       const res = await page.request.get(baseURL + href);
       assert.equal(res.status(), 200);
-      await assertArtwork(await res.body(), 0.84);
+      await assertArtwork(await res.body(), 0.7, true);
     }
     if (key.includes('440')) console.log('BARTER_APPLE_ICON_IMAGE ' + appleBytes.toString('base64'));
     checks.push('full mark bounds, alignment, larger Apple/PWA artwork and maskable safe circle');
