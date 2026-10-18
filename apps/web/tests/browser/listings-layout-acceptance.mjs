@@ -107,6 +107,10 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : [];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
   // A read already dispatched during page teardown can reach the isolated server.
+  else if (req.method === 'POST' && url.pathname === '/analytics/events') data = { ok: true };
+  else if (req.method === 'GET' && url.pathname === '/reviews/listing/fixture-detail/eligibility') data = { canReview: false, reason: 'no_chat' };
+  else if (req.method === 'GET' && url.pathname === '/presence/users/fixture-peer') data = { isOnline: false, lastSeenAt: null };
+  else if (req.method === 'GET' && url.pathname === '/users/fixture-peer/profile') data = { user: { id: 'fixture-peer', name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] };
   else if (req.method === 'GET' && url.pathname === '/favorites') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
@@ -189,6 +193,12 @@ async function installFixture(context, state, theme) {
       state.writes.push({ path, body });
       return json({ ...body, id: 'fixture-created', category, images: [] }, 201);
     }
+    // The detail acceptance opens genuine analytics, presence and review widgets.
+    // Only explicit fixture entities are permitted here; unknown calls still fail.
+    if (method === 'POST' && path === '/analytics/events') return json({ ok: true }, 201);
+    if (method === 'GET' && path === '/reviews/listing/fixture-detail/eligibility') return json({ canReview: false, reason: 'no_chat' });
+    if (method === 'GET' && path === '/presence/users/fixture-peer') return json({ isOnline: false, lastSeenAt: null });
+    if (method === 'GET' && path === '/users/fixture-peer/profile') return json({ user: { id: 'fixture-peer', name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] });
     if (method !== 'GET') {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
