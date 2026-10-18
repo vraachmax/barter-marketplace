@@ -81,7 +81,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className, sh
   const thumbClassName = useSquareThumb
     ? surface === 'home'
       ? 'relative w-full aspect-square overflow-hidden rounded-t-[18px] bg-muted'
-      : 'relative w-full aspect-[313/195] overflow-hidden rounded-t-[18px] bg-muted'
+      : 'relative w-full aspect-[313/195] overflow-hidden rounded-t-[18px] bg-muted md:aspect-square'
     : 'relative w-full overflow-hidden rounded-t-[18px] bg-muted';
 
   return (
@@ -127,7 +127,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className, sh
                   VIP
                 </Badge>
               ) : null}
-              {photoCount > 0 ? (
+              {photoCount > 1 ? (
                 <span className="pointer-events-none absolute bottom-1.5 right-1.5 z-[2] flex items-center gap-1 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
                   <Camera size={10} strokeWidth={2} aria-hidden />
                   {photoCount}
