@@ -137,7 +137,9 @@ const api = createServer((req, res) => {
             { id: 'detail-photo-1', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#f5eee8"/></svg>'), sortOrder: 0 },
             { id: 'detail-photo-2', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e4e8fc"/></svg>'), sortOrder: 1 },
           ], description: 'Описание тестового объявления.', owner: { id: 'fixture-peer', name: 'Продавец', email: null, phone: null } }
-      : { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
+      : { ...listing, description: 'Описание тестового объявления.', owner: url.pathname.startsWith('/listings/fixture-visual-')
+          ? { id: 'fixture-peer', name: 'Максим', email: null, phone: null }
+          : { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
   }
   else { serverUnexpected.push(req.method + ' ' + url.pathname); res.statusCode = 404; data = {}; }
   res.setHeader('Content-Type', 'application/json');
