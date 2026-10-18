@@ -41,7 +41,11 @@ export function LiquidBottomNav() {
           return <li key={item.href}><Link href={item.href} className="liquid-nav__link"
             aria-current={index === activeIndex ? 'page' : undefined} data-selected={index === activeIndex}
             draggable={false}>
-            <svg className="liquid-nav__icon" width="23" height="23" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d={item.icon} /></svg><span>{item.label}</span>
+            <svg className="liquid-nav__icon" width="23" height="23" viewBox="0 0 24 24"
+              fill={item.href === '/favorites' && index !== activeIndex ? 'none' : 'currentColor'}
+              stroke={item.href === '/favorites' && index !== activeIndex ? 'currentColor' : 'none'}
+              strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+              aria-hidden="true"><path d={item.icon} /></svg><span>{item.label}</span>
           </Link></li>;
         })}
       </ul>
