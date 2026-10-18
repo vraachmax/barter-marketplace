@@ -274,10 +274,10 @@ function FullscreenGallery({
       ref={dialogRef}
       aria-label="Просмотр фотографий"
       onCancel={(e) => { e.preventDefault(); onClose(); }}
-      className="fixed inset-0 z-[100] m-0 flex h-dvh max-h-none w-screen max-w-none flex-col border-0 bg-black/95 p-0 text-white backdrop:bg-black/80"
+      className="listing-fullscreen-dialog fixed inset-0 z-[100] m-0 flex h-dvh max-h-none w-screen max-w-none flex-col border-0 bg-black p-0 text-white backdrop:bg-black"
       onClick={onClose}
     >
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="listing-fullscreen-toolbar flex shrink-0 items-center justify-between px-4 py-3">
         <span className="text-sm font-semibold tabular-nums text-white/80">
           {idx + 1} / {n}
         </span>
@@ -324,7 +324,7 @@ function FullscreenGallery({
         ) : null}
       </div>
 
-      <div className="flex justify-center gap-2 overflow-x-auto px-4 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="listing-fullscreen-thumbnails flex shrink-0 justify-center gap-2 overflow-x-auto px-4 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {images.map((im, i) => (
           <button
             key={im.id}
