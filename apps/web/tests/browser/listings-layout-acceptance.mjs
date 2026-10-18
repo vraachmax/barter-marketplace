@@ -114,7 +114,9 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/favorites') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
-    appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20, total: 0, items: [], vipStrip: [],
+    appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20,
+    total: url.searchParams.get('sort') === 'expensive' ? 2 : 0,
+    items: url.searchParams.get('sort') === 'expensive' ? visualFixtureListings() : [], vipStrip: [],
   };
   else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)\/similar$/.test(url.pathname)) data = [];
   else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)$/.test(url.pathname)) {
@@ -146,6 +148,18 @@ function fixture(theme) {
     ],
     writes: [], unexpected: [], catalogReads: [], catalogSearchReads: [], failListings: false, guest: false,
   };
+}
+
+function visualFixtureListings() {
+  const sample = fixture('light').listings[1];
+  const blue = sample.images[0];
+  return [
+    { ...sample, id: 'fixture-visual-phone', status: 'ACTIVE', title: 'iPhone 15 Pro', category, priceRub: 95000,
+      saleEnabled: true, barterEnabled: true, isBarter: true, images: [blue] },
+    { ...sample, id: 'fixture-visual-laptop', status: 'ACTIVE', title: 'MacBook Air M2', category, priceRub: 100000,
+      saleEnabled: false, barterEnabled: true, isBarter: true,
+      images: [{ ...blue, id: 'fixture-laptop', url: blue.url.replace('dce6ef','c9b6fc') }] },
+  ];
 }
 
 const packages = [{ id: 'fixture-package', code: 'lift', title: 'Поднятие x2', description: 'Тестовый пакет',
@@ -217,7 +231,8 @@ async function installFixture(context, state, theme) {
       state.catalogSearchReads.push(url.searchParams.get('attrs'));
       return json({ appliedMode: url.searchParams.get('mode') || 'market',
         ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}),
-        page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
+        page: 1, limit: 20, total: url.searchParams.get('sort') === 'expensive' ? 2 : 0,
+        items: url.searchParams.get('sort') === 'expensive' ? visualFixtureListings() : [], vipStrip: [] });
     }
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
     if (path === '/wallet/packages') return json(packages);
@@ -655,6 +670,20 @@ async function scenario(browserType, width, theme) {
     checks.push('wallet populated and guest states keep the same content rails');
 
 
+    if (width === 390 || width === 440) {
+      await visit('/?mode=both&sort=expensive');
+      await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
+      const cards = page.locator('.refresh-listing-card > [role="link"]:first-child');
+      await expect(cards).toHaveCount(2);
+      const cardHeight = await cards.first().evaluate(el => el.getBoundingClientRect().height);
+      assert(Math.abs(cardHeight - 145) < 2,
+        'Claude v2 feed needs 145px mobile photo tiles, got ' + cardHeight);
+      const firstTitle = page.getByText('iPhone 15 Pro', { exact: true }).first();
+      const titleSize = await firstTitle.evaluate(el => getComputedStyle(el).fontSize);
+      assert.equal(titleSize, '13.5px', 'Claude v2 mobile product card title font');
+      await shot(page, key + '-reference-v2-product-feed');
+      checks.push('populated homepage with compact product tiles and real card interactions');
+    }
     await visit('/?mode=market&sort=new');
     // Exactly one visible hero at a time: the supplied Claude banner on mobile,
     // the existing proportional promotional layout on desktop.
