@@ -11,7 +11,7 @@ type Props = { barterEnabled?: boolean; saleEnabled?: boolean; listingId: string
 export default function ListingContactActions({ listingId, sellerId, active, phone, email, saleEnabled, barterEnabled }: Props) {
   const { user, ready } = useAuth();
   if (user?.id === sellerId) return (
-    <Button render={<Link href="/listings" />} size="lg" className="w-full">Управлять объявлением</Button>
+    <Button render={<Link href="/listings" />} size="lg" className="listing-owner-action w-full">Управлять объявлением</Button>
   );
   return (
     <div className="listing-contact-actions space-y-3">
