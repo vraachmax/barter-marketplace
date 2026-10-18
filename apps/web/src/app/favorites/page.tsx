@@ -124,7 +124,7 @@ function FavoritesContent({ onRetry }: { onRetry: () => void }) {
         </Card>
       ) : (
         <>
-          <p className="mb-4 text-sm text-muted-foreground">Сохранено: {state.items.length}</p>
+          <p className="sr-only mb-4 text-sm text-muted-foreground md:not-sr-only">Сохранено: {state.items.length}</p>
           <div className="grid grid-cols-2 items-start gap-x-3 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
             {state.items.map((item) => {
               const id = item.listing.id;
