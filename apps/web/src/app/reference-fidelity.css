@@ -203,3 +203,11 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     overflow-wrap:normal;
   }
 }
+
+/* Prevent the previous marketing banner from appearing below the exact Claude banner on mobile. */
+@media(max-width:767px) {
+  .refresh-hero.hidden { display:none !important; }
+}
+@media(min-width:768px) {
+  .refresh-hero.hidden { display:flex !important; }
+}
