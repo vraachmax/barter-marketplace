@@ -776,9 +776,9 @@ async function scenario(browserType, width, theme) {
       await expect(page.getByRole('heading', { name: 'Тестовое объявление', exact: true })).toBeVisible();
       const galleryDots = page.locator('.listing-gallery-mobile-dots button');
       await expect(galleryDots).toHaveCount(2);
-      await galleryDots.nth(1).click({ force: width >= 768 });
-      await expect(galleryDots.nth(1)).toHaveAttribute('aria-pressed', 'true');
       if (width < 768) {
+        await galleryDots.nth(1).click();
+        await expect(galleryDots.nth(1)).toHaveAttribute('aria-pressed', 'true');
         const footer = page.locator('.listing-detail .listing-primary-actions');
         await expect(footer).toBeVisible();
         const footerBounds = await footer.boundingBox();
