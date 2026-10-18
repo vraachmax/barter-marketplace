@@ -353,6 +353,8 @@ async function scenario(browserType, width, theme) {
       state.previewFavorites = [{ id: 'favorite-preview', listing: { ...source,
         images: [source.images[0], { ...source.images[0], id: 'second', url: source.images[0].url.replace('dce6ef', 'ff9944') }] } }];
       await visit('/favorites');
+      await expect(page.getByRole('heading', { name: 'Избранное', exact: true })).toBeVisible();
+      await expect(page.locator('.screen-header:visible')).toHaveCount(0);
       // Saved cards must have ONE tappable remove-heart, not a feed favorite
       // floating above an inaccessible remove button.
       await expect(page.locator('.listing-feed-favorite')).toHaveCount(0);
@@ -446,8 +448,10 @@ async function scenario(browserType, width, theme) {
       await page.keyboard.press('Escape');
       await expect(compose).not.toBeVisible();
       await expect(dock.getByRole('button', { name: 'Добавить объявление' })).toBeFocused();
+      await expect(dock.getByRole('link', { name: 'Избранное', exact: true }).locator('svg')).toHaveAttribute('fill', 'none');
       await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
       await expect(page).toHaveURL(/\/favorites$/);
+      await expect(dock.getByRole('link', { name: 'Избранное', exact: true }).locator('svg')).toHaveAttribute('fill', 'currentColor');
       await expect(dock.getByRole('link', { name: 'Избранное', exact: true })).toHaveAttribute('aria-current', 'page');
       await dock.getByRole('link', { name: 'Главная', exact: true }).click();
       await expect(page).toHaveURL(baseURL + '/');
