@@ -56,8 +56,8 @@ function getChatMode(listing: ChatSummary['listing']): 'barter' | 'market' {
 }
 
 const MODE_COLOR: Record<'barter' | 'market', string> = {
-  barter: '#b84617', // Бартер — оранжевый
-  market: '#006bd6', // Маркет — синий
+  barter: '#ff5a0a',
+  market: '#ff5a0a', // The reference uses one orange brand, not blue mode accents.
 };
 
 const MODE_LABEL: Record<'barter' | 'market', string> = {
@@ -881,7 +881,7 @@ export default function MessagesPage() {
                     const isPeer = m.senderId === selectedChat.peer?.id;
                     const mediaFull = resolveAssetUrl(m.mediaUrl);
                     // Пузырь «моих» сообщений красим в цвет режима чата:
-                    // оранжевый — если объявление барт., синий — если маркет.
+                    // брендовый оранжевый используется в обоих режимах.
                     return (
                       <div key={m.id} className={`flex ${isPeer ? 'justify-start' : 'justify-end'}`}>
                         <div
