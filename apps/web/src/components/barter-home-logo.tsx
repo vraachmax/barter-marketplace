@@ -73,7 +73,7 @@ export function BarterHomeLogo() {
     <Link
       href="/"
       onClick={onLogoClick}
-      className="inline-flex min-h-11 w-fit shrink-0 items-center"
+      className="inline-flex min-h-11 w-fit shrink-0 items-center pl-[3px]"
       title="Главная — сбросить фильтры и поиск"
       aria-label="Бартер — на главную"
     >
