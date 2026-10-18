@@ -38,9 +38,9 @@ export function ListingShareButton({ title }: { title: string }) {
   }
   return (
     <Dialog open={state === 'fallback'} onOpenChange={(open) => { if (!open) setState('idle'); }}>
-      <Button type="button" variant="ghost" size="sm" aria-label={state === 'copied' ? 'Ссылка скопирована' : 'Поделиться'} onClick={() => void share()}>
-        {state === 'copied' ? <Check size={18} aria-hidden /> : <Share2 size={18} aria-hidden />}
-        <span role="status">{state === 'copied' ? 'Ссылка скопирована' : 'Поделиться'}</span>
+      <Button type="button" variant="ghost" size="sm" className="listing-share-action" aria-label={state === 'copied' ? 'Ссылка скопирована' : 'Поделиться'} onClick={() => void share()}>
+        {state === 'copied' ? <Check size={19} aria-hidden /> : <Share2 size={19} aria-hidden />}
+        <span className="listing-share-label" role="status">{state === 'copied' ? 'Ссылка скопирована' : 'Поделиться'}</span>
       </Button>
       <DialogContent>
         <DialogHeader><DialogTitle>Ссылка на объявление</DialogTitle><DialogDescription>Не удалось скопировать автоматически. Выделите и скопируйте ссылку.</DialogDescription></DialogHeader>
