@@ -248,3 +248,19 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .refresh-listing-card .listing-card-copy {padding:10px 12px 13px;gap:3px}
   .refresh-listing-card .listing-card-copy .listing-card-location {display:none}
 }
+
+/* Prevent Russian bubble labels from wrapping under 70px thumbnails. */
+@media(max-width:767px) {
+  .home-category-tile .category-title {white-space:nowrap;font-size:12px;letter-spacing:-.2px;}
+}
+@media(min-width:768px) {
+  .home-category-tile[data-reference-bubble='true'] .category-title {
+    display:block;width:100%;margin-top:auto;
+    padding:9px 12px 11px;line-height:1.15;font-weight:700;
+    background:rgba(255,250,246,.94);
+    border-radius:0 0 16px 16px;
+  }
+  html[data-theme='dark'] .home-category-tile[data-reference-bubble='true'] .category-title {
+    background:rgba(29,26,28,.92); color:#faf7f5;
+  }
+}

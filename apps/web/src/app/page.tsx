@@ -339,7 +339,7 @@ async function renderHome(sp: HomeSearchParams) {
 
   // Category illustrations are decorative; destinations always come from API slugs.
   const CATS = [
-    { name: 'Электроника', slug: 'electronics' },
+    { name: 'Техника', slug: 'electronics' },
     { name: 'Авто', slug: 'auto' },
     { name: 'Недвижимость', slug: 'realty' },
     { name: 'Одежда', slug: 'clothes' },
