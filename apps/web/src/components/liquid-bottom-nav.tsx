@@ -42,8 +42,8 @@ export function LiquidBottomNav() {
             aria-current={index === activeIndex ? 'page' : undefined} data-selected={index === activeIndex}
             draggable={false}>
             <svg className="liquid-nav__icon" width="23" height="23" viewBox="0 0 24 24"
-              fill={item.href === '/' ? 'currentColor' : 'none'}
-              stroke={item.href === '/' ? 'none' : 'currentColor'}
+              fill={item.href === '/' || (item.href === '/favorites' && index === activeIndex) ? 'currentColor' : 'none'}
+              stroke={item.href === '/' || (item.href === '/favorites' && index === activeIndex) ? 'none' : 'currentColor'}
               strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
               aria-hidden="true"><path d={item.icon} /></svg><span>{item.label}</span>
           </Link></li>;
