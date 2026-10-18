@@ -51,6 +51,8 @@ type Props = {
    */
   thumbHeight?: number;
   className?: string;
+  /** Favorites manages removal with its own single action; don't stack two hearts. */
+  showFavoriteAction?: boolean;
 };
 
 /**
@@ -66,7 +68,7 @@ type Props = {
  *  │  12/400  город · км  │
  *  └──────────────────────┘
  */
-export function ListingCardComponent({ data, apiBase, thumbHeight, className }: Props) {
+export function ListingCardComponent({ data, apiBase, thumbHeight, className, showFavoriteAction = true }: Props) {
   const router = useRouter();
   const openListing = () => { void trackBehaviorEvents([{ type: 'click_item', listingId: data.id }]); router.push(`/listing/${data.id}`); };
   const promoRingClass = promoRing(data.promoType);
@@ -125,7 +127,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className }: 
                   {photoCount}
                 </span>
               ) : null}
-              <FeedFavoriteAction listingId={data.id} />
+              {showFavoriteAction ? <FeedFavoriteAction listingId={data.id} /> : null}
             </>
           }
         />
