@@ -681,6 +681,11 @@ async function scenario(browserType, width, theme) {
       const firstTitle = page.getByText('iPhone 15 Pro', { exact: true }).first();
       const titleSize = await firstTitle.evaluate(el => getComputedStyle(el).fontSize);
       assert.equal(titleSize, '13.5px', 'Claude v2 mobile product card title font');
+      for (const fav of await page.locator('.refresh-listing-card .listing-feed-favorite').all()) {
+        const hit = await fav.boundingBox();
+        assert(hit && hit.width >= 44 && hit.height >= 44,
+          'visually compact favorite hearts must retain 44px hit targets');
+      }
       await shot(page, key + '-reference-v2-product-feed');
       checks.push('populated homepage with compact product tiles and real card interactions');
     }
