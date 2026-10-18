@@ -86,6 +86,9 @@ const categorySchema = { version: 1, optionsQueryVersion: 1, fields: [
 ] };
 const conditionOptions = [{ fieldKey: 'condition', value: 'used_good', label: 'Б/у — хорошее' }];
 const autoCategory = { id: 'fixture-auto', title: 'Авто', slug: 'auto', parentId: null };
+const realtyCategory = { id: 'fixture-realty', title: 'Недвижимость', slug: 'realty', parentId: null };
+const clothesCategory = { id: 'fixture-clothes', title: 'Одежда', slug: 'clothes', parentId: null };
+const referenceCategories = [category, autoCategory, realtyCategory, clothesCategory];
 const autoSchema = { version: 2, optionsQueryVersion: 1, fields: [
   { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: null },
   { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_make' },
@@ -103,7 +106,7 @@ assert(!process.env.NEXT_PUBLIC_API_URL, 'Run this suite without a public API ov
 const api = createServer((req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1:3001');
   let data;
-  if (req.method === 'GET' && url.pathname === '/categories') data = [category];
+  if (req.method === 'GET' && url.pathname === '/categories') data = referenceCategories;
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : [];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
   // A read already dispatched during page teardown can reach the isolated server.
@@ -223,7 +226,7 @@ async function installFixture(context, state, theme) {
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
     if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1, ...(state.oldWishesApi ? {} : { structuredWishesVersion: 1 }) });
-    if (path === '/categories') return json([category, autoCategory]);
+    if (path === '/categories') return json(referenceCategories);
     if (path === '/categories/fixture-auto/attribute-schema') return state.failCatalog ? json({}, 503) : json(autoSchema);
     if (path === '/categories/fixture-auto/attribute-options') return json(autoOptions.filter(option =>
       option.fieldKey === url.searchParams.get('fieldKey') && (!option.parentValue || option.parentValue === url.searchParams.get('parentValue'))));
