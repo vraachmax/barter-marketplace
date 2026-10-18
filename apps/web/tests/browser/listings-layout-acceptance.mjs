@@ -383,6 +383,7 @@ async function scenario(browserType, width, theme) {
       // floating above an inaccessible remove button.
       await expect(page.locator('.listing-feed-favorite')).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Удалить из избранного:/ })).toHaveCount(1);
+      await shot(page, key + '-favorites-reference');
       const thumb = page.locator('.photo-hold-preview').first();
       await expect(thumb).toBeVisible();
       assert.equal(await thumb.evaluate(el => el.closest('a')), null, 'hold surface is not a native link preview target');
@@ -468,7 +469,7 @@ async function scenario(browserType, width, theme) {
         const css = getComputedStyle(document.documentElement);
         return ['--bg-page', '--bg-surface', '--bg-muted', '--fg-default', '--fg-muted', '--border-default'].map(key => css.getPropertyValue(key).trim());
       });
-      if (theme === 'dark') assert.deepEqual(palette, ['#0e0e10', '#1a1a1d', '#1e1e22', '#f6f6f8', '#9a9aa6', '#2a2a2f']);
+      if (theme === 'dark') assert.deepEqual(palette, ['#0d0e0f', '#151618', '#202227', '#f6f7fa', '#a9b4c6', '#2a2b30']);
       await dock.getByRole('button', { name: 'Добавить объявление' }).click();
       const compose = page.getByRole('dialog', { name: 'Новое объявление' });
       await expect(compose).toBeVisible();
