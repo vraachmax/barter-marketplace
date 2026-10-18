@@ -95,7 +95,7 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   html[data-theme='dark'] .liquid-nav__add { background:linear-gradient(155deg,#ff851f,#ff4d00); }
 }
 @media(min-width:768px) {
-  .home-category-strip { grid-auto-columns:minmax(112px,1fr); gap:14px; }
+  .home-category-strip { grid-auto-columns:132px; gap:14px; justify-content:start; }
   .home-category-tile { min-height:122px; padding:12px; background:var(--bg-muted); font-size:13px; }
   .home-category-tile > span:first-child { width:80px; height:80px; }
   .refresh-hero { max-width:1232px; min-height:248px; margin:0 auto 28px; }
