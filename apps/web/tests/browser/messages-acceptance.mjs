@@ -141,21 +141,28 @@ async function scenario(type, width, theme) {
         document.documentElement.style.setProperty('--safe-area-bottom', '34px');
       });
       const dock = page.locator('.magic-nav');
-      const dockY = (await dock.boundingBox()).y;
+      // The reference chat is full-screen; only the chat list owns the dock.
+      await expect(dock).toBeHidden();
       await page.getByRole('button', { name: 'Назад к списку' }).click();
+      await expect(dock).toBeVisible();
+      const dockY = (await dock.boundingBox()).y;
       const title = page.getByRole('heading', { name: 'Сообщения', exact: true }).last();
-      assert((await title.boundingBox()).y >= 59, 'chat title clears the system area');
+      assert((await title.boundingBox()).y >= 59, 'chat list title clears the system area');
       assert.equal(await page.evaluate(() => window.scrollY), 0);
       await choose('Анна');
-      assert(Math.abs((await dock.boundingBox()).y - dockY) < 1, 'dock stays anchored across list/thread');
+      await expect(dock).toBeHidden();
       assert.equal(await page.evaluate(() => window.scrollY), 0, 'history scroll does not move the document');
       assert.equal(await page.locator('body').evaluate(el => Math.round(el.getBoundingClientRect().height)), 956);
       await page.screenshot({ path: join(output, key + '-safe-area.png') });
+      await page.getByRole('button', { name: 'Назад к списку' }).click();
+      await expect(dock).toBeVisible();
+      assert(Math.abs((await dock.boundingBox()).y - dockY) < 1, 'dock stays anchored when returning to chat list');
+      await choose('Анна');
       await page.evaluate(() => {
         document.documentElement.style.removeProperty('--safe-area-top');
         document.documentElement.style.removeProperty('--safe-area-bottom');
       });
-      checks.push('safe-area title, full-height body and stable dock across thread transitions');
+      checks.push('full-screen chat, nav in list, safe-area title and stable list dock');
     }
     await input.fill('Черновик Анне');
     await choose('Борис');
