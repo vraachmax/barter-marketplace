@@ -643,12 +643,12 @@ async function scenario(browserType, width, theme) {
       await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
       checks.push('opaque logo header, safe area plus 12px, and unobstructed branding');
     }
-    const markBox = await logo.locator('img').boundingBox();
-    const wordBox = await logo.locator('span').last().boundingBox();
+    const markBox = await brandImages[0].boundingBox();
+    const wordBox = await brandImages[1].boundingBox();
     assert(markBox.x + markBox.width <= wordBox.x, 'wordmark must not overlap the mark');
     assert(Math.abs(markBox.y + markBox.height / 2 - wordBox.y - wordBox.height / 2) < 1,
       'mark and name share a vertical center');
-    const markResponse = await page.request.get(baseURL + '/brand/bubble-b-v2/mark.png');
+    const markResponse = await page.request.get(baseURL + '/brand/claude-mark.png');
     assert.equal(markResponse.status(), 200);
     await assertArtwork(await markResponse.body(), 0.94, true);
     const apple = page.locator('link[rel="apple-touch-icon"]');
