@@ -343,13 +343,13 @@ async function renderHome(sp: HomeSearchParams) {
     { name: 'Авто', slug: 'auto' },
     { name: 'Недвижимость', slug: 'realty' },
     { name: 'Одежда', slug: 'clothes' },
+    { name: 'Другое', slug: 'all' },
     { name: 'Игры и хобби', slug: 'hobby' },
     { name: 'Для дома', slug: 'home' },
     { name: 'Детям', slug: 'kids' },
     { name: 'Работа', slug: 'job' },
     { name: 'Спецтехника', slug: 'special_equipment' },
     { name: 'Услуги', slug: 'services' },
-    { name: 'Все категории', slug: 'all' },
   ];
   const DESKTOP_CATEGORY_IMAGES: Record<string, string> = {
     electronics: 'smartphones', auto: 'cars', realty: 'real-estate',
@@ -444,21 +444,22 @@ async function renderHome(sp: HomeSearchParams) {
             <Link
               key={cat.slug}
               scroll={false}
-              href={{ pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
+              href={cat.slug === 'all' ? '/search' : { pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
               aria-current={urlCategoryId === cat.categoryId ? 'true' : undefined}
               className="home-category-tile"
-              data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug)}
+              data-mobile-secondary={!(['electronics', 'auto', 'realty', 'clothes', 'all'].includes(cat.slug))}
+              data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug)}
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
-              {cat.slug === 'all' ? <LayoutGrid size={40} strokeWidth={1.5} className="text-muted-foreground" aria-hidden /> : (
-                ['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug) ? (
+              {['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug) ? (
+                true ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug}-light.jpg`} width={124} height={124} alt="" />
+                    <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-light.jpg`} width={124} height={124} alt="" />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug}-dark.jpg`} width={124} height={124} alt="" />
+                    <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-dark.jpg`} width={124} height={124} alt="" />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug]}.webp`} width={240} height={240} alt="" />
+                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? "miscellaneous"}.webp`} width={240} height={240} alt="" />
                   </>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
