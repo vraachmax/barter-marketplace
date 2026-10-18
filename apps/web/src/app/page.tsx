@@ -354,7 +354,7 @@ async function renderHome(sp: HomeSearchParams) {
   const DESKTOP_CATEGORY_IMAGES: Record<string, string> = {
     electronics: 'smartphones', auto: 'cars', realty: 'real-estate',
     clothes: 'clothing', hobby: 'gaming', home: 'furniture',
-    kids: 'miscellaneous', job: 'services', services: 'services',
+    kids: 'miscellaneous', job: 'laptops', services: 'services',
     special_equipment: 'heavy-machinery',
   };
     const availableCategories = getAvailableCatalogCategories(CATS, categories);
