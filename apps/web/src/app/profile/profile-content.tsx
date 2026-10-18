@@ -535,6 +535,12 @@ export function ProfileContent() {
                   <span className="flex-1 text-sm font-semibold text-foreground">Мои объявления</span>
                   <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
                 </Link>
+                <Link href="/profile/analytics" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring">
+                  <BarChart3 size={24} strokeWidth={1.6} aria-hidden />
+                  <span className="flex-1 text-sm font-semibold">Аналитика</span>
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">Новое</span>
+                  <ChevronRight size={20} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
+                </Link>
                 <Link href="/favorites" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left hover:bg-muted/50"><Heart size={24} aria-hidden /><span className="flex-1 text-sm font-semibold">Избранное</span><ChevronRight size={20} aria-hidden /></Link>
 
                 <Link
@@ -598,7 +604,7 @@ export function ProfileContent() {
               </div>
               <BarterDashProfileCard className="mt-5" />
 
-              <Link href="/profile/analytics" className="analytics-profile-entry"><Eye size={26} aria-hidden /><span><strong>Аналитика</strong><span>Просмотры, сохранения и обращения</span></span><ChevronRight size={19} aria-hidden /></Link>
+
                 </>
               )}
             </div>
