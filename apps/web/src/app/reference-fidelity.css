@@ -1555,3 +1555,14 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     display: none;
   }
 }
+
+
+/* The feed may crop photos, but the primary product image must be fully
+   visible, exactly like Claude's plain hero. Override the legacy !important
+   thumbnail crop only on the detail page, never on the feed cards. */
+@media (max-width: 767px) {
+  .listing-detail .listing-detail-media .listing-thumb-img {
+    object-fit: contain !important;
+    filter: none !important;
+  }
+}
