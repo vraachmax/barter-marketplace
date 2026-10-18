@@ -981,7 +981,7 @@ async function captureReferenceViewport(theme) {
         search: '.catalog-home-search-group',
         modes: '.home-mode-row .catalog-mode-switch',
         categories: '.home-category-strip',
-        firstCategory: '.home-category-tile:visible',
+        firstCategory: '.home-category-tile',
         banner: '.claude-mobile-hero',
         section: 'main#feed section h2',
         grid: '.listing-grid',
