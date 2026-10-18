@@ -1,3 +1,15 @@
+## 2026-10-18: release CI follow-up
+
+251d45b: 6/6 account and 6/6 message browser scenarios passed. Catalog 8/12
+passed; four publication scenarios hit an ambiguous text locator introduced by
+live preview, and two late favorites reads reached the isolated fixture server.
+Scoped confirmation text to .publication-form and added the known read-only
+favorites fixture; no production guards or mutation assertions removed.
+PWA assets are now committed under bubble-b-v2, generated from the existing
+artwork; all seven sizing/alpha/maskable assertions pass. Web/API builds and
+87 web + 4 analytics tests pass. Full new orange logo still requires clean artwork.
+Deployment remains pending successful rerun; prior visual-browser restriction remains.
+
 ## 2026-10-18: mobile release preparation, not yet deployed
 
 Owner now prioritizes deploying mobile. Restored checkout from remote a3d0204 after

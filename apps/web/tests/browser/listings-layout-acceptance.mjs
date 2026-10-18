@@ -86,6 +86,8 @@ const api = createServer((req, res) => {
   if (req.method === 'GET' && url.pathname === '/categories') data = [category];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : [];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
+  // A read already dispatched during page teardown can reach the isolated server.
+  else if (req.method === 'GET' && url.pathname === '/favorites') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20, total: 0, items: [], vipStrip: [],
@@ -757,7 +759,7 @@ async function scenario(browserType, width, theme) {
       await newWish.getByRole('combobox', { name: 'Поколение', exact: true }).selectOption('bmw/3/gen-5');
       await page.getByPlaceholder('Состояние, комплект, дефекты, история покупки, способ передачи…').fill('Телефон в хорошем состоянии, полный комплект. Рассмотрю обмен на фотоаппарат.');
       for (let step = 2; step <= 4; step++) await page.getByRole('button', { name: 'Далее', exact: true }).click();
-      await expect(page.getByText('Только обмен', { exact: true })).toBeVisible();
+      await expect(page.locator('.publication-form').getByText('Только обмен', { exact: true })).toBeVisible();
       await expect(page.getByText(/Оценка:.*18/)).toBeVisible();
       await expect(page.getByRole('region', { name: 'Условия обмена' })).toContainText('Марка: BMW');
       await expect(page.getByRole('region', { name: 'Условия обмена' })).toContainText('Поколение: V (семейство E90)');
