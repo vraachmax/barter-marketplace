@@ -15,7 +15,7 @@ import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
 import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
 import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
-import { Heart, LayoutGrid, Search, Sparkles } from 'lucide-react';
+import { LayoutGrid, Search, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   appliedMode?: CatalogMode;
@@ -339,18 +339,25 @@ async function renderHome(sp: HomeSearchParams) {
 
   // Category illustrations are decorative; destinations always come from API slugs.
   const CATS = [
-    { name: 'Электроника', slug: 'electronics' },
-    { name: 'Для дома', slug: 'home' },
-    { name: 'Одежда', slug: 'clothes' },
-    { name: 'Детям', slug: 'kids' },
+    { name: 'Техника', slug: 'electronics' },
     { name: 'Авто', slug: 'auto' },
-    { name: 'Хобби', slug: 'hobby' },
     { name: 'Недвижимость', slug: 'realty' },
+    { name: 'Одежда', slug: 'clothes' },
+    { name: 'Игры и хобби', slug: 'hobby' },
+    { name: 'Для дома', slug: 'home' },
+    { name: 'Детям', slug: 'kids' },
     { name: 'Работа', slug: 'job' },
+    { name: 'Спецтехника', slug: 'special_equipment' },
     { name: 'Услуги', slug: 'services' },
     { name: 'Все категории', slug: 'all' },
   ];
-  const availableCategories = getAvailableCatalogCategories(CATS, categories);
+  const DESKTOP_CATEGORY_IMAGES: Record<string, string> = {
+    electronics: 'smartphones', auto: 'cars', realty: 'real-estate',
+    clothes: 'clothing', hobby: 'gaming', home: 'furniture',
+    kids: 'miscellaneous', job: 'services', services: 'services',
+    special_equipment: 'heavy-machinery',
+  };
+    const availableCategories = getAvailableCatalogCategories(CATS, categories);
 
   // Keep requested filters and sorting authoritative. Recommendations must
   // have a separate surface, rather than being injected into search results.
@@ -403,31 +410,29 @@ async function renderHome(sp: HomeSearchParams) {
       <header className="catalog-mobile-header sticky top-0 z-40 px-4 pb-3 md:hidden">
         <div className="mb-3 flex min-h-11 items-center justify-between gap-2">
           <BarterHomeLogo />
-          <div className="flex min-w-0 items-center gap-1">
+          <div className="catalog-home-city">
             <CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="city" />
-            <Link href="/favorites" aria-label="Избранное" className="grid size-11 shrink-0 place-items-center rounded-full text-foreground hover:bg-muted">
-              <Heart size={21} strokeWidth={1.7} aria-hidden />
-            </Link>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <form action="/" method="GET" className="glass-panel flex h-12 min-w-0 flex-1 border border-border items-center gap-2 rounded-full px-3 focus-within:ring-2 focus-within:ring-primary">
+        <div className="catalog-home-search-group flex h-[46px] min-w-0 items-center overflow-visible rounded-full bg-muted">
+          <form action="/" method="GET" className="flex h-full min-w-0 flex-1 items-center gap-2 pl-3 pr-1">
             {Object.entries(preservedListQuery).filter(([key]) => key !== 'q').map(([key, value]) => <input key={key} type="hidden" name={key} value={value} />)}
             {urlCategoryId ? <input type="hidden" name="categoryId" value={urlCategoryId} /> : null}
-            <button type="submit" aria-label="Найти объявления" className="grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground">
-              <Search size={21} strokeWidth={1.7} aria-hidden />
+            <button type="submit" aria-label="Найти объявления" className="grid size-10 shrink-0 place-items-center text-muted-foreground">
+              <Search size={21} strokeWidth={1.8} aria-hidden />
             </button>
-            <input key={currentQ} name="q" type="search" aria-label="Поиск объявлений" enterKeyHint="search" defaultValue={currentQ} placeholder="Что ищете?" className="h-12 min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground" />
+            <input key={currentQ} name="q" type="search" aria-label="Поиск объявлений" enterKeyHint="search" defaultValue={currentQ} placeholder="Поиск товаров, категорий, брендов" className="h-full w-full min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground" />
           </form>
+          <span className="catalog-home-search-divider h-[22px] w-px shrink-0 bg-border" aria-hidden="true" />
           <CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="filters" />
         </div>
       </header>
 
-      <div className="mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-2 px-4 pt-4 md:px-6">
+      <div className="home-mode-row mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-1 px-4 pt-2 md:px-6 md:pt-5">
         <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
         <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : currentMode === 'both' ? 'Покупка и обмен в одной ленте' : 'Объявления с возможностью покупки'}</p>
       </div>
-      <nav aria-label="Категории объявлений" className="mx-auto max-w-7xl px-4 py-5 md:px-6 md:py-6">
+      <nav aria-label="Категории объявлений" className="home-categories mx-auto max-w-7xl px-4 py-3 md:px-6 md:py-5">
         {catRes.status === 'rejected' && !apiBackendDown ? (
           <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted p-4 text-foreground">
             <p className="text-sm">Категории не загрузились. Объявления доступны ниже.</p>
@@ -442,11 +447,23 @@ async function renderHome(sp: HomeSearchParams) {
               href={{ pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
               aria-current={urlCategoryId === cat.categoryId ? 'true' : undefined}
               className="home-category-tile"
+              data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug)}
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
               {cat.slug === 'all' ? <LayoutGrid size={40} strokeWidth={1.5} className="text-muted-foreground" aria-hidden /> : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={`/categories/${cat.slug}.webp`} alt="" width={56} height={56} className="size-14 rounded-xl object-contain md:size-16" />
+                ['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug) ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug}-light.jpg`} width={124} height={124} alt="" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug}-dark.jpg`} width={124} height={124} alt="" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug]}.webp`} width={240} height={240} alt="" />
+                  </>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? 'miscellaneous'}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
+                )
               )}
               </span>
               <span className="category-title">{cat.name}</span>
@@ -458,12 +475,21 @@ async function renderHome(sp: HomeSearchParams) {
       {/* ===== MAIN CONTENT =====
           Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
           muted на десктопе ради контраста карточек. */}
-      {!currentQ && !urlCategoryId ? <section className="refresh-hero" aria-label="Возможности БАРТЕРА">
+      {!currentQ && !urlCategoryId ? <>
+        <Link href="#feed" className="claude-mobile-hero md:hidden" aria-label="Смотреть объявления — Меняй. Покупай. Открывай новое.">
+          {/* The original approved Claude imagery already contains text and CTA: do not double-render it. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/visual-refresh/claude-banner-light.jpg" className="claude-banner-light" alt="Меняй. Покупай. Открывай новое. Тысячи товаров. Реальные люди." width={643} height={320} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/visual-refresh/claude-banner-dark.jpg" className="claude-banner-dark" alt="" width={652} height={319} />
+        </Link>
+        <section className="refresh-hero hidden md:flex" aria-label="Возможности БАРТЕРА">
         <div><h1>Меняй. Покупай.<br />Открывай новое.</h1><p>Нужные вещи. Новые возможности.<br />Находите своё на БАРТЕРЕ.</p><Link href="#feed" className="refresh-hero-cta">Смотреть объявления <span aria-hidden>→</span></Link></div>
         {/* Marketing illustration, never a seller photo. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/visual-refresh/laptop.webp" alt="" width={500} height={500} />
-      </section> : null}
+      </section>
+      </> : null}
       <main id="feed" className="relative z-20 bg-background">
         <div className="mx-auto max-w-7xl page-content-spacing px-4 pt-1 md:px-6">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />
@@ -492,7 +518,7 @@ async function renderHome(sp: HomeSearchParams) {
             {/* MOBILE-only: design-style section header — «Свежие предложения · 234 за сегодня · рядом» */}
             {mergedFeed.length > 0 ? (
               <div className="pt-1 pb-4 md:hidden">
-                <h2 className="m-0 text-[20px] font-bold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Свежие объявления'}</h2>
+                <h2 className="m-0 text-[20px] font-bold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">
                   {listings.total > 0 ? `${listings.total} ${pluralRu(listings.total, ['объявление', 'объявления', 'объявлений'])}` : 'Объявления'}
                   {currentCity ? ` · ${currentCity}` : ''}

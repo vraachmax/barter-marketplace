@@ -745,24 +745,23 @@ function FiltersSheet(props: {
       <div
         className="w-full"
       >
-        <div className="glass-panel sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <div className="inline-flex items-center gap-2">
-            <Filter size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
-            <h2 id={titleId} className="text-lg font-semibold text-foreground">Фильтры</h2>
-          </div>
+        <div className="catalog-filter-header sticky top-0 z-10 grid grid-cols-[82px_minmax(0,1fr)_82px] items-center gap-0 bg-background px-4 py-2">
           <button
             type="button"
             onClick={onClose}
-            className="grid size-11 shrink-0 place-items-center rounded-full transition hover:bg-muted"
+            className="grid size-11 place-items-center rounded-full text-foreground transition hover:bg-muted"
             aria-label="Закрыть"
           >
-            <X size={18} strokeWidth={1.8} className="shrink-0" aria-hidden />
+            <X size={24} strokeWidth={1.8} aria-hidden />
           </button>
+          <h2 id={titleId} className="text-center text-[19px] font-extrabold text-foreground">Фильтры</h2>
+          <button type="button" onClick={onReset}
+            className="min-h-11 justify-self-end text-[15px] font-semibold text-[#ff5a0a]">Сбросить</button>
         </div>
 
-        <div className="space-y-6 px-4 py-5">
+        <div className="catalog-filter-fields flex flex-col gap-5 px-4 py-5">
           {/* Category */}
-          <div>
+          <div className="catalog-filter-category">
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Категория
             </p>
@@ -810,7 +809,7 @@ function FiltersSheet(props: {
             </div>
           </div>
 
-          {activeCatalog && activeCatalog.fields.length > 0 ? <div className="space-y-3">
+          {activeCatalog && activeCatalog.fields.length > 0 ? <div className="catalog-filter-attributes space-y-3">
             <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Характеристики</p>
             {activeCatalog.fields.filter(field => !field.parentKey || draftAttrs[field.parentKey]).map(field => <label key={field.key} className="block text-sm font-medium text-foreground">
               {field.label}
@@ -827,7 +826,7 @@ function FiltersSheet(props: {
           </div> : null}
 
           {/* Sort */}
-          <div>
+          <div className="catalog-filter-sort">
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Сортировка
             </p>
@@ -866,7 +865,7 @@ function FiltersSheet(props: {
           </div>
 
           {/* Price */}
-          <div>
+          <div className="catalog-filter-price">
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Цена, ₽
             </p>
@@ -893,13 +892,6 @@ function FiltersSheet(props: {
         <div className="glass-panel sticky bottom-0 space-y-3 border-t border-border px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {invalidRange ? <p id={`${titleId}-price-error`} role="alert" className="text-sm text-destructive">Цена «от» не должна быть больше цены «до».</p> : null}
           <div className="flex flex-col gap-2 sm:flex-row">
-          <Button variant="secondary" size="lg"
-            type="button"
-            onClick={onReset}
-            className="w-full sm:w-auto"
-          >
-            Сбросить
-          </Button>
           <Button size="lg" disabled={invalidRange}
             type="button"
             onClick={() =>

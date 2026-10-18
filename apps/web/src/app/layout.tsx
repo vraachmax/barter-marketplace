@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
+import { Onest } from "next/font/google";
 import "./globals.css";
+import "./reference-fidelity.css";
 import { THEME_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import { ThemeSync } from "@/components/theme-sync";
 import { ModeThemeSync } from "@/components/mode-theme-sync";
@@ -11,36 +12,28 @@ import { LiquidBottomNav } from "@/components/liquid-bottom-nav";
 import { PresenceProvider } from "@/components/presence-provider";
 import { AuthProvider } from "@/components/auth-provider";
 
-// Golos Text — brand font (Paratype). Cyrillic-first grotesque used across the product.
-// Source: docs/design-system/project/fonts/
-const golosText = localFont({
+// The approved interactive Claude prototype uses Onest. Next self-hosts this
+// font at build time so Russian clients do not depend on Google Fonts.
+const onest = Onest({
   variable: "--font-sans",
   display: "swap",
-  preload: true,
-  fallback: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-  src: [
-    { path: "../fonts/golos/GolosText-Regular.ttf",    weight: "400", style: "normal" },
-    { path: "../fonts/golos/GolosText-Medium.ttf",     weight: "500", style: "normal" },
-    { path: "../fonts/golos/GolosText-SemiBold.ttf",   weight: "600", style: "normal" },
-    { path: "../fonts/golos/GolosText-Bold.ttf",       weight: "700", style: "normal" },
-    { path: "../fonts/golos/GolosText-ExtraBold.ttf",  weight: "800", style: "normal" },
-    { path: "../fonts/golos/GolosText-Black.ttf",      weight: "900", style: "normal" },
-  ],
+  subsets: ["latin", "cyrillic"],
 });
+
 
 const SITE_NAME = 'БАРТЕР — маркетплейс объявлений';
 const SITE_DESC = 'Покупайте и продавайте легко: электроника, авто, недвижимость, услуги и многое другое. Бесплатные объявления по всей России.';
 
 export const metadata: Metadata = {
   applicationName: 'БАРТЕР',
-  manifest: '/manifest.json?v=bubble-b-3',
+  manifest: '/manifest.json?v=claude-1',
   appleWebApp: { capable: true, title: 'БАРТЕР', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
-      { url: '/brand/bubble-b-v2/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/brand/bubble-b-v2/favicon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/brand/claude-pwa/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/brand/claude-pwa/favicon-48.png', sizes: '48x48', type: 'image/png' },
     ],
-    apple: [{ url: '/brand/bubble-b-v2/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/brand/claude-pwa/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   title: {
     default: SITE_NAME,
@@ -92,7 +85,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${golosText.variable} antialiased`}
+        className={`${onest.variable} antialiased`}
       >
         <ThemeSync />
         <ModeThemeSync />

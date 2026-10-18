@@ -24,6 +24,25 @@ const shots = [];
 const delay = ms => new Promise(done => setTimeout(done, ms));
 
 
+async function assertApprovedOrangeMark(bytes) {
+  const sharp = webRequire('sharp');
+  const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let left = info.width, right = -1, top = info.height, bottom = -1, orange = 0, other = 0;
+  for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
+    const i = (y * info.width + x) * 4;
+    const [r, g, b, a] = data.subarray(i, i + 4);
+    if (a < 64 || Math.max(r, g, b) - Math.min(r, g, b) < 50) continue;
+    if (r > g && g > b) orange++; else other++;
+    left = Math.min(left, x); right = Math.max(right, x);
+    top = Math.min(top, y); bottom = Math.max(bottom, y);
+  }
+  assert(orange > info.width * info.height * 0.25, 'approved orange logo has meaningful visible area');
+  assert(other < orange / 10, 'no obsolete blue/orange mark remains');
+  assert(top <= 3 && bottom >= info.height - 4, 'logo uses almost the full reference canvas');
+  assert(Math.abs((left + right + 1) / 2 - info.width / 2) <= 2, 'orange logo centered on X');
+  assert(Math.abs((top + bottom + 1) / 2 - info.height / 2) <= 2, 'orange logo centered on Y');
+}
+
 async function assertArtwork(bytes, fill, transparent = false, maskable = false) {
   const sharp = webRequire('sharp');
   const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -40,7 +59,8 @@ async function assertArtwork(bytes, fill, transparent = false, maskable = false)
     if (maskable) assert(Math.hypot(x + 0.5 - info.width / 2, y + 0.5 - info.height / 2) < info.width * 0.4,
       'all colored pixels stay inside the maskable safe circle');
   }
-  assert(blue > 0 && orange > 0, 'both complete color shapes are present');
+  assert(orange > 50, 'approved orange logomark must remain visible');
+  assert(blue === 0, 'old blue brand must not appear in iOS/PWA artwork');
   assert(left > 0 && top > 0 && right < info.width - 1 && bottom < info.height - 1, 'artwork never touches a cut edge');
   assert(Math.abs((bottom - top + 1) / info.height - fill) < 0.05, 'visible mark occupies the intended height');
   assert(Math.abs((left + right + 1) / 2 - info.width / 2) <= 1.5, 'horizontal centering');
@@ -87,16 +107,26 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : [];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
   // A read already dispatched during page teardown can reach the isolated server.
+  else if (req.method === 'POST' && url.pathname === '/analytics/events') data = { ok: true };
+  else if (req.method === 'GET' && url.pathname === '/reviews/listing/fixture-detail/eligibility') data = { canReview: false, reason: 'no_chat' };
+  else if (req.method === 'GET' && url.pathname === '/presence/users/fixture-peer') data = { isOnline: false, lastSeenAt: null };
+  else if (req.method === 'GET' && url.pathname === '/users/fixture-peer/profile') data = { user: { id: 'fixture-peer', name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] };
   else if (req.method === 'GET' && url.pathname === '/favorites') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20, total: 0, items: [], vipStrip: [],
   };
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)\/similar$/.test(url.pathname)) data = [];
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created)$/.test(url.pathname)) {
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)\/similar$/.test(url.pathname)) data = [];
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)$/.test(url.pathname)) {
     // Next Link prefetch also requests listing metadata through the server API.
     const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id) ?? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true };
-    data = { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
+    data = url.pathname === '/listings/fixture-detail'
+      ? { ...listing, id: 'fixture-detail', title: 'Тестовое объявление', status: 'ACTIVE', saleEnabled: true, barterEnabled: true,
+          images: [
+            { id: 'detail-photo-1', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#f5eee8"/></svg>'), sortOrder: 0 },
+            { id: 'detail-photo-2', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e4e8fc"/></svg>'), sortOrder: 1 },
+          ], description: 'Описание тестового объявления.', owner: { id: 'fixture-peer', name: 'Продавец', email: null, phone: null } }
+      : { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
   }
   else { serverUnexpected.push(req.method + ' ' + url.pathname); res.statusCode = 404; data = {}; }
   res.setHeader('Content-Type', 'application/json');
@@ -163,6 +193,12 @@ async function installFixture(context, state, theme) {
       state.writes.push({ path, body });
       return json({ ...body, id: 'fixture-created', category, images: [] }, 201);
     }
+    // The detail acceptance opens genuine analytics, presence and review widgets.
+    // Only explicit fixture entities are permitted here; unknown calls still fail.
+    if (method === 'POST' && path === '/analytics/events') return json({ ok: true }, 201);
+    if (method === 'GET' && path === '/reviews/listing/fixture-detail/eligibility') return json({ canReview: false, reason: 'no_chat' });
+    if (method === 'GET' && path === '/presence/users/fixture-peer') return json({ isOnline: false, lastSeenAt: null });
+    if (method === 'GET' && path === '/users/fixture-peer/profile') return json({ user: { id: 'fixture-peer', name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] });
     if (method !== 'GET') {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
@@ -391,7 +427,7 @@ async function scenario(browserType, width, theme) {
         const css = getComputedStyle(document.documentElement);
         return ['--bg-page', '--bg-surface', '--bg-muted', '--fg-default', '--fg-muted', '--border-default'].map(key => css.getPropertyValue(key).trim());
       });
-      if (theme === 'dark') assert.deepEqual(palette, ['#141519', '#202126', '#2b2d34', '#f4f5f7', '#a3a5ae', '#2e3036']);
+      if (theme === 'dark') assert.deepEqual(palette, ['#0e0e10', '#1a1a1d', '#1e1e22', '#f6f6f8', '#9a9aa6', '#2a2a2f']);
       await dock.getByRole('button', { name: 'Добавить объявление' }).click();
       const compose = page.getByRole('dialog', { name: 'Новое объявление' });
       await expect(compose).toBeVisible();
@@ -601,13 +637,24 @@ async function scenario(browserType, width, theme) {
 
 
     await visit('/?mode=market&sort=new');
+    // Exactly one visible hero at a time: the supplied Claude banner on mobile,
+    // the existing proportional promotional layout on desktop.
+    // The app router can briefly retain an off-screen route during navigation.
+    // Assert the actual number of visible banners, not the total DOM nodes.
+    await expect(page.locator('.claude-mobile-hero:visible')).toHaveCount(width < 768 ? 1 : 0);
+    await expect(page.locator('.refresh-hero:visible')).toHaveCount(width < 768 ? 0 : 1);
     const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
     await expect(logo).toBeVisible();
     await expect(logo).toContainText('БАРТЕР');
-    await expect(logo.locator('img')).toHaveJSProperty('complete', true);
-    assert(await logo.locator('img').evaluate(img => img.naturalWidth > 0));
+    // The approved logo is two real image assets: mark + Cyrillic wordmark.
+    const brandImages = await logo.locator('img').all();
+    assert.equal(brandImages.length, 2, 'mark and wordmark');
+    for (const brandImage of brandImages) {
+      await expect(brandImage).toHaveJSProperty('complete', true);
+      assert(await brandImage.evaluate(img => img.naturalWidth > 0), 'brand artwork is loaded');
+      await contained(brandImage);
+    }
     await contained(logo);
-    await contained(logo.locator('img'));
     if (width < 768) {
       // Desktop WebKit has no physical notch. Exercise a nonzero safe area,
       // without claiming this emulates the actual iPhone status-bar renderer.
@@ -638,24 +685,24 @@ async function scenario(browserType, width, theme) {
       await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
       checks.push('opaque logo header, safe area plus 12px, and unobstructed branding');
     }
-    const markBox = await logo.locator('img').boundingBox();
-    const wordBox = await logo.locator('span').last().boundingBox();
+    const markBox = await brandImages[0].boundingBox();
+    const wordBox = await brandImages[1].boundingBox();
     assert(markBox.x + markBox.width <= wordBox.x, 'wordmark must not overlap the mark');
     assert(Math.abs(markBox.y + markBox.height / 2 - wordBox.y - wordBox.height / 2) < 1,
       'mark and name share a vertical center');
-    const markResponse = await page.request.get(baseURL + '/brand/bubble-b-v2/mark.png');
+    const markResponse = await page.request.get(baseURL + '/brand/claude-mark.png');
     assert.equal(markResponse.status(), 200);
-    await assertArtwork(await markResponse.body(), 0.94, true);
+    await assertApprovedOrangeMark(await markResponse.body());
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
-    assert.equal(appleHref, '/brand/bubble-b-v2/apple-touch-icon.png');
+    assert.equal(appleHref, '/brand/claude-pwa/apple-touch-icon.png');
     const appleResponse = await page.request.get(baseURL + appleHref);
     assert.equal(appleResponse.status(), 200);
     const appleBytes = await appleResponse.body();
     assert.equal(appleBytes.readUInt32BE(16), 180);
     assert.equal(appleBytes.readUInt32BE(20), 180);
-    await assertArtwork(appleBytes, 0.84);
+    await assertArtwork(appleBytes, 0.65);
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const manifestResponse = await page.request.get(baseURL + manifestHref);
     assert.equal(manifestResponse.status(), 200);
@@ -670,15 +717,15 @@ async function scenario(browserType, width, theme) {
       const [w, h] = icon.sizes.split('x').map(Number);
       assert.equal(bytes.readUInt32BE(16), w);
       assert.equal(bytes.readUInt32BE(20), h);
-      await assertArtwork(bytes, icon.purpose === 'maskable' ? 0.60 : 0.84, false, icon.purpose === 'maskable');
+      await assertArtwork(bytes, icon.purpose === 'maskable' ? 0.52 : 0.65, false, icon.purpose === 'maskable');
     }
     assert.equal(await page.locator('link[href="/favicon.svg"]').count(), 0);
     for (const link of await page.locator('link[rel="icon"]').all()) {
       const href = await link.getAttribute('href');
-      assert(href.startsWith('/brand/bubble-b-v2/'), 'no stale icon candidate');
+      assert(href.startsWith('/brand/claude-pwa/'), 'no stale icon candidate');
       const res = await page.request.get(baseURL + href);
       assert.equal(res.status(), 200);
-      await assertArtwork(await res.body(), 0.84);
+      await assertArtwork(await res.body(), 0.7, true);
     }
     if (key.includes('440')) console.log('BARTER_APPLE_ICON_IMAGE ' + appleBytes.toString('base64'));
     checks.push('full mark bounds, alignment, larger Apple/PWA artwork and maskable safe circle');
@@ -731,6 +778,25 @@ async function scenario(browserType, width, theme) {
       await page.getByRole('button', { name: 'Показать результаты' }).click();
       await expect(page).not.toHaveURL(/gen-5/);
       checks.push('generation filter persists and changing make clears every descendant');
+    }
+
+    // Claude detail acceptance: real gallery buttons and contact actions remain usable.
+    if (width === 390 || width === 1280) {
+      await visit('/listing/fixture-detail');
+      await expect(page.getByRole('heading', { name: 'Тестовое объявление', exact: true })).toBeVisible();
+      const galleryDots = page.locator('.listing-gallery-mobile-dots button');
+      await expect(galleryDots).toHaveCount(2);
+      if (width < 768) {
+        await galleryDots.nth(1).click();
+        await expect(galleryDots.nth(1)).toHaveAttribute('aria-pressed', 'true');
+        const footer = page.locator('.listing-detail .listing-primary-actions');
+        await expect(footer).toBeVisible();
+        const footerBounds = await footer.boundingBox();
+        assert(footerBounds && footerBounds.y > 600 && footerBounds.y + footerBounds.height >= 755,
+          'detail contact buttons must stay anchored near the bottom of the mobile viewport');
+        await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
+      }
+      checks.push('reference detail gallery indicators, real messaging CTA and mobile footer');
     }
 
     state.failListings = true;
