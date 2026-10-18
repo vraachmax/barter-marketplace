@@ -510,7 +510,7 @@ async function renderHome(sp: HomeSearchParams) {
 
           {listings.vipStrip?.length ? <section aria-label="Продвигаемые объявления" className="mb-7">
             <h2 className="mb-3 text-sm font-medium text-muted-foreground">Продвигаемые объявления</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{listings.vipStrip.map((item) => <ListingCardComponent key={item.id} data={item} apiBase={API_URL} />)}</div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{listings.vipStrip.map((item) => <ListingCardComponent key={item.id} data={item} apiBase={API_URL} surface="home" />)}</div>
           </section> : null}
 
           {/* ===== LISTINGS SECTION ===== */}
@@ -575,7 +575,7 @@ async function renderHome(sp: HomeSearchParams) {
                 </div>
               ) : null}
               {mergedFeed.map((x) => (
-                <ListingCardComponent key={x.id} data={x} apiBase={API_URL} />
+                <ListingCardComponent key={x.id} data={x} apiBase={API_URL} surface={!urlCategoryId && !currentQ ? "home" : "catalog"} />
               ))}
 
               {!effectiveRecoMode && !apiBackendDown && listings.total > listings.items.length ? (
