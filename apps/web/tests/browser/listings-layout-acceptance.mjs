@@ -799,6 +799,11 @@ async function scenario(browserType, width, theme) {
         const titleBox = await detailTitle.boundingBox();
         assert(photoBox && titleBox && titleBox.y >= photoBox.y + photoBox.height - 46,
           'title must render immediately after the image as the Claude sheet');
+        const priceBox = await page.locator('.listing-detail-seller [data-slot="card"] > div:first-child > p:nth-child(2)').boundingBox();
+        const metaBox = await page.locator('.listing-detail-mobile-meta').boundingBox();
+        assert(priceBox && metaBox && priceBox.y + priceBox.height <= metaBox.y + 2,
+          'price must precede city and date in the mobile Claude product sheet');
+        await expect(page.locator('.listing-contact-actions > :last-child')).toBeHidden();
         const share = page.getByRole('button', { name: 'Поделиться' });
         const shareBox = await share.boundingBox();
         assert(shareBox && shareBox.width <= 45 && shareBox.x >= 0 && shareBox.x + shareBox.width <= width,
