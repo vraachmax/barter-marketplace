@@ -137,7 +137,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
         <div className="listing-detail-heading mb-6 space-y-3">
           <span className="detail-trade-label">{listing.saleEnabled === false ? "Обмен" : (listing.barterEnabled ?? listing.isBarter) ? "Обмен / Покупка" : "Покупка"}</span>
           <h1 className="max-w-4xl break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{listing.title}</h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+          <div className="hidden flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground md:flex">
             <span className="inline-flex items-center gap-1.5"><MapPin size={16} aria-hidden />{listing.city}</span>
             <span className="inline-flex items-center gap-1.5"><Calendar size={16} aria-hidden />{formatListedAt(listing.createdAt)}</span>
             <span className="inline-flex items-center gap-1.5"><Eye size={16} aria-hidden />{listing.viewsCount ?? 0} просмотров</span>
@@ -156,6 +156,11 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
                 <p className="text-sm text-muted-foreground">{listing.category.slug === 'job' ? 'Зарплата' : 'Стоимость'}</p>
                 <p className="break-words text-3xl font-semibold leading-tight tracking-tight tabular-nums">{listing.saleEnabled === false ? 'Только обмен' : formatListingPrice(listing.priceRub, listing.priceType)}</p>
                 {listing.saleEnabled === false && listing.priceRub != null ? <p className="text-sm text-muted-foreground">Оценочная стоимость: {formatListingPrice(listing.priceRub, listing.priceType)}</p> : (listing.barterEnabled ?? listing.isBarter) && listing.saleEnabled !== false ? <p className="text-sm font-medium text-foreground">Продажа или обмен</p> : null}
+                <div className="listing-detail-mobile-meta flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground md:hidden">
+                  <span className="inline-flex items-center gap-1"><MapPin size={15} aria-hidden />{listing.city}</span>
+                  <span className="inline-flex items-center gap-1"><Calendar size={15} aria-hidden />{formatListedAt(listing.createdAt)}</span>
+                  <span className="inline-flex items-center gap-1"><Eye size={15} aria-hidden />{listing.viewsCount ?? 0} просмотров</span>
+                </div>
               </div>
               <ListingContactActions barterEnabled={Boolean(listing.barterEnabled ?? listing.isBarter)} listingId={listing.id} sellerId={listing.owner.id} saleEnabled={listing.saleEnabled} active={listing.status === 'ACTIVE'} phone={listing.owner.phone} email={listing.owner.email} />
               <div className="border-t border-border pt-5">
