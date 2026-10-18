@@ -79,15 +79,15 @@ export function BarterHomeLogo() {
     >
       <span className="inline-flex items-center gap-2">
         <Image
-          src="/brand/bubble-b-v3.svg"
+          src="/brand/claude-mark.png"
           alt=""
-          width={100}
-          height={112}
+          width={179}
+          height={199}
           sizes="(min-width: 768px) 36px, 32px"
           unoptimized
           className="h-9 w-8 shrink-0 object-contain md:h-10 md:w-9"
         />
-        <span className="whitespace-nowrap text-[23px] font-extrabold tracking-tight text-foreground md:text-[26px]">БАРТЕР</span>
+        <Image src="/brand/claude-word.png" alt="БАРТЕР" width={377} height={66} unoptimized className="brand-reference-word h-[20px] w-auto object-contain md:h-[24px]" />
       </span>
     </Link>
   );

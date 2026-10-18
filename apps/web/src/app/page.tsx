@@ -340,12 +340,12 @@ async function renderHome(sp: HomeSearchParams) {
   // Category illustrations are decorative; destinations always come from API slugs.
   const CATS = [
     { name: 'Электроника', slug: 'electronics' },
-    { name: 'Для дома', slug: 'home' },
-    { name: 'Одежда', slug: 'clothes' },
-    { name: 'Детям', slug: 'kids' },
     { name: 'Авто', slug: 'auto' },
-    { name: 'Хобби', slug: 'hobby' },
     { name: 'Недвижимость', slug: 'realty' },
+    { name: 'Одежда', slug: 'clothes' },
+    { name: 'Игры и хобби', slug: 'hobby' },
+    { name: 'Для дома', slug: 'home' },
+    { name: 'Детям', slug: 'kids' },
     { name: 'Работа', slug: 'job' },
     { name: 'Услуги', slug: 'services' },
     { name: 'Все категории', slug: 'all' },
@@ -442,11 +442,21 @@ async function renderHome(sp: HomeSearchParams) {
               href={{ pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
               aria-current={urlCategoryId === cat.categoryId ? 'true' : undefined}
               className="home-category-tile"
+              data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug)}
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
               {cat.slug === 'all' ? <LayoutGrid size={40} strokeWidth={1.5} className="text-muted-foreground" aria-hidden /> : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={`/categories/${cat.slug}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
+                ['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug) ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug}-light.jpg`} width={124} height={124} alt="" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug}-dark.jpg`} width={124} height={124} alt="" />
+                  </>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/categories/${cat.slug}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
+                )
               )}
               </span>
               <span className="category-title">{cat.name}</span>
@@ -458,12 +468,21 @@ async function renderHome(sp: HomeSearchParams) {
       {/* ===== MAIN CONTENT =====
           Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
           muted на десктопе ради контраста карточек. */}
-      {!currentQ && !urlCategoryId ? <section className="refresh-hero" aria-label="Возможности БАРТЕРА">
+      {!currentQ && !urlCategoryId ? <>
+        <Link href="#feed" className="claude-mobile-hero md:hidden" aria-label="Смотреть объявления — Меняй. Покупай. Открывай новое.">
+          {/* The original approved Claude imagery already contains text and CTA: do not double-render it. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/visual-refresh/claude-banner-light.jpg" className="claude-banner-light" alt="Меняй. Покупай. Открывай новое. Тысячи товаров. Реальные люди." width={643} height={320} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/visual-refresh/claude-banner-dark.jpg" className="claude-banner-dark" alt="" width={652} height={319} />
+        </Link>
+        <section className="refresh-hero hidden md:flex" aria-label="Возможности БАРТЕРА">
         <div><h1>Меняй. Покупай.<br />Открывай новое.</h1><p>Нужные вещи. Новые возможности.<br />Находите своё на БАРТЕРЕ.</p><Link href="#feed" className="refresh-hero-cta">Смотреть объявления <span aria-hidden>→</span></Link></div>
         {/* Marketing illustration, never a seller photo. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/visual-refresh/laptop.webp" alt="" width={500} height={500} />
-      </section> : null}
+      </section>
+      </> : null}
       <main id="feed" className="relative z-20 bg-background">
         <div className="mx-auto max-w-7xl page-content-spacing px-4 pt-1 md:px-6">
           <HomePreferenceCookieSync city={currentCity} categoryId={urlCategoryId} />

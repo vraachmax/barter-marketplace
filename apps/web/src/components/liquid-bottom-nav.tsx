@@ -47,7 +47,7 @@ export function LiquidBottomNav() {
       </ul>
     </div>
     <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
-      <Popover.Trigger className="liquid-nav__add" aria-label="Добавить объявление"><Image src="/brand/bubble-b-v3.svg" alt="" width={34} height={40} className="compose-brand-mark" /></Popover.Trigger>
+      <Popover.Trigger className="liquid-nav__add" aria-label="Добавить объявление"><Image src="/brand/claude-mark-white.png" alt="" width={34} height={40} className="compose-brand-mark" /></Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner side="top" align="end" sideOffset={14} className="liquid-compose-positioner">
           <Popover.Popup className="liquid-compose">
