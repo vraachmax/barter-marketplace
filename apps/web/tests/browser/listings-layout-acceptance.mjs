@@ -820,7 +820,9 @@ async function scenario(browserType, width, theme) {
           'detail contact buttons must stay anchored near the bottom of the mobile viewport');
         await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
         await shot(page, key + '-listing-detail-fixed');
-        await page.getByRole('button', { name: 'Открыть на весь экран' }).click();
+        await expect(page.getByRole('button', { name: 'Открыть на весь экран', exact: true })).toBeHidden();
+        // Tap the photograph itself, as in the Claude prototype (not the extra loupe).
+        await page.getByRole('button', { name: /^Открыть фотографии на весь экран/ }).click();
         const full = page.getByRole('dialog', { name: 'Просмотр фотографий' });
         await expect(full).toBeVisible();
         assert.equal(await full.evaluate(el => getComputedStyle(el).backgroundColor),
