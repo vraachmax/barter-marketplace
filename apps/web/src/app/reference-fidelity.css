@@ -522,7 +522,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     position:absolute;
     z-index:12;
     left:50%;
-    bottom:9px;
+    bottom:0;
     display:flex;
     max-width:calc(100% - 128px);
     transform:translateX(-50%);
@@ -533,8 +533,8 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .listing-gallery-mobile-dots::-webkit-scrollbar{display:none;}
   .listing-gallery-mobile-dots button {
     display:grid;
-    width:27px;
-    height:27px;
+    width:44px;
+    height:44px;
     flex:none;
     place-items:center;
     border:0;
