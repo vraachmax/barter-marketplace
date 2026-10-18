@@ -143,10 +143,10 @@ html[data-theme='dark'] .message-bubble[data-direction='outgoing'] { background:
 
 /* Claude reference uses neutral near-black, not blue-graphite; keep all shared routes in sync. */
 html[data-theme='dark'] {
-  --bg-page:#0e0e10; --bg-section:#17171a; --bg-surface:#1a1a1d;
-  --bg-muted:#1e1e22; --bg-input:#1c1c20;
-  --fg-default:#f6f6f8; --fg-strong:#f6f6f8; --fg-title:#f6f6f8; --fg-muted:#9a9aa6;
-  --border-default:#2a2a2f; --border-subtle:#2a2a2f; --border-input:#2a2a2f;
+  --bg-page:#0d0e0f; --bg-section:#17181b; --bg-surface:#151618;
+  --bg-muted:#202227; --bg-input:#1c1d21;
+  --fg-default:#f6f7fa; --fg-strong:#f6f7fa; --fg-title:#f6f7fa; --fg-muted:#a9b4c6;
+  --border-default:#2a2b30; --border-subtle:#2a2b30; --border-input:#2a2b30;
 }
 @media(max-width:767px) {
   html[data-theme='light'] .home-category-tile img { mix-blend-mode:multiply; }
