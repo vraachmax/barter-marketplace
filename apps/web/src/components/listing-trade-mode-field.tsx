@@ -16,9 +16,10 @@ export function ListingTradeModeField({ value, onChange, barterAllowed }: {
 }) {
   const name = useId();
   if (!barterAllowed) return <p className="text-sm text-muted-foreground">Объявление появится в Маркете. Для этой категории обмен недоступен.</p>;
-  return <fieldset className="space-y-3">
+  return <fieldset className="trade-mode-field space-y-3">
     <legend className="mb-3 text-base font-semibold">Как хотите разместить?</legend>
     {(['sale', 'barter', 'both'] as const).map(mode => <label key={mode}
+      data-mode={mode} data-selected={value === mode}
       className={`flex min-h-12 cursor-pointer items-start gap-3 rounded-2xl border p-4 ${value === mode ? 'border-primary bg-primary/5' : 'border-border bg-card'}`}>
       <input type="radio" name={name} value={mode} checked={value === mode} onChange={() => onChange(mode)}
         className="mt-0.5 size-5 shrink-0 accent-primary" />

@@ -1,3 +1,4 @@
+import { analyticsWindow } from './seller-analytics';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserBehaviorEventType } from '@prisma/client';
@@ -18,6 +19,34 @@ export class AnalyticsService {
     private prisma: PrismaService,
     private jwt: JwtService,
   ) {}
+
+  async sellerSummary(ownerId: string, days: number) {
+    const { start, end } = analyticsWindow(days);
+    const [totals, daily, listings] = await Promise.all([
+      this.prisma.userBehaviorEvent.groupBy({
+        by: ['type'], where: { listing: { ownerId }, createdAt: { gte: start, lt: end } },
+        _count: { _all: true },
+      }),
+      this.prisma.$queryRaw<Array<{ day: Date; count: bigint }>>`
+        SELECT date_trunc('day', e."createdAt") AS day, count(*) AS count
+        FROM "UserBehaviorEvent" e JOIN "Listing" l ON l.id = e."listingId"
+        WHERE l."ownerId" = ${ownerId} AND e.type = 'VIEW_ITEM'
+          AND e."createdAt" >= ${start} AND e."createdAt" < ${end}
+        GROUP BY 1 ORDER BY 1`,
+      this.prisma.listing.findMany({ where: { ownerId }, orderBy: { createdAt: 'desc' }, take: 100,
+        select: { id: true, title: true, status: true, viewsCount: true, images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } },
+          _count: { select: { favorites: true, chats: true } } },
+      }),
+    ]);
+    const count = (type: UserBehaviorEventType) => totals.find(row => row.type === type)?._count._all ?? 0;
+    const byDay = new Map(daily.map(row => [new Date(row.day).toISOString().slice(0, 10), Number(row.count)]));
+    return { days, from: start.toISOString(), to: end.toISOString(), timezone: 'UTC',
+      totals: { views: count('VIEW_ITEM'), favorites: count('ADD_TO_FAVORITES'), messages: count('SEND_MESSAGE'), clicks: count('CLICK_ITEM') },
+      daily: Array.from({ length: days }, (_, index) => { const date = new Date(start); date.setUTCDate(date.getUTCDate() + index); const day = date.toISOString().slice(0, 10); return { day, views: byDay.get(day) ?? 0 }; }),
+      listings: listings.map(row => ({ id: row.id, title: row.title, status: row.status, image: row.images[0]?.url ?? null, views: row.viewsCount, favorites: row._count.favorites, chats: row._count.chats })),
+      capabilities: { audience: false, offers: false },
+    };
+  }
 
   tryResolveUserId(req: { cookies?: any; headers?: any }): string | null {
     const raw = extractJwtFromRequest(req);

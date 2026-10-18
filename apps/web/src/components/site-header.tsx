@@ -8,13 +8,10 @@ import { useCallback, useState, type ReactNode } from 'react';
 import {
   ChevronDown,
   Heart,
-  LayoutGrid,
   LogOut,
   MessageCircle,
   Package,
-  Plus,
   Settings,
-  ShoppingCart,
   SlidersHorizontal,
   Sparkles,
   Star,
@@ -24,9 +21,8 @@ import {
   Lock,
 } from 'lucide-react';
 import { MegaMenu } from '@/components/mega-menu';
-import { SupportSheet } from '@/components/support-sheet';
 import { ThemeQuickToggle } from '@/components/theme-quick-toggle';
-import { Button } from '@/components/ui/button';
+import { SupportSheet } from '@/components/support-sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,21 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-/**
- * Site header — Avito-matched layout (pixel-for-pixel 2026).
- * Reference: docs/design-system/project/ui_kits/web/Header.jsx
- *
- * Structure:
- *   ── Top utility row (desktop)
- *      • left: Для бизнеса, Карьера в Бартере, Помощь, Каталоги, #яПомогаю
- *      • right: heart, cart, msg, theme, login / profile dropdown, "+ Разместить"
- *   ── Main row (desktop)
- *      • Logo  ·  [Все категории] (cyan pill)  ·  Search input + [Найти]  ·  Region pin
- *   ── Mobile row: logo + pill search + filters icon
- *
- * Brand colors come from `--brand-primary` (#00AAFF) via the @theme layer
- * (`bg-primary`, `text-primary`, etc.) — no hardcoded hex.
- */
+/** Shared responsive marketplace header. */
 export function SiteHeader({ children, regionControl }: { children?: ReactNode; regionControl?: ReactNode }) {
   const { ready, user, logout } = useAuth();
   const router = useRouter();
@@ -80,29 +62,12 @@ export function SiteHeader({ children, regionControl }: { children?: ReactNode; 
   return (
     <>
       <header className="glass-panel sticky top-0 z-[100] border-b border-border pt-[env(safe-area-inset-top)] md:pt-0">
-        {/* ── Top utility bar — desktop only ─────────────────────────────── */}
-        <div className="hidden border-b border-border/60 md:block">
-          <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-6">
-            <nav className="flex items-center gap-5" aria-label="Сервисы">
-              <Link href="/pricing" className={topLinkClass}>Тарифы</Link>
-              <button type="button" onClick={() => setSupportOpen(true)} className={topLinkClass}>Помощь</button>
-              <button type="button" onClick={() => setMegaOpen(true)} className={topLinkClass}>Категории</button>
-            </nav>
-
-            <div className="flex items-center gap-5">
-              <ThemeQuickToggle />
-              <Link href="/favorites" className={topLinkClass} aria-label="Избранное">
-                <Heart size={16} strokeWidth={1.8} />
-              </Link>
-              <Link href="/cart" className={topLinkClass} aria-label="Корзина">
-                <ShoppingCart size={16} strokeWidth={1.8} />
-              </Link>
-              {ready && user ? (
-                <Link href="/messages" className={topLinkClass} aria-label="Сообщения">
-                  <MessageCircle size={16} strokeWidth={1.8} />
-                </Link>
-              ) : null}
-
+        <div className="mx-auto hidden max-w-[1600px] items-center gap-6 px-6 py-4 md:flex">
+          <div className="shrink-0"><BarterHomeLogo /></div>
+          <div className="min-w-0 flex-1">{children ?? <form action="/search" className="flex h-12 items-center gap-3 rounded-full bg-muted px-5"><Search size={20} /><input aria-label="Поиск товаров" name="q" placeholder="Поиск товаров, категорий, брендов..." className="min-w-0 flex-1 bg-transparent text-sm outline-none" /><button type="button" aria-label="Категории" onClick={() => setMegaOpen(true)}><SlidersHorizontal size={20} /></button></form>}</div>
+          {regionControl ?? <Link href="/search" className="shrink-0 text-sm text-muted-foreground">Город и фильтры</Link>}
+          <Link href="/favorites" aria-label="Избранное" className="text-muted-foreground"><Heart size={24} strokeWidth={1.8} /></Link>
+          <Link href="/messages" aria-label="Сообщения" className="text-muted-foreground"><MessageCircle size={24} strokeWidth={1.8} /></Link>
               {ready ? (
                 user ? (
                   <DropdownMenu>
@@ -155,6 +120,8 @@ export function SiteHeader({ children, regionControl }: { children?: ReactNode; 
                       </div>
                       <DropdownMenuSeparator className="my-0" />
                       <div className="py-1.5">
+                        <div className="flex items-center justify-between px-4 py-2 text-sm"><span>Тема оформления</span><ThemeQuickToggle /></div>
+                        <DropdownMenuItem onClick={() => setSupportOpen(true)} className="px-4 py-2 text-sm">Помощь</DropdownMenuItem>
                         <DropdownMenuItem
                           render={<Link href="/profile/settings" />}
                           className="cursor-pointer gap-3 px-4 py-2 text-sm text-foreground"
@@ -188,43 +155,10 @@ export function SiteHeader({ children, regionControl }: { children?: ReactNode; 
                 )
               ) : null}
 
-              <Button
-                render={<Link href="/new" />}
-                size="sm"
-                className="h-7 gap-1 px-3 text-xs font-semibold"
-              >
-                <Plus size={14} strokeWidth={2} />
-                Разместить объявление
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Main row — desktop ─────────────────────────────────────────── */}
-        <div className="mx-auto hidden max-w-7xl items-center gap-3 px-6 py-3 md:flex">
-          <div className="shrink-0">
-            <BarterHomeLogo />
-          </div>
-
-          {/* Все категории — cyan pill (Avito-style) */}
-          <Button
-            type="button"
-            onClick={() => setMegaOpen((v) => !v)}
-            aria-expanded={megaOpen}
-            className="h-11 shrink-0 gap-2 rounded-full bg-primary px-5 text-[15px] font-medium text-primary-foreground shadow-none hover:bg-primary/90"
-          >
-            <LayoutGrid size={14} strokeWidth={1.8} aria-hidden />
-            Все категории
-          </Button>
-
-          {/* Search — outer 2px primary frame; the inner input + Найти button live in `children` (page.tsx) */}
-          {children}
-
-          {regionControl ?? <Link href="/search" className="rounded-full px-3 py-3 text-sm text-muted-foreground hover:bg-muted">Город и фильтры</Link>}
         </div>
 
         {/* ── Mobile row ─────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 px-4 py-2 md:hidden" style={{ minHeight: 56 }}>
+        <div className="mobile-market-header flex items-center gap-2 px-4 py-2 md:hidden" style={{ minHeight: 56 }}>
           <div className="shrink-0">
             <BarterHomeLogo />
           </div>
@@ -237,7 +171,7 @@ export function SiteHeader({ children, regionControl }: { children?: ReactNode; 
             <input
               type="text"
               name="q"
-              placeholder="Поиск по объявлениям"
+              placeholder="Поиск товаров, категорий, брендов..."
               className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
             />
           </form>

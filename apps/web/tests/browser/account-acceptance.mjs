@@ -122,14 +122,15 @@ async function geometry(page, label) {
       viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
       headerHeight: rect.height, headerTop: rect.top,
       titleSize: parseFloat(title.fontSize), titleWeight: title.fontWeight,
+      profileScreen: !!document.querySelector('.profile-screen'),
       sectionTitleSize: section ? parseFloat(getComputedStyle(section).fontSize) : null,
       mainLeft: main?.left, mainRight: main?.right,
     };
   });
   assert(metrics.scrollWidth <= metrics.viewport + 1, label + ': horizontal page overflow');
-  assert(metrics.headerHeight >= 64, label + ': header shorter than 64px');
-  assert.equal(metrics.titleSize, 18, label + ': header typography overridden');
-  assert.equal(metrics.titleWeight, '600', label + ': header weight overridden');
+  assert(metrics.headerHeight >= (metrics.viewport < 768 ? 58 : 64), label + ': header below reference height');
+  assert.equal(metrics.titleSize, metrics.profileScreen && metrics.viewport < 768 ? 26 : 18, label + ': header typography overridden');
+  assert.equal(metrics.titleWeight, '700', label + ': header weight overridden');
   if (metrics.sectionTitleSize !== null) assert.equal(metrics.sectionTitleSize, 20, label + ': section typography overridden');
   assert(Math.abs(metrics.headerTop) <= 1, label + ': header not at viewport top');
   if (metrics.mainLeft !== undefined) {

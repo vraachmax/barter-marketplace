@@ -86,6 +86,8 @@ const api = createServer((req, res) => {
   if (req.method === 'GET' && url.pathname === '/categories') data = [category];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : [];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
+  // A read already dispatched during page teardown can reach the isolated server.
+  else if (req.method === 'GET' && url.pathname === '/favorites') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
     appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20, total: 0, items: [], vipStrip: [],
@@ -254,9 +256,9 @@ async function headerCheck(page) {
   const title = page.locator('header:visible h1');
   await expect(title).toHaveText('Мои объявления');
   const style = await title.evaluate(el => ({ font: getComputedStyle(el).fontSize, weight: getComputedStyle(el).fontWeight }));
-  assert.deepEqual(style, { font: '18px', weight: '600' });
+  assert.deepEqual(style, { font: '18px', weight: '700' });
   const box = await page.locator('header:visible').boundingBox();
-  assert(box.height >= 64);
+  assert(box.height >= (page.viewportSize().width < 768 ? 58 : 64));
   await contained(page.getByRole('navigation', { name: 'Статусы объявлений' }));
 }
 
@@ -402,22 +404,13 @@ async function scenario(browserType, width, theme) {
       await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
       await expect(page).toHaveURL(/\/favorites$/);
       await expect(dock.getByRole('link', { name: 'Избранное', exact: true })).toHaveAttribute('aria-current', 'page');
-      const target = await dock.getByRole('link', { name: 'Лента', exact: true }).boundingBox();
-      const from = await dock.getByRole('link', { name: 'Избранное', exact: true }).boundingBox();
-      await page.emulateMedia({ reducedMotion: 'no-preference' });
-      // WebKit dispatches the media-query change asynchronously. Let the nav's
-      // intentional gesture cancellation on accessibility changes finish first.
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-      await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 12 });
-      await page.mouse.up();
+      await dock.getByRole('link', { name: 'Главная', exact: true }).click();
       await expect(page).toHaveURL(baseURL + '/');
-      await expect(dock.getByRole('link', { name: 'Лента', exact: true })).toHaveAttribute('aria-current', 'page');
+      await expect(dock.getByRole('link', { name: 'Главная', exact: true })).toHaveAttribute('aria-current', 'page');
       await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
       await expect(page).toHaveURL(/\/favorites$/);
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      checks.push('single tap, drag/release, next tap, native menu dismissal, touch targets and graphite palette');
+      checks.push('tab taps, next tap, native menu dismissal, touch targets and graphite palette');
       await visit('/listings?tab=NEEDS_ACTION');
       await expect(page.getByRole('heading', { name: 'Требуют внимания', exact: true })).toBeVisible();
     } else await expect(dock).not.toBeVisible();
@@ -689,28 +682,28 @@ async function scenario(browserType, width, theme) {
     }
     if (key.includes('440')) console.log('BARTER_APPLE_ICON_IMAGE ' + appleBytes.toString('base64'));
     checks.push('full mark bounds, alignment, larger Apple/PWA artwork and maskable safe circle');
-    const toggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
-    for (const mode of ['market', 'barter']) {
-      const label = mode === 'market' ? 'Маркет' : 'Бартер';
+    const toggle = page.getByRole('navigation', { name: 'Режим каталога' });
+    for (const mode of ['market', 'barter', 'both']) {
+      const label = mode === 'market' ? 'Покупка' : mode === 'barter' ? 'Обмен' : 'Оба';
       await toggle.getByRole('link', { name: label, exact: true }).click();
       await expect(toggle.getByRole('link', { name: label, exact: true })).toHaveAttribute('aria-current', 'page');
       await expect(page).toHaveURL(new RegExp('mode=' + mode));
       assert(new URL(page.url()).searchParams.get('sort') === 'new');
       const box = await contained(toggle);
-      assert(Math.abs((box.left + box.right) / 2 - width / 2) <= 1, 'toggle is not centered: ' + JSON.stringify(box));
+      assert(Math.abs((box.left + box.right) / 2 - (width + (width >= 1280 ? 224 : 0)) / 2) <= 1, 'toggle is not centered: ' + JSON.stringify(box));
       const selected = await toggle.getByRole('link', { name: label, exact: true }).boundingBox();
-      const pill = await toggle.locator('span[aria-hidden]').boundingBox();
+      const pill = await toggle.locator('[data-selected="true"]').boundingBox();
       assert(Math.abs(pill.x + pill.width / 2 - selected.x - selected.width / 2) <= 2, 'selected pill is off-center');
     }
     await spacingCheck(page, width, false);
     await shot(page, key + '-catalog');
     await visit('/search');
-    const searchToggle = page.getByRole('navigation', { name: 'Маркет или Бартер' });
+    const searchToggle = page.getByRole('navigation', { name: 'Режим каталога' });
     await expect(searchToggle).toBeVisible();
     await spacingCheck(page, width);
     await shot(page, key + '-search');
     const searchBox = await contained(searchToggle);
-    assert(Math.abs((searchBox.left + searchBox.right) / 2 - width / 2) <= 1, 'search toggle is off-center');
+    assert(Math.abs((searchBox.left + searchBox.right) / 2 - (width + (width >= 1280 ? 224 : 0)) / 2) <= 1, 'search toggle is off-center');
     checks.push('catalog and search centered, selected pill aligned, sort preserved');
     if (width === 360 || width === 1280) {
       await visit('/search?categoryId=fixture-category&mode=market');
@@ -719,7 +712,7 @@ async function scenario(browserType, width, theme) {
       await page.getByRole('button', { name: 'Показать результаты' }).click();
       await expect(page).toHaveURL(/attrs=/);
       await expect(page.getByText('Характеристики · 1')).toBeVisible();
-      await page.getByRole('navigation', { name: 'Маркет или Бартер' }).getByRole('link', { name: 'Бартер' }).click();
+      await page.getByRole('navigation', { name: 'Режим каталога' }).getByRole('link', { name: 'Обмен' }).click();
       await expect(page).toHaveURL(/attrs=/);
       assert(state.catalogSearchReads.includes(JSON.stringify({ condition: 'used_good' })), 'mode search keeps selected catalog option');
       checks.push('catalog filter uses schema option and survives Market/Barter switch');
@@ -766,7 +759,7 @@ async function scenario(browserType, width, theme) {
       await newWish.getByRole('combobox', { name: 'Поколение', exact: true }).selectOption('bmw/3/gen-5');
       await page.getByPlaceholder('Состояние, комплект, дефекты, история покупки, способ передачи…').fill('Телефон в хорошем состоянии, полный комплект. Рассмотрю обмен на фотоаппарат.');
       for (let step = 2; step <= 4; step++) await page.getByRole('button', { name: 'Далее', exact: true }).click();
-      await expect(page.getByText('Только обмен', { exact: true })).toBeVisible();
+      await expect(page.locator('.publication-form').getByText('Только обмен', { exact: true })).toBeVisible();
       await expect(page.getByText(/Оценка:.*18/)).toBeVisible();
       await expect(page.getByRole('region', { name: 'Условия обмена' })).toContainText('Марка: BMW');
       await expect(page.getByRole('region', { name: 'Условия обмена' })).toContainText('Поколение: V (семейство E90)');

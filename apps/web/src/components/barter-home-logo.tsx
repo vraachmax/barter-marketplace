@@ -87,7 +87,7 @@ export function BarterHomeLogo() {
           unoptimized
           className="h-auto w-8 shrink-0 object-contain md:w-9"
         />
-        <span className="whitespace-nowrap text-base font-bold tracking-tight text-foreground md:text-lg">БАРТЕР</span>
+        <span className="whitespace-nowrap text-[23px] font-extrabold tracking-tight text-foreground md:text-[26px]">БАРТЕР</span>
       </span>
     </Link>
   );

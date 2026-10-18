@@ -29,6 +29,7 @@ import {
   Settings,
   ShoppingBag,
   Sparkles,
+  Heart,
   Star,
   Wallet,
 } from 'lucide-react';
@@ -278,7 +279,7 @@ export function ProfileContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
+    <div className="profile-screen min-h-screen bg-background text-foreground antialiased">
       <AccountScreenHeader
         title={showListingsView ? 'Мои объявления' : 'Профиль'}
         subtitle={showListingsView ? 'Публикация и управление объявлениями' : 'Ваш аккаунт и активность'}
@@ -454,9 +455,9 @@ export function ProfileContent() {
                 /* ===== PROFILE MENU VIEW ===== */
                 <>
               {/* Profile Card Section */}
-              <Card className="gap-0 rounded-3xl p-6 text-center shadow-sm">
+              <Card className="profile-identity gap-0 rounded-3xl p-6 text-center shadow-sm">
                 {/* Avatar */}
-                <div className="relative mx-auto mb-4 w-fit">
+                <div className="profile-identity-avatar relative mx-auto mb-4 w-fit">
                   <div
                     className="h-20 w-20 overflow-hidden rounded-3xl border-2 border-border [background-color:var(--mode-accent-soft)]"
                   >
@@ -484,7 +485,7 @@ export function ProfileContent() {
                 </h2>
 
                 {/* Rating */}
-                <div className="mt-2 flex flex-col items-center gap-1">
+                <div className="profile-identity-rating mt-2 flex flex-col items-center gap-1">
                   <div className="flex items-center gap-1">
                     {publicProfile && publicProfile.rating.avg ? (
                       <>
@@ -507,7 +508,7 @@ export function ProfileContent() {
                 </div>
 
                 {/* Stats boxes */}
-                <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="profile-identity-stats mt-5 grid grid-cols-2 gap-3">
                   <Link href="/profile?tab=ACTIVE" className="rounded-2xl bg-muted/60 px-3 py-4 focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="text-xs font-medium text-muted-foreground">Активные</div>
                     <div className="mt-1 text-xl font-bold text-foreground">{activeCount}</div>
@@ -534,8 +535,10 @@ export function ProfileContent() {
 
               <BarterDashProfileCard className="mt-5" />
 
+              <Link href="/profile/analytics" className="analytics-profile-entry"><Eye size={26} aria-hidden /><span><strong>Аналитика</strong><span>Просмотры, сохранения и обращения</span></span><ChevronRight size={19} aria-hidden /></Link>
               {/* Menu Items */}
-              <div className="mt-5 space-y-2">
+              <div className="profile-menu mt-5 space-y-2">
+                <Link href="/favorites" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left hover:bg-muted/50"><Heart size={24} aria-hidden /><span className="flex-1 text-sm font-semibold">Избранное</span><ChevronRight size={20} aria-hidden /></Link>
                 <Link
                   href="/listings"
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring hover:bg-muted/50"

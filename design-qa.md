@@ -1,3 +1,69 @@
+## 2026-10-18: release CI follow-up
+
+251d45b: 6/6 account and 6/6 message browser scenarios passed. Catalog 8/12
+passed; four publication scenarios hit an ambiguous text locator introduced by
+live preview, and two late favorites reads reached the isolated fixture server.
+Scoped confirmation text to .publication-form and added the known read-only
+favorites fixture; no production guards or mutation assertions removed.
+PWA assets are now committed under bubble-b-v2, generated from the existing
+artwork; all seven sizing/alpha/maskable assertions pass. Web/API builds and
+87 web + 4 analytics tests pass. Full new orange logo still requires clean artwork.
+Deployment remains pending successful rerun; prior visual-browser restriction remains.
+
+## 2026-10-18: mobile release preparation, not yet deployed
+
+Owner now prioritizes deploying mobile. Restored checkout from remote a3d0204 after
+previous worktree metadata vanished. Added photo selection and trade mode to first
+publication step, two-row mobile logo/search header, fixed nonexistent bubble-b-v2
+asset references to existing checked-in brand assets (exact new logo still pending).
+Updated browser geometry assertions for the intentional 58px/700 mobile header and
+profile heading rather than old 64px/600 design. Retained overflow/tap-target checks.
+Prior CI a3d0204: account failed old geometry assertions, messages passed, listings
+suite skipped. Local production build passed before asset/header changes; final
+build/CI pending. Browser-policy block from prior session remains; no bypass.
+Next: pass release CI, then deploy the scoped mobile increment authorized by owner.
+Pixel-perfect all-pages completion remains open; do not conflate rollout with acceptance.
+
+## 2026-10-17: screen refresh and real seller analytics (draft PR #75)
+
+Mobile detail now uses edge-to-edge gallery, rounded content sheet and compact
+attribute tiles. Profile identity/menu, chat bubble colors, full-screen filters,
+publication step indicator and mode controls updated. Desktop header now has one
+row, and publication has a live preview from the actual entered data and photos.
+Added authenticated /analytics/seller endpoint and /profile/analytics: owner-scoped
+recorded events, UTC daily buckets and own listing counters, bounded 7/30/90 days.
+Audience/offer tracking is unavailable and explicitly shown as unavailable.
+Checks: final web build PASS; API build PASS; 87 web tests PASS; 4 new analytics
+tests PASS (period validation, UTC boundaries, authenticated owner, query scoping).
+Browser verification remains blocked by the earlier cloud-browser URL-policy denial;
+no alternate execution surface used. No pixel-fidelity, iPhone or release claim.
+Generated logo extraction rejected for visible alpha artifacts, not added to app.
+Still open: exact logo/hero; publication step reconciliation/photo-first mobile flow;
+structured exchange-offer UI/backend; notification screen; analytics detail/audience;
+remaining supporting screens; screenshot comparison at mobile and desktop sizes.
+Next: resolve authorized visual-preview access, refine these gaps against references.
+This is incremental implementation, not completion of the all-pages request.
+
+# Visual refresh QA — 2026-10-17
+
+final result: blocked
+
+Source: supplied archive home-light-v2 and desktop screenshots. Actual implementation
+could not be captured: cloud browser refused terminal.local under its URL policy.
+No policy bypass attempted. No pixel-fidelity or physical-iPhone claim is made.
+
+Implemented draft: home, shared cards, dock, combined catalog mode, desktop rail.
+Not complete: reference-faithful hero composition and logo, full detail/chat/profile/
+creation screens and analytics. The reference analytics values are fictional and
+were not copied into the application. Dark/mobile overflow and keyboard remain unverified.
+
+Builds: Next production and Nest pass. Tests: 87 web and 35 targeted API pass.
+Browser acceptance suite updated but unexecuted. Production remains unchanged.
+
+---
+
+## Previous QA record (before this refresh)
+
 # Crystal Catalog implementation QA • 2026-09-05
 
 ### Toggle follow-up, 2026-09-06

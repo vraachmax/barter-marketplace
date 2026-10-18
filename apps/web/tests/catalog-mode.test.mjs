@@ -37,3 +37,11 @@ describe('catalog mode contract', () => {
     }
   });
 });
+
+it('supports the combined catalog only when confirmed by the API', () => {
+  assert.equal(parseCatalogMode('both'), 'both');
+  assert.equal(modeFromCookie('barter_catalog_mode=both'), 'both');
+  assert.throws(() => assertCatalogMode({items: []}, 'both'), /catalog_filter_unavailable/);
+  const data = { appliedMode: 'both', items: [{saleEnabled: true}, {saleEnabled: false, isBarter: true}] };
+  assert.equal(assertCatalogMode(data, 'both'), data);
+});

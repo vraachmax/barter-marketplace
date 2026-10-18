@@ -36,8 +36,8 @@ function optionalDecimal(value: unknown): unknown {
 
 export class ListListingsQueryDto {
   @IsOptional()
-  @IsIn(['market', 'barter'])
-  mode?: 'market' | 'barter';
+  @IsIn(['market', 'barter', 'both'])
+  mode?: 'market' | 'barter' | 'both';
 
   @Transform(({ value }: { value: unknown }) => optionalText(value))
   @IsOptional()

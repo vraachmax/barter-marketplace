@@ -529,9 +529,9 @@ export default function NewListingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted text-foreground antialiased">
+    <div className="publication-screen min-h-screen bg-background text-foreground antialiased">
       {/* ===== HEADER + PROGRESS ===== */}
-      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-md">
+      <header className="publication-header sticky top-0 z-30 bg-background">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           {step > 1 ? (
             <button
@@ -555,32 +555,33 @@ export default function NewListingPage() {
             <p className="text-[11px] font-medium text-muted-foreground">
               Шаг {step} из {TOTAL_STEPS}
             </p>
-            <h1 className="truncate text-base font-bold text-foreground">{STEP_LABELS[step]}</h1>
+            <h1 className="truncate text-base font-bold text-foreground">Разместить объявление</h1>
           </div>
         </div>
-        {/* Progress bar */}
-        <div className="mx-auto max-w-3xl px-4 pb-3">
-          <div className="flex items-center gap-1.5">
-            {([1, 2, 3, 4, 5] as const).map((n) => (
-              <div
-                key={n}
-                className="h-1 flex-1 overflow-hidden rounded-full bg-muted"
-              >
-                <div
-                  className="h-full transition-all duration-300"
-                  style={{
-                    width: n <= step ? '100%' : '0%',
-                    backgroundColor: 'var(--mode-accent)',
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <ol className="publication-steps" aria-label="Этапы размещения">
+          {([1, 2, 3, 4, 5] as const).map(n => <li key={n} aria-current={n === step ? 'step' : undefined} data-complete={n < step}><span>{n < step ? <Check size={14} aria-hidden /> : n}</span><span>{['Объявление', 'Характеристики', 'Фото', 'Место', 'Публикация'][n - 1]}</span></li>)}
+        </ol>
       </header>
 
       {/* ===== STEP CONTENT ===== */}
-      <main className="mx-auto max-w-3xl px-4 pb-32 pt-5 md:pb-24 md:pt-8">
+      <main className="publication-main mx-auto max-w-3xl px-4 pb-32 pt-5 md:pb-24 md:pt-8">
+        <div className="publication-form">
+        {step === 1 ? (
+          <Step3Photos
+            pendingPhotos={pendingPhotos}
+            totalPhotos={totalPhotos}
+            dragOver={dragOver}
+            onDragEnterCapture={() => setDragOver(true)}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(files) => {
+              setDragOver(false);
+              addFiles(files);
+            }}
+            onPickFiles={(files) => addFiles(files)}
+            onRemovePending={removePending}
+            fileInputRef={fileInputRef}
+          />
+        ) : null}
         {step === 1 ? (
           <Step1WhatToSell
             title={title}
@@ -592,6 +593,8 @@ export default function NewListingPage() {
             loadingCats={loadingCats}
           />
         ) : null}
+
+        {step === 1 ? <div className="mt-6"><ListingTradeModeField value={tradeMode} onChange={setTradeMode} barterAllowed={canOfferBarter(selectedCategory)} /></div> : null}
 
         {step === 5 && payload.exchangePreferences ? <ExchangePreferencesSummary value={payload.exchangePreferences} categories={cats} /> : null}
 
@@ -658,6 +661,19 @@ export default function NewListingPage() {
             submitStatus={submitStatus}
           />
         ) : null}
+        </div>
+        <aside className="publication-preview" aria-label="Предпросмотр объявления">
+          <h2>Предпросмотр объявления</h2>
+          <p className="publication-preview-hint">Так ваше объявление увидят другие пользователи</p>
+          <div className="publication-preview-card">
+            {pendingPhotos[0]?.url || uploadedImages[0]?.url ? <img src={pendingPhotos[0]?.url ?? resolveAssetUrl(uploadedImages[0].url)} alt="Первое фото объявления" /> : <div className="publication-preview-empty"><PlusCircle size={36} /><span>Добавьте фото объявления</span></div>}
+            <h3>{title.trim() || 'Название объявления'}</h3>
+            <div className="publication-preview-price"><strong>{price && Number.isFinite(Number(price)) ? `${Number(price).toLocaleString('ru-RU')} ₽` : 'Цена не указана'}</strong><span>{tradeModeLabel(tradeMode)}</span></div>
+            <p>{selectedCategory?.title || 'Выберите категорию'}</p>
+            <p className="inline-flex items-center gap-2"><MapPin size={16} />{city || 'Укажите город'}</p>
+            {description.trim() ? <p className="publication-preview-description">{description}</p> : null}
+          </div>
+        </aside>
       </main>
 
       {/* ===== BOTTOM ACTION BAR =====
@@ -666,7 +682,7 @@ export default function NewListingPage() {
            остаётся единственной фиксированной плашкой и не уходит под
            навигацию. paddingBottom учитывает safe-area для iPhone X+. */}
       <div
-        className="glass-panel fixed bottom-0 left-0 right-0 z-40 border-t border-border"
+        className="publication-actions fixed bottom-0 left-0 right-0 z-40 bg-background"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
@@ -1065,7 +1081,7 @@ function Step3Photos(props: {
   } = props;
   const slotsLeft = Math.max(0, 10 - totalPhotos);
   return (
-    <section className="space-y-4">
+    <section className="publication-photos space-y-4">
       <p className="text-sm text-muted-foreground">
         До 10 фото. Первое — обложка в ленте. Чем чётче снимки — тем выше доверие.
       </p>
