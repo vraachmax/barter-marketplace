@@ -236,6 +236,34 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .home-categories { padding-top:14px; padding-bottom:3px; }
   .home-category-strip { padding-block:0; gap:2px; grid-auto-columns:calc((100% - 8px)/5); }
   .home-category-tile[data-mobile-secondary='true'] { display:none; }
+  /* Catalog is a different compact surface from the discovery homepage. */
+  .mobile-category-filters {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:5px; margin-top:0; padding:0; align-items:start;
+  }
+  .mobile-category-filter,
+  .mobile-category-subfilter {
+    display:flex; align-items:center; justify-content:center;
+    min-width:0; height:36px; padding:0 5px;
+    border-radius:20px; background:var(--bg-muted);
+    color:var(--fg-default); text-decoration:none;
+    font-size:11.5px; font-weight:500; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .mobile-category-filter[aria-current='page'] {
+    background:linear-gradient(180deg,#ff6a14,#ff5300);
+    color:white; box-shadow:0 4px 12px rgba(255,90,10,.18);
+  }
+  .mobile-category-subfilters {
+    grid-column:1/-1; display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px;
+    margin-top:5px;
+  }
+  .mobile-category-subfilter { height:33px; }
+  .mobile-category-filter:focus-visible,
+  .mobile-category-subfilter:focus-visible {
+    outline:2px solid var(--mode-accent);outline-offset:2px;
+  }
   .home-category-tile { min-height:89px; gap:4px; font-size:10.5px; font-weight:500; }
   .home-category-tile > span:first-child { width:72px; height:72px; }
   .claude-mobile-hero { margin-top:8px; margin-bottom:9px; }
