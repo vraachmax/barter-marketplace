@@ -51,7 +51,7 @@ html[data-theme='dark'] .refresh-hero { background:linear-gradient(120deg,#34231
 html[data-theme='dark'] .refresh-hero h1 { color:#fff; }
 html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 0 1px rgba(255,255,255,.12); }
 @media(max-width:767px) {
-  .app-viewport .catalog-mobile-header { padding-top:12px; padding-bottom:8px; }
+  .app-viewport .catalog-mobile-header { padding-top:8px; padding-bottom:8px; }
   .catalog-mobile-header >div:first-child { margin-bottom:8px; }
   .catalog-mobile-header [type='search'] { font-size:11.5px; }
   .home-mode-row { padding-top:8px; }
@@ -234,7 +234,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background:linear-gradient(180deg,#ff6a14,#ff5300); color:#fff; font-weight:600;
     box-shadow:none;
   }
-  .home-categories { padding-top:14px; padding-bottom:3px; }
+  .home-categories { padding-top:18px; padding-bottom:3px; }
   .home-category-strip { padding-block:0; gap:2px; grid-auto-columns:calc((100% - 8px)/5); }
   .home-category-tile[data-mobile-secondary='true'] { display:none; }
   /* Catalog is a different compact surface from the discovery homepage. */
@@ -267,7 +267,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .home-category-tile { min-height:89px; gap:4px; font-size:10.5px; font-weight:500; }
   .home-category-tile > span:first-child { width:72px; height:72px; }
-  .claude-mobile-hero { margin-top:8px; margin-bottom:9px; }
+  .claude-mobile-hero { margin-top:12px; margin-bottom:5px; }
 }
 
 .listing-feed-favorite { position:absolute; top:9px; right:9px; z-index:10;
