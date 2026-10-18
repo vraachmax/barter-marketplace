@@ -1577,3 +1577,60 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     padding-bottom: max(34px, env(safe-area-inset-bottom, 0px));
   }
 }
+
+
+/* Claude v2 mobile feed uses a compact 145px photograph and 13-14px copy.
+   Scope to the listing cards, without changing desktop cards, photo viewer,
+   or the 44px interactive hit targets outside the media tile. */
+@media (max-width: 767px) {
+  .refresh-listing-card > [role='link']:first-child {
+    height: 145px !important;
+    aspect-ratio: auto !important;
+    min-height: 145px;
+    border-radius: 18px 18px 0 0;
+  }
+  .refresh-listing-card .listing-card-copy {
+    gap: 0;
+    padding: 10px 14px 8px;
+  }
+  .refresh-listing-card .listing-card-copy > div:first-child {
+    display: block;
+    min-height: 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 16px;
+  }
+  .refresh-listing-card .listing-card-copy > div:nth-child(2) {
+    margin-top: 3px;
+    font-size: 10.5px;
+    line-height: 14px;
+  }
+  .refresh-listing-card .listing-card-copy > div:nth-child(3) {
+    margin-top: 4px;
+    font-size: 13.5px;
+    font-weight: 800;
+    line-height: 17px;
+  }
+  .refresh-listing-card .listing-trade-badge {
+    top: 10px;
+    left: 9px;
+    min-height: 22px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    line-height: 14px;
+  }
+  .refresh-listing-card .listing-feed-favorite {
+    top: 9px;
+    right: 6px;
+    width: 29px;
+    height: 29px;
+    min-height: 29px;
+  }
+  .refresh-listing-card .listing-feed-favorite svg {
+    width: 16px;
+    height: 16px;
+  }
+}
