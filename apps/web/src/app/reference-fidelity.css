@@ -234,8 +234,13 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background:linear-gradient(180deg,#ff6a14,#ff5300); color:#fff; font-weight:600;
     box-shadow:none;
   }
-  .home-categories { padding-top:18px; padding-bottom:3px; }
-  .home-category-strip { padding-block:0; gap:2px; grid-auto-columns:calc((100% - 8px)/5); }
+  .home-categories { padding:18px 0 3px; }
+  .home-category-strip {
+    display:flex; justify-content:space-between;
+    width:100%; gap:0; padding:0 8px;
+    overflow:hidden;
+  }
+  .home-category-tile { flex:0 0 72px; width:72px; }
   .home-category-tile[data-mobile-secondary='true'] { display:none; }
   /* Catalog is a different compact surface from the discovery homepage. */
   .mobile-category-filters {
