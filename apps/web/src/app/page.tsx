@@ -445,7 +445,7 @@ async function renderHome(sp: HomeSearchParams) {
               key={cat.slug}
               scroll={false}
               href={cat.slug === 'all' ? '/search' : { pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
-              aria-current={urlCategoryId === cat.categoryId ? 'true' : undefined}
+              aria-current={urlCategoryId && cat.categoryId && urlCategoryId === cat.categoryId ? 'true' : undefined}
               className="home-category-tile"
               data-mobile-secondary={!(['electronics', 'auto', 'realty', 'clothes', 'all'].includes(cat.slug))}
               data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug)}
