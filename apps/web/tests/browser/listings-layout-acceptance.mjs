@@ -675,6 +675,11 @@ async function scenario(browserType, width, theme) {
       await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
       const cards = page.locator('.refresh-listing-card > [role="link"]:first-child');
       await expect(cards).toHaveCount(2);
+      // WebKit may expose a new RSC route tree before the view transition
+      // makes its card boxes visible. Wait for real geometry, not DOM count.
+      await expect(cards.first()).toBeVisible();
+      await expect.poll(() => cards.first().evaluate(el => el.getBoundingClientRect().height),
+        { timeout: 10000 }).toBeGreaterThan(140);
       const cardHeight = await cards.first().evaluate(el => el.getBoundingClientRect().height);
       assert(Math.abs(cardHeight - 145) < 2,
         'Claude v2 feed needs 145px mobile photo tiles, got ' + cardHeight);
