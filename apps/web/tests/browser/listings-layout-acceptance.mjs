@@ -622,13 +622,10 @@ async function scenario(browserType, width, theme) {
     await visit('/?mode=market&sort=new');
     // Exactly one visible hero at a time: the supplied Claude banner on mobile,
     // the existing proportional promotional layout on desktop.
-    if (width < 768) {
-      await expect(page.locator('.claude-mobile-hero')).toBeVisible();
-      await expect(page.locator('.refresh-hero')).toBeHidden();
-    } else {
-      await expect(page.locator('.claude-mobile-hero')).toBeHidden();
-      await expect(page.locator('.refresh-hero')).toBeVisible();
-    }
+    // The app router can briefly retain an off-screen route during navigation.
+    // Assert the actual number of visible banners, not the total DOM nodes.
+    await expect(page.locator('.claude-mobile-hero:visible')).toHaveCount(width < 768 ? 1 : 0);
+    await expect(page.locator('.refresh-hero:visible')).toHaveCount(width < 768 ? 0 : 1);
     const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
     await expect(logo).toBeVisible();
     await expect(logo).toContainText('БАРТЕР');
