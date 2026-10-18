@@ -77,7 +77,7 @@ export function BarterHomeLogo() {
       title="Главная — сбросить фильтры и поиск"
       aria-label="Бартер — на главную"
     >
-      <span className="inline-flex items-center gap-2">
+      <span className="inline-flex items-center gap-3">
         <Image
           src="/brand/claude-mark.png"
           alt=""
@@ -85,9 +85,9 @@ export function BarterHomeLogo() {
           height={199}
           sizes="(min-width: 768px) 36px, 32px"
           unoptimized
-          className="h-9 w-8 shrink-0 object-contain md:h-10 md:w-9"
+          className="h-[37px] w-[33px] shrink-0 object-contain md:h-10 md:w-9"
         />
-        <Image src="/brand/claude-word.png" alt="БАРТЕР" width={377} height={66} unoptimized className="brand-reference-word h-[20px] w-auto object-contain md:h-[24px]" />
+        <Image src="/brand/claude-word.png" alt="БАРТЕР" width={377} height={66} unoptimized className="brand-reference-word h-[21px] w-auto object-contain md:h-[24px]" />
         <span className="sr-only">БАРТЕР</span>
       </span>
     </Link>
