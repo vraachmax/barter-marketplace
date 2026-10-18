@@ -1363,3 +1363,169 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     color: white;
   }
 }
+
+
+/* iPhone PWA fidelity hotfix from physical device screenshots (October 18).
+   These scoped rules supersede earlier mobile experiments instead of
+   requiring new !important transforms or duplicating real listing markup. */
+@media (max-width: 767px) {
+  /* The 62px gap visible below the tab bar came from the old inset-based
+     dock placement winning in the PWA. The entire safe area must be opaque. */
+  body .magic-nav {
+    bottom: 0 !important;
+    height: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    background: var(--bg-surface);
+    border-radius: 26px 26px 0 0;
+  }
+  body .magic-nav .liquid-nav {
+    height: 72px;
+    background: var(--bg-surface);
+    border-radius: 26px 26px 0 0;
+  }
+  body .magic-nav .liquid-nav__items {
+    height: 72px;
+  }
+  /* Don't leave a black gap if the environment reports an inset only to
+     the fixed shell and not the tab bar (some installed iOS PWA versions). */
+  body .magic-nav::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: env(safe-area-inset-bottom, 0px);
+    background: var(--bg-surface);
+    pointer-events: none;
+  }
+  .listing-detail .listing-detail-grid {
+    display: contents !important;
+  }
+  .listing-detail .listing-detail-main > * {
+    margin-bottom: 0;
+  }
+  /* Keep actions inside the photo hero: no text protruding into the image. */
+  .listing-detail .screen-header {
+    overflow: visible;
+  }
+  .listing-detail .screen-header > div {
+    min-height: 62px;
+    gap: 10px;
+    padding: 12px 16px 6px;
+  }
+  .listing-detail .screen-header > div > div:last-child {
+    display: flex;
+    margin-left: auto;
+    flex: none;
+    gap: 8px;
+  }
+  .listing-detail .listing-detail-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .listing-detail .listing-detail-head-actions .listing-feed-favorite {
+    position: static !important;
+    inset: auto !important;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    color: #17171b;
+    background: rgba(255,255,255,.94);
+  }
+  .listing-detail .listing-detail-head-actions .listing-feed-favorite[aria-pressed='true'] {
+    color: #ff5a0a;
+  }
+  .listing-detail .screen-header .listing-share-action {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    line-height: 1;
+  }
+  .listing-detail .screen-header .listing-share-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .listing-detail .listing-detail-seller .listing-owner-action {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(12px + env(safe-area-inset-bottom,0px));
+    z-index: 55;
+    width: calc(100% - 32px);
+    max-width: 488px;
+    min-height: 52px;
+    margin-inline: auto;
+    border: 0;
+    border-radius: 999px;
+    background: #ff5a0a;
+    color: white;
+    box-shadow: 0 8px 25px rgba(0,0,0,.12);
+  }
+  .listing-detail .listing-detail-media .listing-gallery {
+    position: relative;
+  }
+  .listing-detail .listing-detail-heading {
+    z-index: 2;
+    background: var(--bg-page);
+  }
+  .listing-detail .listing-detail-content {
+    position: relative;
+    z-index: 1;
+  }
+  /* Balanced, consistent favorite button dimensions across cards. */
+  .listing-feed-favorite {
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+  .listing-feed-favorite svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+  }
+}
+
+/* The picture viewer is a top-layer element, not part of app-scroll-root.
+   iOS's clock, battery and home indicator must remain unobstructed. */
+.listing-fullscreen-dialog[open] {
+  box-sizing: border-box;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: 100vw;
+  max-width: 100vw;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+}
+.listing-fullscreen-dialog::backdrop { background: #000; }
+.listing-fullscreen-dialog .listing-fullscreen-toolbar {
+  min-height: 56px;
+}
+.listing-fullscreen-dialog .listing-fullscreen-thumbnails {
+  padding-top: 12px;
+  padding-bottom: 2px;
+}
+.listing-fullscreen-dialog .listing-fullscreen-toolbar button {
+  flex: none;
+}
+@media (min-width: 768px) {
+  .listing-detail .listing-share-label {
+    display: inline;
+  }
+}
