@@ -17,7 +17,10 @@ export default function FavoritesPage() {
   const [attempt, setAttempt] = useState(0);
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <header className="screen-header sticky top-0 z-30 border-b border-border/60">
+      <div className="mx-auto flex h-[52px] max-w-6xl items-center px-4 pt-1 md:hidden">
+        <h1 className="text-[32px] font-extrabold leading-tight tracking-[-.6px]">Избранное</h1>
+      </div>
+      <header className="screen-header sticky top-0 z-30 hidden border-b border-border/60 md:block">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="grid size-11 place-items-center rounded-2xl bg-muted text-foreground">
@@ -33,7 +36,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 pb-32 pt-5 md:pb-12">
+      <main className="mx-auto max-w-6xl px-4 pb-32 pt-2 md:pb-12 md:pt-5">
         {ready ? (
           <FavoritesContent key={`${token ?? 'guest'}:${attempt}`} onRetry={() => setAttempt((value) => value + 1)} />
         ) : <FavoritesLoading />}
