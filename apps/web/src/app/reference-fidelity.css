@@ -998,13 +998,13 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .profile-screen[data-profile-view='menu'] .profile-menu > a > svg:first-child,
   .profile-screen[data-profile-view='menu'] .profile-menu > button > svg:first-child {
-    width:25px;
-    height:25px;
+    width:21px;
+    height:21px;
     color:var(--fg-default);
   }
   .profile-screen[data-profile-view='menu'] .profile-menu > a > span.flex-1,
   .profile-screen[data-profile-view='menu'] .profile-menu > button > span.flex-1 {
-    font-size:16.5px;
+    font-size:14.5px;
     font-weight:500;
   }
   .profile-screen[data-profile-view='menu'] .profile-menu > a > svg:last-child,
@@ -1103,18 +1103,18 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     order: 2;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin: -26px 0 0;
-    padding: 18px 16px 9px;
-    border-radius: 26px 26px 0 0;
+    gap: 0;
+    margin: -34px 0 0;
+    padding: 16px 19px 9px;
+    border-radius: 28px 28px 0 0;
     background: var(--bg-page);
   }
   .listing-detail .listing-detail-heading h1 {
     order: 1;
-    font-size: 28px;
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -.4px;
+    font-size:25px;
+    font-weight:800;
+    line-height:30px;
+    letter-spacing:-.3px;
   }
   .listing-detail .listing-detail-heading .detail-trade-label {
     order: 2;
@@ -1127,10 +1127,10 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .listing-detail .listing-detail-heading > p { order: 4; }
   .listing-detail .listing-detail-seller {
     order: 3;
-    padding: 0 16px;
+    padding: 0 19px;
   }
   .listing-detail .listing-detail-seller [data-slot='card'] {
-    gap: 10px;
+    gap: 8px;
     padding: 0;
     border: 0;
     border-radius: 0;
@@ -1146,8 +1146,8 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     letter-spacing: -.5px;
   }
   .listing-detail .listing-detail-content {
-    order: 4;
-    padding: 8px 16px 24px;
+    order:4;
+    padding:9px 19px 24px;
   }
   .listing-detail .listing-primary-actions {
     position: fixed;
@@ -1163,9 +1163,9 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background: linear-gradient(to top,var(--bg-page) 78%,transparent);
   }
   .listing-detail .listing-primary-actions > * {
-    flex: 1;
-    min-width: 0;
-    min-height: 52px;
+    flex:1;
+    min-width:0;
+    min-height:43px;
     border-radius: 26px;
     font-weight: 600;
     white-space: nowrap;
