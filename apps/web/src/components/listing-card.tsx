@@ -106,7 +106,7 @@ export function ListingCardComponent({ data, apiBase, thumbHeight, className, sh
           imageClassName="w-full h-full object-cover"
           thumbStyle={thumbStyleProp}
           imageStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          placeholder={<ListingPlaceholder categoryTitle={data.category.title} categorySlug={data.category.slug} />}
+          placeholder={<ListingPlaceholder categoryTitle={data.category.title} categorySlug={data.category.slug} compact />}
           badges={
             <>
               {surface === 'home' ? <span className="listing-trade-badge" data-exchange={Boolean(data.barterEnabled ?? data.isBarter)}>{tradeLabel}</span> : null}
