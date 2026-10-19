@@ -456,6 +456,11 @@ async function chatListRecovery() {
   state.rejectList = true;
   await install(context, state, 'light');
   const page = await context.newPage();
+  const chatPaths = [];
+  page.on('request', request => {
+    const url = new URL(request.url());
+    if (url.pathname.endsWith('/chats')) chatPaths.push(url.pathname);
+  });
   try {
     await page.goto(baseURL + '/messages');
     await expect(page.getByRole('alert').filter({ hasText: 'Сервис сообщений временно недоступен' })).toBeVisible();
@@ -465,6 +470,7 @@ async function chatListRecovery() {
     await expect(page.getByRole('button', { name: /Анна/ })).toBeVisible();
     await expect(page.getByRole('alert').filter({ hasText: 'Сервис сообщений временно недоступен' })).toHaveCount(0);
     await page.screenshot({ path: join(output, 'messages-list-393x850-loaded.png') });
+    assert(chatPaths.length >= 2 && chatPaths.every(path => path === '/api/backend/chats'), 'preview chat reads must use same-origin proxy');
     console.log('BARTER_MESSAGES_RECOVERY_PASS 393x850');
   } finally { await context.close(); await browser.close(); }
 }
