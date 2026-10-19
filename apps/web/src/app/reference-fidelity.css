@@ -334,142 +334,150 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
 }
 
-/* Compact chat header/composer as in the supplied Claude prototype. */
-@media(max-width:767px) {
-  .messages-screen .thread-header {
-    min-height:56px;
-    padding-top:6px;
-    padding-bottom:6px;
-    gap:10px;
-    background:var(--bg-page);
-  }
-  .messages-screen .thread-header > div:nth-of-type(1) {
-    width:40px; height:40px;
-    border-radius:50%;
-  }
-  .messages-screen .message-bubble {
-    max-width:82%;
-    border-radius:19px;
-    padding:10px 13px 8px;
-    box-shadow:none;
-    font-size:15px;
-    line-height:1.3;
-  }
-  .messages-screen .message-bubble[data-direction='incoming'] {
-    border-radius:19px 19px 19px 7px;
-    background:var(--bg-muted);
-    border-color:transparent;
-    color:var(--fg-default);
-  }
-  .messages-screen .message-bubble[data-direction='outgoing'] {
-    border-radius:19px 19px 7px 19px;
-    background:#e3ebfd;
-    color:#192033;
-  }
-  .messages-screen .message-bubble[data-direction='outgoing'] [class*='text-white'] {
-    color:#5b6374;
-  }
-  .messages-screen .glass-panel:has(textarea[aria-label='Сообщение']) {
-    border-top:0;
-    background:var(--bg-page);
-    box-shadow:none;
-    -webkit-backdrop-filter:none;
-    backdrop-filter:none;
-    padding-top:8px;
-    padding-bottom:6px;
-  }
-  .messages-screen textarea[aria-label='Сообщение'] {
-    height:44px;
-    min-height:44px;
-    max-height:120px;
-    border-radius:22px;
-    background:var(--bg-muted);
-    border:0;
-    padding-block:10px;
-    line-height:24px;
-  }
-  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] {
-    background:#233553;
-    color:#f6f6f8;
-  }
-  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] [class*='text-white'] {
-    color:#a7b5d0;
-  }
-}
-
-
-/* Claude's conversation is a dedicated full-screen view. Keep the dock
-   visible in the chat list, but never let it cover the open thread composer. */
+/* Messages: one mobile visual contract from the 393x850 Claude conversation.
+   The inbox has no supplied screen reference, so use the same tokens and rhythm.
+   Desktop remains a split-pane, real API-backed messenger. */
 @media (max-width: 767px) {
-  body:has(.messages-screen[data-thread-open='true']) .magic-nav {
-    display: none !important;
+  .messages-screen { color:var(--fg-default); background:var(--bg-page); }
+  .messages-screen .messages-sidebar {
+    background:var(--bg-page); border:0;
   }
+  .messages-screen .messages-sidebar-heading {
+    padding:16px 16px 12px; min-height:70px;
+  }
+  .messages-screen .messages-sidebar-heading h2 {
+    font-size:29px; line-height:35px; font-weight:800; letter-spacing:-.5px;
+  }
+  .messages-screen .messages-sidebar-heading button[aria-label='Помощь и поддержка'] {
+    background:var(--bg-muted); color:var(--fg-muted); border:0;
+  }
+  .messages-screen .messages-list-controls { padding:0 16px 14px; }
+  .messages-screen .messages-list-search {
+    height:44px; border:0; background:var(--bg-muted);
+    border-radius:17px; font-size:13px;
+  }
+  .messages-screen .messages-list-filter {
+    min-height:36px; height:36px; padding:0 13px;
+    background:var(--bg-muted); font-size:12px;
+    color:var(--fg-muted);
+  }
+  .messages-screen .messages-list-filter[aria-pressed='true'] {
+    background:#ffede3; color:#ff5a0a;
+  }
+  html[data-theme='dark'] .messages-screen .messages-list-filter[aria-pressed='true'] {
+    background:#34231d; color:#ff7d37;
+  }
+  .messages-screen .messages-chat-row {
+    min-height:78px; gap:12px; padding:12px; border-radius:16px;
+  }
+  .messages-screen .messages-chat-thumb { width:48px; height:48px; border:0; border-radius:13px; }
+  .messages-screen .messages-list-error {
+    color:var(--fg-default); padding:16px 8px 22px;
+  }
+
+  /* A conversation is full-height and does not share the bottom tab bar. */
+  body:has(.messages-screen[data-thread-open='true']) .magic-nav { display:none !important; }
   .app-viewport .messages-screen[data-thread-open='true'],
   .messages-screen[data-thread-open='true'] {
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom:max(4px, env(safe-area-inset-bottom,0px)) !important;
   }
+  .messages-screen .thread-header,
   .messages-screen[data-thread-open='true'] .thread-header {
-    min-height: 56px;
-    padding: 5px 16px;
-    border-bottom: 0;
-    gap: 9px;
+    min-height:52px; height:52px; padding:0 9px 0 5px;
+    gap:9px; border:0; background:var(--bg-page);
+  }
+  .messages-screen .thread-header > button[aria-label='Назад к списку'] {
+    width:44px; height:44px; flex:none;
   }
   .messages-screen .thread-peer-avatar {
-    border-radius: 50%;
-    background: var(--bg-muted);
+    position:relative; width:43px; height:43px;
+    border-radius:50%; background:var(--bg-muted);
+  }
+  .messages-screen .thread-peer-avatar[data-online='true']::after {
+    position:absolute; right:-1px; bottom:0;
+    content:""; width:12px; height:12px;
+    border:2px solid var(--bg-page); border-radius:50%; background:#2fc45d;
+  }
+  .messages-screen .thread-header .thread-peer-name {
+    font-size:15.4px; font-weight:700; line-height:19px;
+  }
+  .messages-screen .thread-header .thread-peer-status {
+    margin-top:1px; font-size:11.5px; line-height:14px;
+  }
+  .messages-screen .thread-header .thread-peer-status > span:first-child { display:none; }
+  .messages-screen .thread-call-link,
+  .messages-screen .thread-header button[aria-label='Меню помощи'] {
+    width:36px; height:36px; min-width:36px; border:0; background:transparent;
   }
   .messages-screen .thread-listing-preview {
-    min-height: 80px;
-    background: var(--bg-surface);
-    box-shadow: 0 3px 15px rgba(24,24,48,.055);
-    border-color: var(--border-default);
+    min-height:80px; height:80px; margin:3px 16px 1px;
+    padding:0 14px; gap:13px; border:1px solid var(--border-default);
+    border-radius:16px; background:var(--bg-page);
+    box-shadow:0 3px 14px rgba(24,28,50,.07);
   }
+  .messages-screen .thread-listing-image { width:78px; height:65px; border-radius:10px; }
+  .messages-screen .thread-listing-preview > div:nth-child(2) { min-width:0; }
+  .messages-screen .thread-listing-preview strong { font-weight:700; }
+
   .messages-screen[data-thread-open='true'] [data-thread-scroll] {
-    padding: 8px 16px 10px;
-    background: var(--bg-page);
-    overscroll-behavior-y: contain;
+    padding:9px 16px 4px; background:var(--bg-page);
+    overscroll-behavior-y:contain;
   }
-  .messages-screen[data-thread-open='true'] [data-thread-scroll] > div {
-    gap: 9px;
-  }
-  .messages-screen[data-thread-open='true'] .thread-message-width {
-    max-width: 82%;
-  }
+  .messages-screen[data-thread-open='true'] .messages-bubbles { gap:7px; }
+  .messages-screen[data-thread-open='true'] .thread-message-width { max-width:80.5%; }
+  .messages-screen .message-bubble,
   .messages-screen[data-thread-open='true'] .message-bubble {
-    max-width: 100%;
-    border: 0;
-    padding: 10px 13px 8px;
-    font-size: 15.5px;
-    line-height: 1.3;
+    max-width:100%; border:0; box-shadow:none;
+    padding:11px 15px 7px; border-radius:19px;
+    font-size:12.8px; line-height:18px; overflow-wrap:anywhere;
   }
-  .messages-screen[data-thread-open='true'] .message-bubble[data-direction='incoming'],
-  .messages-screen[data-thread-open='true'] .message-bubble[data-direction='outgoing'] {
-    border-radius: 19px;
+  .messages-screen .message-bubble[data-direction='incoming'] {
+    background:#f2f3f5; color:#05060f; border-radius:19px;
   }
-  .messages-screen[data-thread-open='true'] .message-bubble .leading-relaxed {
-    line-height: 1.3;
+  .messages-screen .message-bubble[data-direction='outgoing'] {
+    background:#e5eefe; color:#192033; border-radius:19px;
   }
-  .messages-screen[data-thread-open='true'] .glass-panel:has(textarea[aria-label='Сообщение']) {
-    padding: 8px 16px 4px;
-    border: 0;
-    background: var(--bg-page);
-    box-shadow: none;
+  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='incoming'] {
+    background:#242629; color:#f6f7fa;
   }
-  .messages-screen[data-thread-open='true'] textarea[aria-label='Сообщение'] {
-    min-height: 44px;
-    height: 44px;
-    border: 0;
-    border-radius: 23px;
-    background: var(--bg-muted);
-    padding: 10px 16px;
-    font-size: 15.5px;
-    line-height: 24px;
+  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] {
+    background:#223657; color:#f6f7fa;
+  }
+  .messages-screen .message-bubble .leading-relaxed { line-height:18px; }
+  .messages-screen .message-bubble [data-message-meta] {
+    margin-top:5px; gap:4px; line-height:12px; font-size:10px;
+  }
+  .messages-screen .message-bubble [data-message-meta] svg {
+    width:17px; height:17px; color:#2f7cf6; stroke-width:2.2;
+  }
+  .messages-screen .message-bubble[data-direction='outgoing'] [data-message-meta] {
+    color:var(--fg-muted);
+  }
+
+  .messages-screen .messages-composer,
+  .messages-screen[data-thread-open='true'] .messages-composer {
+    border:0; background:var(--bg-page); box-shadow:none;
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+    padding:4px 16px 2px;
+  }
+  .messages-screen .messages-composer > div:last-child {
+    align-items:center; gap:8px;
+  }
+  .messages-screen textarea[aria-label='Сообщение'] {
+    height:36px; min-height:36px; max-height:120px;
+    padding:6px 16px; border:0; border-radius:18px;
+    background:var(--bg-muted); font-size:12.5px; line-height:24px;
+  }
+  .messages-screen .messages-composer label:has(input[type='file']) {
+    width:36px; height:36px; background:transparent; color:var(--fg-default);
+  }
+  .messages-screen .messages-composer button[aria-label='Отправить'] {
+    width:36px; height:36px; min-width:36px;
   }
   html[data-theme='dark'] .messages-screen .thread-listing-preview {
-    box-shadow: 0 3px 15px rgba(0,0,0,.25);
+    box-shadow:0 3px 14px rgba(0,0,0,.25);
   }
 }
-
 
 /* One clear top action and one integrated search bar, not two competing
    standalone circles. City still opens the actual location picker. */
