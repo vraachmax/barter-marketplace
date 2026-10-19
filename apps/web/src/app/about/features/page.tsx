@@ -36,7 +36,7 @@ export default function BarterFeaturesPage() {
         </Link>
         <header className="relative mt-4 overflow-hidden rounded-[26px] bg-[#111113] px-6 py-9 text-white md:px-12 md:py-16">
           <span className="relative z-10 text-xs font-semibold tracking-[.13em] text-[#ff9661]">ВОЗМОЖНОСТИ БАРТЕРА</span>
-          <h1 className="relative z-10 mt-3 max-w-[580px] text-[31px] font-extrabold leading-[1.1] tracking-[-.7px] md:text-[55px]">Меняй. Покупай.<br />Открывай новое.</h1>
+          <h1 style={{ color: '#ffffff' }} className="relative z-10 mt-3 max-w-[580px] text-[31px] font-extrabold leading-[1.1] tracking-[-.7px] md:text-[55px]">Меняй. Покупай.<br />Открывай новое.</h1>
           <p className="relative z-10 mt-4 max-w-[400px] text-sm leading-6 text-[#cbcad0] md:text-base">
             Один сервис для вещей, которые нужны, и вещей, которыми готовы поделиться.
           </p>
