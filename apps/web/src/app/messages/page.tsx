@@ -113,6 +113,7 @@ export default function MessagesPage() {
   const messageRequestRef = useRef(0);
   const listRequestRef = useRef(0);
   const [status, setStatus] = useState<'loading' | 'need_auth' | 'ready' | 'error'>('loading');
+  const [listError, setListError] = useState<{ title: string; detail: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [onlineByUserId, setOnlineByUserId] = useState<Record<string, boolean>>({});
   const [lastSeenByUserId, setLastSeenByUserId] = useState<Record<string, string>>({});
@@ -208,17 +209,42 @@ export default function MessagesPage() {
 
   const loadChats = useCallback(async (background = false) => {
     const request = ++listRequestRef.current;
+    if (!background) setStatus('loading');
     const res = await apiFetchJson<ChatSummary[]>('/chats', { signal: AbortSignal.timeout(15000) });
     if (request !== listRequestRef.current) return res.ok ? res.data : [];
     if (!res.ok) {
       if (background) return [];
       if (res.status === 401) {
+        setListError(null);
         setStatus('need_auth');
         return [];
       }
+      const title = res.status === 0
+        ? 'Нет связи с сервером сообщений'
+        : res.status === 403
+          ? 'Нет доступа к сообщениям'
+          : res.status >= 500
+            ? 'Сервис сообщений временно недоступен'
+            : 'Не удалось загрузить чаты';
+      const detail = res.status === 0
+        ? 'Проверьте соединение и повторите попытку. Если ошибка сохраняется, возможно, недоступен API.'
+        : res.status === 403
+          ? 'Проверьте, что вы вошли в аккаунт, и попробуйте снова.'
+          : res.status >= 500
+            ? 'Сервер вернул ошибку ' + res.status + '. Попробуйте чуть позже.'
+            : 'Код ответа API: ' + res.status + '. Попробуйте обновить список.';
+      setListError({ title, detail });
       setStatus('error');
       return [];
     }
+    if (!Array.isArray(res.data)) {
+      if (!background) {
+        setListError({ title: 'Неверный ответ сервера', detail: 'Список чатов получен в неожиданном формате. Повторите загрузку.' });
+        setStatus('error');
+      }
+      return [];
+    }
+    setListError(null);
     setChats(res.data);
     joinLoadedChats(res.data);
     setStatus('ready');
@@ -611,9 +637,11 @@ export default function MessagesPage() {
               </div>
             ) : null}
             {status === 'error' ? (
-              <div role="alert" className="p-4 text-center text-sm text-destructive">
-                <p>Не удалось загрузить чаты</p>
-                <Button variant="outline" className="mt-3" onClick={() => void loadChats()}>Повторить загрузку</Button>
+              <div role="alert" className="messages-list-error mx-4 mt-8 flex flex-col items-center text-center">
+                <MessageCircle size={34} strokeWidth={1.5} className="text-muted-foreground" aria-hidden />
+                <p className="mt-3 text-[15px] font-semibold text-foreground">{listError?.title ?? 'Не удалось загрузить чаты'}</p>
+                <p className="mt-1 max-w-[300px] text-[12px] leading-5 text-muted-foreground">{listError?.detail ?? 'Попробуйте ещё раз.'}</p>
+                <Button variant="outline" className="mt-4 min-h-11 rounded-full border-border px-5 text-foreground" onClick={() => void loadChats()}>Повторить загрузку</Button>
               </div>
             ) : null}
 
