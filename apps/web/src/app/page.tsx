@@ -340,26 +340,59 @@ async function renderHome(sp: HomeSearchParams) {
   const retryQuery = { ...preservedListQuery, city: currentCity ?? '', ...(recoMode ? { reco: '1' } : {}) };
 
   // Category illustrations are decorative; destinations always come from API slugs.
+  // Two rows of rounded category buttons on mobile. The first row maintains the
+  // five established entry points while additional categories stay reachable by
+  // horizontal scrolling. Use IDs from the API; never invent a category ID.
   const CATS = [
     { name: 'Техника', slug: 'electronics' },
+    { name: 'Хобби', slug: 'hobby' },
     { name: 'Авто', slug: 'auto' },
-    { name: 'Недвижимость', slug: 'realty' },
-    { name: 'Одежда', slug: 'clothes' },
-    { name: 'Другое', slug: 'all' },
-    { name: 'Игры и хобби', slug: 'hobby' },
-    { name: 'Для дома', slug: 'home' },
-    { name: 'Детям', slug: 'kids' },
-    { name: 'Работа', slug: 'job' },
-    { name: 'Спецтехника', slug: 'special_equipment' },
     { name: 'Услуги', slug: 'services' },
+    { name: 'Недвижимость', slug: 'realty' },
+    { name: 'Для дома', slug: 'home' },
+    { name: 'Одежда', slug: 'clothes' },
+    { name: 'Детские товары', slug: 'kids' },
+    { name: 'Другое', slug: 'all' },
+    { name: 'Спецтехника', slug: 'special_equipment' },
+    { name: 'Запчасти', slug: 'parts' },
+    { name: 'Мебель', slug: 'furniture' },
+    { name: 'Спорт', slug: 'sports' },
+    { name: 'Красота', slug: 'beauty' },
+    { name: 'Животные', slug: 'pets' },
+    { name: 'Работа', slug: 'job' },
   ];
   const DESKTOP_CATEGORY_IMAGES: Record<string, string> = {
-    electronics: 'smartphones', auto: 'cars', realty: 'real-estate',
+    electronics: 'laptops', auto: 'cars', realty: 'real-estate',
     clothes: 'clothing', hobby: 'gaming', home: 'furniture',
     kids: 'miscellaneous', job: 'laptops', services: 'services',
-    special_equipment: 'heavy-machinery',
+    special_equipment: 'heavy-machinery', parts: 'cars',
+    furniture: 'furniture', sports: 'gaming', beauty: 'watches',
+    pets: 'miscellaneous',
   };
-    const availableCategories = getAvailableCatalogCategories(CATS, categories);
+  const categoryArt = (cat: { slug: string; name: string }) => {
+    const label = (cat.slug + ' ' + cat.name).toLowerCase();
+    return DESKTOP_CATEGORY_IMAGES[cat.slug]
+      ?? (/спецтех|строител.*техник|excavat|heavy.machin/.test(label) ? 'heavy-machinery' : null)
+      ?? (/запчаст|parts|автозапчаст|spare/.test(label) ? 'cars' : null)
+      ?? (/мебел|дом|furnit|interior/.test(label) ? 'furniture' : null)
+      ?? (/спорт|хобби|gaming|game/.test(label) ? 'gaming' : null)
+      ?? (/услуг|ремонт|service/.test(label) ? 'services' : null)
+      ?? (/телефон|электрон|smart|gadget/.test(label) ? 'smartphones' : null)
+      ?? 'miscellaneous';
+  };
+  const curated = getAvailableCatalogCategories(CATS, categories);
+  const usedCategoryIds = new Set(curated.map(cat => cat.categoryId).filter(Boolean));
+  const extraCategories = categories
+    .filter(cat => cat?.id && cat?.slug && !cat.parentId && !usedCategoryIds.has(cat.id))
+    .map(cat => ({ name: cat.title, slug: cat.slug, categoryId: cat.id }));
+  // Several legacy API catalogs put special equipment under vehicles. Surface
+  // that existing category even when its slug differs from our curated alias.
+  const equipment = categories.find(cat =>
+    cat?.id && (/спецтехник/i.test(cat.title) || /special[-_]?equipment|heavy[-_]?machinery/.test(cat.slug)));
+  const equipmentTile = equipment && !usedCategoryIds.has(equipment.id) && !extraCategories.some(x => x.categoryId === equipment.id)
+    ? [{ name: 'Спецтехника', slug: equipment.slug, categoryId: equipment.id }]
+    : [];
+  const availableCategories = [...curated, ...extraCategories, ...equipmentTile];
 
   const categoryView = Boolean(urlCategoryId) && !currentQ;
   const categorySubcategories = categories.filter(category => category.parentId === urlCategoryId);
@@ -478,7 +511,7 @@ async function renderHome(sp: HomeSearchParams) {
               href={cat.slug === 'all' ? '/search' : { pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
               aria-current={urlCategoryId && cat.categoryId && urlCategoryId === cat.categoryId ? 'true' : undefined}
               className="home-category-tile"
-              data-mobile-secondary={!(['electronics', 'auto', 'realty', 'clothes', 'all'].includes(cat.slug))}
+              data-mobile-secondary="false"
               data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug)}
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
@@ -489,11 +522,11 @@ async function renderHome(sp: HomeSearchParams) {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-dark.jpg`} width={124} height={124} alt="" />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? "miscellaneous"}.webp`} width={240} height={240} alt="" />
+                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${categoryArt(cat)}.webp`} width={240} height={240} alt="" />
                   </>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? 'miscellaneous'}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
+                  <img src={`/visual-refresh/placeholders/${categoryArt(cat)}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
               )}
               </span>
               <span className="category-title">{cat.name}</span>
