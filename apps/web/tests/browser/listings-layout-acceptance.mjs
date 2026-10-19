@@ -1059,6 +1059,8 @@ async function captureReferenceViewport(theme) {
       await page.locator('.barter-hero-carousel__slide[data-active="true"] a').click();
       await expect(page).toHaveURL(/\/about\/features#exchange$/);
       await expect(page.getByRole('heading', { name: /Обменивайтесь без ограничений/ })).toBeVisible();
+      const featuresHeadlineColor = await page.locator('main header h1').evaluate(el => getComputedStyle(el).color);
+      assert.equal(featuresHeadlineColor, 'rgb(255, 255, 255)', 'features headline must remain readable over dark art');
       await page.screenshot({ path: join(output, 'features-393x850-' + theme + '.png') });
       await page.goto(baseURL + '/listing/fixture-visual-phone', { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('heading', { name: 'iPhone 15 Pro' })).toBeVisible();
