@@ -136,6 +136,27 @@ async function scenario(type, width, theme) {
     await page.goto(baseURL + '/messages?chatId=a');
     await expect(page.getByText('Сообщение Анны', { exact: true })).toBeVisible();
     if (width < 768) {
+      const bubble = page.locator('.message-bubble').first();
+      await expect(bubble).toBeVisible();
+      const mobileMetrics = await page.evaluate(() => {
+        const bubble = document.querySelector('.message-bubble');
+        const header = document.querySelector('.thread-header');
+        const composer = document.querySelector('textarea[aria-label="Сообщение"]');
+        return {
+          bubbleFont: getComputedStyle(bubble).fontSize,
+          bubbleLineHeight: getComputedStyle(bubble).lineHeight,
+          headerHeight: Math.round(header.getBoundingClientRect().height),
+          composerHeight: Math.round(composer.getBoundingClientRect().height),
+        };
+      });
+      assert.equal(mobileMetrics.bubbleFont, '12.8px', 'Claude mobile message font');
+      assert.equal(mobileMetrics.bubbleLineHeight, '18px', 'Claude mobile message leading');
+      assert.equal(mobileMetrics.headerHeight, 52, 'Claude chat header height');
+      assert.equal(mobileMetrics.composerHeight, 36, 'Claude composer pill height');
+      await page.screenshot({ path: join(output, key + '-reference-conversation.png') });
+      checks.push('reference mobile conversation geometry and screenshot');
+    }
+    if (width < 768) {
       await page.evaluate(() => {
         document.documentElement.style.setProperty('--safe-area-top', '59px');
         document.documentElement.style.setProperty('--safe-area-bottom', '34px');
@@ -369,8 +390,28 @@ async function scenario(type, width, theme) {
     console.error('BARTER_MESSAGES_FAIL ' + key + '\n' + error.stack);
   } finally { await context.close(); await browser.close(); }
 }
+async function chatListRecovery() {
+  const browser = await chromium.launch();
+  const context = await browser.newContext({ viewport: { width: 393, height: 850 }, isMobile: true, hasTouch: true, colorScheme: 'light' });
+  const state = fixture('light');
+  state.rejectList = true;
+  await install(context, state, 'light');
+  const page = await context.newPage();
+  try {
+    await page.goto(baseURL + '/messages');
+    await expect(page.getByRole('alert').filter({ hasText: 'Сервис сообщений временно недоступен' })).toBeVisible();
+    await page.screenshot({ path: join(output, 'messages-list-393x850-server-error.png') });
+    state.rejectList = false;
+    await page.getByRole('button', { name: 'Повторить загрузку' }).click();
+    await expect(page.getByRole('button', { name: /Анна/ })).toBeVisible();
+    await expect(page.getByRole('alert').filter({ hasText: 'Сервис сообщений временно недоступен' })).toHaveCount(0);
+    await page.screenshot({ path: join(output, 'messages-list-393x850-loaded.png') });
+    console.log('BARTER_MESSAGES_RECOVERY_PASS 393x850');
+  } finally { await context.close(); await browser.close(); }
+}
 try {
   await waitForServer();
+  await chatListRecovery();
   for (const theme of ['light', 'dark']) for (const width of [360, 440, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
 } finally {
   server.kill('SIGTERM');
