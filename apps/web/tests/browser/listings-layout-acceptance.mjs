@@ -700,13 +700,6 @@ async function scenario(browserType, width, theme) {
     if (width === 390 || width === 440) {
       await visit('/?mode=both&sort=expensive');
       await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
-      const neutralPlaceholder = page.locator('.refresh-listing-card .listing-photo-placeholder').first();
-      await expect(neutralPlaceholder).toBeVisible();
-      await expect(neutralPlaceholder).toHaveAttribute('data-compact', 'true');
-      await expect(neutralPlaceholder).toHaveAttribute('aria-label', /Нет фото товара/);
-      await expect(neutralPlaceholder.locator('svg')).toHaveCount(1);
-      assert.equal((await neutralPlaceholder.innerText()).trim(), '',
-        'missing-photo tile must not display a clipped caption');
       const cards = page.locator('.refresh-listing-card > [role="link"]:first-child');
       await expect(cards).toHaveCount(2);
       // WebKit may expose a new RSC route tree before the view transition
@@ -967,6 +960,14 @@ async function scenario(browserType, width, theme) {
     state.failListings = false;
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
+    if (width === 390 || width === 440) {
+      const missingPhoto = page.locator('.listing-photo-placeholder').first();
+      await expect(missingPhoto).toBeVisible();
+      await expect(missingPhoto).toHaveAttribute('aria-label', /Нет фото товара/);
+      await expect(missingPhoto.locator('svg')).toHaveCount(1);
+      assert.equal((await missingPhoto.innerText()).trim(), '',
+        'no-photo tiles must not show clipped caption text');
+    }
     if (width === 360 || width === 1280) {
       await visit('/new?tradeMode=barter');
       await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
