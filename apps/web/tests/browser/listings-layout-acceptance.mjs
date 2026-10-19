@@ -1172,6 +1172,54 @@ async function captureReferenceViewport(theme, width = 393, height = 850) {
   } finally { await browser.close(); }
 }
 
+/** Chromium DevTools can emulate the installed-app display mode. This verifies
+ * CSS geometry only; final physical iOS Safari/PWA acceptance stays separate.
+ */
+async function checkStandaloneShell(theme) {
+  const browser = await chromium.launch();
+  const context = await browser.newContext({
+    viewport: { width: 393, height: 850 }, isMobile: true, hasTouch: true,
+    deviceScaleFactor: 1, colorScheme: theme,
+  });
+  try {
+    await installFixture(context, fixture(theme), theme);
+    const page = await context.newPage();
+    const cdp = await context.newCDPSession(page);
+    try {
+      await cdp.send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'display-mode', value: 'standalone' }],
+      });
+      await page.goto(baseURL + '/?mode=both', { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('.magic-nav')).toBeVisible();
+      const result = await page.evaluate(() => {
+        const dock = document.querySelector('.magic-nav').getBoundingClientRect();
+        const header = document.querySelector('.catalog-mobile-header').getBoundingClientRect();
+        const hStyle = getComputedStyle(document.querySelector('.catalog-mobile-header'));
+        return {
+          standalone: matchMedia('(display-mode: standalone)').matches,
+          dockHeight: dock.height,
+          dockBottom: dock.bottom,
+          headerTop: header.top,
+          headerBackdrop: hStyle.backdropFilter,
+          headerWebkitBackdrop: hStyle.webkitBackdropFilter,
+          viewportHeight: window.innerHeight,
+        };
+      });
+      assert(result.standalone, 'standalone media feature must be emulated');
+      assert(Math.abs(result.dockBottom - result.viewportHeight) <= 2 &&
+        result.dockHeight >= 55 && result.dockHeight <= 89,
+        'iOS PWA dock must end at viewport bottom with <=34px safe area: ' + JSON.stringify(result));
+      assert(result.headerTop >= 50 && result.headerBackdrop === 'none' &&
+        (!result.headerWebkitBackdrop || result.headerWebkitBackdrop === 'none'),
+        'PWA header must remain below the status bar and have no background blur: ' + JSON.stringify(result));
+      await page.screenshot({ path: join(output, 'pwa-shell-393x850-' + theme + '.png') });
+      console.log('BARTER_PWA_SHELL_PASS ' + theme);
+    } finally {
+      await cdp.detach();
+    }
+  } finally { await context.close(); await browser.close(); }
+}
+
 try {
   await waitForServer();
   for (const theme of ['light', 'dark']) {
@@ -1181,6 +1229,7 @@ try {
   for (const theme of ['light', 'dark']) {
     await captureReferenceViewport(theme, 393, 850);
     await captureReferenceViewport(theme, 430, 932);
+    await checkStandaloneShell(theme);
   }
   const browser = await chromium.launch();
   try {
