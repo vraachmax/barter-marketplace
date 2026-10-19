@@ -4,16 +4,35 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
+/** Approved assets are individual, text-free images. All labels and CTAs are live HTML. */
 const slides = [
-  { id: 'intro', label: 'Знакомство с БАРТЕРОМ', href: '/about/features' },
-  { id: 'exchange', label: 'Предложения обмена', href: '/about/features#exchange' },
-  { id: 'both', label: 'Продажа и обмен вместе', href: '/about/features#one-listing' },
-  { id: 'messages', label: 'Договоритесь в сообщениях', href: '/about/features#messages' },
+  {
+    id: 'intro', label: 'Знакомство с БАРТЕРОМ',
+    image: '/visual-refresh/premium/hero-intro.webp', href: '/about/features',
+    title: 'Меняй. Покупай. Открывай новое.',
+    description: 'Нужные вещи. Новые возможности. Находи своё в БАРТЕРЕ.',
+  },
+  {
+    id: 'exchange', label: 'Предложения обмена',
+    image: '/visual-refresh/premium/hero-exchange.webp', href: '/about/features#exchange',
+    title: 'Меняй вещи, находи своё.',
+    description: 'Предлагай обмен на вещи из любых категорий.',
+  },
+  {
+    id: 'both', label: 'Продажа и обмен вместе',
+    image: '/visual-refresh/premium/hero-one-listing.webp', href: '/about/features#one-listing',
+    title: 'Одно объявление. Два пути.',
+    description: 'Покупка и обмен без повторной публикации.',
+  },
+  {
+    id: 'messages', label: 'Договоритесь в сообщениях',
+    image: '/visual-refresh/premium/hero-messages.webp', href: '/about/features#messages',
+    title: 'Обсудите сделку внутри.',
+    description: 'Чат, фотографии и детали сделки в одном месте.',
+  },
 ] as const;
 
-/** Interactive and keyboard/swipe-accessible homepage hero.
- * Slide one reuses the EXACT approved artwork; the artwork includes its own CTA.
- */
+/** Accessible homepage hero, with pointer/keyboard navigation and reduced-motion support. */
 export function BarterHeroCarousel() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -35,7 +54,8 @@ export function BarterHeroCarousel() {
 
   return (
     <section className="barter-hero-carousel" aria-label="Возможности БАРТЕРА" aria-roledescription="Карусель">
-      <div className="barter-hero-carousel__frame"
+      <div
+        className="barter-hero-carousel__frame"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocusCapture={() => setPaused(true)}
@@ -61,46 +81,43 @@ export function BarterHeroCarousel() {
         }}
       >
         {slides.map((slide, i) => (
-          <div className="barter-hero-carousel__slide" key={slide.id} aria-hidden={active !== i}
-            data-active={active === i} id={'barter-slide-' + slide.id}>
-            {slide.id === 'intro' ? (
-              <Link href={slide.href} tabIndex={active === i ? 0 : -1}
-                className="barter-hero-carousel__intro"
-                aria-label="Открыть возможности Barter: Меняй. Покупай. Открывай новое.">
-                {/* Original artwork contains the headline and the CTA. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="barter-hero-carousel__light" src="/visual-refresh/claude-banner-light.jpg" alt="" width={643} height={320} />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="barter-hero-carousel__dark" src="/visual-refresh/claude-banner-dark.jpg" alt="" width={652} height={319} />
-              </Link>
-            ) : (
-              <Link href={slide.href} tabIndex={active === i ? 0 : -1}
-                className={`barter-hero-carousel__content barter-hero-carousel__content--${slide.id}`}>
-                {/* Three generated photographic slide artworks share one optimized asset. */}
-                <span className={`barter-hero-carousel__art barter-hero-carousel__art--${slide.id}`} aria-hidden />
-                <div className="barter-hero-carousel__copy">
-                  <span className="barter-hero-carousel__eyebrow">БАРТЕР · ВОЗМОЖНОСТИ</span>
-                  <h2>{slide.id === 'exchange' ? 'Меняй вещи, находи своё.' : slide.id === 'both' ? 'Одно объявление. Два пути.' : 'Обсудите сделку внутри.'}</h2>
-                  <p>{slide.id === 'exchange'
-                    ? 'Предлагай обмен на вещи из любых категорий.'
-                    : slide.id === 'both'
-                      ? 'Покупка и обмен без повторной публикации.'
-                      : 'Чат, фотографии и детали сделки в одном месте.'}</p>
-                  <span className="barter-hero-carousel__cta">Подробнее <ArrowRight size={15} aria-hidden /></span>
-                </div>
-
-              </Link>
-            )}
+          <div
+            key={slide.id}
+            className="barter-hero-carousel__slide"
+            aria-hidden={active !== i}
+            data-active={active === i}
+            id={'barter-slide-' + slide.id}
+          >
+            <Link
+              href={slide.href}
+              tabIndex={active === i ? 0 : -1}
+              className={'barter-hero-carousel__content barter-hero-carousel__content--' + slide.id +
+                (slide.id === 'intro' ? ' barter-hero-carousel__intro' : '')}
+            >
+              {/* Each slide uses its own original illustration; no text is baked into the image. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img className="barter-hero-carousel__art" src={slide.image}
+                width={1600} height={740} alt="" aria-hidden="true" />
+              <div className="barter-hero-carousel__copy">
+                <span className="barter-hero-carousel__eyebrow">БАРТЕР · ВОЗМОЖНОСТИ</span>
+                <h2>{slide.title}</h2>
+                <p>{slide.description}</p>
+                <span className="barter-hero-carousel__cta">Подробнее <ArrowRight size={15} aria-hidden="true" /></span>
+              </div>
+            </Link>
           </div>
         ))}
         <div className="barter-hero-carousel__dots" aria-label="Выбор слайда">
           {slides.map((slide, i) => (
-            <button type="button" key={slide.id}
-              aria-label={`Слайд ${i + 1}: ${slide.label}`}
+            <button
+              type="button"
+              key={slide.id}
+              aria-label={'Слайд ' + (i + 1) + ': ' + slide.label}
               aria-current={active === i ? 'true' : undefined}
               onClick={() => change(i)}
-              className="barter-hero-carousel__dot-hit">
-              <span className="barter-hero-carousel__dot" aria-hidden />
+              className="barter-hero-carousel__dot-hit"
+            >
+              <span className="barter-hero-carousel__dot" aria-hidden="true" />
             </button>
           ))}
         </div>

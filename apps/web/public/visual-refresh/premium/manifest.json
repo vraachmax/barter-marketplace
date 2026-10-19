@@ -1,0 +1,226 @@
+{
+  "project": "Barter",
+  "version": "premium-assets-2026-10-19",
+  "original_sources": [
+    {
+      "file": "премиальная_композиция_гаджетов_с_оранжевыми_лента.png",
+      "sha256": "227c8baeb6c3fc20ac9d479e4c6cc65713ac0919a22c7b527aebcbca64fa8e2c"
+    },
+    {
+      "file": "обмен_гаджетами_в_премиум_стиле.png",
+      "sha256": "0d1850e5c3969dc4cd86883b53dbea46f73da8c39c4bfa7b73921d5c926d205d"
+    },
+    {
+      "file": "премиальный_ноутбук_в_золотом_вихре.png",
+      "sha256": "408057c16fab07de01f05e282c9c56cb01c1bf951e24f8f4f11d8a5211d521f7"
+    },
+    {
+      "file": "современный_диалог_смартфоны_и_стиль.png",
+      "sha256": "84d9a56078596e46edc8b358072583578e0532d913d3e3bc315663e145414a8a"
+    },
+    {
+      "file": "премиальная_сетка_3d_иконок_категорий.png",
+      "sha256": "dc867c417c1a97f18a33afb324507c191b7273ff544489c933570bf087c50cd7"
+    }
+  ],
+  "files": [
+    {
+      "file": "hero-intro.webp",
+      "pixels": [
+        1600,
+        740
+      ],
+      "bytes": 91928,
+      "sha256": "a22a58f6faad49b0a343c5c6c59f890d3d3f03a9771fb1e4a9d555c0ea3d2f73"
+    },
+    {
+      "file": "hero-exchange.webp",
+      "pixels": [
+        1600,
+        740
+      ],
+      "bytes": 84532,
+      "sha256": "1f09a444de596742f4d3050accd4b922c755c8105132f6ba734208e6a39254aa"
+    },
+    {
+      "file": "hero-one-listing.webp",
+      "pixels": [
+        1600,
+        740
+      ],
+      "bytes": 72744,
+      "sha256": "4e25ab65e6f5006bcf05b7595e9fa2fd86fd3d658dfa668832d5cbecf0cf4b35"
+    },
+    {
+      "file": "hero-messages.webp",
+      "pixels": [
+        1600,
+        740
+      ],
+      "bytes": 84048,
+      "sha256": "11198fffc9696ac87c410106110fd8541de4ba9ad6ed75b43686e439dfd0a646"
+    },
+    {
+      "file": "categories/electronics.webp",
+      "category": "Техника",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 11680,
+      "sha256": "18290ef8f1df27cf70380fd97554da6b28d6171e46790f8c60634e0e64e0892c"
+    },
+    {
+      "file": "categories/auto.webp",
+      "category": "Авто",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 14326,
+      "sha256": "1c98231c0356318d65c0e40890a24f4c2cee496339783d4b62a79fe2c6074c27"
+    },
+    {
+      "file": "categories/realty.webp",
+      "category": "Недвижимость",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 14918,
+      "sha256": "69aabe7cf49937d6626fe6ce79543db6c4776d7e6f6e0eddf6c0c815bd287f4f"
+    },
+    {
+      "file": "categories/clothes.webp",
+      "category": "Одежда",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 11440,
+      "sha256": "01be1be4f4cec85c691aa904ef8023aa414fc1ca9dc56c19cbb367c6cc87e700"
+    },
+    {
+      "file": "categories/hobby.webp",
+      "category": "Хобби",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 11624,
+      "sha256": "3cbd422dc53c0874c2321a65535d97d59ea4dc63522b98102a505d557e60b958"
+    },
+    {
+      "file": "categories/special_equipment.webp",
+      "category": "Спецтехника",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 15844,
+      "sha256": "0c2735fc23f5c4589a7ceb59c0eb88db0e2d646a849811399c3e4fc81e9aeeb0"
+    },
+    {
+      "file": "categories/services.webp",
+      "category": "Услуги",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 12682,
+      "sha256": "5a183df59378b6f7a2b35374db1b88b87cb91d7b28098044bda5a1144d5f3612"
+    },
+    {
+      "file": "categories/parts.webp",
+      "category": "Запчасти",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 14484,
+      "sha256": "8ba16e46ef84cb6bd59d107c8c5ba559c30e473a20862be221695e32ff17d4ac"
+    },
+    {
+      "file": "categories/furniture.webp",
+      "category": "Мебель",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 10156,
+      "sha256": "ef6d5a21ac84d077d2923ccf7c0c6f12ae48ec0618bfc46a62640eda20472807"
+    },
+    {
+      "file": "categories/kids.webp",
+      "category": "Детские товары",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 17012,
+      "sha256": "c8007cf767e994cf187ed19cea114b0e08e6a75206728d1a18fbdb703b1e1384"
+    },
+    {
+      "file": "categories/home.webp",
+      "category": "Для дома",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 12784,
+      "sha256": "8e85835ab6c59c1e7d85780c81ed3d126d6d5c397b8dc3c2f68744dfc4b537ef"
+    },
+    {
+      "file": "categories/sports.webp",
+      "category": "Спорт",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 13450,
+      "sha256": "04c5ff51f91d38f851bcf4a280e28ad51f7f8b65b5c5bc7d9797c612e8cbec42"
+    },
+    {
+      "file": "categories/beauty.webp",
+      "category": "Красота",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 11796,
+      "sha256": "dd4dbd012909adebdeded06b2b22b01c8cf4ecc56636bb5bf6e927785b11b7a5"
+    },
+    {
+      "file": "categories/pets.webp",
+      "category": "Животные",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 14976,
+      "sha256": "3126aca76ca971bc0a5df5ecca45a4447bf61d1c47f1bf9bb472ec3b9f5fd3be"
+    },
+    {
+      "file": "categories/photo.webp",
+      "category": "Фото и музыка",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 14540,
+      "sha256": "741ae205a08725aa994f4b64df9ed893bd317feb2ff9bdd03a6b9c2386fec5d3"
+    },
+    {
+      "file": "categories/all.webp",
+      "category": "Другое",
+      "pixels": [
+        288,
+        288
+      ],
+      "bytes": 10726,
+      "sha256": "56200eba8e606b992797e43ae5c9cb8144bd522bc1e63bcdf507bfe90802cb2c"
+    }
+  ],
+  "status": "assets-only; components are not integrated automatically",
+  "license_note": "Generated by user request; visually review third-party logo-like imagery before distribution"
+}
