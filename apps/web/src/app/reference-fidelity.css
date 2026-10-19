@@ -1780,3 +1780,27 @@ html[data-theme='dark'] .barter-hero-carousel__intro .barter-hero-carousel__dark
 .barter-hero-carousel__intro:focus-visible,.barter-hero-carousel__content:focus-visible {outline:3px solid #ff5a0a;outline-offset:-4px;}
 @media(min-width:768px) { .barter-hero-carousel {display:none;} }
 @media(prefers-reduced-motion:reduce) { .barter-hero-carousel__slide,.barter-hero-carousel__dot {transition:none;} }
+
+/* Reference feed cards: full bleed media with a flat orange trade chip.
+   Never place a framed placeholder card inside the media region. */
+.refresh-listing-card .listing-trade-badge,
+.refresh-listing-card .listing-trade-badge[data-exchange='true'] {
+  display:inline-flex; align-items:center; justify-content:center;
+  border:0 !important; outline:0; box-shadow:none !important;
+  background:#ff5a0a; color:#fff; border-radius:999px;
+  font-weight:600; white-space:nowrap;
+}
+.refresh-listing-card > [role='link']:first-child { isolation:isolate; }
+.refresh-listing-card > [role='link']:first-child > [role='img'] { width:100%;height:100%; }
+.refresh-listing-card > [role='link']:first-child img { object-fit:cover; }
+.refresh-listing-card .photo-hold-preview { touch-action:pan-y; }
+.refresh-listing-card .photo-hold-preview[data-photo-holding='true'] { cursor:ew-resize; }
+.refresh-listing-card .photo-hold-preview [aria-hidden='false'] img { object-fit:cover; }
+@media(max-width:767px) {
+  .refresh-listing-card[data-surface='home'] > [role='link']:first-child {
+    height:145px !important; min-height:145px; aspect-ratio:auto !important;
+    border-radius:18px 18px 0 0; overflow:hidden;
+  }
+  .refresh-listing-card .listing-trade-badge { min-height:22px; padding:4px 10px; font-size:10.4px; line-height:14px; }
+  .refresh-listing-card .listing-card-copy { padding:10px 14px 8px; }
+}
