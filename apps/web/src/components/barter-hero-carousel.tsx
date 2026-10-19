@@ -76,9 +76,8 @@ export function BarterHeroCarousel() {
             ) : (
               <Link href={slide.href} tabIndex={active === i ? 0 : -1}
                 className={`barter-hero-carousel__content barter-hero-carousel__content--${slide.id}`}>
-                {/* Product imagery is a real photograph-based generated background, not a giant UI icon. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="barter-hero-carousel__art" src={`/visual-refresh/hero-${slide.id === 'both' ? 'one-listing' : slide.id}.webp`} width={643} height={320} alt="" aria-hidden />
+                {/* Three generated photographic slide artworks share one optimized asset. */}
+                <span className={`barter-hero-carousel__art barter-hero-carousel__art--${slide.id}`} aria-hidden />
                 <div className="barter-hero-carousel__copy">
                   <span className="barter-hero-carousel__eyebrow">БАРТЕР · ВОЗМОЖНОСТИ</span>
                   <h2>{slide.id === 'exchange' ? 'Меняй вещи, находи своё.' : slide.id === 'both' ? 'Одно объявление. Два пути.' : 'Обсудите сделку внутри.'}</h2>
