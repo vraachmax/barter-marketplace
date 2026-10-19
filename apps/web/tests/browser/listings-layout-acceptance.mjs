@@ -166,7 +166,11 @@ function visualFixtureListings() {
   const blue = sample.images[0];
   return [
     { ...sample, id: 'fixture-visual-phone', status: 'ACTIVE', title: 'iPhone 15 Pro', category, priceRub: 95000,
-      saleEnabled: true, barterEnabled: true, isBarter: true, images: [blue] },
+      saleEnabled: true, barterEnabled: true, isBarter: true,
+      images: [blue,
+        { ...blue, id: 'fixture-photo-2', sortOrder: 1, url: blue.url.replace('dce6ef','f3c08d') },
+        { ...blue, id: 'fixture-photo-3', sortOrder: 2, url: blue.url.replace('dce6ef','d7b7e6') },
+      ] },
     { ...sample, id: 'fixture-visual-laptop', status: 'ACTIVE', title: 'MacBook Air M2', category, priceRub: 100000,
       saleEnabled: false, barterEnabled: true, isBarter: true,
       images: [{ ...blue, id: 'fixture-laptop', url: blue.url.replace('dce6ef','c9b6fc') }] },
@@ -489,6 +493,9 @@ async function scenario(browserType, width, theme) {
       await dock.getByRole('link', { name: 'Главная', exact: true }).click();
       await expect(page).toHaveURL(baseURL + '/');
       await expect(dock.getByRole('link', { name: 'Главная', exact: true })).toHaveAttribute('aria-current', 'page');
+      await expect(dock.getByRole('link', { name: 'Главная', exact: true }).locator('svg')).toHaveAttribute('fill', 'currentColor');
+      await expect(dock.getByRole('link', { name: 'Сообщения', exact: true }).locator('svg')).toHaveAttribute('fill', 'none');
+      await expect(dock.getByRole('link', { name: 'Профиль', exact: true }).locator('svg')).toHaveAttribute('fill', 'none');
       await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
       await expect(page).toHaveURL(/\/favorites$/);
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -703,15 +710,28 @@ async function scenario(browserType, width, theme) {
         assert(hit && hit.width >= 44 && hit.height >= 44,
           'visually compact favorite hearts must retain 44px hit targets');
       }
+      const iphoneThumb = page.locator('.refresh-listing-card').filter({ hasText: 'iPhone 15 Pro' }).locator('.photo-hold-preview');
+      await expect(iphoneThumb).toHaveCount(1);
+      await expect(iphoneThumb).toHaveAttribute('data-photo-count', '3');
+      await iphoneThumb.evaluate(el => {
+        const box = el.getBoundingClientRect();
+        const fromX = box.left + box.width * .75, toX = box.left + box.width * .2, y = box.top + box.height / 2;
+        const t1 = new Touch({ identifier: 42, target: el, clientX: fromX, clientY: y });
+        const t2 = new Touch({ identifier: 42, target: el, clientX: toX, clientY: y });
+        el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [t1], targetTouches: [t1], changedTouches: [t1] }));
+        el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [t2], targetTouches: [t2], changedTouches: [t2] }));
+        el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], targetTouches: [], changedTouches: [t2] }));
+      });
+      await expect(iphoneThumb).toHaveAttribute('data-photo-index', '1');
       await shot(page, key + '-reference-v2-product-feed');
-      checks.push('populated homepage with compact product tiles and real card interactions');
+      checks.push('real product feed, full-bleed cards and swipe gallery without opening listing');
     }
     await visit('/?mode=market&sort=new');
     // Exactly one visible hero at a time: the supplied Claude banner on mobile,
     // the existing proportional promotional layout on desktop.
     // The app router can briefly retain an off-screen route during navigation.
     // Assert the actual number of visible banners, not the total DOM nodes.
-    await expect(page.locator('.claude-mobile-hero:visible')).toHaveCount(width < 768 ? 1 : 0);
+    await expect(page.locator('.barter-hero-carousel:visible')).toHaveCount(width < 768 ? 1 : 0);
     await expect(page.locator('.refresh-hero:visible')).toHaveCount(width < 768 ? 0 : 1);
     const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
     await expect(logo).toBeVisible();
@@ -990,7 +1010,7 @@ async function captureReferenceViewport(theme) {
       await page.goto(baseURL + '/?mode=both&sort=expensive', { waitUntil: 'domcontentloaded' });
       await expect(page.locator('.home-category-tile:visible')).toHaveCount(5);
       await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
-      await expect(page.locator('.claude-mobile-hero:visible')).toHaveCount(1);
+      await expect(page.locator('.barter-hero-carousel:visible')).toHaveCount(1);
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => window.scrollTo(0, 0));
       const geometricSelectors = {
@@ -999,7 +1019,7 @@ async function captureReferenceViewport(theme) {
         modes: '.home-mode-row .catalog-mode-switch',
         categories: '.home-category-strip',
         firstCategory: '.home-category-tile',
-        banner: '.claude-mobile-hero',
+        banner: '.barter-hero-carousel',
         section: 'main#feed section h2',
         grid: '.listing-grid',
         firstCard: '.refresh-listing-card',
@@ -1026,6 +1046,12 @@ async function captureReferenceViewport(theme) {
       }, geometricSelectors);
       await writeFile(join(output, 'reference-393x850-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
       await page.screenshot({ path: join(output, 'reference-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
+      await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveAttribute('id', 'barter-slide-exchange');
+      await page.locator('.barter-hero-carousel__slide[data-active="true"] a').click();
+      await expect(page).toHaveURL(/\/about\/features#exchange$/);
+      await expect(page.getByRole('heading', { name: /Обменивайтесь без ограничений/ })).toBeVisible();
+      await page.screenshot({ path: join(output, 'features-393x850-' + theme + '.png') });
       await page.goto(baseURL + '/listing/fixture-visual-phone', { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('heading', { name: 'iPhone 15 Pro' })).toBeVisible();
       const detailSelectors = {
