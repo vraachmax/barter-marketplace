@@ -361,24 +361,33 @@ async function renderHome(sp: HomeSearchParams) {
     { name: 'Животные', slug: 'pets' },
     { name: 'Работа', slug: 'job' },
   ];
-  const DESKTOP_CATEGORY_IMAGES: Record<string, string> = {
-    electronics: 'laptops', auto: 'cars', realty: 'real-estate',
-    clothes: 'clothing', hobby: 'gaming', home: 'furniture',
-    kids: 'miscellaneous', job: 'laptops', services: 'services',
-    special_equipment: 'heavy-machinery', parts: 'cars',
-    furniture: 'furniture', sports: 'gaming', beauty: 'watches',
-    pets: 'miscellaneous',
+  // The icons are files extracted from the approved 4x4 category illustration.
+  // Actual destinations and category availability still come only from the API.
+  const PREMIUM_CATEGORY_IMAGES: Record<string, string> = {
+    electronics: 'electronics', auto: 'auto', realty: 'realty', clothes: 'clothes',
+    hobby: 'hobby', special_equipment: 'special_equipment', services: 'services',
+    parts: 'parts', furniture: 'furniture', kids: 'kids', home: 'home',
+    sports: 'sports', beauty: 'beauty', pets: 'pets', photo: 'photo', all: 'all',
   };
-  const categoryArt = (cat: { slug: string; name: string }) => {
+  const categoryArt = (cat: { slug: string; name: string }): string => {
     const label = (cat.slug + ' ' + cat.name).toLowerCase();
-    return DESKTOP_CATEGORY_IMAGES[cat.slug]
-      ?? (/спецтех|строител.*техник|excavat|heavy.machin/.test(label) ? 'heavy-machinery' : null)
-      ?? (/запчаст|parts|автозапчаст|spare/.test(label) ? 'cars' : null)
-      ?? (/мебел|дом|furnit|interior/.test(label) ? 'furniture' : null)
-      ?? (/спорт|хобби|gaming|game/.test(label) ? 'gaming' : null)
-      ?? (/услуг|ремонт|service/.test(label) ? 'services' : null)
-      ?? (/телефон|электрон|smart|gadget/.test(label) ? 'smartphones' : null)
-      ?? 'miscellaneous';
+    return PREMIUM_CATEGORY_IMAGES[cat.slug]
+      ?? (/спецтех|heavy[-_ ]?machin|excavat/.test(label) ? 'special_equipment' : null)
+      ?? (/запчаст|spare|parts/.test(label) ? 'parts' : null)
+      ?? (/недвижим|real[-_ ]?estate/.test(label) ? 'realty' : null)
+      ?? (/одежд|clothing|fashion/.test(label) ? 'clothes' : null)
+      ?? (/детск|child|kids/.test(label) ? 'kids' : null)
+      ?? (/мебел|furniture/.test(label) ? 'furniture' : null)
+      ?? (/фото|музык|photograph|music/.test(label) ? 'photo' : null)
+      ?? (/спорт|sport/.test(label) ? 'sports' : null)
+      ?? (/красот|beauty/.test(label) ? 'beauty' : null)
+      ?? (/животн|pet/.test(label) ? 'pets' : null)
+      ?? (/услуг|service/.test(label) ? 'services' : null)
+      ?? (/хобби|hobby|gaming/.test(label) ? 'hobby' : null)
+      ?? (/авто|vehicle|cars/.test(label) ? 'auto' : null)
+      ?? (/техник|электрон|gadget|phone/.test(label) ? 'electronics' : null)
+      ?? (/дом|house/.test(label) ? 'home' : null)
+      ?? 'all';
   };
   const curated = getAvailableCatalogCategories(CATS, categories);
   const usedCategoryIds = new Set(curated.map(cat => cat.categoryId).filter(Boolean));
@@ -512,22 +521,17 @@ async function renderHome(sp: HomeSearchParams) {
               aria-current={urlCategoryId && cat.categoryId && urlCategoryId === cat.categoryId ? 'true' : undefined}
               className="home-category-tile"
               data-mobile-secondary="false"
-              data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug)}
+              data-reference-bubble="true"
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
-              {['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug) ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-light.jpg`} width={124} height={124} alt="" />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-dark.jpg`} width={124} height={124} alt="" />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${categoryArt(cat)}.webp`} width={240} height={240} alt="" />
-                  </>
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={`/visual-refresh/placeholders/${categoryArt(cat)}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
-              )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="premium-category-art"
+                  src={'/visual-refresh/premium/categories/' + categoryArt(cat) + '.webp'}
+                  width={288}
+                  height={288}
+                  alt=""
+                />
               </span>
               <span className="category-title">{cat.name}</span>
             </Link>
