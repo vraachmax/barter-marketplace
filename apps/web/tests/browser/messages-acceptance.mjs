@@ -390,6 +390,65 @@ async function scenario(type, width, theme) {
     console.error('BARTER_MESSAGES_FAIL ' + key + '\n' + error.stack);
   } finally { await context.close(); await browser.close(); }
 }
+// Isolated VISUAL fixture: data reproduces the reference conversation spacing,
+// while the screenshot is rendered by the real Next.js chat components.
+async function referenceConversation(theme) {
+  const browser = await webkit.launch();
+  const context = await browser.newContext({
+    viewport: { width: 393, height: 850 }, isMobile: true, hasTouch: true,
+    colorScheme: theme, reducedMotion: 'reduce',
+  });
+  const state = fixture(theme);
+  state.chats[0].peer = { id: 'peer-a', name: 'Максим', avatarUrl: null };
+  state.chats[0].listing = {
+    id: 'fixture-phone', title: 'iPhone 15 Pro', category: { title: 'Смартфоны' },
+    priceRub: 95000, city: 'Краснодар', saleEnabled: true, barterEnabled: true,
+    previewImageUrl: null,
+  };
+  const msg = (id, text, senderId, time) => ({
+    ...state.makeMessage(id, text, senderId),
+    createdAt: '2026-09-19T' + time + ':00Z',
+    isReadByPeer: senderId === 'fixture-user',
+  });
+  state.messages.a = [
+    msg('ref-1', 'Здравствуйте! Интересует обмен на ваш iPhone 15 Pro.', 'fixture-user', '10:24'),
+    msg('ref-2', 'Здравствуйте! Да, давайте обсудим варианты. Что вы предлагаете?', 'peer-a', '10:26'),
+    msg('ref-3', 'Моё предложение: MacBook Air M2, доплата 20 000 ₽.', 'fixture-user', '10:27'),
+    msg('ref-4', 'Выглядит интересно, можно подробнее про состояние MacBook?', 'peer-a', '10:29'),
+    msg('ref-5', 'Конечно! MacBook в отличном состоянии, использовался аккуратно. Могу отправить дополнительные фото и чек, если нужно.', 'fixture-user', '10:33'),
+    msg('ref-6', 'Отлично, давайте созвонимся сегодня и обсудим детали.', 'peer-a', '10:34'),
+  ];
+  await install(context, state, theme);
+  const page = await context.newPage();
+  try {
+    await page.goto(baseURL + '/messages?chatId=a');
+    await expect(page.getByText('Отлично, давайте созвонимся сегодня и обсудим детали.', { exact: true })).toBeVisible();
+    await expect(page.locator('.thread-listing-preview')).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: join(output, 'reference-conversation-393x850-' + theme + '.png') });
+    const geometry = await page.evaluate(() => {
+      const rect = selector => {
+        const el = document.querySelector(selector);
+        if (!el) return null;
+        const { x, y, width, height } = el.getBoundingClientRect();
+        return { x, y, width, height };
+      };
+      return {
+        header: rect('.thread-header'),
+        listing: rect('.thread-listing-preview'),
+        bubble: rect('.message-bubble'),
+        composer: rect('.messages-composer'),
+        input: rect('textarea[aria-label="Сообщение"]'),
+      };
+    });
+    await writeFile(join(output, 'reference-conversation-393x850-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
+    assert.equal(Math.round(geometry.header.height), 52);
+    assert.equal(Math.round(geometry.listing.height), 80);
+    assert.equal(Math.round(geometry.input.height), 36);
+    console.log('BARTER_MESSAGES_REFERENCE_PASS ' + theme);
+  } finally { await context.close(); await browser.close(); }
+}
+
 async function chatListRecovery() {
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 393, height: 850 }, isMobile: true, hasTouch: true, colorScheme: 'light' });
@@ -411,6 +470,7 @@ async function chatListRecovery() {
 }
 try {
   await waitForServer();
+  for (const theme of ['light', 'dark']) await referenceConversation(theme);
   await chatListRecovery();
   for (const theme of ['light', 'dark']) for (const width of [360, 440, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
 } finally {
