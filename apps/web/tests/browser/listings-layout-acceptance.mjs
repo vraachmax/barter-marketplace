@@ -1097,8 +1097,10 @@ async function captureReferenceViewport(theme, width = 393, height = 850) {
       await page.screenshot({ path: join(output, 'reference-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
       await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveAttribute('id', 'barter-slide-exchange');
+      await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveCSS('opacity', '1');
       await page.screenshot({ path: join(output, 'hero-exchange-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 3: Продажа и обмен вместе/ }).click();
+      await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveCSS('opacity', '1');
       const heroHeadline = await page.locator('.barter-hero-carousel__slide[data-active="true"] h2')
         .evaluate(el => getComputedStyle(el).color);
       assert.equal(heroHeadline, 'rgb(255, 255, 255)', 'slide headline must be white over dark imagery');
@@ -1108,8 +1110,10 @@ async function captureReferenceViewport(theme, width = 393, height = 850) {
         'all carousel indicators use rounded orange 8px+ dots');
       await page.screenshot({ path: join(output, 'hero-one-listing-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 4: Договоритесь в сообщениях/ }).click();
+      await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveCSS('opacity', '1');
       await page.screenshot({ path: join(output, 'hero-messages-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
+      await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveCSS('opacity', '1');
       await page.locator('.barter-hero-carousel__slide[data-active="true"] a').click();
       await expect(page).toHaveURL(/\/about\/features#exchange$/);
       await expect(page.getByRole('heading', { name: /Обменивайтесь без ограничений/ })).toBeVisible();
