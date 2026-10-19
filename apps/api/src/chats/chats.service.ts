@@ -200,6 +200,9 @@ export class ChatsService {
             priceRub: true,
             city: true,
             ownerId: true,
+            saleEnabled: true,
+            barterEnabled: true,
+            category: { select: { title: true } },
             images: {
               orderBy: { sortOrder: 'asc' },
               take: 1,
@@ -219,6 +222,7 @@ export class ChatsService {
                 name: true,
                 email: true,
                 phone: true,
+                avatarUrl: true,
               },
             },
           },
