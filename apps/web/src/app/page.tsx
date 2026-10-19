@@ -13,9 +13,11 @@ import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
+import QrScannerButton from '@/components/qr-scanner-button';
+import { BarterHeroCarousel } from '@/components/barter-hero-carousel';
 import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
 import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
-import { LayoutGrid, Search, Sparkles } from 'lucide-react';
+import { ChevronRight, Search, Sparkles } from 'lucide-react';
 
 type ListingsResponse = {
   appliedMode?: CatalogMode;
@@ -343,21 +345,26 @@ async function renderHome(sp: HomeSearchParams) {
     { name: 'Авто', slug: 'auto' },
     { name: 'Недвижимость', slug: 'realty' },
     { name: 'Одежда', slug: 'clothes' },
+    { name: 'Другое', slug: 'all' },
     { name: 'Игры и хобби', slug: 'hobby' },
     { name: 'Для дома', slug: 'home' },
     { name: 'Детям', slug: 'kids' },
     { name: 'Работа', slug: 'job' },
     { name: 'Спецтехника', slug: 'special_equipment' },
     { name: 'Услуги', slug: 'services' },
-    { name: 'Все категории', slug: 'all' },
   ];
   const DESKTOP_CATEGORY_IMAGES: Record<string, string> = {
     electronics: 'smartphones', auto: 'cars', realty: 'real-estate',
     clothes: 'clothing', hobby: 'gaming', home: 'furniture',
-    kids: 'miscellaneous', job: 'services', services: 'services',
+    kids: 'miscellaneous', job: 'laptops', services: 'services',
     special_equipment: 'heavy-machinery',
   };
     const availableCategories = getAvailableCatalogCategories(CATS, categories);
+
+  const categoryView = Boolean(urlCategoryId) && !currentQ;
+  const categorySubcategories = categories.filter(category => category.parentId === urlCategoryId);
+  const categoryFilterHref = (mode: CatalogMode, sort: string = 'relevant') =>
+    '/?' + new URLSearchParams({ ...preservedListQuery, categoryId: urlCategoryId, mode, sort }).toString();
 
   // Keep requested filters and sorting authoritative. Recommendations must
   // have a separate surface, rather than being injected into search results.
@@ -410,8 +417,8 @@ async function renderHome(sp: HomeSearchParams) {
       <header className="catalog-mobile-header sticky top-0 z-40 px-4 pb-3 md:hidden">
         <div className="mb-3 flex min-h-11 items-center justify-between gap-2">
           <BarterHomeLogo />
-          <div className="catalog-home-city">
-            <CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="city" />
+          <div className="catalog-home-qr">
+            <QrScannerButton />
           </div>
         </div>
         <div className="catalog-home-search-group flex h-[46px] min-w-0 items-center overflow-visible rounded-full bg-muted">
@@ -429,9 +436,33 @@ async function renderHome(sp: HomeSearchParams) {
       </header>
 
       <div className="home-mode-row mx-auto flex min-w-0 max-w-7xl flex-col items-center gap-1 px-4 pt-2 md:px-6 md:pt-5">
-        <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
+        <div className={categoryView ? 'hidden w-full md:block' : 'contents'}>
+          <CatalogModeToggle mode={currentMode} values={{ ...preservedListQuery, categoryId: urlCategoryId }} />
+        </div>
+        {categoryView ? (
+          <nav className="mobile-category-filters w-full md:hidden" aria-label="Быстрые фильтры категории">
+            {([
+              { label: 'Все', href: categoryFilterHref('both'), active: currentMode === 'both' && currentSort !== 'new' },
+              { label: 'Новые', href: categoryFilterHref('both', 'new'), active: currentMode === 'both' && currentSort === 'new' },
+              { label: 'Обмен', href: categoryFilterHref('barter'), active: currentMode === 'barter' },
+              { label: 'Покупка', href: categoryFilterHref('market'), active: currentMode === 'market' },
+            ] as const).map(filter => (
+              <Link key={filter.label} href={filter.href} aria-current={filter.active ? 'page' : undefined}
+                className="mobile-category-filter">{filter.label}</Link>
+            ))}
+            {categorySubcategories.length ? (
+              <div className="mobile-category-subfilters">
+                {categorySubcategories.slice(0, 8).map(category => (
+                  <Link key={category.id} href={{ pathname: '/', query: { ...preservedListQuery, categoryId: category.id } }}
+                    className="mobile-category-subfilter">{category.title}</Link>
+                ))}
+              </div>
+            ) : null}
+          </nav>
+        ) : null}
         <p className="text-center text-xs text-muted-foreground">{currentMode === 'barter' ? 'Объявления продавцов, готовых к обмену' : currentMode === 'both' ? 'Покупка и обмен в одной ленте' : 'Объявления с возможностью покупки'}</p>
       </div>
+      {!categoryView ? (
       <nav aria-label="Категории объявлений" className="home-categories mx-auto max-w-7xl px-4 py-3 md:px-6 md:py-5">
         {catRes.status === 'rejected' && !apiBackendDown ? (
           <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted p-4 text-foreground">
@@ -444,26 +475,25 @@ async function renderHome(sp: HomeSearchParams) {
             <Link
               key={cat.slug}
               scroll={false}
-              href={{ pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
-              aria-current={urlCategoryId === cat.categoryId ? 'true' : undefined}
+              href={cat.slug === 'all' ? '/search' : { pathname: '/', query: { ...preservedListQuery, ...(cat.categoryId ? { categoryId: cat.categoryId } : {}) } }}
+              aria-current={urlCategoryId && cat.categoryId && urlCategoryId === cat.categoryId ? 'true' : undefined}
               className="home-category-tile"
-              data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug)}
+              data-mobile-secondary={!(['electronics', 'auto', 'realty', 'clothes', 'all'].includes(cat.slug))}
+              data-reference-bubble={['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug)}
             >
               <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
-              {cat.slug === 'all' ? <LayoutGrid size={40} strokeWidth={1.5} className="text-muted-foreground" aria-hidden /> : (
-                ['electronics', 'auto', 'realty', 'clothes', 'hobby'].includes(cat.slug) ? (
+              {['electronics', 'auto', 'realty', 'clothes', 'hobby', 'all'].includes(cat.slug) ? (
                   <>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug}-light.jpg`} width={124} height={124} alt="" />
+                    <img className="bubble-category-art bubble-category-light" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-light.jpg`} width={124} height={124} alt="" />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug}-dark.jpg`} width={124} height={124} alt="" />
+                    <img className="bubble-category-art bubble-category-dark" src={`/visual-refresh/bubbles/${cat.slug === "all" ? "hobby" : cat.slug}-dark.jpg`} width={124} height={124} alt="" />
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug]}.webp`} width={240} height={240} alt="" />
+                    <img className="desktop-category-art" src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? "miscellaneous"}.webp`} width={240} height={240} alt="" />
                   </>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={`/visual-refresh/placeholders/${DESKTOP_CATEGORY_IMAGES[cat.slug] ?? 'miscellaneous'}.webp`} alt="" width={70} height={70} className="size-[66px] rounded-full object-contain md:size-20" />
-                )
               )}
               </span>
               <span className="category-title">{cat.name}</span>
@@ -471,20 +501,15 @@ async function renderHome(sp: HomeSearchParams) {
           ))}
         </div>
       </nav>
+      ) : null}
 
       {/* ===== MAIN CONTENT =====
           Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
           muted на десктопе ради контраста карточек. */}
       {!currentQ && !urlCategoryId ? <>
-        <Link href="#feed" className="claude-mobile-hero md:hidden" aria-label="Смотреть объявления — Меняй. Покупай. Открывай новое.">
-          {/* The original approved Claude imagery already contains text and CTA: do not double-render it. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/visual-refresh/claude-banner-light.jpg" className="claude-banner-light" alt="Меняй. Покупай. Открывай новое. Тысячи товаров. Реальные люди." width={643} height={320} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/visual-refresh/claude-banner-dark.jpg" className="claude-banner-dark" alt="" width={652} height={319} />
-        </Link>
+        <BarterHeroCarousel />
         <section className="refresh-hero hidden md:flex" aria-label="Возможности БАРТЕРА">
-        <div><h1>Меняй. Покупай.<br />Открывай новое.</h1><p>Нужные вещи. Новые возможности.<br />Находите своё на БАРТЕРЕ.</p><Link href="#feed" className="refresh-hero-cta">Смотреть объявления <span aria-hidden>→</span></Link></div>
+        <div><h1>Меняй. Покупай.<br />Открывай новое.</h1><p>Нужные вещи. Новые возможности.<br />Находите своё на БАРТЕРЕ.</p><Link href="/about/features" className="refresh-hero-cta">Возможности БАРТЕРА <span aria-hidden>→</span></Link></div>
         {/* Marketing illustration, never a seller photo. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/visual-refresh/laptop.webp" alt="" width={500} height={500} />
@@ -510,19 +535,24 @@ async function renderHome(sp: HomeSearchParams) {
 
           {listings.vipStrip?.length ? <section aria-label="Продвигаемые объявления" className="mb-7">
             <h2 className="mb-3 text-sm font-medium text-muted-foreground">Продвигаемые объявления</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{listings.vipStrip.map((item) => <ListingCardComponent key={item.id} data={item} apiBase={API_URL} />)}</div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{listings.vipStrip.map((item) => <ListingCardComponent key={item.id} data={item} apiBase={API_URL} surface="home" />)}</div>
           </section> : null}
 
           {/* ===== LISTINGS SECTION ===== */}
           <section>
             {/* MOBILE-only: design-style section header — «Свежие предложения · 234 за сегодня · рядом» */}
-            {mergedFeed.length > 0 ? (
-              <div className="pt-1 pb-4 md:hidden">
-                <h2 className="m-0 text-[20px] font-bold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
-                <p className="mt-0.5 text-[13px] text-muted-foreground">
-                  {listings.total > 0 ? `${listings.total} ${pluralRu(listings.total, ['объявление', 'объявления', 'объявлений'])}` : 'Объявления'}
-                  {currentCity ? ` · ${currentCity}` : ''}
-                </p>
+            {mergedFeed.length > 0 && !categoryView ? (
+              <div className="flex items-center justify-between gap-2 pt-1 pb-0 md:hidden">
+                <h2 className="m-0 text-[20px] font-extrabold tracking-tight text-foreground">{currentQ ? `Результаты: «${currentQ}»` : 'Для вас'}</h2>
+                {!currentQ && !urlCategoryId ? (
+                  <Link href="/search" className="inline-flex min-h-11 items-center gap-1 text-[11.5px] text-muted-foreground">
+                    Смотреть все <ChevronRight size={16} strokeWidth={2} aria-hidden />
+                  </Link>
+                ) : (
+                  <p className="text-[12px] text-muted-foreground">
+                    {listings.total > 0 ? `${listings.total} ${pluralRu(listings.total, ['объявление', 'объявления', 'объявлений'])}` : 'Объявления'}
+                  </p>
+                )}
               </div>
             ) : null}
 
@@ -575,7 +605,7 @@ async function renderHome(sp: HomeSearchParams) {
                 </div>
               ) : null}
               {mergedFeed.map((x) => (
-                <ListingCardComponent key={x.id} data={x} apiBase={API_URL} />
+                <ListingCardComponent key={x.id} data={x} apiBase={API_URL} surface={!urlCategoryId && !currentQ ? "home" : "catalog"} />
               ))}
 
               {!effectiveRecoMode && !apiBackendDown && listings.total > listings.items.length ? (

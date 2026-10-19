@@ -95,6 +95,8 @@ export function SellerPresenceBadge({ sellerId, className = '', compact }: Props
     );
   }
 
+  if (compact) return null;
+
   return (
     <span className={`text-xs font-medium text-muted-foreground ${className}`.trim()}>
       Нет данных о визите

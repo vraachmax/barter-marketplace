@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
-import { MapPin, SlidersHorizontal, X } from 'lucide-react';
+import { MapPin, ScanLine, SlidersHorizontal, X } from 'lucide-react';
 import type { Category } from '@/lib/api';
 import { ThemeQuickToggle } from '@/components/theme-quick-toggle';
 
@@ -24,7 +24,7 @@ export function CatalogControls({ categories, cities, values, categoryId, trigge
     <button type="button" onClick={() => { setError(''); dialog.current?.showModal(); }}
       aria-label={isCity ? `Город: ${values.city || 'Вся Россия'}. Изменить` : 'Открыть фильтры'}
       className={isCity ? 'flex min-h-11 min-w-0 items-center gap-1.5 rounded-full px-2 text-sm text-foreground hover:bg-muted' : 'glass-panel grid size-12 shrink-0 place-items-center rounded-full text-foreground hover:bg-muted'}>
-      {isCity ? <><MapPin size={18} className="shrink-0" aria-hidden /><span className="max-w-28 truncate md:max-w-40">{values.city || 'Вся Россия'}</span></> : <SlidersHorizontal size={22} strokeWidth={1.7} aria-hidden />}
+      {isCity ? <><ScanLine size={19} strokeWidth={1.8} className="shrink-0 md:hidden" aria-hidden /><MapPin size={18} className="hidden shrink-0 md:block" aria-hidden /><span className="max-w-28 truncate md:max-w-40">{values.city || 'Вся Россия'}</span></> : <SlidersHorizontal size={22} strokeWidth={1.7} aria-hidden />}
     </button>
     <dialog ref={dialog} aria-labelledby={`${id}-title`} onClick={(e) => { if (e.target === e.currentTarget) dialog.current?.close(); }}
       className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl border border-border bg-background p-0 text-foreground shadow-xl backdrop:bg-black/30 backdrop:backdrop-blur-sm md:inset-0 md:m-auto md:max-w-lg md:rounded-3xl">

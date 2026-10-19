@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Onest } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import "./reference-fidelity.css";
 import { THEME_BOOTSTRAP } from "@/lib/theme-bootstrap";
@@ -12,9 +12,9 @@ import { LiquidBottomNav } from "@/components/liquid-bottom-nav";
 import { PresenceProvider } from "@/components/presence-provider";
 import { AuthProvider } from "@/components/auth-provider";
 
-// The approved interactive Claude prototype uses Onest. Next self-hosts this
+// Claude mobile v2 uses Inter. Next self-hosts this
 // font at build time so Russian clients do not depend on Google Fonts.
-const onest = Onest({
+const inter = Inter({
   variable: "--font-sans",
   display: "swap",
   subsets: ["latin", "cyrillic"],
@@ -85,7 +85,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${onest.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
       >
         <ThemeSync />
         <ModeThemeSync />

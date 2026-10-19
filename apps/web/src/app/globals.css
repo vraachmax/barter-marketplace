@@ -434,21 +434,21 @@ html[data-mode="barter"] .btn-show-phone:active { background: var(--mode-accent-
 /* ---------- Dark theme ---------- */
 html[data-theme='dark'] {
   color-scheme: dark;
-  --bg-page:    #141519;
-  --bg-section: #202126;
-  --bg-surface: #202126;
-  --bg-muted:   #2b2d34;
-  --bg-input:   #2b2d34;
+  --bg-page:    #0d0e0f;
+  --bg-section: #17181b;
+  --bg-surface: #151618;
+  --bg-muted:   #202227;
+  --bg-input:   #1c1d21;
 
-  --fg-default: #f4f5f7;
-  --fg-strong:  #f4f5f7;
-  --fg-title:   #f4f5f7;
-  --fg-muted:   #a3a5ae;
-  --fg-subtle:  #9699a3;
-  --fg-soft:    #a3a5ae;
+  --fg-default: #f6f7fa;
+  --fg-strong:  #f6f7fa;
+  --fg-title:   #f6f7fa;
+  --fg-muted:   #a9b4c6;
+  --fg-subtle:  #a9b4c6;
+  --fg-soft:    #b4becf;
 
-  --border-default: #2b2d34;
-  --border-subtle:  #2b2d34;
+  --border-default: #2a2b30;
+  --border-subtle:  #2a2b30;
   --border-input:   #3b3e46;
 
   /* Primary brightens slightly in dark */
@@ -604,17 +604,9 @@ a.link:hover { color: var(--brand-primary-hover); }
 
   body { padding-bottom: 72px !important; }
 
-  .listing-detail-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  .listing-detail-grid > * {
-    position: relative !important;
-    width: 100% !important;
-  }
-  .listing-detail-main > * { margin-bottom: 12px; }
-  .listing-detail-main > *:last-child { margin-bottom: 0; }
+  /* The listing's approved mobile layout lives in reference-fidelity.css.
+     Never force flex here: it breaks display:contents and DOM visual order. */
+  .listing-detail-grid > * { min-width: 0; }
   .listing-detail-aside > * { margin-bottom: 12px; }
   .listing-detail-aside > *:last-child { margin-bottom: 0; }
 
@@ -687,22 +679,22 @@ html[data-theme='dark'] .listing-placeholder-surface { color: #7DD3FC; }
 /* Crystal Catalog, selected by Maxim on 2026-09-05.
    Shared material for both product palettes. Content stays on an opaque canvas. */
 :root {
-  --fg-default: #151b2b;
-  --fg-muted: #636d80;
-  --bg-muted: #f3f5f8;
-  --border-default: #dfe4ec;
+  --fg-default: #05060f;
+  --fg-muted: #7c8594;
+  --bg-muted: #f4f4f7;
+  --border-default: #e9eaef;
   --glass-surface: rgba(255, 255, 255, 0.86);
   --glass-edge: rgba(214, 223, 234, 0.85);
   --glass-highlight: rgba(255, 255, 255, 0.95);
   --glass-shadow: 0 8px 28px rgba(37, 59, 93, 0.08);
 }
 html[data-theme='dark'] {
-  --fg-default: #f4f5f7;
-  --fg-muted: #a3a5ae;
-  --bg-page: #141519;
-  --bg-surface: #202126;
-  --bg-muted: #2b2d34;
-  --border-default: #2e3036;
+  --fg-default: #f6f7fa;
+  --fg-muted: #a9b4c6;
+  --bg-page: #0d0e0f;
+  --bg-surface: #151618;
+  --bg-muted: #202227;
+  --border-default: #2a2b30;
   --glass-surface: rgba(32, 33, 38, 0.84);
   --glass-edge: rgba(255, 255, 255, 0.12);
   --glass-highlight: rgba(255, 255, 255, 0.18);

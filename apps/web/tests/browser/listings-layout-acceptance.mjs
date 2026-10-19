@@ -86,6 +86,9 @@ const categorySchema = { version: 1, optionsQueryVersion: 1, fields: [
 ] };
 const conditionOptions = [{ fieldKey: 'condition', value: 'used_good', label: 'Б/у — хорошее' }];
 const autoCategory = { id: 'fixture-auto', title: 'Авто', slug: 'auto', parentId: null };
+const realtyCategory = { id: 'fixture-realty', title: 'Недвижимость', slug: 'realty', parentId: null };
+const clothesCategory = { id: 'fixture-clothes', title: 'Одежда', slug: 'clothes', parentId: null };
+const referenceCategories = [category, autoCategory, realtyCategory, clothesCategory];
 const autoSchema = { version: 2, optionsQueryVersion: 1, fields: [
   { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: null },
   { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_make' },
@@ -103,30 +106,40 @@ assert(!process.env.NEXT_PUBLIC_API_URL, 'Run this suite without a public API ov
 const api = createServer((req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1:3001');
   let data;
-  if (req.method === 'GET' && url.pathname === '/categories') data = [category];
+  if (req.method === 'GET' && url.pathname === '/categories') data = referenceCategories;
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-options') data = url.searchParams.get('fieldKey') === 'condition' ? conditionOptions : [];
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
   // A read already dispatched during page teardown can reach the isolated server.
   else if (req.method === 'POST' && url.pathname === '/analytics/events') data = { ok: true };
-  else if (req.method === 'GET' && url.pathname === '/reviews/listing/fixture-detail/eligibility') data = { canReview: false, reason: 'no_chat' };
-  else if (req.method === 'GET' && url.pathname === '/presence/users/fixture-peer') data = { isOnline: false, lastSeenAt: null };
-  else if (req.method === 'GET' && url.pathname === '/users/fixture-peer/profile') data = { user: { id: 'fixture-peer', name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] };
+  else if (req.method === 'GET' && /^\/reviews\/listing\/fixture-(detail|visual-phone|visual-laptop)\/eligibility$/.test(url.pathname)) data = { canReview: false, reason: 'no_chat' };
+  else if (req.method === 'GET' && /^\/presence\/users\/fixture-(peer|seller)$/.test(url.pathname)) data = { online: false, isOnline: false, lastSeenAt: null };
+  else if (req.method === 'GET' && /^\/users\/fixture-(peer|seller)\/profile$/.test(url.pathname)) data = { user: { id: url.pathname.split('/')[2], name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] };
+  else if (req.method === 'GET' && url.pathname === '/chats') data = [];
   else if (req.method === 'GET' && url.pathname === '/favorites') data = [];
   else if (req.method === 'GET' && url.pathname === '/listings/my') data = fixture('light').listings;
   else if (req.method === 'GET' && url.pathname === '/listings') data = {
-    appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20, total: 0, items: [], vipStrip: [],
+    appliedMode: url.searchParams.get('mode') || 'market', ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}), page: 1, limit: 20,
+    total: url.searchParams.get('sort') === 'expensive' ? 2 : 0,
+    items: url.searchParams.get('sort') === 'expensive' ? visualFixtureListings() : [], vipStrip: [],
   };
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)\/similar$/.test(url.pathname)) data = [];
-  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail)$/.test(url.pathname)) {
-    // Next Link prefetch also requests listing metadata through the server API.
-    const listing = fixture('light').listings.find(x => url.pathname === '/listings/' + x.id) ?? { ...fixture('light').listings[0], id: 'fixture-created', saleEnabled: false, barterEnabled: true };
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail|visual-phone|visual-laptop)\/similar$/.test(url.pathname)) data = [];
+  else if (req.method === 'GET' && /^\/listings\/fixture-(needs|pending|sold|created|detail|visual-phone|visual-laptop)$/.test(url.pathname)) {
+    // Next Link prefetch requests the same visual listing data as the catalog.
+    // Keep unknown IDs visible rather than silently replacing them with another fixture.
+    const listing = [...fixture('light').listings, ...visualFixtureListings()].find(x => url.pathname === '/listings/' + x.id)
+      ?? (['/listings/fixture-created', '/listings/fixture-detail'].includes(url.pathname)
+        ? { ...fixture('light').listings[0], id: url.pathname.split('/').at(-1), saleEnabled: false, barterEnabled: true }
+        : null);
+    assert(listing, 'Unexpected listing fixture: ' + url.pathname);
     data = url.pathname === '/listings/fixture-detail'
       ? { ...listing, id: 'fixture-detail', title: 'Тестовое объявление', status: 'ACTIVE', saleEnabled: true, barterEnabled: true,
           images: [
             { id: 'detail-photo-1', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#f5eee8"/></svg>'), sortOrder: 0 },
             { id: 'detail-photo-2', url: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e4e8fc"/></svg>'), sortOrder: 1 },
           ], description: 'Описание тестового объявления.', owner: { id: 'fixture-peer', name: 'Продавец', email: null, phone: null } }
-      : { ...listing, description: 'Описание тестового объявления.', owner: { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
+      : { ...listing, description: 'Описание тестового объявления.', owner: url.pathname.startsWith('/listings/fixture-visual-')
+          ? { id: 'fixture-peer', name: 'Максим', email: null, phone: null }
+          : { id: 'fixture-seller', name: 'Тестовый продавец', email: null, phone: null } };
   }
   else { serverUnexpected.push(req.method + ' ' + url.pathname); res.statusCode = 404; data = {}; }
   res.setHeader('Content-Type', 'application/json');
@@ -146,6 +159,22 @@ function fixture(theme) {
     ],
     writes: [], unexpected: [], catalogReads: [], catalogSearchReads: [], failListings: false, guest: false,
   };
+}
+
+function visualFixtureListings() {
+  const sample = fixture('light').listings[1];
+  const blue = sample.images[0];
+  return [
+    { ...sample, id: 'fixture-visual-phone', status: 'ACTIVE', title: 'iPhone 15 Pro', category, priceRub: 95000,
+      saleEnabled: true, barterEnabled: true, isBarter: true,
+      images: [blue,
+        { ...blue, id: 'fixture-photo-2', sortOrder: 1, url: blue.url.replace('dce6ef','f3c08d') },
+        { ...blue, id: 'fixture-photo-3', sortOrder: 2, url: blue.url.replace('dce6ef','d7b7e6') },
+      ] },
+    { ...sample, id: 'fixture-visual-laptop', status: 'ACTIVE', title: 'MacBook Air M2', category, priceRub: 100000,
+      saleEnabled: false, barterEnabled: true, isBarter: true,
+      images: [{ ...blue, id: 'fixture-laptop', url: blue.url.replace('dce6ef','c9b6fc') }] },
+  ];
 }
 
 const packages = [{ id: 'fixture-package', code: 'lift', title: 'Поднятие x2', description: 'Тестовый пакет',
@@ -196,15 +225,15 @@ async function installFixture(context, state, theme) {
     // The detail acceptance opens genuine analytics, presence and review widgets.
     // Only explicit fixture entities are permitted here; unknown calls still fail.
     if (method === 'POST' && path === '/analytics/events') return json({ ok: true }, 201);
-    if (method === 'GET' && path === '/reviews/listing/fixture-detail/eligibility') return json({ canReview: false, reason: 'no_chat' });
-    if (method === 'GET' && path === '/presence/users/fixture-peer') return json({ isOnline: false, lastSeenAt: null });
-    if (method === 'GET' && path === '/users/fixture-peer/profile') return json({ user: { id: 'fixture-peer', name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] });
+    if (method === 'GET' && /^\/reviews\/listing\/fixture-(detail|visual-phone|visual-laptop)\/eligibility$/.test(path)) return json({ canReview: false, reason: 'no_chat' });
+    if (method === 'GET' && /^\/presence\/users\/fixture-(peer|seller)$/.test(path)) return json({ online: false, isOnline: false, lastSeenAt: null });
+    if (method === 'GET' && /^\/users\/fixture-(peer|seller)\/profile$/.test(path)) return json({ user: { id: path.split('/')[2], name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] });
     if (method !== 'GET') {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
     if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1, ...(state.oldWishesApi ? {} : { structuredWishesVersion: 1 }) });
-    if (path === '/categories') return json([category, autoCategory]);
+    if (path === '/categories') return json(referenceCategories);
     if (path === '/categories/fixture-auto/attribute-schema') return state.failCatalog ? json({}, 503) : json(autoSchema);
     if (path === '/categories/fixture-auto/attribute-options') return json(autoOptions.filter(option =>
       option.fieldKey === url.searchParams.get('fieldKey') && (!option.parentValue || option.parentValue === url.searchParams.get('parentValue'))));
@@ -217,7 +246,8 @@ async function installFixture(context, state, theme) {
       state.catalogSearchReads.push(url.searchParams.get('attrs'));
       return json({ appliedMode: url.searchParams.get('mode') || 'market',
         ...(url.searchParams.has('attrs') ? { appliedAttrs: JSON.parse(url.searchParams.get('attrs')) } : {}),
-        page: 1, limit: 20, total: 0, items: [], vipStrip: [] });
+        page: 1, limit: 20, total: url.searchParams.get('sort') === 'expensive' ? 2 : 0,
+        items: url.searchParams.get('sort') === 'expensive' ? visualFixtureListings() : [], vipStrip: [] });
     }
     if (path === '/listings/my') return state.failListings ? json({}, 503) : json(state.listings);
     if (path === '/wallet/packages') return json(packages);
@@ -353,6 +383,13 @@ async function scenario(browserType, width, theme) {
       state.previewFavorites = [{ id: 'favorite-preview', listing: { ...source,
         images: [source.images[0], { ...source.images[0], id: 'second', url: source.images[0].url.replace('dce6ef', 'ff9944') }] } }];
       await visit('/favorites');
+      await expect(page.getByRole('heading', { name: 'Избранное', exact: true })).toBeVisible();
+      await expect(page.locator('.screen-header:visible')).toHaveCount(0);
+      // Saved cards must have ONE tappable remove-heart, not a feed favorite
+      // floating above an inaccessible remove button.
+      await expect(page.locator('.listing-feed-favorite')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Удалить из избранного:/ })).toHaveCount(1);
+      await shot(page, key + '-favorites-reference');
       const thumb = page.locator('.photo-hold-preview').first();
       await expect(thumb).toBeVisible();
       assert.equal(await thumb.evaluate(el => el.closest('a')), null, 'hold surface is not a native link preview target');
@@ -423,11 +460,22 @@ async function scenario(browserType, width, theme) {
         const bounds = await contained(link);
         assert(bounds.width >= 44 && bounds.height >= 44, '44px navigation touch target');
       }
+      // Regression: the fixed iPhone dock must touch the bottom edge, not
+      // float 50-70px above a black blank strip in standalone Safari.
+      const dockBox = await dock.boundingBox();
+      assert(dockBox && Math.abs(dockBox.y + dockBox.height - page.viewportSize().height) < 2,
+        'mobile dock must extend through the bottom safe area');
+      const bottomPadding = await dock.evaluate(el => parseFloat(getComputedStyle(el).paddingBottom) || 0);
+      assert(Math.abs(dockBox.height - (55 + bottomPadding)) < 2,
+        'Claude v2 mobile dock is 55px plus safe-area, not the old 72px');
+      const plus = await dock.locator('.liquid-nav__add').boundingBox();
+      assert(plus && Math.abs(plus.width - 65) < 2 && Math.abs(plus.height - 65) < 2,
+        'Claude v2 center compose action must remain 65x65px');
       const palette = await page.evaluate(() => {
         const css = getComputedStyle(document.documentElement);
         return ['--bg-page', '--bg-surface', '--bg-muted', '--fg-default', '--fg-muted', '--border-default'].map(key => css.getPropertyValue(key).trim());
       });
-      if (theme === 'dark') assert.deepEqual(palette, ['#0e0e10', '#1a1a1d', '#1e1e22', '#f6f6f8', '#9a9aa6', '#2a2a2f']);
+      if (theme === 'dark') assert.deepEqual(palette, ['#0d0e0f', '#151618', '#202227', '#f6f7fa', '#a9b4c6', '#2a2b30']);
       await dock.getByRole('button', { name: 'Добавить объявление' }).click();
       const compose = page.getByRole('dialog', { name: 'Новое объявление' });
       await expect(compose).toBeVisible();
@@ -437,12 +485,17 @@ async function scenario(browserType, width, theme) {
       await page.keyboard.press('Escape');
       await expect(compose).not.toBeVisible();
       await expect(dock.getByRole('button', { name: 'Добавить объявление' })).toBeFocused();
+      await expect(dock.getByRole('link', { name: 'Избранное', exact: true }).locator('svg')).toHaveAttribute('fill', 'none');
       await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
       await expect(page).toHaveURL(/\/favorites$/);
+      await expect(dock.getByRole('link', { name: 'Избранное', exact: true }).locator('svg')).toHaveAttribute('fill', 'currentColor');
       await expect(dock.getByRole('link', { name: 'Избранное', exact: true })).toHaveAttribute('aria-current', 'page');
       await dock.getByRole('link', { name: 'Главная', exact: true }).click();
       await expect(page).toHaveURL(baseURL + '/');
       await expect(dock.getByRole('link', { name: 'Главная', exact: true })).toHaveAttribute('aria-current', 'page');
+      await expect(dock.getByRole('link', { name: 'Главная', exact: true }).locator('svg')).toHaveAttribute('fill', 'currentColor');
+      await expect(dock.getByRole('link', { name: 'Сообщения', exact: true }).locator('svg')).toHaveAttribute('fill', 'none');
+      await expect(dock.getByRole('link', { name: 'Профиль', exact: true }).locator('svg')).toHaveAttribute('fill', 'none');
       await dock.getByRole('link', { name: 'Избранное', exact: true }).click();
       await expect(page).toHaveURL(/\/favorites$/);
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -636,12 +689,63 @@ async function scenario(browserType, width, theme) {
     checks.push('wallet populated and guest states keep the same content rails');
 
 
+    if (width === 390 || width === 440) {
+      await visit('/?mode=both&sort=expensive');
+      await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
+      const cards = page.locator('.refresh-listing-card > [role="link"]:first-child');
+      await expect(cards).toHaveCount(2);
+      // WebKit may expose a new RSC route tree before the view transition
+      // makes its card boxes visible. Wait for real geometry, not DOM count.
+      await expect(cards.first()).toBeVisible();
+      await expect.poll(() => cards.first().evaluate(el => el.getBoundingClientRect().height),
+        { timeout: 10000 }).toBeGreaterThan(140);
+      const cardHeight = await cards.first().evaluate(el => el.getBoundingClientRect().height);
+      assert(Math.abs(cardHeight - 145) < 2,
+        'Claude v2 feed needs 145px mobile photo tiles, got ' + cardHeight);
+      const firstTitle = page.getByText('iPhone 15 Pro', { exact: true }).first();
+      const titleSize = await firstTitle.evaluate(el => getComputedStyle(el).fontSize);
+      assert.equal(titleSize, '13.5px', 'Claude v2 mobile product card title font');
+      for (const fav of await page.locator('.refresh-listing-card .listing-feed-favorite').all()) {
+        const hit = await fav.boundingBox();
+        assert(hit && hit.width >= 44 && hit.height >= 44,
+          'visually compact favorite hearts must retain 44px hit targets');
+      }
+      const iphoneThumb = page.locator('.refresh-listing-card').filter({ hasText: 'iPhone 15 Pro' }).locator('.photo-hold-preview');
+      await expect(iphoneThumb).toHaveCount(1);
+      await expect(iphoneThumb).toHaveAttribute('data-photo-count', '3');
+      const photoDots = iphoneThumb.locator('[data-photo-pagination="dots"]');
+      await expect(photoDots).toHaveCount(1);
+      await expect(photoDots.locator('span')).toHaveCount(3);
+      await expect(photoDots.locator('span').first()).toHaveAttribute('data-active', 'true');
+      await iphoneThumb.evaluate(el => {
+        const box = el.getBoundingClientRect();
+        const fromX = box.left + box.width * .75, toX = box.left + box.width * .2, y = box.top + box.height / 2;
+        const dispatchTouch = (type, x) => {
+          const point = { identifier: 42, target: el, clientX: x, clientY: y };
+          const event = new Event(type, { bubbles: true, cancelable: true });
+          Object.defineProperties(event, {
+            touches: { value: type === 'touchend' ? [] : [point] },
+            changedTouches: { value: [point] },
+          });
+          el.dispatchEvent(event);
+        };
+        // WebKit cannot construct Touch in the isolated test runner.
+        dispatchTouch('touchstart', fromX);
+        dispatchTouch('touchmove', toX);
+        dispatchTouch('touchend', toX);
+      });
+      await expect(iphoneThumb).toHaveAttribute('data-photo-index', '1');
+      await expect(photoDots.locator('span').nth(1)).toHaveAttribute('data-active', 'true');
+      await expect(photoDots.locator('span').first()).toHaveAttribute('data-active', 'false');
+      await shot(page, key + '-reference-v2-product-feed');
+      checks.push('real product feed, full-bleed cards and swipe gallery without opening listing');
+    }
     await visit('/?mode=market&sort=new');
     // Exactly one visible hero at a time: the supplied Claude banner on mobile,
     // the existing proportional promotional layout on desktop.
     // The app router can briefly retain an off-screen route during navigation.
     // Assert the actual number of visible banners, not the total DOM nodes.
-    await expect(page.locator('.claude-mobile-hero:visible')).toHaveCount(width < 768 ? 1 : 0);
+    await expect(page.locator('.barter-hero-carousel:visible')).toHaveCount(width < 768 ? 1 : 0);
     await expect(page.locator('.refresh-hero:visible')).toHaveCount(width < 768 ? 0 : 1);
     const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
     await expect(logo).toBeVisible();
@@ -665,11 +769,11 @@ async function scenario(browserType, width, theme) {
         return { padding: css.paddingTop, blur: css.backdropFilter || css.webkitBackdropFilter,
           background: css.backgroundColor, page: getComputedStyle(document.body).backgroundColor };
       });
-      assert.equal(material.padding, '12px', '12px breathing room after the system inset');
+      assert.equal(material.padding, '8px', '8px reference spacing after the system inset');
       assert.equal(material.blur, 'none', 'top-edge logo header has no backdrop blur');
       assert.equal(material.background, material.page, 'system area is an opaque continuation of the page');
       const logoBox = await logo.boundingBox();
-      assert(logoBox.y >= 71, 'logo stays below the safe area plus its own spacing');
+      assert(logoBox.y >= 67, 'logo stays below the safe area plus its own spacing');
       assert(await logo.evaluate(el => {
         const b = el.getBoundingClientRect();
         return el.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2));
@@ -679,11 +783,11 @@ async function scenario(browserType, width, theme) {
       await page.evaluate(() => document.querySelector('.app-scroll-root').scrollTo(0, 240));
       await expect.poll(() => page.evaluate(() => document.querySelector('.app-scroll-root').scrollTop)).toBeGreaterThan(100);
       await expect.poll(async () => (await header.boundingBox()).y).toBeGreaterThanOrEqual(0);
-      assert((await logo.boundingBox()).y >= 71, 'scrolling keeps the logo below system chrome');
+      assert((await logo.boundingBox()).y >= 67, 'scrolling keeps the logo below system chrome');
       await header.evaluate(el => { el.parentElement.style.removeProperty('min-height'); });
       await shot(page, key + '-header-safe-area');
       await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
-      checks.push('opaque logo header, safe area plus 12px, and unobstructed branding');
+      checks.push('opaque logo header, safe area plus 8px, and unobstructed branding');
     }
     const markBox = await brandImages[0].boundingBox();
     const wordBox = await brandImages[1].boundingBox();
@@ -729,6 +833,20 @@ async function scenario(browserType, width, theme) {
     }
     if (key.includes('440')) console.log('BARTER_APPLE_ICON_IMAGE ' + appleBytes.toString('base64'));
     checks.push('full mark bounds, alignment, larger Apple/PWA artwork and maskable safe circle');
+    if (width === 390) {
+      const scannerTrigger = page.getByRole('button', { name: 'Сканировать QR-код' });
+      await expect(scannerTrigger).toBeVisible();
+      await scannerTrigger.click();
+      const scanner = page.getByRole('dialog', { name: 'Сканер QR-кода Barter' });
+      await expect(scanner).toBeVisible();
+      await expect(scanner.getByLabel('Выбрать фото QR-кода')).toHaveCount(1);
+      await shot(page, key + '-qr-scanner');
+      await scanner.getByRole('textbox', { name: 'Ссылка на объявление' }).fill('fixture-detail');
+      await scanner.getByRole('button', { name: 'Открыть' }).click();
+      await expect(page).toHaveURL(/\/listing\/fixture-detail$/);
+      await visit('/?mode=market&sort=new');
+      checks.push('real QR dialog with camera, image import and safe manual listing navigation');
+    }
     const toggle = page.getByRole('navigation', { name: 'Режим каталога' });
     for (const mode of ['market', 'barter', 'both']) {
       const label = mode === 'market' ? 'Покупка' : mode === 'barter' ? 'Обмен' : 'Оба';
@@ -781,12 +899,31 @@ async function scenario(browserType, width, theme) {
     }
 
     // Claude detail acceptance: real gallery buttons and contact actions remain usable.
-    if (width === 390 || width === 1280) {
+    if (width === 390 || width === 440 || width === 1280) {
       await visit('/listing/fixture-detail');
-      await expect(page.getByRole('heading', { name: 'Тестовое объявление', exact: true })).toBeVisible();
+      const detailTitle = page.getByRole('heading', { name: 'Тестовое объявление', exact: true });
+      await expect(detailTitle).toBeVisible();
       const galleryDots = page.locator('.listing-gallery-mobile-dots button');
       await expect(galleryDots).toHaveCount(2);
       if (width < 768) {
+        assert.equal(await page.locator('.listing-detail-grid').evaluate(el => getComputedStyle(el).display),
+          'contents', 'legacy !important must not interrupt the hero/sheet order');
+        const photoBox = await page.locator('.listing-detail-media').boundingBox();
+        const heroFit = await page.locator('.listing-detail-media .listing-thumb-img').evaluate(img => getComputedStyle(img).objectFit);
+        assert.equal(heroFit, 'contain', 'full-size listing photos must not be cropped by legacy cover important');
+        const titleBox = await detailTitle.boundingBox();
+        assert(photoBox && titleBox && titleBox.y >= photoBox.y + photoBox.height - 46,
+          'title must render immediately after the image as the Claude sheet');
+        const priceBox = await page.locator('.listing-detail-price').boundingBox();
+        const metaBox = await page.locator('.listing-detail-mobile-meta').boundingBox();
+        assert(priceBox && metaBox && priceBox.y + priceBox.height <= metaBox.y + 2,
+          'price must precede city and date in the mobile Claude product sheet');
+        await expect(page.locator('.listing-contact-actions > :last-child')).toBeHidden();
+        const share = page.getByRole('button', { name: 'Поделиться' });
+        const shareBox = await share.boundingBox();
+        assert(shareBox && shareBox.width <= 45 && shareBox.x >= 0 && shareBox.x + shareBox.width <= width,
+          'share must remain inside a round 40px button, not overlap the photo');
+        await expect(page.locator('.listing-detail-head-actions .listing-feed-favorite')).toBeVisible();
         await galleryDots.nth(1).click();
         await expect(galleryDots.nth(1)).toHaveAttribute('aria-pressed', 'true');
         const footer = page.locator('.listing-detail .listing-primary-actions');
@@ -795,8 +932,18 @@ async function scenario(browserType, width, theme) {
         assert(footerBounds && footerBounds.y > 600 && footerBounds.y + footerBounds.height >= 755,
           'detail contact buttons must stay anchored near the bottom of the mobile viewport');
         await expect(page.getByRole('navigation', { name: 'Основная навигация', exact: true })).toHaveCount(0);
+        await shot(page, key + '-listing-detail-fixed');
+        await expect(page.getByRole('button', { name: 'Открыть на весь экран', exact: true })).toBeHidden();
+        // Tap the photograph itself, as in the Claude prototype (not the extra loupe).
+        await page.getByRole('button', { name: /^Открыть фотографии на весь экран/ }).click();
+        const full = page.getByRole('dialog', { name: 'Просмотр фотографий' });
+        await expect(full).toBeVisible();
+        assert.equal(await full.evaluate(el => getComputedStyle(el).backgroundColor),
+          'rgb(0, 0, 0)', 'fullscreen viewer must be opaque, never leak listing text');
+        await page.getByRole('button', { name: 'Закрыть' }).click();
+        await expect(full).toHaveCount(0);
       }
-      checks.push('reference detail gallery indicators, real messaging CTA and mobile footer');
+      checks.push('hero before title, compact share/favorite, opaque viewer, working gallery and contact footer');
     }
 
     state.failListings = true;
@@ -861,12 +1008,120 @@ async function scenario(browserType, width, theme) {
   } finally { await context.close(); await browser.close(); }
 }
 
+// Pixel-geometry evidence for the exact supplied Claude reference viewport.
+// These isolated fixture captures are NOT release screenshots or real account data.
+async function captureReferenceViewport(theme) {
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 393, height: 850 }, isMobile: true, hasTouch: true,
+      deviceScaleFactor: 1, colorScheme: theme,
+    });
+    try {
+      const state = fixture(theme);
+      await installFixture(context, state, theme);
+      const page = await context.newPage();
+      await page.goto(baseURL + '/?mode=both&sort=expensive', { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('.home-category-tile:visible')).toHaveCount(5);
+      await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
+      await expect(page.locator('.barter-hero-carousel:visible')).toHaveCount(1);
+      const bannerAsset = await page.evaluate(async () => {
+        const response = await fetch('/visual-refresh/hero-visuals.webp');
+        return { ok: response.ok, type: response.headers.get('content-type'), bytes: (await response.blob()).size };
+      });
+      assert(bannerAsset.ok && /image\/webp/.test(bannerAsset.type ?? '') && bannerAsset.bytes > 7000,
+        'all photo-based banner slides must load their optimized artwork');
+      await page.evaluate(() => document.fonts.ready);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const geometricSelectors = {
+        logo: '.catalog-mobile-header a[aria-label="Бартер — на главную"]',
+        search: '.catalog-home-search-group',
+        modes: '.home-mode-row .catalog-mode-switch',
+        categories: '.home-category-strip',
+        firstCategory: '.home-category-tile',
+        banner: '.barter-hero-carousel',
+        section: 'main#feed section h2',
+        grid: '.listing-grid',
+        firstCard: '.refresh-listing-card',
+        firstPhoto: '.refresh-listing-card[data-surface="home"] > [role="link"]:first-child',
+        firstTitle: '.refresh-listing-card .listing-card-copy > div:first-child',
+        dock: '.magic-nav',
+        fab: '.liquid-nav__add',
+      };
+      const geometry = await page.evaluate(selectors => {
+        const result = {};
+        for (const [name, selector] of Object.entries(selectors)) {
+          const el = document.querySelector(selector);
+          if (!el) continue;
+          const box = el.getBoundingClientRect();
+          const css = getComputedStyle(el);
+          result[name] = {
+            x: Number(box.x.toFixed(2)), y: Number(box.y.toFixed(2)),
+            width: Number(box.width.toFixed(2)), height: Number(box.height.toFixed(2)),
+            fontSize: css.fontSize, lineHeight: css.lineHeight,
+            background: css.backgroundColor,
+          };
+        }
+        return result;
+      }, geometricSelectors);
+      await writeFile(join(output, 'reference-393x850-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
+      await page.screenshot({ path: join(output, 'reference-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
+      await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveAttribute('id', 'barter-slide-exchange');
+      await page.screenshot({ path: join(output, 'hero-exchange-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 3: Продажа и обмен вместе/ }).click();
+      await page.screenshot({ path: join(output, 'hero-one-listing-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 4: Договоритесь в сообщениях/ }).click();
+      await page.screenshot({ path: join(output, 'hero-messages-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
+      await page.locator('.barter-hero-carousel__slide[data-active="true"] a').click();
+      await expect(page).toHaveURL(/\/about\/features#exchange$/);
+      await expect(page.getByRole('heading', { name: /Обменивайтесь без ограничений/ })).toBeVisible();
+      const featuresHeadlineColor = await page.locator('main header h1').evaluate(el => getComputedStyle(el).color);
+      assert.equal(featuresHeadlineColor, 'rgb(255, 255, 255)', 'features headline must remain readable over dark art');
+      await page.screenshot({ path: join(output, 'features-393x850-' + theme + '.png') });
+      await page.goto(baseURL + '/listing/fixture-visual-phone', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByRole('heading', { name: 'iPhone 15 Pro' })).toBeVisible();
+      const detailSelectors = {
+        hero: '.listing-detail-media',
+        heading: '.listing-detail-heading',
+        title: '.listing-detail-heading h1',
+        trade: '.detail-trade-label',
+        price: '.listing-detail-price',
+        stats: '.listing-detail-kpis',
+        location: '.listing-detail-mobile-meta',
+        seller: '.listing-detail-seller [data-slot="card"] > div.border-t',
+        attributes: '.listing-detail-content .listing-attributes',
+        description: '#listing-description',
+        actions: '.listing-detail .listing-primary-actions',
+      };
+      const detailGeometry = await page.evaluate(selectors => {
+        const output = {};
+        for (const [key, selector] of Object.entries(selectors)) {
+          const node = document.querySelector(selector);
+          if (!node) continue;
+          const rect = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          output[key] = { x: +rect.x.toFixed(2), y: +rect.y.toFixed(2),
+            width: +rect.width.toFixed(2), height: +rect.height.toFixed(2),
+            fontSize: style.fontSize, lineHeight: style.lineHeight };
+        }
+        return output;
+      }, detailSelectors);
+      await writeFile(join(output, 'detail-393x850-' + theme + '-geometry.json'), JSON.stringify(detailGeometry, null, 2));
+      await page.screenshot({ path: join(output, 'detail-393x850-' + theme + '.png') });
+      assert.deepEqual(state.unexpected, [], 'no unhandled reference viewport fixture requests');
+    } finally { await context.close(); }
+  } finally { await browser.close(); }
+}
+
 try {
   await waitForServer();
   for (const theme of ['light', 'dark']) {
     await scenario(chromium, 390, theme);
     for (const width of [360, 440, 768, 820, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
   }
+  for (const theme of ['light', 'dark']) await captureReferenceViewport(theme);
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage({ viewport: { width: 1200, height: 720 }, deviceScaleFactor: 1 });

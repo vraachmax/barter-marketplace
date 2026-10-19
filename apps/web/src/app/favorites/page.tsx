@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { Heart, Home, LoaderCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Heart, Home, LoaderCircle, RefreshCw } from 'lucide-react';
 import { API_URL, apiFetchJson, type FavoriteItem } from '@/lib/api';
 import { favoritesReducer, initialFavoritesState } from '@/lib/favorites-state';
 import { useAuth } from '@/components/auth-provider';
@@ -17,7 +17,10 @@ export default function FavoritesPage() {
   const [attempt, setAttempt] = useState(0);
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <header className="screen-header sticky top-0 z-30 border-b border-border/60">
+      <div className="mx-auto flex h-14 max-w-6xl items-center px-4 pt-1 md:hidden">
+        <h1 className="text-[29px] font-extrabold leading-tight tracking-[-.5px]">Избранное</h1>
+      </div>
+      <header className="screen-header sticky top-0 z-30 hidden border-b border-border/60 md:block">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="grid size-11 place-items-center rounded-2xl bg-muted text-foreground">
@@ -33,7 +36,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 pb-32 pt-5 md:pb-12">
+      <main className="mx-auto max-w-6xl px-4 pb-32 pt-4 md:pb-12 md:pt-5">
         {ready ? (
           <FavoritesContent key={`${token ?? 'guest'}:${attempt}`} onRetry={() => setAttempt((value) => value + 1)} />
         ) : <FavoritesLoading />}
@@ -47,7 +50,7 @@ function FavoritesLoading() {
     <div role="status" aria-label="Загружаем избранное" aria-busy="true">
       <span className="sr-only">Загружаем избранное…</span>
       <div aria-hidden="true" className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 6 }, (_, i) => <ListingCardSkeleton key={i} thumbHeight={160} />)}
+        {Array.from({ length: 6 }, (_, i) => <ListingCardSkeleton key={i} thumbHeight={109} />)}
       </div>
     </div>
   );
@@ -121,21 +124,21 @@ function FavoritesContent({ onRetry }: { onRetry: () => void }) {
         </Card>
       ) : (
         <>
-          <p className="mb-4 text-sm text-muted-foreground">Сохранено: {state.items.length}</p>
+          <p className="sr-only mb-4 text-sm text-muted-foreground md:not-sr-only">Сохранено: {state.items.length}</p>
           <div className="grid grid-cols-2 items-start gap-x-3 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
             {state.items.map((item) => {
               const id = item.listing.id;
               const pending = state.pending.includes(id);
               return (
                 <div key={item.id} className="relative">
-                  <ListingCardComponent data={item.listing} apiBase={API_URL} thumbHeight={160} />
+                  <ListingCardComponent data={item.listing} apiBase={API_URL} thumbHeight={160} showFavoriteAction={false} />
                   <Button
                     variant="secondary" size="icon" disabled={pending} aria-busy={pending}
                     aria-label={`Удалить из избранного: ${item.listing.title}`}
                     onClick={() => void remove(id)}
-                    className="absolute right-2 top-2 z-[3] size-11 rounded-full bg-background/95 shadow-sm hover:bg-destructive/10 hover:text-destructive"
+                    className="favorites-remove-action absolute right-0 top-0 z-[12] size-11 rounded-full border-0 bg-transparent text-[#ff5a0a] shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-[#ff5a0a]"
                   >
-                    {pending ? <LoaderCircle size={18} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Trash2 size={18} aria-hidden />}
+                    {pending ? <LoaderCircle size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <Heart size={21} strokeWidth={2} fill="currentColor" aria-hidden />}
                   </Button>
                   {state.errors[id] ? <p role="alert" className="mt-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">{state.errors[id]}</p> : null}
                 </div>

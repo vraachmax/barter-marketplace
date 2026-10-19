@@ -9,9 +9,12 @@
   --liquid-active: #ff5a0a;
 }
 html[data-theme='dark'] {
-  --mode-primary: #ff681b;
-  --mode-accent: #ff681b;
-  --liquid-active: #ff681b;
+  --brand-primary: #ff5a0a;
+  --brand-primary-hover: #ec4d00;
+  --brand-primary-soft: #34231d;
+  --mode-primary: #ff5a0a;
+  --mode-accent: #ff5a0a;
+  --liquid-active: #ff5a0a;
 }
 html[data-theme='light'] { color-scheme: light; }
 .catalog-mobile-header { background: var(--bg-page); -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -48,9 +51,9 @@ html[data-theme='dark'] .refresh-hero { background:linear-gradient(120deg,#34231
 html[data-theme='dark'] .refresh-hero h1 { color:#fff; }
 html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 0 1px rgba(255,255,255,.12); }
 @media(max-width:767px) {
-  .app-viewport .catalog-mobile-header { padding-top:12px; padding-bottom:8px; }
+  .app-viewport .catalog-mobile-header { padding-top:8px; padding-bottom:8px; }
   .catalog-mobile-header >div:first-child { margin-bottom:8px; }
-  .catalog-mobile-header [type='search'] { font-size:15px; }
+  .catalog-mobile-header [type='search'] { font-size:11.5px; }
   .home-mode-row { padding-top:8px; }
   .home-mode-row .catalog-mode-switch { width:100%; }
   .home-categories { padding-top:12px; padding-bottom:12px; }
@@ -66,32 +69,33 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   /* Full-width floating dock with central brand, as in the approved reference. */
   .magic-nav {
     position:fixed; left:0; right:0; bottom:0; max-width:520px; margin-inline:auto;
-    height:calc(72px + env(safe-area-inset-bottom,0px)); padding:0 0 env(safe-area-inset-bottom,0px);
-    display:block; border-radius:25px 25px 0 0; z-index:60; background:var(--bg-surface);
+    height:calc(55px + env(safe-area-inset-bottom,0px)); padding:0 0 env(safe-area-inset-bottom,0px);
+    display:block; border-radius:25px 25px 0 0; z-index:60; background:var(--bg-page);
     box-shadow:0 -8px 28px rgba(22,22,32,.075);
   }
-  .liquid-nav { width:100%; height:72px; border:0; border-radius:inherit; box-shadow:none; touch-action:auto; }
-  .liquid-nav__material { background:var(--bg-surface); border-radius:inherit; }
+  .liquid-nav { width:100%; height:55px; border:0; border-radius:inherit; box-shadow:none; touch-action:auto; }
+  .liquid-nav__material { background:var(--bg-page); border-radius:inherit; }
   .liquid-nav__material::after,.liquid-nav__lens { display:none; }
-  .liquid-nav__items { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:center; height:72px; padding:8px 6px 6px; }
+  .liquid-nav__items { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:center; height:55px; padding:8px 6px 1px; }
   .liquid-nav__items li:nth-child(1){grid-column:1}
   .liquid-nav__items li:nth-child(2){grid-column:2}
   .liquid-nav__items li:nth-child(3){grid-column:4}
   .liquid-nav__items li:nth-child(4){grid-column:5}
-  .liquid-nav__link { height:55px; min-height:48px; font-size:11px; color:#9494a2; padding:5px 0; letter-spacing:0; }
+  .liquid-nav__link { height:44px; min-height:44px; font-size:10px; color:#6f7888; padding:0; letter-spacing:0; }
   .liquid-nav__link[data-selected='true'] { color:#ff5a0a; }
-  .liquid-nav__icon { width:23px; height:23px; }
+  html[data-theme='dark'] .liquid-nav__link:not([data-selected='true']) { color:#a9b4c6; }
+  .liquid-nav__icon { width:26px; height:26px; }
   .liquid-nav__add {
-    position:absolute; top:-28px; left:50%; transform:translateX(-50%); margin:0;
-    width:68px; height:68px; border:0; background:linear-gradient(155deg,#ff851f,#ff4d00); color:#fff;
-    border-radius:50%; box-shadow:0 0 0 7px var(--bg-page),0 5px 16px rgba(255,87,0,.3); z-index:3;
+    position:absolute; top:-15px; left:50%; transform:translateX(-50%); margin:0;
+    width:65px; height:65px; border:0; background:linear-gradient(155deg,#ff851f,#ff4d00); color:#fff;
+    border-radius:50%; box-shadow:0 0 0 5px var(--bg-page),0 8px 22px rgba(255,90,10,.35); z-index:3;
     -webkit-backdrop-filter:none; backdrop-filter:none;
   }
   .liquid-nav__add:active{ transform:translateX(-50%) scale(.93); }
   .liquid-nav__add::after{display:none}
-  .liquid-nav__add .compose-brand-mark { filter:brightness(0) invert(1); width:29px; height:33px; }
-  html[data-theme='dark'] .magic-nav { background:#1a1a1d; box-shadow:0 -8px 28px rgba(0,0,0,.38); }
-  html[data-theme='dark'] .liquid-nav__material { background:#1a1a1d; }
+  .liquid-nav__add .compose-brand-mark { filter:brightness(0) invert(1); width:28px; height:30px; }
+  html[data-theme='dark'] .magic-nav { background:var(--bg-page); box-shadow:0 -8px 28px rgba(0,0,0,.38); }
+  html[data-theme='dark'] .liquid-nav__material { background:var(--bg-page); }
   html[data-theme='dark'] .liquid-nav__add { background:linear-gradient(155deg,#ff851f,#ff4d00); }
 }
 @media(min-width:768px) {
@@ -139,10 +143,10 @@ html[data-theme='dark'] .message-bubble[data-direction='outgoing'] { background:
 
 /* Claude reference uses neutral near-black, not blue-graphite; keep all shared routes in sync. */
 html[data-theme='dark'] {
-  --bg-page:#0e0e10; --bg-section:#17171a; --bg-surface:#1a1a1d;
-  --bg-muted:#1e1e22; --bg-input:#1c1c20;
-  --fg-default:#f6f6f8; --fg-strong:#f6f6f8; --fg-title:#f6f6f8; --fg-muted:#9a9aa6;
-  --border-default:#2a2a2f; --border-subtle:#2a2a2f; --border-input:#2a2a2f;
+  --bg-page:#0d0e0f; --bg-section:#17181b; --bg-surface:#151618;
+  --bg-muted:#202227; --bg-input:#1c1d21;
+  --fg-default:#f6f7fa; --fg-strong:#f6f7fa; --fg-title:#f6f7fa; --fg-muted:#a9b4c6;
+  --border-default:#2a2b30; --border-subtle:#2a2b30; --border-input:#2a2b30;
 }
 @media(max-width:767px) {
   html[data-theme='light'] .home-category-tile img { mix-blend-mode:multiply; }
@@ -224,17 +228,51 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .home-mode-row .catalog-mode-switch__link {
     min-height:36px; height:36px; background:var(--bg-muted); border-radius:20px;
-    font-size:14px; font-weight:500; color:var(--fg-default); padding:0 8px;
+    font-size:11.5px; font-weight:500; color:var(--fg-default); padding:0 8px;
   }
   .home-mode-row .catalog-mode-switch__link[data-selected="true"] {
     background:linear-gradient(180deg,#ff6a14,#ff5300); color:#fff; font-weight:600;
     box-shadow:none;
   }
-  .home-categories { padding-top:14px; padding-bottom:3px; }
-  .home-category-strip { padding-block:0; gap:2px; grid-auto-columns:76px; }
-  .home-category-tile { min-height:94px; gap:8px; font-size:12px; font-weight:500; }
-  .home-category-tile > span:first-child { width:70px; height:70px; }
-  .claude-mobile-hero { margin-top:14px; margin-bottom:3px; }
+  .home-categories { padding:18px 0 3px; }
+  .home-category-strip {
+    display:flex; justify-content:space-between;
+    width:100%; gap:0; padding:0 8px;
+    overflow:hidden;
+  }
+  .home-category-tile { flex:0 0 72px; width:72px; }
+  .home-category-tile[data-mobile-secondary='true'] { display:none; }
+  /* Catalog is a different compact surface from the discovery homepage. */
+  .mobile-category-filters {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:5px; margin-top:0; padding:0; align-items:start;
+  }
+  .mobile-category-filter,
+  .mobile-category-subfilter {
+    display:flex; align-items:center; justify-content:center;
+    min-width:0; height:36px; padding:0 5px;
+    border-radius:20px; background:var(--bg-muted);
+    color:var(--fg-default); text-decoration:none;
+    font-size:11.5px; font-weight:500; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  .mobile-category-filter[aria-current='page'] {
+    background:linear-gradient(180deg,#ff6a14,#ff5300);
+    color:white; box-shadow:0 4px 12px rgba(255,90,10,.18);
+  }
+  .mobile-category-subfilters {
+    grid-column:1/-1; display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px;
+    margin-top:5px;
+  }
+  .mobile-category-subfilter { height:33px; }
+  .mobile-category-filter:focus-visible,
+  .mobile-category-subfilter:focus-visible {
+    outline:2px solid var(--mode-accent);outline-offset:2px;
+  }
+  .home-category-tile { min-height:89px; gap:4px; font-size:10.5px; font-weight:500; }
+  .home-category-tile > span:first-child { width:72px; height:72px; }
+  .claude-mobile-hero { margin-top:12px; margin-bottom:5px; }
 }
 
 .listing-feed-favorite { position:absolute; top:9px; right:9px; z-index:10;
@@ -244,14 +282,30 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
 .listing-feed-favorite:focus-visible {outline:2px solid #ff5a0a;outline-offset:2px}
 .listing-feed-favorite[aria-busy="true"] {opacity:.7}
 @media(max-width:767px) {
-  .refresh-listing-card .photo-hold-preview, .refresh-listing-card [role="link"].aspect-square {aspect-ratio:1.16}
-  .refresh-listing-card .listing-card-copy {padding:10px 12px 13px;gap:3px}
+  .refresh-listing-card[data-surface='catalog'] > [role='link']:first-child,
+  .refresh-listing-card[data-surface='catalog'] .photo-hold-preview {
+    aspect-ratio:313/195;
+    height:auto;
+    min-height:0;
+  }
+  .refresh-listing-card .listing-card-copy {padding:10px 14px 8px;gap:0}
   .refresh-listing-card .listing-card-copy .listing-card-location {display:none}
+  /* Tappable area remains 44px; only the visual heart is 29px. */
+  .favorites-remove-action { padding:0; }
+  .favorites-remove-action::before {
+    content:""; position:absolute; z-index:0; inset:7.5px;
+    border-radius:50%; background:#fff;
+    box-shadow:0 2px 8px rgba(0,0,0,.10);
+  }
+  .favorites-remove-action svg {
+    position:relative; z-index:1;
+    width:16px; height:16px; stroke-width:2;
+  }
 }
 
 /* Prevent Russian bubble labels from wrapping under 70px thumbnails. */
 @media(max-width:767px) {
-  .home-category-tile .category-title {white-space:nowrap;font-size:12px;letter-spacing:-.2px;}
+  .home-category-tile .category-title {white-space:nowrap;font-size:10.5px;line-height:13.125px;letter-spacing:0;}
 }
 @media(min-width:768px) {
   .home-category-tile[data-reference-bubble='true'] .category-title {
@@ -280,147 +334,161 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
 }
 
-/* Compact chat header/composer as in the supplied Claude prototype. */
-@media(max-width:767px) {
-  .messages-screen .thread-header {
-    min-height:56px;
-    padding-top:6px;
-    padding-bottom:6px;
-    gap:10px;
-    background:var(--bg-page);
-  }
-  .messages-screen .thread-header > div:nth-of-type(1) {
-    width:40px; height:40px;
-    border-radius:50%;
-  }
-  .messages-screen .message-bubble {
-    max-width:82%;
-    border-radius:19px;
-    padding:10px 13px 8px;
-    box-shadow:none;
-    font-size:15px;
-    line-height:1.3;
-  }
-  .messages-screen .message-bubble[data-direction='incoming'] {
-    border-radius:19px 19px 19px 7px;
-    background:var(--bg-muted);
-    border-color:transparent;
-    color:var(--fg-default);
-  }
-  .messages-screen .message-bubble[data-direction='outgoing'] {
-    border-radius:19px 19px 7px 19px;
-    background:#e3ebfd;
-    color:#192033;
-  }
-  .messages-screen .message-bubble[data-direction='outgoing'] [class*='text-white'] {
-    color:#5b6374;
-  }
-  .messages-screen .glass-panel:has(textarea[aria-label='Сообщение']) {
-    border-top:0;
-    background:var(--bg-page);
-    box-shadow:none;
-    -webkit-backdrop-filter:none;
-    backdrop-filter:none;
-    padding-top:8px;
-    padding-bottom:6px;
-  }
-  .messages-screen textarea[aria-label='Сообщение'] {
-    height:44px;
-    min-height:44px;
-    max-height:120px;
-    border-radius:22px;
-    background:var(--bg-muted);
-    border:0;
-    padding-block:10px;
-    line-height:24px;
-  }
-  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] {
-    background:#233553;
-    color:#f6f6f8;
-  }
-  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] [class*='text-white'] {
-    color:#a7b5d0;
-  }
-}
-
-
-/* Claude's conversation is a dedicated full-screen view. Keep the dock
-   visible in the chat list, but never let it cover the open thread composer. */
+/* Messages: one mobile visual contract from the 393x850 Claude conversation.
+   The inbox has no supplied screen reference, so use the same tokens and rhythm.
+   Desktop remains a split-pane, real API-backed messenger. */
 @media (max-width: 767px) {
-  body:has(.messages-screen[data-thread-open='true']) .magic-nav {
-    display: none !important;
+  .messages-screen { color:var(--fg-default); background:var(--bg-page); }
+  .messages-screen .messages-sidebar {
+    background:var(--bg-page); border:0;
   }
+  .messages-screen .messages-sidebar-heading {
+    padding:16px 16px 12px; min-height:70px;
+  }
+  .messages-screen .messages-sidebar-heading h2 {
+    font-size:29px; line-height:35px; font-weight:800; letter-spacing:-.5px;
+  }
+  .messages-screen .messages-sidebar-heading button[aria-label='Помощь и поддержка'] {
+    background:var(--bg-muted); color:var(--fg-muted); border:0;
+  }
+  .messages-screen .messages-list-controls { padding:0 16px 14px; }
+  .messages-screen .messages-list-search {
+    height:44px; border:0; background:var(--bg-muted);
+    border-radius:17px; font-size:13px;
+  }
+  .messages-screen .messages-list-filter {
+    min-height:36px; height:36px; padding:0 13px;
+    background:var(--bg-muted); font-size:12px;
+    color:var(--fg-muted);
+  }
+  .messages-screen .messages-list-filter[aria-pressed='true'] {
+    background:#ffede3; color:#ff5a0a;
+  }
+  html[data-theme='dark'] .messages-screen .messages-list-filter[aria-pressed='true'] {
+    background:#34231d; color:#ff7d37;
+  }
+  .messages-screen .messages-chat-row {
+    min-height:78px; gap:12px; padding:12px; border-radius:16px;
+  }
+  .messages-screen .messages-chat-thumb { width:48px; height:48px; border:0; border-radius:13px; }
+  .messages-screen .messages-list-error {
+    color:var(--fg-default); padding:16px 8px 22px;
+  }
+
+  /* A conversation is full-height and does not share the bottom tab bar. */
+  body:has(.messages-screen[data-thread-open='true']) .magic-nav { display:none !important; }
   .app-viewport .messages-screen[data-thread-open='true'],
   .messages-screen[data-thread-open='true'] {
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom:max(4px, env(safe-area-inset-bottom,0px)) !important;
   }
+  .messages-screen .thread-header,
   .messages-screen[data-thread-open='true'] .thread-header {
-    min-height: 56px;
-    padding: 5px 16px;
-    border-bottom: 0;
-    gap: 9px;
+    min-height:61px; height:61px; padding:8px 9px 0 5px;
+    gap:9px; border:0; background:var(--bg-page);
+  }
+  .messages-screen .thread-header > button[aria-label='Назад к списку'] {
+    width:44px; height:44px; flex:none;
   }
   .messages-screen .thread-peer-avatar {
-    border-radius: 50%;
-    background: var(--bg-muted);
+    position:relative; width:43px; height:43px;
+    border-radius:50%; background:var(--bg-muted);
+  }
+  .messages-screen .thread-peer-avatar[data-online='true']::after {
+    position:absolute; right:-1px; bottom:0;
+    content:""; width:12px; height:12px;
+    border:2px solid var(--bg-page); border-radius:50%; background:#2fc45d;
+  }
+  .messages-screen .thread-header .thread-peer-name {
+    font-size:15.4px; font-weight:700; line-height:19px;
+  }
+  .messages-screen .thread-header .thread-peer-status {
+    margin-top:1px; font-size:11.5px; line-height:14px;
+  }
+  .messages-screen .thread-header .thread-peer-status > span:first-child { display:none; }
+  .messages-screen .thread-call-link,
+  .messages-screen .thread-header button[aria-label='Меню помощи'] {
+    width:36px; height:36px; min-width:36px; border:0; background:transparent;
   }
   .messages-screen .thread-listing-preview {
-    min-height: 80px;
-    background: var(--bg-surface);
-    box-shadow: 0 3px 15px rgba(24,24,48,.055);
-    border-color: var(--border-default);
+    min-height:80px; height:80px; margin:3px 16px 1px;
+    padding:0 14px; gap:13px; border:1px solid var(--border-default);
+    border-radius:16px; background:var(--bg-page);
+    box-shadow:0 3px 14px rgba(24,28,50,.07);
   }
+  .messages-screen .thread-listing-image { width:78px; height:65px; border-radius:10px; }
+  .messages-screen .thread-listing-preview > div:nth-child(2) { min-width:0; }
+  .messages-screen .thread-listing-preview strong { font-weight:700; }
+
   .messages-screen[data-thread-open='true'] [data-thread-scroll] {
-    padding: 8px 16px 10px;
-    background: var(--bg-page);
-    overscroll-behavior-y: contain;
+    padding:7px 16px 4px; background:var(--bg-page);
+    overscroll-behavior-y:contain;
   }
-  .messages-screen[data-thread-open='true'] [data-thread-scroll] > div {
-    gap: 9px;
-  }
-  .messages-screen[data-thread-open='true'] .thread-message-width {
-    max-width: 82%;
-  }
+  .messages-screen[data-thread-open='true'] .messages-bubbles { gap:7px; }
+  .messages-screen[data-thread-open='true'] .thread-message-width { max-width:80.5%; }
+  .messages-screen .message-bubble,
   .messages-screen[data-thread-open='true'] .message-bubble {
-    max-width: 100%;
-    border: 0;
-    padding: 10px 13px 8px;
-    font-size: 15.5px;
-    line-height: 1.3;
+    max-width:100%; border:0; box-shadow:none;
+    position:relative; padding:11px 15px 8px; border-radius:19px;
+    font-size:12.8px; line-height:18px; overflow-wrap:anywhere;
   }
-  .messages-screen[data-thread-open='true'] .message-bubble[data-direction='incoming'],
-  .messages-screen[data-thread-open='true'] .message-bubble[data-direction='outgoing'] {
-    border-radius: 19px;
+  .messages-screen .message-bubble[data-direction='incoming'] {
+    background:#f2f3f5; color:#05060f; border-radius:19px;
   }
-  .messages-screen[data-thread-open='true'] .message-bubble .leading-relaxed {
-    line-height: 1.3;
+  .messages-screen .message-bubble[data-direction='outgoing'] {
+    background:#e5eefe; color:#192033; border-radius:19px;
   }
-  .messages-screen[data-thread-open='true'] .glass-panel:has(textarea[aria-label='Сообщение']) {
-    padding: 8px 16px 4px;
-    border: 0;
-    background: var(--bg-page);
-    box-shadow: none;
+  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='incoming'] {
+    background:#242629; color:#f6f7fa;
   }
-  .messages-screen[data-thread-open='true'] textarea[aria-label='Сообщение'] {
-    min-height: 44px;
-    height: 44px;
-    border: 0;
-    border-radius: 23px;
-    background: var(--bg-muted);
-    padding: 10px 16px;
-    font-size: 15.5px;
-    line-height: 24px;
+  html[data-theme='dark'] .messages-screen .message-bubble[data-direction='outgoing'] {
+    background:#223657; color:#f6f7fa;
+  }
+  .messages-screen .message-bubble .leading-relaxed { line-height:18px; }
+  .messages-screen .message-bubble .whitespace-pre-wrap::after {
+    content:""; display:inline-block; width:50px; height:0;
+  }
+  .messages-screen .message-bubble [data-message-meta] {
+    position:absolute; right:12px; bottom:5px;
+    margin:0; gap:4px; line-height:12px; font-size:10px;
+  }
+  .messages-screen .message-bubble [data-message-meta] svg {
+    width:17px; height:17px; color:#2f7cf6; stroke-width:2.2;
+  }
+  .messages-screen .message-bubble[data-direction='outgoing'] [data-message-meta] {
+    color:var(--fg-muted);
+  }
+
+  .messages-screen .messages-composer,
+  .messages-screen[data-thread-open='true'] .messages-composer {
+    border:0; background:var(--bg-page); box-shadow:none;
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+    padding:4px 16px 2px;
+  }
+  .messages-screen .messages-composer > div:last-child {
+    align-items:center; gap:8px;
+  }
+  .messages-screen textarea[aria-label='Сообщение'] {
+    height:36px; min-height:36px; max-height:120px;
+    padding:6px 16px; border:0; border-radius:18px;
+    background:var(--bg-muted); font-size:12.5px; line-height:24px;
+  }
+  .messages-screen .messages-composer label:has(input[type='file']) {
+    width:36px; height:36px; background:transparent; color:var(--fg-default);
+  }
+  /* 36px reference icon inside a 44px accessible tap target. */
+  .messages-screen .messages-composer button[aria-label='Отправить'] {
+    width:44px; height:44px; min-width:44px;
+    border-radius:50%;
   }
   html[data-theme='dark'] .messages-screen .thread-listing-preview {
-    box-shadow: 0 3px 15px rgba(0,0,0,.25);
+    box-shadow:0 3px 14px rgba(0,0,0,.25);
   }
 }
-
 
 /* One clear top action and one integrated search bar, not two competing
    standalone circles. City still opens the actual location picker. */
 @media (max-width: 767px) {
-  .catalog-mobile-header .catalog-home-city > button {
+  .catalog-mobile-header .catalog-home-qr > button {
     display: grid;
     place-items: center;
     width: 44px;
@@ -432,7 +500,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background: var(--bg-surface);
     box-shadow: 0 3px 14px rgba(24,24,48,.07);
   }
-  .catalog-mobile-header .catalog-home-city > button > span {
+  .catalog-mobile-header .catalog-home-qr > button > span {
     display: none;
   }
   .catalog-mobile-header .catalog-home-search-group {
@@ -461,11 +529,11 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     backdrop-filter: none;
   }
   .catalog-mobile-header .catalog-home-search-group > button:focus-visible,
-  .catalog-mobile-header .catalog-home-city > button:focus-visible {
+  .catalog-mobile-header .catalog-home-qr > button:focus-visible {
     outline: 2px solid #ff5a0a;
     outline-offset: 2px;
   }
-  html[data-theme='dark'] .catalog-mobile-header .catalog-home-city > button {
+  html[data-theme='dark'] .catalog-mobile-header .catalog-home-qr > button {
     box-shadow: 0 3px 14px rgba(0,0,0,.28);
   }
 }
@@ -487,7 +555,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background:var(--bg-muted);
   }
   .listing-detail-media .listing-gallery > div:first-child > div:first-child {
-    height:clamp(298px,86vw,365px);
+    height:364px;
     aspect-ratio:auto;
   }
   .listing-detail-media .listing-thumb-img {
@@ -554,27 +622,27 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     display:flex;
     flex-direction:column;
     gap:0;
-    margin-top:-25px;
-    padding:19px 16px 7px;
-    border-radius:26px 26px 0 0;
+    margin-top:-34px;
+    padding:16px 19px 9px;
+    border-radius:28px 28px 0 0;
     background:var(--bg-page);
   }
   .listing-detail-heading h1 {
     order:0;
     margin:0;
-    font-size:28px;
-    line-height:1.18;
+    font-size:25px;
+    line-height:30px;
     font-weight:800;
     letter-spacing:-.45px;
   }
   .listing-detail-heading .detail-trade-label {
     order:1;
     align-self:flex-start;
-    margin-top:8px;
-    border-radius:13px;
-    padding:4px 10px;
+    margin-top:7px;
+    border-radius:11px;
+    padding:4px 11px;
     background:#ff5a0a;
-    font-size:13px;
+    font-size:12px;
     font-weight:600;
     line-height:1.15;
   }
@@ -585,30 +653,53 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     font-size:13px;
     color:var(--fg-muted);
   }
-  .listing-detail-seller { padding:0 16px; }
+  .listing-detail-seller { padding:0 19px; }
   .listing-detail-seller [data-slot='card'] {
     padding:0;
-    gap:9px;
+    gap:8px;
     background:transparent;
   }
-  .listing-detail-seller [data-slot='card'] > div:first-child > p:nth-child(2) {
-    font-size:33px;
-    font-weight:800;
-    letter-spacing:-.5px;
-    line-height:1.2;
+  .listing-detail-seller .listing-detail-price-block {
+    display:flex; flex-direction:column; gap:0;
+  }
+  .listing-detail-seller .listing-detail-price-label {
+    position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+  }
+  .listing-detail-seller .listing-detail-price-row {
+    display:flex; align-items:center; justify-content:space-between;
+    min-height:32px; gap:8px; margin-top:1px;
+  }
+  .listing-detail-seller .listing-detail-price {
+    flex:0 1 auto; min-width:0; margin:0;
+    font-size:27.5px; font-weight:800; letter-spacing:-.5px; line-height:32px;
+  }
+  .listing-detail-seller .listing-detail-kpis {
+    display:flex; align-items:center; justify-content:flex-end; gap:7px;
+    flex:none;
+  }
+  .listing-detail-seller .listing-detail-kpi {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    min-height:30px; padding:0 11px;
+    border-radius:12px; background:var(--bg-muted);
+    color:var(--fg-default); font-size:11.5px;
+  }
+  .listing-detail-seller .listing-detail-kpi svg { width:17px; height:17px; }
+  .listing-detail-seller .listing-detail-mobile-meta {
+    margin-top:11px; min-height:20px; font-size:12.5px;
   }
   .listing-detail-seller [data-slot='card'] > div:first-child > p:last-child:not(:first-child) {
     font-size:13px;
   }
   .listing-detail-seller [data-slot='card'] > div.border-t {
     border:0;
-    padding-top:6px;
+    padding-top:0;
+    margin-top:5px;
   }
   .listing-detail-seller [data-slot='card'] > div.border-t > a {
-    min-height:70px;
+    min-height:61px; height:61px;
     border:1px solid var(--border-default);
-    border-radius:18px;
-    padding:10px 12px;
+    border-radius:16px;
+    padding:0 11px;
   }
   .listing-detail-seller [data-slot='card'] > div.border-t > a > span:first-child {
     width:46px; height:46px; border-radius:50%;
@@ -620,19 +711,19 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     display:flex;
     flex-direction:row;
     gap:10px;
-    padding:12px max(16px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
-    background:linear-gradient(to top,var(--bg-page) 84%,rgba(255,255,255,0));
+    padding:12px max(16px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));
+    background:linear-gradient(to top,var(--bg-page) 78%,rgba(255,255,255,0));
   }
   .listing-detail-seller .listing-primary-actions > * {
     display:flex;
     flex:1;
     min-width:0;
-    min-height:52px;
+    min-height:43px;
     justify-content:center;
     align-items:center;
     border-radius:26px;
     padding:8px 12px;
-    font-size:15px;
+    font-size:13.2px;
     font-weight:600;
     text-align:center;
     white-space:normal;
@@ -651,32 +742,31 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .listing-detail-content {
     display:flex;
     flex-direction:column;
-    gap:18px;
-    padding:15px 16px 12px;
+    gap:12px;
+    padding:9px 19px 12px;
   }
   .listing-detail-content .listing-attributes {
-    order:-2;
-    border:0;
-    margin-bottom:0;
-    padding:0;
+    order:-2; position:relative;
+    border:0; margin:0; padding:0;
   }
-  .listing-detail-content .listing-attributes h2 { margin:0 0 8px; }
-  .listing-detail-content .listing-attributes dl { margin-top:0; gap:6px; }
+  .listing-detail-content .listing-attributes h2 { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+  .listing-detail-content .listing-attributes dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; gap:5px 8px; }
   .listing-detail-content .listing-attributes dl > div {
-    min-height:56px;
-    border-radius:12px;
-    padding:8px 12px;
+    display:flex; flex-direction:column; justify-content:center; gap:1px;
+    min-width:0; height:38px; min-height:38px;
+    border:0; border-radius:12px;
+    padding:4px 12px;
     background:var(--bg-input,var(--bg-muted));
   }
-  .listing-detail-content .listing-attributes dt { font-size:12.5px; color:var(--fg-muted); }
-  .listing-detail-content .listing-attributes dd { font-size:15px; font-weight:500; line-height:1.28; }
+  .listing-detail-content .listing-attributes dt { font-size:10.2px; line-height:12px; color:var(--fg-muted); }
+  .listing-detail-content .listing-attributes dd { font-size:12.2px; line-height:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .listing-detail-content > section[aria-labelledby='listing-description'] { order:-1; }
   .listing-detail-content > section[aria-labelledby='listing-description'] h2 {
-    margin-bottom:5px;
-    font-size:18px;
+    margin-bottom:1px;
+    font-size:14.2px;
     font-weight:800;
   }
-  .listing-detail-content > section[aria-labelledby='listing-description'] > div { font-size:15px;line-height:1.45; }
+  .listing-detail-content > section[aria-labelledby='listing-description'] > div { font-size:12.5px;line-height:16.3px;color:var(--fg-muted); }
   html[data-theme='dark'] .listing-detail-seller .listing-primary-actions > :first-child:not(:last-child) {
     background:#222a44; color:#f6f6f8;
   }
@@ -784,7 +874,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .profile-screen .profile-menu > a,
   .profile-screen .profile-menu > button {
     min-height: 60px;
-    padding: 13px 16px;
+    padding: 11px 16px;
     border: 0;
     border-radius: 18px;
     background: var(--bg-surface);
@@ -792,7 +882,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .profile-screen .profile-menu > a span.flex-1,
   .profile-screen .profile-menu > button span.flex-1 {
-    font-size: 16px;
+    font-size: 14.5px;
     font-weight: 500;
   }
   html[data-theme='dark'] .profile-screen .profile-identity-stats,
@@ -821,7 +911,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .profile-screen[data-profile-view='menu'] > .screen-header h1,
   .profile-screen[data-profile-view='menu'] > .screen-header p:first-child {
-    font-size:32px;
+    font-size:29px;
     font-weight:800;
     line-height:1.25;
     letter-spacing:-.6px;
@@ -928,13 +1018,13 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .profile-screen[data-profile-view='menu'] .profile-menu > a > svg:first-child,
   .profile-screen[data-profile-view='menu'] .profile-menu > button > svg:first-child {
-    width:25px;
-    height:25px;
+    width:21px;
+    height:21px;
     color:var(--fg-default);
   }
   .profile-screen[data-profile-view='menu'] .profile-menu > a > span.flex-1,
   .profile-screen[data-profile-view='menu'] .profile-menu > button > span.flex-1 {
-    font-size:16.5px;
+    font-size:14.5px;
     font-weight:500;
   }
   .profile-screen[data-profile-view='menu'] .profile-menu > a > svg:last-child,
@@ -1033,18 +1123,18 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     order: 2;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin: -26px 0 0;
-    padding: 18px 16px 9px;
-    border-radius: 26px 26px 0 0;
+    gap: 0;
+    margin: -34px 0 0;
+    padding: 16px 19px 9px;
+    border-radius: 28px 28px 0 0;
     background: var(--bg-page);
   }
   .listing-detail .listing-detail-heading h1 {
     order: 1;
-    font-size: 28px;
-    font-weight: 800;
-    line-height: 1.2;
-    letter-spacing: -.4px;
+    font-size:25px;
+    font-weight:800;
+    line-height:30px;
+    letter-spacing:-.3px;
   }
   .listing-detail .listing-detail-heading .detail-trade-label {
     order: 2;
@@ -1057,10 +1147,10 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .listing-detail .listing-detail-heading > p { order: 4; }
   .listing-detail .listing-detail-seller {
     order: 3;
-    padding: 0 16px;
+    padding: 0 19px;
   }
   .listing-detail .listing-detail-seller [data-slot='card'] {
-    gap: 10px;
+    gap: 8px;
     padding: 0;
     border: 0;
     border-radius: 0;
@@ -1076,8 +1166,8 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     letter-spacing: -.5px;
   }
   .listing-detail .listing-detail-content {
-    order: 4;
-    padding: 8px 16px 24px;
+    order:4;
+    padding:9px 19px 24px;
   }
   .listing-detail .listing-primary-actions {
     position: fixed;
@@ -1093,9 +1183,9 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background: linear-gradient(to top,var(--bg-page) 78%,transparent);
   }
   .listing-detail .listing-primary-actions > * {
-    flex: 1;
-    min-width: 0;
-    min-height: 52px;
+    flex:1;
+    min-width:0;
+    min-height:43px;
     border-radius: 26px;
     font-weight: 600;
     white-space: nowrap;
@@ -1362,4 +1452,362 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background: #ff5a0a;
     color: white;
   }
+}
+
+
+/* iPhone PWA fidelity hotfix from physical device screenshots (October 18).
+   These scoped rules supersede earlier mobile experiments instead of
+   requiring new !important transforms or duplicating real listing markup. */
+@media (max-width: 767px) {
+  /* The 62px gap visible below the tab bar came from the old inset-based
+     dock placement winning in the PWA. The entire safe area must be opaque. */
+  body .magic-nav {
+    bottom: 0 !important;
+    height: calc(55px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    background: var(--bg-page);
+    border-radius: 26px 26px 0 0;
+  }
+  body .magic-nav .liquid-nav {
+    height: 55px;
+    background: var(--bg-page);
+    border-radius: 26px 26px 0 0;
+  }
+  body .magic-nav .liquid-nav__items {
+    height: 55px;
+  }
+  /* Don't leave a black gap if the environment reports an inset only to
+     the fixed shell and not the tab bar (some installed iOS PWA versions). */
+  body .magic-nav::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: env(safe-area-inset-bottom, 0px);
+    background: var(--bg-page);
+    pointer-events: none;
+  }
+  .listing-detail .listing-detail-grid {
+    display: contents !important;
+  }
+  .listing-detail .listing-detail-main > * {
+    margin-bottom: 0;
+  }
+  /* Keep actions inside the photo hero: no text protruding into the image. */
+  .listing-detail .screen-header {
+    overflow: visible;
+  }
+  .listing-detail .screen-header > div {
+    min-height: 62px;
+    gap: 10px;
+    padding: 12px 16px 6px;
+  }
+  .listing-detail .screen-header > div > div:last-child {
+    display: flex;
+    margin-left: auto;
+    flex: none;
+    gap: 8px;
+  }
+  .listing-detail .listing-detail-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .listing-detail .listing-detail-head-actions .listing-feed-favorite {
+    position: static !important;
+    inset: auto !important;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    color: #17171b;
+    background: rgba(255,255,255,.94);
+  }
+  .listing-detail .listing-detail-head-actions .listing-feed-favorite[aria-pressed='true'] {
+    color: #ff5a0a;
+  }
+  .listing-detail .screen-header .listing-share-action {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    line-height: 1;
+  }
+  .listing-detail .screen-header .listing-share-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .listing-detail .listing-detail-seller .listing-owner-action {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(12px + env(safe-area-inset-bottom,0px));
+    z-index: 55;
+    width: calc(100% - 32px);
+    max-width: 488px;
+    min-height: 52px;
+    margin-inline: auto;
+    border: 0;
+    border-radius: 999px;
+    background: #ff5a0a;
+    color: white;
+    box-shadow: 0 8px 25px rgba(0,0,0,.12);
+  }
+  .listing-detail .listing-detail-media .listing-gallery {
+    position: relative;
+  }
+  .listing-detail .listing-detail-heading {
+    z-index: 2;
+    background: var(--bg-page);
+  }
+  .listing-detail .listing-detail-content {
+    position: relative;
+    z-index: 1;
+  }
+  /* Balanced, consistent favorite button dimensions across cards. */
+  .listing-feed-favorite {
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+  .listing-feed-favorite svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+  }
+}
+
+/* The picture viewer is a top-layer element, not part of app-scroll-root.
+   iOS's clock, battery and home indicator must remain unobstructed. */
+.listing-fullscreen-dialog[open] {
+  box-sizing: border-box;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: 100vw;
+  max-width: 100vw;
+  padding-top: max(12px, var(--safe-area-top, env(safe-area-inset-top, 0px)));
+  padding-bottom: max(12px, var(--safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+}
+.listing-fullscreen-dialog::backdrop { background: #000; }
+.listing-fullscreen-dialog .listing-fullscreen-toolbar {
+  min-height: 56px;
+}
+.listing-fullscreen-dialog .listing-fullscreen-thumbnails {
+  padding-top: 12px;
+  padding-bottom: 2px;
+}
+.listing-fullscreen-dialog .listing-fullscreen-toolbar button {
+  flex: none;
+}
+@media (min-width: 768px) {
+  .listing-detail .listing-share-label {
+    display: inline;
+  }
+}
+
+
+/* Product-sheet details: match the reference reading order and avoid
+   a second full-width favorite CTA when the real header heart is present. */
+@media (max-width: 767px) {
+  .listing-detail .listing-detail-mobile-meta {
+    display:flex; flex-wrap:wrap; gap:5px 8px;
+    margin-top:11px; color:var(--fg-muted);
+    font-size:12.5px; line-height:20px;
+  }
+  .listing-detail .listing-detail-mobile-meta svg { flex: none; }
+  .listing-detail .listing-detail-seller [data-slot='card'] > .border-t {
+    order: 1;
+    margin-top: 3px;
+  }
+  .listing-detail .listing-detail-seller [data-slot='card'] > .listing-contact-actions {
+    order: 2;
+  }
+  .listing-detail .listing-detail-seller .listing-contact-actions > :last-child {
+    display: none;
+  }
+}
+
+
+/* The feed may crop photos, but the primary product image must be fully
+   visible, exactly like Claude's plain hero. Override the legacy !important
+   thumbnail crop only on the detail page, never on the feed cards. */
+@media (max-width: 767px) {
+  .listing-detail .listing-detail-media .listing-thumb-img {
+    object-fit: contain !important;
+    filter: none !important;
+  }
+}
+
+
+/* Installed iPhone PWA fallback: WebKit may report zero safe-area for a
+   modal top layer while the translucent status bar still occupies pixels.
+   Keep gallery controls below Dynamic Island and above the home indicator. */
+@media (display-mode: standalone) and (max-width: 767px) {
+  .listing-fullscreen-dialog[open] {
+    padding-top: max(56px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(34px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+
+/* Claude v2 mobile feed uses a compact 145px photograph and 13-14px copy.
+   Scope to the listing cards, without changing desktop cards, photo viewer,
+   or the 44px interactive hit targets outside the media tile. */
+@media (max-width: 767px) {
+  .refresh-listing-card[data-surface='home'] > [role='link']:first-child {
+    height: 145px !important;
+    aspect-ratio: auto !important;
+    min-height: 145px;
+    border-radius: 18px 18px 0 0;
+  }
+  .refresh-listing-card .listing-card-copy {
+    gap: 0;
+    padding: 10px 14px 8px;
+  }
+  .refresh-listing-card .listing-card-copy > div:first-child {
+    display: block;
+    min-height: 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 16px;
+  }
+  .refresh-listing-card .listing-card-copy > div:nth-child(2) {
+    margin-top: 3px;
+    font-size: 10.5px;
+    line-height: 14px;
+  }
+  .refresh-listing-card .listing-card-copy > div:nth-child(3) {
+    margin-top: 4px;
+    font-size: 13.5px;
+    font-weight: 800;
+    line-height: 17px;
+  }
+  .refresh-listing-card .listing-trade-badge {
+    top: 10px;
+    left: 9px;
+    min-height: 22px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    line-height: 14px;
+  }
+  /* 29px visual heart, 44px real tap target (finger-sized and accessible). */
+  .refresh-listing-card .listing-feed-favorite {
+    top: 2px;
+    right: -1px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    background: transparent;
+    box-shadow: none;
+  }
+  .refresh-listing-card .listing-feed-favorite::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 7.5px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.10);
+  }
+  .refresh-listing-card .listing-feed-favorite svg {
+    position: relative;
+    z-index: 1;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Hero slides, driven by one accessible carousel. Original slide is kept as
+   pixel-faithful artwork, so its typography and CTA remain in the source image. */
+.barter-hero-carousel {
+  position:relative; width:calc(100% - 32px);
+  margin:12px 16px 5px; aspect-ratio:643/320;
+}
+.barter-hero-carousel__frame {
+  position:relative; width:100%; height:100%; overflow:hidden;
+  border-radius:22px; background:#111115; isolation:isolate;
+}
+.barter-hero-carousel__slide {
+  position:absolute; inset:0; opacity:0; visibility:hidden;
+  transition:opacity .36s ease,visibility .36s ease;
+}
+.barter-hero-carousel__slide[data-active='true'] {
+  opacity:1; visibility:visible; z-index:1;
+}
+.barter-hero-carousel__intro,.barter-hero-carousel__content {
+  position:absolute; inset:0; display:block; overflow:hidden;
+  color:#fff; text-decoration:none;
+}
+.barter-hero-carousel__intro img {
+  display:block; width:100%; height:100%; object-fit:cover;
+}
+.barter-hero-carousel__intro .barter-hero-carousel__dark { display:none; }
+html[data-theme='dark'] .barter-hero-carousel__intro .barter-hero-carousel__light { display:none; }
+html[data-theme='dark'] .barter-hero-carousel__intro .barter-hero-carousel__dark { display:block; }
+.barter-hero-carousel__content { background:#14151b; }
+.barter-hero-carousel__art {
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  background-image:url('/visual-refresh/hero-visuals.webp');
+  background-size:100% 300%;background-repeat:no-repeat;
+}
+.barter-hero-carousel__art--exchange { background-position:center top; }
+.barter-hero-carousel__art--both { background-position:center center; }
+.barter-hero-carousel__art--messages { background-position:center bottom; }
+.barter-hero-carousel__copy {position:relative;z-index:2;padding:14px 16px;max-width:66%;color:#fff;}
+.barter-hero-carousel__eyebrow {display:block;color:#ffae7d;font-size:8px;letter-spacing:.11em;font-weight:700;}
+.barter-hero-carousel__copy h2 {margin:7px 0 0;font-size:clamp(16px,5.4vw,24px);line-height:1.09;font-weight:800;letter-spacing:-.35px;}
+.barter-hero-carousel__copy p {margin:6px 0 0;font-size:clamp(9px,2.7vw,12px);line-height:1.3;color:#e2dfe1;}
+.barter-hero-carousel__content--exchange .barter-hero-carousel__copy {color:#171319;}
+.barter-hero-carousel__content--exchange .barter-hero-carousel__eyebrow {color:#dc520a;}
+.barter-hero-carousel__content--exchange .barter-hero-carousel__copy p {color:#68616b;}
+.barter-hero-carousel__cta {display:inline-flex;gap:5px;align-items:center;margin-top:10px;padding:7px 12px;border-radius:999px;background:#ff5a0a;font-size:10px;font-weight:600;color:#fff;}
+.barter-hero-carousel__dots {position:absolute;bottom:3px;left:50%;z-index:3;display:flex;gap:0;transform:translateX(-50%);}
+.barter-hero-carousel__dot-hit {display:grid;place-items:center;width:18px;height:18px;padding:0;border:0;background:transparent;cursor:pointer;}
+.barter-hero-carousel__dot {width:5px;height:5px;border-radius:50%;background:#8e8888;box-shadow:0 0 1px #222;transition:background .2s,transform .2s;}
+.barter-hero-carousel__dot-hit[aria-current='true'] .barter-hero-carousel__dot {background:#ff5a0a;transform:scale(1.2);}
+.barter-hero-carousel__dot-hit:focus-visible {outline:2px solid #ff5a0a;outline-offset:-2px;border-radius:50%;}
+.barter-hero-carousel__intro:focus-visible,.barter-hero-carousel__content:focus-visible {outline:3px solid #ff5a0a;outline-offset:-4px;}
+@media(min-width:768px) { .barter-hero-carousel {display:none;} }
+@media(prefers-reduced-motion:reduce) { .barter-hero-carousel__slide,.barter-hero-carousel__dot {transition:none;} }
+
+/* Reference feed cards: full bleed media with a flat orange trade chip.
+   Never place a framed placeholder card inside the media region. */
+.refresh-listing-card .listing-trade-badge,
+.refresh-listing-card .listing-trade-badge[data-exchange='true'] {
+  display:inline-flex; align-items:center; justify-content:center;
+  border:0 !important; outline:0; box-shadow:none !important;
+  background:#ff5a0a; color:#fff; border-radius:999px;
+  font-weight:600; white-space:nowrap;
+}
+.refresh-listing-card > [role='link']:first-child { isolation:isolate; }
+.refresh-listing-card > [role='link']:first-child > [role='img'] { width:100%;height:100%; }
+.refresh-listing-card > [role='link']:first-child img { object-fit:cover; }
+.refresh-listing-card .photo-hold-preview { touch-action:pan-y; }
+.refresh-listing-card .photo-hold-preview[data-photo-holding='true'] { cursor:ew-resize; }
+.refresh-listing-card .photo-hold-preview [aria-hidden='false'] img { object-fit:cover; }
+@media(max-width:767px) {
+  .refresh-listing-card[data-surface='home'] > [role='link']:first-child {
+    height:145px !important; min-height:145px; aspect-ratio:auto !important;
+    border-radius:18px 18px 0 0; overflow:hidden;
+  }
+  .refresh-listing-card .listing-trade-badge { min-height:22px; padding:4px 10px; font-size:10.4px; line-height:14px; }
+  .refresh-listing-card .listing-card-copy { padding:10px 14px 8px; }
 }

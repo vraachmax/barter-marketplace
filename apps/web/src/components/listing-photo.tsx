@@ -17,8 +17,7 @@ export function ListingPhoto({ src, alt, className, style, categoryTitle, catego
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   if (!src || src === failedSrc) {
-    return src ? <ListingPlaceholder categoryTitle={categoryTitle} categorySlug={categorySlug} unavailable />
-      : fallback ?? <ListingPlaceholder categoryTitle={categoryTitle} categorySlug={categorySlug} />;
+    return fallback ?? <ListingPlaceholder categoryTitle={categoryTitle} categorySlug={categorySlug} unavailable={Boolean(src)} />;
   }
   return <Image key={src} src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} fill unoptimized sizes="(max-width: 768px) 50vw, 25vw"
     className={className ?? 'object-cover'} style={style} onError={() => setFailedSrc(src)} />;
