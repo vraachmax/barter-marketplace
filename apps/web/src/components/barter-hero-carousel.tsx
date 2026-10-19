@@ -18,6 +18,7 @@ export function BarterHeroCarousel() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchX = useRef<number | null>(null);
+  const suppressClickUntil = useRef(0);
 
   useEffect(() => {
     if (paused || typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -42,8 +43,17 @@ export function BarterHeroCarousel() {
         onTouchEnd={event => {
           if (touchX.current == null) return;
           const end = event.changedTouches[0]?.clientX ?? touchX.current;
-          if (Math.abs(end - touchX.current) > 35) change(active + (end < touchX.current ? 1 : -1));
+          if (Math.abs(end - touchX.current) > 35) {
+            suppressClickUntil.current = Date.now() + 650;
+            change(active + (end < touchX.current ? 1 : -1));
+          }
           touchX.current = null;
+        }}
+        onClickCapture={event => {
+          if (Date.now() < suppressClickUntil.current) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
         }}
         onKeyDown={event => {
           if (event.key === 'ArrowLeft') { event.preventDefault(); change(active - 1); }
