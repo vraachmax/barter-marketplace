@@ -474,7 +474,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
 /* One clear top action and one integrated search bar, not two competing
    standalone circles. City still opens the actual location picker. */
 @media (max-width: 767px) {
-  .catalog-mobile-header .catalog-home-city > button {
+  .catalog-mobile-header .catalog-home-qr > button {
     display: grid;
     place-items: center;
     width: 44px;
@@ -486,7 +486,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background: var(--bg-surface);
     box-shadow: 0 3px 14px rgba(24,24,48,.07);
   }
-  .catalog-mobile-header .catalog-home-city > button > span {
+  .catalog-mobile-header .catalog-home-qr > button > span {
     display: none;
   }
   .catalog-mobile-header .catalog-home-search-group {
@@ -515,11 +515,11 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     backdrop-filter: none;
   }
   .catalog-mobile-header .catalog-home-search-group > button:focus-visible,
-  .catalog-mobile-header .catalog-home-city > button:focus-visible {
+  .catalog-mobile-header .catalog-home-qr > button:focus-visible {
     outline: 2px solid #ff5a0a;
     outline-offset: 2px;
   }
-  html[data-theme='dark'] .catalog-mobile-header .catalog-home-city > button {
+  html[data-theme='dark'] .catalog-mobile-header .catalog-home-qr > button {
     box-shadow: 0 3px 14px rgba(0,0,0,.28);
   }
 }
