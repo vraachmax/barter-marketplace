@@ -69,7 +69,7 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   /* Full-width floating dock with central brand, as in the approved reference. */
   .magic-nav {
     position:fixed; left:0; right:0; bottom:0; max-width:520px; margin-inline:auto;
-    height:calc(55px + env(safe-area-inset-bottom,0px)); padding:0 0 env(safe-area-inset-bottom,0px);
+    height:calc(55px + var(--mobile-dock-inset)); padding:0 0 var(--mobile-dock-inset);
     display:block; border-radius:25px 25px 0 0; z-index:60; background:var(--bg-page);
     box-shadow:0 -8px 28px rgba(22,22,32,.075);
   }
@@ -160,12 +160,16 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
 .home-category-tile[data-reference-bubble='true'] > span:first-child {
   position:relative; overflow:hidden; border-radius:50%;
   background:transparent !important; box-shadow:none !important;
-  outline-offset:2px; width:72px; height:72px; flex-shrink:0;
+  outline-offset:2px; width:72px; height:auto; max-width:100%;
+  aspect-ratio:1; flex-shrink:0;
 }
-.home-category-tile[data-reference-bubble='true'] .premium-category-art {
+.home-category-tile[data-reference-bubble='true'] .home-category-visual img {
   display:block; width:100%; height:100%; object-fit:cover; border-radius:50%;
   mix-blend-mode:normal; background:transparent;
 }
+.home-category-tile .category-art-dark { display:none !important; }
+html[data-theme='dark'] .home-category-tile .category-art-light { display:none !important; }
+html[data-theme='dark'] .home-category-tile .category-art-dark { display:block !important; }
 .home-category-tile[data-reference-bubble='true'][aria-current='true'] > span:first-child {
   outline:2px solid #ff5a0a;
 }
@@ -226,15 +230,23 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
      real API category instead of truncating the rail after five buttons. */
   .home-category-strip {
     display:grid; grid-auto-flow:column;
-    grid-template-rows:repeat(2,94px);
-    grid-auto-columns:calc((100% - 32px)/5);
+    grid-template-rows:repeat(2,103px);
+    grid-auto-columns:calc((100% - 48px)/5);
     justify-content:start; align-content:start;
     width:100%; gap:7px 8px; padding:0 8px 8px;
     overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
     scroll-snap-type:x proximity; overscroll-behavior-x:contain;
     -webkit-overflow-scrolling:touch;
   }
-  .home-category-tile { width:100%; min-width:0; flex:none; scroll-snap-align:start; }
+  .home-category-tile {
+    display:flex; flex-direction:column;align-items:center;
+    justify-content:flex-start;width:100%;min-width:0;
+    flex:none;scroll-snap-align:start;text-align:center;
+    min-height:0;gap:5px;
+  }
+  .home-category-tile[data-reference-bubble='true'] > .home-category-visual {
+    width:min(100%,68px);height:auto;aspect-ratio:1;
+  }
   .home-category-tile[data-mobile-secondary='true'] { display:flex; }
   /* Catalog is a different compact surface from the discovery homepage. */
   .mobile-category-filters {
@@ -273,8 +285,8 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
   .mobile-category-subfilter:focus-visible {
     outline:2px solid var(--mode-accent);outline-offset:2px;
   }
-  .home-category-tile { min-height:89px; gap:4px; font-size:10.5px; font-weight:500; }
-  .home-category-tile > span:first-child { width:min(72px,100%); height:auto; aspect-ratio:1; }
+  .home-category-tile { min-height:0; gap:5px; font-size:10.5px; font-weight:500; }
+  .home-category-tile > .home-category-visual { width:min(100%,68px);height:auto;aspect-ratio:1; }
   .claude-mobile-hero { margin-top:12px; margin-bottom:5px; }
 }
 
@@ -1442,9 +1454,9 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
   /* The 62px gap visible below the tab bar came from the old inset-based
      dock placement winning in the PWA. The entire safe area must be opaque. */
   body .magic-nav {
-    bottom: 0 !important;
-    height: calc(55px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    bottom: 0;
+    height: calc(55px + var(--mobile-dock-inset));
+    padding-bottom: var(--mobile-dock-inset);
     background: var(--bg-page);
     border-radius: 26px 26px 0 0;
   }
@@ -1839,4 +1851,32 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
   }
   .refresh-listing-card .listing-trade-badge { min-height:22px; padding:4px 10px; font-size:10.4px; line-height:14px; }
   .refresh-listing-card .listing-card-copy { padding:10px 14px 8px; }
+}
+
+/* Installed iOS PWA: reserve opaque status-bar space and keep the dock attached
+   to the physical bottom. Standard Safari stays on the existing layout. */
+@media (display-mode: standalone) and (max-width: 767px) {
+  .app-viewport {
+    box-sizing:border-box;
+    padding-top:max(54px,env(safe-area-inset-top,0px));
+    background:var(--bg-page);
+  }
+  .app-viewport .catalog-mobile-header {
+    position:sticky;top:0;background:var(--bg-page);
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    box-shadow:none;isolation:isolate;
+  }
+  body .magic-nav {
+    position:fixed;bottom:0;top:auto;
+    height:calc(55px + var(--mobile-dock-inset));
+    padding-bottom:var(--mobile-dock-inset);
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+  .app-viewport .app-scroll-root {height:100%;background:var(--bg-page);}
+}
+.listing-photo-placeholder {border:0;box-shadow:none;}
+@media(max-width:767px) {
+  .listing-detail .listing-detail-media .listing-photo-placeholder {
+    min-height:320px;border-radius:0;
+  }
 }
