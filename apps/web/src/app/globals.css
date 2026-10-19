@@ -577,6 +577,9 @@ a.link:hover { color: var(--brand-primary-hover); }
 :root {
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  /* Installed iOS can report an oversized bottom inset. The dock must never
+     grow taller than its 55px controls plus a normal portrait home-indicator area. */
+  --mobile-dock-inset: clamp(0px, var(--safe-area-bottom), 34px);
 }
 
 /* Keep the logo below system chrome and out of the top-edge blur layer. */

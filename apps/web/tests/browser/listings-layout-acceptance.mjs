@@ -476,6 +476,20 @@ async function scenario(browserType, width, theme) {
       const bottomPadding = await dock.evaluate(el => parseFloat(getComputedStyle(el).paddingBottom) || 0);
       assert(Math.abs(dockBox.height - (55 + bottomPadding)) < 2,
         'Claude v2 mobile dock is 55px plus safe-area, not the old 72px');
+      assert(dockBox.height <= 89, 'safe-area must not inflate the dock above 89px');
+      const dockBlur = await dock.locator('.liquid-nav__material').evaluate(el => {
+        const css = getComputedStyle(el);
+        return css.backdropFilter || css.webkitBackdropFilter;
+      });
+      assert.equal(dockBlur, 'none', 'opaque mobile nav must never blur listing content');
+      // Simulate the oversized reported iOS bottom safe area seen in installed PWA
+      // screenshots. The visible dock must remain 55 + max 34 pixels and stay pinned.
+      await page.evaluate(() => document.documentElement.style.setProperty('--safe-area-bottom', '160px'));
+      const oversizedDock = await dock.boundingBox();
+      assert(oversizedDock && oversizedDock.height <= 89 &&
+        Math.abs(oversizedDock.y + oversizedDock.height - page.viewportSize().height) < 2,
+        'oversized iOS bottom inset cannot lift the dock over the page');
+      await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-bottom'));
       const plus = await dock.locator('.liquid-nav__add').boundingBox();
       assert(plus && Math.abs(plus.width - 65) < 2 && Math.abs(plus.height - 65) < 2,
         'Claude v2 center compose action must remain 65x65px');

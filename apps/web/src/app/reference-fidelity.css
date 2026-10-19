@@ -69,7 +69,7 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   /* Full-width floating dock with central brand, as in the approved reference. */
   .magic-nav {
     position:fixed; left:0; right:0; bottom:0; max-width:520px; margin-inline:auto;
-    height:calc(55px + env(safe-area-inset-bottom,0px)); padding:0 0 env(safe-area-inset-bottom,0px);
+    height:calc(55px + var(--mobile-dock-inset)); padding:0 0 var(--mobile-dock-inset);
     display:block; border-radius:25px 25px 0 0; z-index:60; background:var(--bg-page);
     box-shadow:0 -8px 28px rgba(22,22,32,.075);
   }
@@ -1443,8 +1443,8 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
      dock placement winning in the PWA. The entire safe area must be opaque. */
   body .magic-nav {
     bottom: 0 !important;
-    height: calc(55px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    height: calc(55px + var(--mobile-dock-inset)) !important;
+    padding-bottom: var(--mobile-dock-inset) !important;
     background: var(--bg-page);
     border-radius: 26px 26px 0 0;
   }
@@ -1456,6 +1456,13 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
   body .magic-nav .liquid-nav__items {
     height: 55px;
   }
+  /* Flat, opaque navigation: iOS WebKit must not blur catalog content behind it. */
+  body .magic-nav,
+  body .magic-nav .liquid-nav__material,
+  body .magic-nav .liquid-nav__add {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
   /* Don't leave a black gap if the environment reports an inset only to
      the fixed shell and not the tab bar (some installed iOS PWA versions). */
   body .magic-nav::before {
@@ -1465,7 +1472,7 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
     left: 0;
     right: 0;
     bottom: 0;
-    height: env(safe-area-inset-bottom, 0px);
+    height: var(--mobile-dock-inset);
     background: var(--bg-page);
     pointer-events: none;
   }
@@ -1839,4 +1846,37 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
   }
   .refresh-listing-card .listing-trade-badge { min-height:22px; padding:4px 10px; font-size:10.4px; line-height:14px; }
   .refresh-listing-card .listing-card-copy { padding:10px 14px 8px; }
+}
+
+/* Installed iPhone PWA. WebKit sometimes gives the safe-area environment a
+   zero top inset while drawing its status bar over the web app. Preserve a
+   real opaque status-bar canvas outside the scrolling catalog, without an
+   extra body scrollport. Safari browser tabs keep their normal geometry. */
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) and (max-width: 767px) {
+    .app-viewport {
+      box-sizing: border-box;
+      padding-top: max(54px, var(--safe-area-top));
+      background: var(--bg-page);
+    }
+    .app-viewport .app-scroll-root {
+      height: 100%;
+      background: var(--bg-page);
+    }
+    .app-viewport .catalog-mobile-header {
+      position: sticky;
+      top: 0;
+      background: var(--bg-page);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      box-shadow: none;
+      isolation: isolate;
+    }
+    body .magic-nav {
+      top: auto;
+      bottom: 0 !important;
+      height: calc(55px + var(--mobile-dock-inset)) !important;
+      padding-bottom: var(--mobile-dock-inset) !important;
+    }
+  }
 }
