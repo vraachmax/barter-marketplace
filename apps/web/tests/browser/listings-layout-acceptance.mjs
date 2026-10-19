@@ -713,6 +713,10 @@ async function scenario(browserType, width, theme) {
       const iphoneThumb = page.locator('.refresh-listing-card').filter({ hasText: 'iPhone 15 Pro' }).locator('.photo-hold-preview');
       await expect(iphoneThumb).toHaveCount(1);
       await expect(iphoneThumb).toHaveAttribute('data-photo-count', '3');
+      const photoDots = iphoneThumb.locator('[data-photo-pagination="dots"]');
+      await expect(photoDots).toHaveCount(1);
+      await expect(photoDots.locator('span')).toHaveCount(3);
+      await expect(photoDots.locator('span').first()).toHaveAttribute('data-active', 'true');
       await iphoneThumb.evaluate(el => {
         const box = el.getBoundingClientRect();
         const fromX = box.left + box.width * .75, toX = box.left + box.width * .2, y = box.top + box.height / 2;
@@ -731,6 +735,8 @@ async function scenario(browserType, width, theme) {
         dispatchTouch('touchend', toX);
       });
       await expect(iphoneThumb).toHaveAttribute('data-photo-index', '1');
+      await expect(photoDots.locator('span').nth(1)).toHaveAttribute('data-active', 'true');
+      await expect(photoDots.locator('span').first()).toHaveAttribute('data-active', 'false');
       await shot(page, key + '-reference-v2-product-feed');
       checks.push('real product feed, full-bleed cards and swipe gallery without opening listing');
     }
@@ -1019,6 +1025,12 @@ async function captureReferenceViewport(theme) {
       await expect(page.locator('.home-category-tile:visible')).toHaveCount(5);
       await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
       await expect(page.locator('.barter-hero-carousel:visible')).toHaveCount(1);
+      const bannerAsset = await page.evaluate(async () => {
+        const response = await fetch('/visual-refresh/hero-visuals.webp');
+        return { ok: response.ok, type: response.headers.get('content-type'), bytes: (await response.blob()).size };
+      });
+      assert(bannerAsset.ok && /image\/webp/.test(bannerAsset.type ?? '') && bannerAsset.bytes > 7000,
+        'all photo-based banner slides must load their optimized artwork');
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => window.scrollTo(0, 0));
       const geometricSelectors = {
@@ -1056,6 +1068,12 @@ async function captureReferenceViewport(theme) {
       await page.screenshot({ path: join(output, 'reference-393x850-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
       await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveAttribute('id', 'barter-slide-exchange');
+      await page.screenshot({ path: join(output, 'hero-exchange-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 3: Продажа и обмен вместе/ }).click();
+      await page.screenshot({ path: join(output, 'hero-one-listing-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 4: Договоритесь в сообщениях/ }).click();
+      await page.screenshot({ path: join(output, 'hero-messages-393x850-' + theme + '.png') });
+      await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
       await page.locator('.barter-hero-carousel__slide[data-active="true"] a').click();
       await expect(page).toHaveURL(/\/about\/features#exchange$/);
       await expect(page.getByRole('heading', { name: /Обменивайтесь без ограничений/ })).toBeVisible();
