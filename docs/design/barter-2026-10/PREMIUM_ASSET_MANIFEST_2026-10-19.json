@@ -12,87 +12,87 @@
   ],
   "files": [
     {
-      "path": "apps/web/visual-refresh/premium/categories/all.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/all.webp",
       "sha256": "56200eba8e606b992797e43ae5c9cb8144bd522bc1e63bcdf507bfe90802cb2c"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/auto.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/auto.webp",
       "sha256": "1c98231c0356318d65c0e40890a24f4c2cee496339783d4b62a79fe2c6074c27"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/beauty.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/beauty.webp",
       "sha256": "dd4dbd012909adebdeded06b2b22b01c8cf4ecc56636bb5bf6e927785b11b7a5"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/clothes.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/clothes.webp",
       "sha256": "01be1be4f4cec85c691aa904ef8023aa414fc1ca9dc56c19cbb367c6cc87e700"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/electronics.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/electronics.webp",
       "sha256": "18290ef8f1df27cf70380fd97554da6b28d6171e46790f8c60634e0e64e0892c"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/furniture.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/furniture.webp",
       "sha256": "ef6d5a21ac84d077d2923ccf7c0c6f12ae48ec0618bfc46a62640eda20472807"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/hobby.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/hobby.webp",
       "sha256": "3cbd422dc53c0874c2321a65535d97d59ea4dc63522b98102a505d557e60b958"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/home.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/home.webp",
       "sha256": "8e85835ab6c59c1e7d85780c81ed3d126d6d5c397b8dc3c2f68744dfc4b537ef"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/kids.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/kids.webp",
       "sha256": "c8007cf767e994cf187ed19cea114b0e08e6a75206728d1a18fbdb703b1e1384"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/parts.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/parts.webp",
       "sha256": "8ba16e46ef84cb6bd59d107c8c5ba559c30e473a20862be221695e32ff17d4ac"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/pets.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/pets.webp",
       "sha256": "3126aca76ca971bc0a5df5ecca45a4447bf61d1c47f1bf9bb472ec3b9f5fd3be"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/photo.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/photo.webp",
       "sha256": "741ae205a08725aa994f4b64df9ed893bd317feb2ff9bdd03a6b9c2386fec5d3"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/realty.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/realty.webp",
       "sha256": "69aabe7cf49937d6626fe6ce79543db6c4776d7e6f6e0eddf6c0c815bd287f4f"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/services.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/services.webp",
       "sha256": "5a183df59378b6f7a2b35374db1b88b87cb91d7b28098044bda5a1144d5f3612"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/special_equipment.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/special_equipment.webp",
       "sha256": "0c2735fc23f5c4589a7ceb59c0eb88db0e2d646a849811399c3e4fc81e9aeeb0"
     },
     {
-      "path": "apps/web/visual-refresh/premium/categories/sports.webp",
+      "path": "apps/web/public/visual-refresh/premium/categories/sports.webp",
       "sha256": "04c5ff51f91d38f851bcf4a280e28ad51f7f8b65b5c5bc7d9797c612e8cbec42"
     },
     {
-      "path": "apps/web/visual-refresh/premium/hero-exchange.webp",
+      "path": "apps/web/public/visual-refresh/premium/hero-exchange.webp",
       "sha256": "1f09a444de596742f4d3050accd4b922c755c8105132f6ba734208e6a39254aa"
     },
     {
-      "path": "apps/web/visual-refresh/premium/hero-intro.webp",
+      "path": "apps/web/public/visual-refresh/premium/hero-intro.webp",
       "sha256": "a22a58f6faad49b0a343c5c6c59f890d3d3f03a9771fb1e4a9d555c0ea3d2f73"
     },
     {
-      "path": "apps/web/visual-refresh/premium/hero-messages.webp",
+      "path": "apps/web/public/visual-refresh/premium/hero-messages.webp",
       "sha256": "11198fffc9696ac87c410106110fd8541de4ba9ad6ed75b43686e439dfd0a646"
     },
     {
-      "path": "apps/web/visual-refresh/premium/hero-one-listing.webp",
+      "path": "apps/web/public/visual-refresh/premium/hero-one-listing.webp",
       "sha256": "4e25ab65e6f5006bcf05b7595e9fa2fd86fd3d658dfa668832d5cbecf0cf4b35"
     },
     {
-      "path": "apps/web/visual-refresh/premium/manifest.json",
+      "path": "apps/web/public/visual-refresh/premium/manifest.json",
       "sha256": "b9809d032cb97d08c5d7d6f33025d454e8550d91ca841a04b48cd18f7c0b163e"
     }
   ]
