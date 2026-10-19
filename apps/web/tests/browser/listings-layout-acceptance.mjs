@@ -716,11 +716,19 @@ async function scenario(browserType, width, theme) {
       await iphoneThumb.evaluate(el => {
         const box = el.getBoundingClientRect();
         const fromX = box.left + box.width * .75, toX = box.left + box.width * .2, y = box.top + box.height / 2;
-        const t1 = new Touch({ identifier: 42, target: el, clientX: fromX, clientY: y });
-        const t2 = new Touch({ identifier: 42, target: el, clientX: toX, clientY: y });
-        el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [t1], targetTouches: [t1], changedTouches: [t1] }));
-        el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [t2], targetTouches: [t2], changedTouches: [t2] }));
-        el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], targetTouches: [], changedTouches: [t2] }));
+        const dispatchTouch = (type, x) => {
+          const point = { identifier: 42, target: el, clientX: x, clientY: y };
+          const event = new Event(type, { bubbles: true, cancelable: true });
+          Object.defineProperties(event, {
+            touches: { value: type === 'touchend' ? [] : [point] },
+            changedTouches: { value: [point] },
+          });
+          el.dispatchEvent(event);
+        };
+        // WebKit cannot construct Touch in the isolated test runner.
+        dispatchTouch('touchstart', fromX);
+        dispatchTouch('touchmove', toX);
+        dispatchTouch('touchend', toX);
       });
       await expect(iphoneThumb).toHaveAttribute('data-photo-index', '1');
       await shot(page, key + '-reference-v2-product-feed');
