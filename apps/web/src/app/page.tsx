@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
 import QrScannerButton from '@/components/qr-scanner-button';
+import { BarterHeroCarousel } from '@/components/barter-hero-carousel';
 import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
 import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
 import { ChevronRight, Search, Sparkles } from 'lucide-react';
@@ -506,15 +507,9 @@ async function renderHome(sp: HomeSearchParams) {
           Мобильный фон теперь тоже белый (шапка белая — реф), блок остаётся
           muted на десктопе ради контраста карточек. */}
       {!currentQ && !urlCategoryId ? <>
-        <Link href="#feed" className="claude-mobile-hero md:hidden" aria-label="Смотреть объявления — Меняй. Покупай. Открывай новое.">
-          {/* The original approved Claude imagery already contains text and CTA: do not double-render it. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/visual-refresh/claude-banner-light.jpg" className="claude-banner-light" alt="Меняй. Покупай. Открывай новое. Тысячи товаров. Реальные люди." width={643} height={320} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/visual-refresh/claude-banner-dark.jpg" className="claude-banner-dark" alt="" width={652} height={319} />
-        </Link>
+        <BarterHeroCarousel />
         <section className="refresh-hero hidden md:flex" aria-label="Возможности БАРТЕРА">
-        <div><h1>Меняй. Покупай.<br />Открывай новое.</h1><p>Нужные вещи. Новые возможности.<br />Находите своё на БАРТЕРЕ.</p><Link href="#feed" className="refresh-hero-cta">Смотреть объявления <span aria-hidden>→</span></Link></div>
+        <div><h1>Меняй. Покупай.<br />Открывай новое.</h1><p>Нужные вещи. Новые возможности.<br />Находите своё на БАРТЕРЕ.</p><Link href="/about/features" className="refresh-hero-cta">Возможности БАРТЕРА <span aria-hidden>→</span></Link></div>
         {/* Marketing illustration, never a seller photo. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/visual-refresh/laptop.webp" alt="" width={500} height={500} />
