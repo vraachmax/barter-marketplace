@@ -151,7 +151,7 @@ async function scenario(type, width, theme) {
       });
       assert.equal(mobileMetrics.bubbleFont, '12.8px', 'Claude mobile message font');
       assert.equal(mobileMetrics.bubbleLineHeight, '18px', 'Claude mobile message leading');
-      assert.equal(mobileMetrics.headerHeight, 52, 'Claude chat header height');
+      assert.equal(mobileMetrics.headerHeight, 61, 'Measured Claude conversation top area');
       assert.equal(mobileMetrics.composerHeight, 36, 'Claude composer pill height');
       await page.screenshot({ path: join(output, key + '-reference-conversation.png') });
       checks.push('reference mobile conversation geometry and screenshot');
@@ -442,7 +442,7 @@ async function referenceConversation(theme) {
       };
     });
     await writeFile(join(output, 'reference-conversation-393x850-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
-    assert.equal(Math.round(geometry.header.height), 52);
+    assert.equal(Math.round(geometry.header.height), 61);
     assert.equal(Math.round(geometry.listing.height), 80);
     assert.equal(Math.round(geometry.input.height), 36);
     console.log('BARTER_MESSAGES_REFERENCE_PASS ' + theme);
