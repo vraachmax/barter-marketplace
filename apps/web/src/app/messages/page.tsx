@@ -52,8 +52,12 @@ function peerInitials(peer: ChatSummary['peer']): string {
  * опционально. Все существующие чаты считаются «market» до миграции.
  */
 function getChatMode(listing: ChatSummary['listing']): 'barter' | 'market' {
-  const isBarter = (listing as { isBarter?: boolean } | null | undefined)?.isBarter;
-  return isBarter ? 'barter' : 'market';
+  return listing?.barterEnabled ?? listing?.isBarter ? 'barter' : 'market';
+}
+function getChatTradeLabel(listing: ChatSummary['listing']): string {
+  const barter = listing?.barterEnabled ?? listing?.isBarter;
+  if (barter && listing?.saleEnabled === true) return 'Обмен / Покупка';
+  return barter ? 'Обмен' : 'Покупка';
 }
 
 const MODE_COLOR: Record<'barter' | 'market', string> = {
@@ -570,6 +574,7 @@ export default function MessagesPage() {
 
   const listingHref = selectedChat?.listing?.id ? `/listing/${selectedChat.listing.id}` : null;
   const previewSrc = resolveAssetUrl(selectedChat?.listing?.previewImageUrl ?? null);
+  const peerAvatarSrc = resolveAssetUrl(selectedChat?.peer?.avatarUrl ?? null);
 
   return (
     <div
@@ -718,7 +723,7 @@ export default function MessagesPage() {
                             }}
                             className="inline-flex h-[14px] shrink-0 items-center rounded px-1 text-[9px] font-bold tracking-wide uppercase"
                           >
-                            {MODE_LABEL[chatMode]}
+                            {getChatTradeLabel(c.listing)}
                           </span>
                           <span className="truncate text-xs text-muted-foreground">
                             {c.listing?.title ?? 'Без объявления'}
@@ -795,8 +800,11 @@ export default function MessagesPage() {
                   globals.css растянет аватар объявления до 140px и
                   шапка диалога станет «громоздкой» (жалоба Максима).
                 */}
-                <div className="thread-peer-avatar grid h-[43px] w-[43px] shrink-0 place-items-center rounded-full bg-muted text-sm font-bold text-foreground md:h-11 md:w-11" data-online={Boolean(selectedChat.peer?.id && onlineByUserId[selectedChat.peer.id])} aria-hidden="true">
-                  {peerInitials(selectedChat.peer)}
+                <div className="thread-peer-avatar grid h-[43px] w-[43px] shrink-0 place-items-center overflow-visible rounded-full bg-muted text-sm font-bold text-foreground md:h-11 md:w-11" data-online={Boolean(selectedChat.peer?.id && onlineByUserId[selectedChat.peer.id])} aria-hidden="true">
+                  {peerAvatarSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={peerAvatarSrc} alt="" className="h-full w-full rounded-full object-cover" />
+                  ) : peerInitials(selectedChat.peer)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="thread-peer-name truncate text-base font-semibold leading-tight text-foreground">
@@ -860,13 +868,13 @@ export default function MessagesPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <strong className="block truncate text-[15px] leading-[18px]">{selectedChat.listing.title}</strong>
-                    <span className="mt-[3px] block truncate text-[10.5px] leading-[14px] text-muted-foreground">{selectedChat.listing.city}</span>
+                    <span className="mt-[3px] block truncate text-[10.5px] leading-[14px] text-muted-foreground">{selectedChat.listing.category?.title ?? selectedChat.listing.city}</span>
                     <strong className="mt-[5px] block text-[14.5px] leading-5">
                       {selectedChat.listing.priceRub == null ? 'Цена по запросу' : selectedChat.listing.priceRub.toLocaleString('ru-RU') + ' ₽'}
                     </strong>
                   </div>
                   <span className="max-w-[100px] shrink-0 self-end pb-2 text-right text-[11.5px] leading-tight text-[#ff5a0a]">
-                    {getChatMode(selectedChat.listing) === 'barter' ? 'Обмен' : 'Покупка'}
+                    {getChatTradeLabel(selectedChat.listing)}
                   </span>
                 </Link>
               ) : null}
