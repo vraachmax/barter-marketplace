@@ -603,28 +603,28 @@ export default function MessagesPage() {
       <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col md:my-4 md:flex-row md:gap-0 md:overflow-hidden md:rounded-3xl md:border md:border-border md:bg-card md:shadow-sm">
         {/* Sidebar — chat list */}
         <aside
-          className={`flex min-h-0 w-full flex-col border-border bg-card md:w-[340px] lg:w-[380px] md:shrink-0 md:border-r ${
+          className={`messages-sidebar flex min-h-0 w-full flex-col border-border bg-card md:w-[340px] lg:w-[380px] md:shrink-0 md:border-r ${
  mobileThreadOpen ? 'hidden md:flex' : 'flex flex-1 md:flex-none'
  }`}
         >
-          <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-5 pb-3">
+          <div className="messages-sidebar-heading flex shrink-0 items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
             <div className="flex min-w-0 items-center gap-2">
-              <h2 className="text-2xl font-bold tracking-tight md:text-lg">Сообщения</h2>
+              <h2 className="text-[29px] font-extrabold leading-[35px] tracking-[-.5px] md:text-lg">Сообщения</h2>
               {totalUnread > 0 ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{totalUnread}</span> : null}
             </div>
             <button type="button" onClick={() => setSupportSheetOpen(true)} aria-label="Помощь и поддержка" className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"><CircleHelp size={21} aria-hidden /></button>
           </div>
           {openError ? <div role="alert" className="px-4 pb-3 text-sm"><p>{openError}</p><Button variant="outline" className="mt-2" onClick={() => { setOpenError(''); setOpenAttempt(value => value + 1); }}>Повторить открытие</Button></div> : null}
-          <div className="shrink-0 px-4 pb-3">
+          <div className="messages-list-controls shrink-0 px-4 pb-3">
             <div className="relative">
               <Search size={19} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <input type="search" value={listQuery} onChange={(e) => setListQuery(e.target.value)} aria-label="Поиск по диалогам" placeholder="Имя, объявление или сообщение"
-                className="h-12 w-full min-w-0 rounded-2xl border border-transparent bg-muted/60 pr-4 pl-11 text-base outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/15" />
+                className="messages-list-search h-11 w-full min-w-0 rounded-[17px] border border-transparent bg-muted pr-4 pl-11 text-[13px] outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/15" />
             </div>
             <div aria-label="Фильтр диалогов" className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
               {([{ id: 'all', label: 'Все' }, { id: 'buyer', label: 'Покупаю' }, { id: 'seller', label: 'Продаю' }, { id: 'unread', label: 'Непрочитанные' }] as const).map((filter) => (
                 <button key={filter.id} type="button" aria-pressed={listFilter === filter.id} onClick={() => setListFilter(filter.id)}
-                  className="min-h-11 shrink-0 rounded-full bg-muted/50 px-3 text-xs font-semibold text-muted-foreground transition-colors aria-pressed:bg-primary/10 aria-pressed:text-primary">{filter.label}</button>
+                  className="messages-list-filter min-h-11 shrink-0 rounded-full bg-muted px-3 text-[12px] font-medium text-muted-foreground transition-colors aria-pressed:bg-[#ffede3] aria-pressed:text-[#ff5a0a]">{filter.label}</button>
               ))}
             </div>
           </div>
@@ -660,7 +660,7 @@ export default function MessagesPage() {
                       type="button"
                       onClick={() => selectChat(c.id)}
                       aria-pressed={active}
-                      className={`flex min-h-24 w-full items-center gap-3 rounded-2xl p-3 text-left transition ${
+                      className={`messages-chat-row flex min-h-[78px] w-full items-center gap-3 rounded-[16px] p-3 text-left transition ${
  active
  ? 'bg-primary/8 ring-1 ring-primary/15'
  : 'hover:bg-muted/60'
@@ -675,7 +675,7 @@ export default function MessagesPage() {
                           вытянутую пилюлю 44×140. Поэтому здесь plain div
                           с обычным `h-11 w-11`.
                         */}
-                        <div className="h-14 w-14 overflow-hidden rounded-2xl border border-border bg-muted">
+                        <div className="messages-chat-thumb h-12 w-12 overflow-hidden rounded-[13px] bg-muted">
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={img} alt="" className="h-full w-full object-cover" />
@@ -794,7 +794,7 @@ export default function MessagesPage() {
                   globals.css растянет аватар объявления до 140px и
                   шапка диалога станет «громоздкой» (жалоба Максима).
                 */}
-                <div className="thread-peer-avatar grid h-10 w-10 shrink-0 place-items-center rounded-full bg-muted text-sm font-bold text-foreground md:h-11 md:w-11" aria-hidden="true">
+                <div className="thread-peer-avatar grid h-[43px] w-[43px] shrink-0 place-items-center rounded-full bg-muted text-sm font-bold text-foreground md:h-11 md:w-11" aria-hidden="true">
                   {peerInitials(selectedChat.peer)}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -848,31 +848,31 @@ export default function MessagesPage() {
               {listingHref && selectedChat.listing ? (
                 <Link
                   href={listingHref}
-                  className="thread-listing-preview mx-4 mt-1.5 mb-1 flex shrink-0 items-center gap-3 rounded-[18px] border border-border bg-card p-2.5 text-foreground shadow-sm sm:hidden"
+                  className="thread-listing-preview mx-4 mt-[3px] mb-1 flex shrink-0 items-center gap-3 rounded-[16px] border border-border bg-card px-[14px] py-[7px] text-foreground shadow-sm sm:hidden"
                   aria-label={'Открыть объявление: ' + selectedChat.listing.title}
                 >
-                  <div className="grid h-[62px] w-[62px] shrink-0 place-items-center overflow-hidden rounded-xl bg-muted">
+                  <div className="thread-listing-image grid h-[65px] w-[78px] shrink-0 place-items-center overflow-hidden rounded-[10px] bg-muted">
                     {previewSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={previewSrc} alt="" className="h-full w-full object-cover" />
                     ) : <Store size={27} className="text-muted-foreground" aria-hidden />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <strong className="block truncate text-[16px] leading-5">{selectedChat.listing.title}</strong>
-                    <span className="block truncate text-[13px] text-muted-foreground">{selectedChat.listing.city}</span>
-                    <strong className="block text-[17px] leading-5">
+                    <strong className="block truncate text-[15px] leading-[18px]">{selectedChat.listing.title}</strong>
+                    <span className="mt-[3px] block truncate text-[10.5px] leading-[14px] text-muted-foreground">{selectedChat.listing.city}</span>
+                    <strong className="mt-[5px] block text-[14.5px] leading-5">
                       {selectedChat.listing.priceRub == null ? 'Цена по запросу' : selectedChat.listing.priceRub.toLocaleString('ru-RU') + ' ₽'}
                     </strong>
                   </div>
-                  <span className="max-w-[95px] shrink-0 self-end pb-1 text-right text-[12px] leading-tight text-primary">
+                  <span className="max-w-[100px] shrink-0 self-end pb-2 text-right text-[11.5px] leading-tight text-[#ff5a0a]">
                     {getChatMode(selectedChat.listing) === 'barter' ? 'Обмен' : 'Покупка'}
                   </span>
                 </Link>
               ) : null}
 
               {/* Messages */}
-              <div ref={messagesScrollRef} data-thread-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-muted/30 px-3 py-5 md:px-5">
-                <div className="mx-auto max-w-3xl space-y-3">
+              <div ref={messagesScrollRef} data-thread-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background px-3 py-2 md:px-5">
+                <div className="messages-bubbles mx-auto max-w-3xl space-y-[7px]">
                   {threadStatus === 'loading' ? <p role="status" className="py-8 text-center text-sm text-muted-foreground">Загрузка переписки…</p> : null}
                   {threadStatus === 'error' ? <div role="alert" className="rounded-2xl border border-border bg-card p-4 text-sm"><p>Не удалось загрузить переписку</p><Button variant="outline" className="mt-3" onClick={() => void loadMessages(selectedChatId)}>Обновить переписку</Button></div> : null}
                   {threadStatus === 'ready' && messages.length === 0 ? (
@@ -929,7 +929,7 @@ export default function MessagesPage() {
                           ) : null}
                           <div
                             data-direction={isPeer ? "incoming" : "outgoing"}
-                            className={`message-bubble min-w-0 rounded-[22px] px-4 py-3 text-[15px] shadow-sm ${
+                            className={`message-bubble min-w-0 rounded-[19px] px-[15px] pt-[11px] pb-[7px] text-[12.8px] leading-[18px] shadow-none ${
  isPeer
  ? 'rounded-bl-md border border-border/60 bg-card text-foreground'
  : 'rounded-br-md text-white'
@@ -1041,7 +1041,7 @@ export default function MessagesPage() {
               ) : null}
 
               {/* Composer stays above the existing mobile navigation. */}
-              <div className="glass-panel shrink-0 border-t border-border px-3 py-3 md:p-4">
+              <div className="messages-composer glass-panel shrink-0 border-t border-border px-3 py-3 md:p-4">
                 {sendErrors[selectedChatId] ? <div role="alert" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-border bg-card p-3 text-sm">
                   <p>{sendErrors[selectedChatId]}</p>
                   {sendErrors[selectedChatId].startsWith('Сессия истекла') ? <Link className="mt-2 inline-flex min-h-11 items-center text-primary underline" href={'/auth?next=' + encodeURIComponent('/messages?chatId=' + selectedChatId)}>Войти снова</Link> : null}
@@ -1100,7 +1100,7 @@ export default function MessagesPage() {
                     rows={1}
                     maxLength={4000}
                     aria-label="Сообщение"
-                    className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-2.5 text-base leading-6 placeholder:text-muted-foreground transition focus:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-[18px] border-0 bg-muted px-4 py-2.5 text-[12.5px] leading-6 placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Написать сообщение..."
                     value={text}
                     onChange={(e) => {
