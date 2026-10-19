@@ -238,11 +238,7 @@ export default function FeedListingHoverThumb({
               />
             ))}
           </div>
-          {n > 2 ? (
-            <span className="pointer-events-none absolute right-1.5 top-1.5 z-[3] rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white backdrop-blur-sm">
-              {n} фото
-            </span>
-          ) : null}
+
         </>
       ) : null}
     </div>
