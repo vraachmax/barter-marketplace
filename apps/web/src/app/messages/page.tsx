@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Camera,
-  CheckCircle,
+  Check,
+  CheckCheck,
   ChevronLeft,
   Lightbulb,
   Link2,
@@ -794,14 +795,14 @@ export default function MessagesPage() {
                   globals.css растянет аватар объявления до 140px и
                   шапка диалога станет «громоздкой» (жалоба Максима).
                 */}
-                <div className="thread-peer-avatar grid h-[43px] w-[43px] shrink-0 place-items-center rounded-full bg-muted text-sm font-bold text-foreground md:h-11 md:w-11" aria-hidden="true">
+                <div className="thread-peer-avatar grid h-[43px] w-[43px] shrink-0 place-items-center rounded-full bg-muted text-sm font-bold text-foreground md:h-11 md:w-11" data-online={Boolean(selectedChat.peer?.id && onlineByUserId[selectedChat.peer.id])} aria-hidden="true">
                   {peerInitials(selectedChat.peer)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-base font-semibold leading-tight text-foreground">
+                  <div className="thread-peer-name truncate text-base font-semibold leading-tight text-foreground">
                     {selectedChat.peer?.name ?? 'Собеседник'}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
+                  <div className="thread-peer-status mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground md:text-xs">
                     <span
                       className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
  peerTyping
@@ -949,6 +950,7 @@ export default function MessagesPage() {
                             ) : null}
                             {m.text ? <div className="whitespace-pre-wrap leading-relaxed [overflow-wrap:anywhere]">{m.text}</div> : null}
                             <div
+                              data-message-meta
                               className={`mt-1.5 flex items-center gap-2 text-[10px] ${
  isPeer ? 'justify-end text-muted-foreground' : 'justify-end text-white/80'
  }`}
@@ -961,9 +963,9 @@ export default function MessagesPage() {
                               </span>
                               {!isPeer ? (
                                 m.isReadByPeer ? (
-                                  <CheckCircle size={14} strokeWidth={1.8} className="shrink-0 text-white" aria-hidden />
+                                  <CheckCheck size={17} strokeWidth={2.2} className="shrink-0" aria-label="Прочитано" />
                                 ) : (
-                                  <CheckCircle size={14} strokeWidth={1.8} className="shrink-0 opacity-70" aria-hidden />
+                                  <Check size={17} strokeWidth={2.2} className="shrink-0" aria-label="Отправлено" />
                                 )
                               ) : null}
                             </div>
