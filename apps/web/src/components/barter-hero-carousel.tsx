@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, ShieldCheck, Repeat2, Layers3 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 const slides = [
   { id: 'intro', label: 'Знакомство с БАРТЕРОМ', href: '/about/features' },
@@ -76,6 +76,9 @@ export function BarterHeroCarousel() {
             ) : (
               <Link href={slide.href} tabIndex={active === i ? 0 : -1}
                 className={`barter-hero-carousel__content barter-hero-carousel__content--${slide.id}`}>
+                {/* Product imagery is a real photograph-based generated background, not a giant UI icon. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img className="barter-hero-carousel__art" src={`/visual-refresh/hero-${slide.id === 'both' ? 'one-listing' : slide.id}.webp`} width={643} height={320} alt="" aria-hidden />
                 <div className="barter-hero-carousel__copy">
                   <span className="barter-hero-carousel__eyebrow">БАРТЕР · ВОЗМОЖНОСТИ</span>
                   <h2>{slide.id === 'exchange' ? 'Меняй вещи, находи своё.' : slide.id === 'both' ? 'Одно объявление. Два пути.' : 'Обсудите сделку внутри.'}</h2>
@@ -86,9 +89,7 @@ export function BarterHeroCarousel() {
                       : 'Чат, фотографии и детали сделки в одном месте.'}</p>
                   <span className="barter-hero-carousel__cta">Подробнее <ArrowRight size={15} aria-hidden /></span>
                 </div>
-                <div className="barter-hero-carousel__symbol" aria-hidden>
-                  {slide.id === 'exchange' ? <Repeat2 strokeWidth={1.35} /> : slide.id === 'both' ? <Layers3 strokeWidth={1.35} /> : <ShieldCheck strokeWidth={1.35} />}
-                </div>
+
               </Link>
             )}
           </div>
