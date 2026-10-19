@@ -234,14 +234,21 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background:linear-gradient(180deg,#ff6a14,#ff5300); color:#fff; font-weight:600;
     box-shadow:none;
   }
-  .home-categories { padding:18px 0 3px; }
+  .home-categories { padding:14px 0 7px; }
+  /* Two rows, five columns per viewport, with horizontal access to EVERY
+     real API category instead of truncating the rail after five buttons. */
   .home-category-strip {
-    display:flex; justify-content:space-between;
-    width:100%; gap:0; padding:0 8px;
-    overflow:hidden;
+    display:grid; grid-auto-flow:column;
+    grid-template-rows:repeat(2,94px);
+    grid-auto-columns:calc((100% - 32px)/5);
+    justify-content:start; align-content:start;
+    width:100%; gap:7px 8px; padding:0 8px 8px;
+    overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+    scroll-snap-type:x proximity; overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
   }
-  .home-category-tile { flex:0 0 72px; width:72px; }
-  .home-category-tile[data-mobile-secondary='true'] { display:none; }
+  .home-category-tile { width:100%; min-width:0; flex:none; scroll-snap-align:start; }
+  .home-category-tile[data-mobile-secondary='true'] { display:flex; }
   /* Catalog is a different compact surface from the discovery homepage. */
   .mobile-category-filters {
     display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
@@ -271,7 +278,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     outline:2px solid var(--mode-accent);outline-offset:2px;
   }
   .home-category-tile { min-height:89px; gap:4px; font-size:10.5px; font-weight:500; }
-  .home-category-tile > span:first-child { width:72px; height:72px; }
+  .home-category-tile > span:first-child { width:min(72px,100%); height:auto; aspect-ratio:1; }
   .claude-mobile-hero { margin-top:12px; margin-bottom:5px; }
 }
 
@@ -305,7 +312,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
 
 /* Prevent Russian bubble labels from wrapping under 70px thumbnails. */
 @media(max-width:767px) {
-  .home-category-tile .category-title {white-space:nowrap;font-size:10.5px;line-height:13.125px;letter-spacing:0;}
+  .home-category-tile .category-title {max-width:100%;white-space:normal;overflow-wrap:break-word;text-align:center;font-size:10px;line-height:12px;letter-spacing:0;}
 }
 @media(min-width:768px) {
   .home-category-tile[data-reference-bubble='true'] .category-title {
@@ -1762,27 +1769,34 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
 .barter-hero-carousel__intro .barter-hero-carousel__dark { display:none; }
 html[data-theme='dark'] .barter-hero-carousel__intro .barter-hero-carousel__light { display:none; }
 html[data-theme='dark'] .barter-hero-carousel__intro .barter-hero-carousel__dark { display:block; }
-.barter-hero-carousel__content { background:#14151b; }
+.barter-hero-carousel__content { background:linear-gradient(110deg,#171518,#39211d); }
+/* Use existing high-resolution Barter photography. The 9 KB three-image
+   sprite was badly blurred at iPhone viewport sizes. */
 .barter-hero-carousel__art {
-  position:absolute;inset:0;display:block;width:100%;height:100%;
-  background-image:url('/visual-refresh/hero-visuals.webp');
-  background-size:100% 300%;background-repeat:no-repeat;
+  position:absolute;top:0;bottom:0;right:0;left:42%;display:block;
+  background-repeat:no-repeat;background-size:auto 100%;
+  background-position:right center;
+  filter:saturate(1.12) contrast(1.03);
 }
-.barter-hero-carousel__art--exchange { background-position:center top; }
-.barter-hero-carousel__art--both { background-position:center center; }
-.barter-hero-carousel__art--messages { background-position:center bottom; }
+.barter-hero-carousel__art--exchange { background-image:url('/visual-refresh/claude-banner-light.jpg'); }
+.barter-hero-carousel__art--both { background-image:url('/visual-refresh/placeholders/laptops.webp'); background-color:#21181b; }
+.barter-hero-carousel__art--messages { background-image:url('/visual-refresh/placeholders/smartphones.webp'); background-color:#1b1619; }
+.barter-hero-carousel__content::before {
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,#171518 0%,#171518 37%,rgba(23,21,24,.96) 47%,rgba(23,21,24,.10) 83%);
+}
 .barter-hero-carousel__copy {position:relative;z-index:2;padding:14px 16px;max-width:66%;color:#fff;}
 .barter-hero-carousel__eyebrow {display:block;color:#ffae7d;font-size:8px;letter-spacing:.11em;font-weight:700;}
 .barter-hero-carousel__copy h2 {margin:7px 0 0;font-size:clamp(16px,5.4vw,24px);line-height:1.09;font-weight:800;letter-spacing:-.35px;}
 .barter-hero-carousel__copy p {margin:6px 0 0;font-size:clamp(9px,2.7vw,12px);line-height:1.3;color:#e2dfe1;}
-.barter-hero-carousel__content--exchange .barter-hero-carousel__copy {color:#171319;}
-.barter-hero-carousel__content--exchange .barter-hero-carousel__eyebrow {color:#dc520a;}
-.barter-hero-carousel__content--exchange .barter-hero-carousel__copy p {color:#68616b;}
+.barter-hero-carousel__content .barter-hero-carousel__copy {color:#fff;}
+.barter-hero-carousel__content .barter-hero-carousel__eyebrow {color:#ffb080;}
+.barter-hero-carousel__content .barter-hero-carousel__copy p {color:#e9e3e3;}
 .barter-hero-carousel__cta {display:inline-flex;gap:5px;align-items:center;margin-top:10px;padding:7px 12px;border-radius:999px;background:#ff5a0a;font-size:10px;font-weight:600;color:#fff;}
-.barter-hero-carousel__dots {position:absolute;bottom:3px;left:50%;z-index:3;display:flex;gap:0;transform:translateX(-50%);}
-.barter-hero-carousel__dot-hit {display:grid;place-items:center;width:18px;height:18px;padding:0;border:0;background:transparent;cursor:pointer;}
-.barter-hero-carousel__dot {width:5px;height:5px;border-radius:50%;background:#8e8888;box-shadow:0 0 1px #222;transition:background .2s,transform .2s;}
-.barter-hero-carousel__dot-hit[aria-current='true'] .barter-hero-carousel__dot {background:#ff5a0a;transform:scale(1.2);}
+.barter-hero-carousel__dots {position:absolute;bottom:6px;left:50%;z-index:3;display:flex;gap:0;transform:translateX(-50%);}
+.barter-hero-carousel__dot-hit {display:grid;place-items:center;width:14px;height:22px;padding:0;border:0;background:transparent;cursor:pointer;}
+.barter-hero-carousel__dot {width:9px;height:9px;border-radius:50%;background:rgba(255,90,10,.45);box-shadow:0 0 0 1px rgba(255,255,255,.4);transition:background .2s,transform .2s;}
+.barter-hero-carousel__dot-hit[aria-current='true'] .barter-hero-carousel__dot {background:#ff5a0a;transform:scale(1.08);}
 .barter-hero-carousel__dot-hit:focus-visible {outline:2px solid #ff5a0a;outline-offset:-2px;border-radius:50%;}
 .barter-hero-carousel__intro:focus-visible,.barter-hero-carousel__content:focus-visible {outline:3px solid #ff5a0a;outline-offset:-4px;}
 @media(min-width:768px) { .barter-hero-carousel {display:none;} }
