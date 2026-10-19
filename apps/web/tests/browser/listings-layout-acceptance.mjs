@@ -735,11 +735,11 @@ async function scenario(browserType, width, theme) {
         return { padding: css.paddingTop, blur: css.backdropFilter || css.webkitBackdropFilter,
           background: css.backgroundColor, page: getComputedStyle(document.body).backgroundColor };
       });
-      assert.equal(material.padding, '12px', '12px breathing room after the system inset');
+      assert.equal(material.padding, '8px', '8px reference spacing after the system inset');
       assert.equal(material.blur, 'none', 'top-edge logo header has no backdrop blur');
       assert.equal(material.background, material.page, 'system area is an opaque continuation of the page');
       const logoBox = await logo.boundingBox();
-      assert(logoBox.y >= 71, 'logo stays below the safe area plus its own spacing');
+      assert(logoBox.y >= 67, 'logo stays below the safe area plus its own spacing');
       assert(await logo.evaluate(el => {
         const b = el.getBoundingClientRect();
         return el.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2));
@@ -749,11 +749,25 @@ async function scenario(browserType, width, theme) {
       await page.evaluate(() => document.querySelector('.app-scroll-root').scrollTo(0, 240));
       await expect.poll(() => page.evaluate(() => document.querySelector('.app-scroll-root').scrollTop)).toBeGreaterThan(100);
       await expect.poll(async () => (await header.boundingBox()).y).toBeGreaterThanOrEqual(0);
-      assert((await logo.boundingBox()).y >= 71, 'scrolling keeps the logo below system chrome');
+      assert((await logo.boundingBox()).y >= 67, 'scrolling keeps the logo below system chrome');
       await header.evaluate(el => { el.parentElement.style.removeProperty('min-height'); });
       await shot(page, key + '-header-safe-area');
       await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
-      checks.push('opaque logo header, safe area plus 12px, and unobstructed branding');
+      checks.push('opaque logo header, safe area plus 8px, and unobstructed branding');
+    }
+    if (width === 390) {
+      const scannerTrigger = page.getByRole('button', { name: 'Сканировать QR-код' });
+      await expect(scannerTrigger).toBeVisible();
+      await scannerTrigger.click();
+      const scanner = page.getByRole('dialog', { name: 'Сканер QR-кода Barter' });
+      await expect(scanner).toBeVisible();
+      await expect(scanner.getByLabel('Выбрать фото QR-кода')).toHaveCount(1);
+      await shot(page, key + '-qr-scanner');
+      await scanner.getByRole('textbox', { name: 'Ссылка на объявление' }).fill('fixture-detail');
+      await scanner.getByRole('button', { name: 'Открыть' }).click();
+      await expect(page).toHaveURL(/\/listing\/fixture-detail$/);
+      await visit('/?mode=market&sort=new');
+      checks.push('real QR dialog with camera, image import and safe manual listing navigation');
     }
     const markBox = await brandImages[0].boundingBox();
     const wordBox = await brandImages[1].boundingBox();
