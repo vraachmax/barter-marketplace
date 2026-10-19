@@ -123,6 +123,8 @@ export default function FeedListingHoverThumb({
       clearTimers();
       holdingNow = false; swiping = false;
       touching.current = true;
+      // A NEW touch starts a NEW gesture; do not suppress its regular tap.
+      suppressClickUntil.current = 0;
       if (event.touches.length !== 1) return;
       startX = event.touches[0].clientX;
       startY = event.touches[0].clientY;
