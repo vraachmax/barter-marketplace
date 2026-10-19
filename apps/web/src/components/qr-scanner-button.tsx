@@ -146,7 +146,7 @@ export default function QrScannerButton() {
       </button>
       <dialog ref={dialog} onCancel={() => setOpen(false)}
         aria-label="Сканер QR-кода Barter"
-        className="fixed inset-0 m-auto w-[min(100%-32px,440px)] max-h-[calc(100dvh-48px)] overflow-y-auto rounded-[26px] border-0 bg-[var(--bg-page)] p-0 text-foreground shadow-2xl backdrop:bg-black/70">
+        className="fixed inset-0 m-auto w-[calc(100%-32px)] max-w-[440px] max-h-[calc(100dvh-48px)] overflow-y-auto rounded-[26px] border-0 bg-[var(--bg-page)] p-0 text-foreground shadow-2xl backdrop:bg-black/70">
         <div className="flex items-center justify-between gap-2 px-5 pt-5 pb-3">
           <div>
             <h2 className="text-[20px] font-bold">Сканировать QR-код</h2>
