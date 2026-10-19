@@ -350,6 +350,16 @@ function getClientToken(): string | null {
   try { return localStorage.getItem('barter_token'); } catch { return null; }
 }
 
+/** Chat routes use the existing same-origin Next.js rewrite in browsers.
+ * Random Vercel Preview hostnames are not necessarily allowed in the API CORS list.
+ * Authentication and the server API remain unchanged.
+ */
+function clientRequestBase(path: string): string {
+  return typeof window !== 'undefined' && /^\/chats(?:\/|$)/.test(path)
+    ? '/api/backend'
+    : API_URL;
+}
+
 export async function apiFetchJson<T>(
   path: string,
   init?: RequestInit,
@@ -358,7 +368,7 @@ export async function apiFetchJson<T>(
     const token = getClientToken();
     const authHeaders: Record<string, string> = {};
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${clientRequestBase(path)}${path}`, {
       ...init,
       credentials: 'include',
       headers: {
@@ -446,7 +456,7 @@ export async function apiUploadFile(
     const token = getClientToken();
     const authHeaders: Record<string, string> = {};
     if (token) authHeaders['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${clientRequestBase(path)}${path}`, {
       method: 'POST',
       body: fd,
       signal: options?.signal,
