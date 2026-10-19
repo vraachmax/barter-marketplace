@@ -700,6 +700,13 @@ async function scenario(browserType, width, theme) {
     if (width === 390 || width === 440) {
       await visit('/?mode=both&sort=expensive');
       await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
+      const neutralPlaceholder = page.locator('.refresh-listing-card .listing-photo-placeholder').first();
+      await expect(neutralPlaceholder).toBeVisible();
+      await expect(neutralPlaceholder).toHaveAttribute('data-compact', 'true');
+      await expect(neutralPlaceholder).toHaveAttribute('aria-label', /Нет фото товара/);
+      await expect(neutralPlaceholder.locator('svg')).toHaveCount(1);
+      assert.equal((await neutralPlaceholder.innerText()).trim(), '',
+        'missing-photo tile must not display a clipped caption');
       const cards = page.locator('.refresh-listing-card > [role="link"]:first-child');
       await expect(cards).toHaveCount(2);
       // WebKit may expose a new RSC route tree before the view transition
@@ -1055,7 +1062,17 @@ async function captureReferenceViewport(theme, width = 393, height = 850) {
         heroFiles.map(file => '/visual-refresh/premium/' + file),
         'each slide must use its corresponding image, never a duplicated placeholder');
       await expect(page.locator('.barter-hero-carousel__slide .barter-hero-carousel__cta')).toHaveCount(4);
-      await expect(page.locator('.home-category-tile .premium-category-art')).toHaveCount(11);
+      await expect(page.locator('.home-category-tile .premium-category-art')).toHaveCount(6);
+      await expect(page.locator('.home-category-tile .category-art-light')).toHaveCount(5);
+      await expect(page.locator('.home-category-tile .category-art-dark')).toHaveCount(5);
+      const categoryCenters = await page.locator('.home-category-tile').evaluateAll(tiles => tiles.slice(0, 10).map(el => {
+        const tile = el.getBoundingClientRect();
+        const art = el.querySelector('.home-category-visual').getBoundingClientRect();
+        return { offset: Math.abs((tile.left + tile.width / 2) - (art.left + art.width / 2)),
+          overflow: art.width > tile.width + 1, size: art.width };
+      }));
+      assert(categoryCenters.every(x => x.offset < 1.5 && !x.overflow && x.size >= 48),
+        'round category artwork must be centered and fit every column: ' + JSON.stringify(categoryCenters));
       const fades = await page.locator('.barter-hero-carousel__content').evaluateAll(els =>
         els.map(el => getComputedStyle(el, '::before').backgroundImage));
       assert(fades.every(fade => fade.includes('linear-gradient')),
