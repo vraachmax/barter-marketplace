@@ -523,15 +523,18 @@ async function renderHome(sp: HomeSearchParams) {
               data-mobile-secondary="false"
               data-reference-bubble="true"
             >
-              <span className="flex size-16 shrink-0 items-center justify-center" aria-hidden="true">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  className="premium-category-art"
-                  src={'/visual-refresh/premium/categories/' + categoryArt(cat) + '.webp'}
-                  width={288}
-                  height={288}
-                  alt=""
-                />
+              <span className="home-category-visual" aria-hidden="true">
+                {(['electronics', 'auto', 'realty', 'clothes', 'all'].includes(cat.slug)) ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="category-art-light" src={'/visual-refresh/bubbles/' + (cat.slug === 'all' ? 'hobby' : cat.slug) + '-light.jpg'} width={288} height={288} alt="" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img className="category-art-dark" src={'/visual-refresh/bubbles/' + (cat.slug === 'all' ? 'hobby' : cat.slug) + '-dark.jpg'} width={288} height={288} alt="" />
+                  </>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img className="premium-category-art" src={'/visual-refresh/premium/categories/' + categoryArt(cat) + '.webp'} width={288} height={288} alt="" />
+                )}
               </span>
               <span className="category-title">{cat.name}</span>
             </Link>
