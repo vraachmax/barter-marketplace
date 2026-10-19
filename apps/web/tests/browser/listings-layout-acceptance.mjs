@@ -88,7 +88,15 @@ const conditionOptions = [{ fieldKey: 'condition', value: 'used_good', label: '�
 const autoCategory = { id: 'fixture-auto', title: 'Авто', slug: 'auto', parentId: null };
 const realtyCategory = { id: 'fixture-realty', title: 'Недвижимость', slug: 'realty', parentId: null };
 const clothesCategory = { id: 'fixture-clothes', title: 'Одежда', slug: 'clothes', parentId: null };
-const referenceCategories = [category, autoCategory, realtyCategory, clothesCategory];
+const referenceCategories = [
+  category, autoCategory, realtyCategory, clothesCategory,
+  { id: 'fixture-hobby', title: 'Хобби', slug: 'hobby', parentId: null },
+  { id: 'fixture-services', title: 'Услуги', slug: 'services', parentId: null },
+  { id: 'fixture-home', title: 'Для дома', slug: 'home', parentId: null },
+  { id: 'fixture-kids', title: 'Детские товары', slug: 'kids', parentId: null },
+  { id: 'fixture-special', title: 'Спецтехника', slug: 'special_equipment', parentId: null },
+  { id: 'fixture-parts', title: 'Запчасти', slug: 'parts', parentId: null },
+];
 const autoSchema = { version: 2, optionsQueryVersion: 1, fields: [
   { key: 'auto_make', label: 'Марка', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: null },
   { key: 'auto_model', label: 'Модель', sectionId: 'auto_main', sectionTitle: 'Автомобиль', fieldType: 'select', parentKey: 'auto_make' },
@@ -1022,14 +1030,16 @@ async function captureReferenceViewport(theme) {
       await installFixture(context, state, theme);
       const page = await context.newPage();
       await page.goto(baseURL + '/?mode=both&sort=expensive', { waitUntil: 'domcontentloaded' });
-      await expect(page.locator('.home-category-tile:visible')).toHaveCount(5);
+      await expect(page.locator('.home-category-tile')).toHaveCount(11);
+      await expect(page.getByRole('link', { name: 'Спецтехника', exact: true })).toHaveCount(1);
+      await expect(page.getByRole('link', { name: 'Услуги', exact: true })).toHaveCount(1);
       await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
       await expect(page.locator('.barter-hero-carousel:visible')).toHaveCount(1);
       const bannerAsset = await page.evaluate(async () => {
-        const response = await fetch('/visual-refresh/hero-visuals.webp');
+        const response = await fetch('/visual-refresh/placeholders/laptops.webp');
         return { ok: response.ok, type: response.headers.get('content-type'), bytes: (await response.blob()).size };
       });
-      assert(bannerAsset.ok && /image\/webp/.test(bannerAsset.type ?? '') && bannerAsset.bytes > 7000,
+      assert(bannerAsset.ok && /image\/webp/.test(bannerAsset.type ?? '') && bannerAsset.bytes > 100000,
         'all photo-based banner slides must load their optimized artwork');
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => window.scrollTo(0, 0));
@@ -1070,6 +1080,13 @@ async function captureReferenceViewport(theme) {
       await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveAttribute('id', 'barter-slide-exchange');
       await page.screenshot({ path: join(output, 'hero-exchange-393x850-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 3: Продажа и обмен вместе/ }).click();
+      const heroHeadline = await page.locator('.barter-hero-carousel__slide[data-active="true"] h2')
+        .evaluate(el => getComputedStyle(el).color);
+      assert.equal(heroHeadline, 'rgb(255, 255, 255)', 'slide headline must be white over dark imagery');
+      const dots = await page.locator('.barter-hero-carousel__dot').evaluateAll(els =>
+        els.map(el => ({ size: Math.round(el.getBoundingClientRect().width), color: getComputedStyle(el).backgroundColor })));
+      assert(dots.every(dot => dot.size >= 8 && /255, 90, 10/.test(dot.color)),
+        'all carousel indicators use rounded orange 8px+ dots');
       await page.screenshot({ path: join(output, 'hero-one-listing-393x850-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 4: Договоритесь в сообщениях/ }).click();
       await page.screenshot({ path: join(output, 'hero-messages-393x850-' + theme + '.png') });
