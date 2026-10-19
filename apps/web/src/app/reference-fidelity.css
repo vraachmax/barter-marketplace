@@ -383,7 +383,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   }
   .messages-screen .thread-header,
   .messages-screen[data-thread-open='true'] .thread-header {
-    min-height:52px; height:52px; padding:0 9px 0 5px;
+    min-height:61px; height:61px; padding:8px 9px 0 5px;
     gap:9px; border:0; background:var(--bg-page);
   }
   .messages-screen .thread-header > button[aria-label='Назад к списку'] {
@@ -420,7 +420,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .messages-screen .thread-listing-preview strong { font-weight:700; }
 
   .messages-screen[data-thread-open='true'] [data-thread-scroll] {
-    padding:9px 16px 4px; background:var(--bg-page);
+    padding:7px 16px 4px; background:var(--bg-page);
     overscroll-behavior-y:contain;
   }
   .messages-screen[data-thread-open='true'] .messages-bubbles { gap:7px; }
@@ -428,7 +428,7 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .messages-screen .message-bubble,
   .messages-screen[data-thread-open='true'] .message-bubble {
     max-width:100%; border:0; box-shadow:none;
-    padding:11px 15px 7px; border-radius:19px;
+    position:relative; padding:11px 15px 8px; border-radius:19px;
     font-size:12.8px; line-height:18px; overflow-wrap:anywhere;
   }
   .messages-screen .message-bubble[data-direction='incoming'] {
@@ -444,8 +444,12 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     background:#223657; color:#f6f7fa;
   }
   .messages-screen .message-bubble .leading-relaxed { line-height:18px; }
+  .messages-screen .message-bubble .whitespace-pre-wrap::after {
+    content:""; display:inline-block; width:50px; height:0;
+  }
   .messages-screen .message-bubble [data-message-meta] {
-    margin-top:5px; gap:4px; line-height:12px; font-size:10px;
+    position:absolute; right:12px; bottom:5px;
+    margin:0; gap:4px; line-height:12px; font-size:10px;
   }
   .messages-screen .message-bubble [data-message-meta] svg {
     width:17px; height:17px; color:#2f7cf6; stroke-width:2.2;
