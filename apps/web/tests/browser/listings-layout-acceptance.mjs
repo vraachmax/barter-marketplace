@@ -961,12 +961,14 @@ async function scenario(browserType, width, theme) {
     await page.getByRole('button', { name: 'Повторить', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Активные объявления', exact: true })).toBeVisible();
     if (width === 390 || width === 440) {
-      const missingPhoto = page.locator('.listing-photo-placeholder').first();
+      await visit('/listing/fixture-needs');
+      const missingPhoto = page.locator('.listing-detail-media .listing-photo-placeholder').first();
       await expect(missingPhoto).toBeVisible();
       await expect(missingPhoto).toHaveAttribute('aria-label', /Нет фото товара/);
       await expect(missingPhoto.locator('svg')).toHaveCount(1);
       assert.equal((await missingPhoto.innerText()).trim(), '',
-        'no-photo tiles must not show clipped caption text');
+        'no-photo detail must not show clipped caption text');
+      await visit('/listings');
     }
     if (width === 360 || width === 1280) {
       await visit('/new?tradeMode=barter');
