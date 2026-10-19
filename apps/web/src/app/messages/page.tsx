@@ -65,11 +65,6 @@ const MODE_COLOR: Record<'barter' | 'market', string> = {
   market: '#8b8b98', // Sale-only is neutral; exchange keeps the orange accent.
 };
 
-const MODE_LABEL: Record<'barter' | 'market', string> = {
-  barter: 'Обмен',
-  market: 'Продажа',
-};
-
 function formatListTime(iso: string | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
