@@ -119,7 +119,7 @@ const api = createServer((req, res) => {
   else if (req.method === 'GET' && url.pathname === '/categories/fixture-category/attribute-schema') data = categorySchema;
   // A read already dispatched during page teardown can reach the isolated server.
   else if (req.method === 'POST' && url.pathname === '/analytics/events') data = { ok: true };
-  else if (req.method === 'GET' && /^\/reviews\/listing\/fixture-(detail|visual-phone|visual-laptop)\/eligibility$/.test(url.pathname)) data = { canReview: false, reason: 'no_chat' };
+  else if (req.method === 'GET' && /^\/reviews\/listing\/fixture-(needs|detail|visual-phone|visual-laptop)\/eligibility$/.test(url.pathname)) data = { canReview: false, reason: 'no_chat' };
   else if (req.method === 'GET' && /^\/presence\/users\/fixture-(peer|seller)$/.test(url.pathname)) data = { online: false, isOnline: false, lastSeenAt: null };
   else if (req.method === 'GET' && /^\/users\/fixture-(peer|seller)\/profile$/.test(url.pathname)) data = { user: { id: url.pathname.split('/')[2], name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] };
   else if (req.method === 'GET' && url.pathname === '/chats') data = [];
@@ -233,7 +233,7 @@ async function installFixture(context, state, theme) {
     // The detail acceptance opens genuine analytics, presence and review widgets.
     // Only explicit fixture entities are permitted here; unknown calls still fail.
     if (method === 'POST' && path === '/analytics/events') return json({ ok: true }, 201);
-    if (method === 'GET' && /^\/reviews\/listing\/fixture-(detail|visual-phone|visual-laptop)\/eligibility$/.test(path)) return json({ canReview: false, reason: 'no_chat' });
+    if (method === 'GET' && /^\/reviews\/listing\/fixture-(needs|detail|visual-phone|visual-laptop)\/eligibility$/.test(path)) return json({ canReview: false, reason: 'no_chat' });
     if (method === 'GET' && /^\/presence\/users\/fixture-(peer|seller)$/.test(path)) return json({ online: false, isOnline: false, lastSeenAt: null });
     if (method === 'GET' && /^\/users\/fixture-(peer|seller)\/profile$/.test(path)) return json({ user: { id: path.split('/')[2], name: 'Продавец', avatarUrl: null, about: null, companyName: null, companyInfo: null }, rating: { avg: null, count: 0 }, reviews: [], activeListings: [] });
     if (method !== 'GET') {
