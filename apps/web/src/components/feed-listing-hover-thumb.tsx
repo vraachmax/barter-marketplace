@@ -52,7 +52,7 @@ export default function FeedListingHoverThumb({
   const rafRef = useRef<number | null>(null);
   const pendingXRef = useRef<number | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const suppressClick = useRef(false);
+  const suppressClickUntil = useRef(0);
   const touching = useRef(false);
   const [holding, setHolding] = useState(false);
 
@@ -97,7 +97,7 @@ export default function FeedListingHoverThumb({
   );
 
   const onMouseLeave = useCallback(() => {
-    setHoverIdx(0);
+    if (!touching.current) setHoverIdx(0);
   }, []);
 
   useEffect(() => {
@@ -109,21 +109,27 @@ export default function FeedListingHoverThumb({
   useEffect(() => {
     const el = wrapRef.current;
     if (!el || n < 2) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    let holdTimer: ReturnType<typeof setTimeout> | undefined;
     let cycle: ReturnType<typeof setInterval> | undefined;
-    let startX = 0, startY = 0, active = false;
-    const stopTimers = () => { clearTimeout(timer); clearInterval(cycle); };
-    const finish = () => {
-      stopTimers(); active = false; setHolding(false); setHoverIdx(0);
-      // Ignore synthetic mouse hover following a touch; the next mouse pointer
-      // explicitly restores desktop preview below.
-    };
+    let startX = 0;
+    let startY = 0;
+    let swiping = false;
+    let holdingNow = false;
+    const clearTimers = () => { clearTimeout(holdTimer); clearInterval(cycle); };
+    const finish = () => { clearTimers(); holdingNow = false; swiping = false; setHolding(false); };
+
     const start = (event: TouchEvent) => {
-      finish(); touching.current = true; suppressClick.current = false;
+      clearTimers();
+      holdingNow = false; swiping = false;
+      touching.current = true;
       if (event.touches.length !== 1) return;
-      startX = event.touches[0].clientX; startY = event.touches[0].clientY;
-      timer = setTimeout(() => {
-        active = true; suppressClick.current = true; setHolding(true);
+      startX = event.touches[0].clientX;
+      startY = event.touches[0].clientY;
+      holdTimer = setTimeout(() => {
+        holdingNow = true;
+        suppressClickUntil.current = Date.now() + 650;
+        setHolding(true);
         setHoverIdx(index => (index + 1) % n);
         cycle = setInterval(() => setHoverIdx(index => (index + 1) % n), 850);
       }, 320);
@@ -131,26 +137,51 @@ export default function FeedListingHoverThumb({
     const move = (event: TouchEvent) => {
       if (event.touches.length !== 1) { finish(); return; }
       const touch = event.touches[0];
-      if (!active) {
-        if (Math.hypot(touch.clientX - startX, touch.clientY - startY) > 10) stopTimers();
-        return; // A normal swipe scrolls the feed.
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      if (holdingNow) {
+        if (event.cancelable) event.preventDefault();
+        if (Math.abs(dx) > 9) {
+          clearInterval(cycle);
+          applyClientX(touch.clientX);
+        }
+        return;
       }
-      if (event.cancelable) event.preventDefault();
-      if (Math.abs(touch.clientX - startX) > 10) {
-        clearInterval(cycle);
-        applyClientX(touch.clientX);
+      if (swiping) {
+        if (event.cancelable) event.preventDefault();
+        return;
+      }
+      if (Math.abs(dx) > 18 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+        clearTimers();
+        swiping = true;
+        suppressClickUntil.current = Date.now() + 650;
+        if (event.cancelable) event.preventDefault();
+      } else if (Math.abs(dy) > 10) {
+        // Vertical motion belongs to the feed scroll, never intercept it.
+        clearTimers();
       }
     };
+    const endTouch = (event: TouchEvent) => {
+      if (swiping) {
+        const dx = (event.changedTouches[0]?.clientX ?? startX) - startX;
+        if (Math.abs(dx) > 28) {
+          setHoverIdx(index => (index + (dx < 0 ? 1 : n - 1)) % n);
+        }
+      }
+      // Retain the selected image after a swipe or hold, like marketplace previews.
+      finish();
+    };
+    const cancelTouch = () => finish();
     el.addEventListener('touchstart', start, { passive: true });
     el.addEventListener('touchmove', move, { passive: false });
-    el.addEventListener('touchend', finish);
-    el.addEventListener('touchcancel', finish);
+    el.addEventListener('touchend', endTouch);
+    el.addEventListener('touchcancel', cancelTouch);
     return () => {
-      stopTimers();
+      clearTimers();
       el.removeEventListener('touchstart', start);
       el.removeEventListener('touchmove', move);
-      el.removeEventListener('touchend', finish);
-      el.removeEventListener('touchcancel', finish);
+      el.removeEventListener('touchend', endTouch);
+      el.removeEventListener('touchcancel', cancelTouch);
     };
   }, [n, applyClientX]);
 
@@ -164,7 +195,7 @@ export default function FeedListingHoverThumb({
   }
 
   const openProps = {
-    role: 'link', tabIndex: 0, 'aria-label': title,
+    role: 'link', tabIndex: 0, 'aria-label': n > 1 ? `${title}, фото ${hoverIdx + 1} из ${n}` : title,
     onClick: onOpen,
     onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); onOpen(); } },
   };
@@ -175,11 +206,12 @@ export default function FeedListingHoverThumb({
       ref={wrapRef}
       className={`${thumbClassName}${n > 1 ? ' photo-hold-preview' : ''}`}
       data-photo-index={hoverIdx}
+      data-photo-count={n}
       data-photo-holding={holding}
       style={thumbStyle}
       onPointerEnter={e => { if (e.pointerType === 'mouse') touching.current = false; }}
       onClickCapture={e => {
-        if (suppressClick.current) { e.preventDefault(); e.stopPropagation(); suppressClick.current = false; }
+        if (Date.now() < suppressClickUntil.current) { e.preventDefault(); e.stopPropagation(); }
       }}
       onContextMenu={e => { if (n > 1 && touching.current) e.preventDefault(); }}
       onDragStart={e => e.preventDefault()}
@@ -188,13 +220,13 @@ export default function FeedListingHoverThumb({
       onMouseLeave={onMouseLeave}
     >
       {list.map((photo, index) => <div key={photo.url} className="absolute inset-0 pointer-events-none" style={{ visibility: index === hoverIdx ? 'visible' : 'hidden' }} aria-hidden={index !== hoverIdx}>
-        <ListingPhoto src={resolveAssetUrl(photo.url, apiBase)} alt={title} categoryTitle={categoryTitle} categorySlug={categorySlug} className={imageClassName} style={imageStyle} fallback={placeholder} eager={n > 1} />
+        <ListingPhoto src={resolveAssetUrl(photo.url, apiBase)} alt={title} categoryTitle={categoryTitle} categorySlug={categorySlug} className={imageClassName} style={imageStyle} fallback={placeholder} eager={index === hoverIdx} />
       </div>)}
       {badges}
       {n > 1 ? (
         <>
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-1.5 z-[3] flex justify-center gap-0.5 px-2"
+            className="pointer-events-none absolute bottom-2.5 left-2 right-11 z-[3] flex justify-center gap-0.5"
             aria-hidden
           >
             {list.map((_, i) => (
