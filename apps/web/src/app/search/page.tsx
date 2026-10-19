@@ -318,11 +318,11 @@ function SearchContent() {
 
         {/* Filter chip row — показываем только если есть результаты или фильтры */}
         {hasResults ? (
-          <div className="mx-auto flex max-w-3xl items-center gap-2 overflow-x-auto px-4 pb-3 md:px-6 scrollbar-none">
+          <div className="search-filter-rail mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-x-auto overscroll-x-contain whitespace-nowrap px-4 pb-2 md:px-6 scrollbar-none">
             <button
               type="button"
               onClick={() => setFiltersOpen(true)}
-              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-muted"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-semibold leading-none text-foreground transition hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               style={
                 activeFiltersCount > 0
                   ? {
@@ -920,25 +920,23 @@ function FiltersSheet(props: {
  *  HELPERS
  * ========================================================================== */
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  // Make the whole compact pill removable instead of nesting a 44px icon
+  // button inside it, which used to inflate every chip to 44px tall.
   return (
-    <span
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1"
+    <button
+      type="button"
+      onClick={onRemove}
+      aria-label={`Убрать фильтр: ${label}`}
+      className="inline-flex h-9 max-w-[70vw] shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold leading-none ring-1 transition hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:max-w-[260px]"
       style={{
         backgroundColor: 'var(--mode-accent-soft)',
         color: 'var(--mode-accent)',
         ['--tw-ring-color' as string]: 'var(--mode-accent-ring)',
       }}
     >
-      {label}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="grid size-11 place-items-center rounded-full hover:bg-background"
-        aria-label={`Убрать фильтр: ${label}`}
-      >
-        <X size={10} strokeWidth={2.4} className="shrink-0" aria-hidden />
-      </button>
-    </span>
+      <span className="min-w-0 truncate">{label}</span>
+      <X size={12} strokeWidth={2.2} className="shrink-0" aria-hidden />
+    </button>
   );
 }
 

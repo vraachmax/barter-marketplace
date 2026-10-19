@@ -570,7 +570,7 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
     position:absolute;
     z-index:12;
     left:50%;
-    bottom:0;
+    bottom:30px;
     display:flex;
     max-width:calc(100% - 128px);
     transform:translateX(-50%);
@@ -581,7 +581,7 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
   .listing-gallery-mobile-dots::-webkit-scrollbar{display:none;}
   .listing-gallery-mobile-dots button {
     display:grid;
-    width:44px;
+    width:22px;
     height:44px;
     flex:none;
     place-items:center;

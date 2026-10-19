@@ -880,6 +880,19 @@ async function scenario(browserType, width, theme) {
     checks.push('catalog and search centered, selected pill aligned, sort preserved');
     if (width === 360 || width === 1280) {
       await visit('/search?categoryId=fixture-category&mode=market');
+      const chip = page.getByRole('button', { name: 'Убрать фильтр: Электроника' });
+      await expect(chip).toBeVisible();
+      if (width < 768) {
+        const filterTrigger = await page.getByRole('button', { name: /^Фильтры/ }).boundingBox();
+        const chipBox = await chip.boundingBox();
+        const railBox = await page.locator('.search-filter-rail').boundingBox();
+        const modeBox = await page.locator('.search-screen .catalog-mode-switch').boundingBox();
+        assert(filterTrigger && chipBox && railBox && modeBox &&
+          filterTrigger.height <= 38 && chipBox.height <= 38,
+          'filter chips remain compact without a 44px nested remove button');
+        assert(modeBox.y >= railBox.y + railBox.height + 8,
+          'search filters and catalog mode must be visually separated');
+      }
       await page.getByRole('button', { name: /^Фильтры/ }).click();
       await page.getByRole('dialog').getByLabel('Состояние').selectOption('used_good');
       await page.getByRole('button', { name: 'Показать результаты' }).click();
@@ -932,6 +945,13 @@ async function scenario(browserType, width, theme) {
         assert(shareBox && shareBox.width <= 45 && shareBox.x >= 0 && shareBox.x + shareBox.width <= width,
           'share must remain inside a round 40px button, not overlap the photo');
         await expect(page.locator('.listing-detail-head-actions .listing-feed-favorite')).toBeVisible();
+        const dot0 = await galleryDots.nth(0).boundingBox();
+        const dot1 = await galleryDots.nth(1).boundingBox();
+        const dotRail = await page.locator('.listing-gallery-mobile-dots').boundingBox();
+        assert(dot0 && dot1 && dotRail && dot1.x - dot0.x <= 24,
+          'photo indicators must be close together, not 44px apart');
+        assert(dotRail.y + dotRail.height / 2 < titleBox.y,
+          'photo indicators must sit above the overlapping listing sheet');
         await galleryDots.nth(1).click();
         await expect(galleryDots.nth(1)).toHaveAttribute('aria-pressed', 'true');
         const footer = page.locator('.listing-detail .listing-primary-actions');
