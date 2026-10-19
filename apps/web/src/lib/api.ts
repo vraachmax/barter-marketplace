@@ -108,6 +108,10 @@ export type ChatSummary = {
     priceRub: number | null;
     city: string;
     ownerId?: string;
+    saleEnabled?: boolean;
+    barterEnabled?: boolean;
+    isBarter?: boolean;
+    category?: { title: string } | null;
     previewImageUrl?: string | null;
   } | null;
   peer: {
@@ -115,6 +119,7 @@ export type ChatSummary = {
     name: string | null;
     email: string | null;
     phone: string | null;
+    avatarUrl?: string | null;
   } | null;
   /** Роль текущего пользователя в чате относительно объявления */
   myRole?: 'buyer' | 'seller' | 'neutral';
