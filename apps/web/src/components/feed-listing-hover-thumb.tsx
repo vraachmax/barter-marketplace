@@ -230,15 +230,15 @@ export default function FeedListingHoverThumb({
       {badges}
       {n > 1 ? (
         <div
-          className="pointer-events-none absolute bottom-[9px] inset-x-0 z-[3] flex items-center justify-center gap-[5px]"
+          className="pointer-events-none absolute bottom-[8px] inset-x-0 z-[3] flex items-center justify-center gap-[4px]"
           data-photo-pagination="dots"
           aria-hidden
         >
           {visibleDots.map(i => (
             <span key={i}
               data-active={i === hoverIdx ? 'true' : 'false'}
-              className={`h-[6px] w-[6px] shrink-0 rounded-full border border-white/70 shadow-[0_1px_3px_rgba(0,0,0,.4)] transition-[background,transform] duration-150 ${
-                i === hoverIdx ? 'scale-[1.16] bg-[#ff5a0a] !border-[#ff5a0a]' : 'bg-white/60'
+              className={`h-[9px] w-[9px] shrink-0 rounded-full border-0 shadow-[0_1px_3px_rgba(0,0,0,.2)] transition-[background,transform] duration-150 ${
+                i === hoverIdx ? 'scale-[1.08] bg-[#ff5a0a]' : 'bg-[#ff5a0a]/45'
               }`}
             />
           ))}
