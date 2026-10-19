@@ -1018,11 +1018,11 @@ async function scenario(browserType, width, theme) {
 
 // Pixel-geometry evidence for the exact supplied Claude reference viewport.
 // These isolated fixture captures are NOT release screenshots or real account data.
-async function captureReferenceViewport(theme) {
+async function captureReferenceViewport(theme, width = 393, height = 850) {
   const browser = await chromium.launch();
   try {
     const context = await browser.newContext({
-      viewport: { width: 393, height: 850 }, isMobile: true, hasTouch: true,
+      viewport: { width, height }, isMobile: true, hasTouch: true,
       deviceScaleFactor: 1, colorScheme: theme,
     });
     try {
@@ -1035,12 +1035,31 @@ async function captureReferenceViewport(theme) {
       await expect(page.getByRole('link', { name: 'Услуги', exact: true })).toHaveCount(1);
       await expect(page.locator('.refresh-listing-card')).toHaveCount(2);
       await expect(page.locator('.barter-hero-carousel:visible')).toHaveCount(1);
-      const bannerAsset = await page.evaluate(async () => {
-        const response = await fetch('/visual-refresh/placeholders/laptops.webp');
-        return { ok: response.ok, type: response.headers.get('content-type'), bytes: (await response.blob()).size };
-      });
-      assert(bannerAsset.ok && /image\/webp/.test(bannerAsset.type ?? '') && bannerAsset.bytes > 100000,
-        'all photo-based banner slides must load their optimized artwork');
+      const heroFiles = [
+        'hero-intro.webp', 'hero-exchange.webp', 'hero-one-listing.webp', 'hero-messages.webp',
+      ];
+      const iconFiles = [
+        'electronics','auto','realty','clothes','hobby','special_equipment','services','parts',
+        'furniture','kids','home','sports','beauty','pets','photo','all',
+      ].map(name => 'categories/' + name + '.webp');
+      const premiumAssets = await page.evaluate(async paths => Promise.all(paths.map(async path => {
+        const response = await fetch('/visual-refresh/premium/' + path);
+        return { path, ok: response.ok, type: response.headers.get('content-type'), bytes: (await response.blob()).size };
+      })), [...heroFiles, ...iconFiles]);
+      assert(premiumAssets.length === 20 && premiumAssets.every(asset =>
+        asset.ok && /image\/webp/.test(asset.type ?? '') && asset.bytes > 5000),
+        'all four distinct hero WebP and sixteen category files must be served, nonempty and of WebP type');
+      const heroImages = await page.locator('.barter-hero-carousel__slide .barter-hero-carousel__art')
+        .evaluateAll(els => els.map(el => el.getAttribute('src')));
+      assert.deepEqual(heroImages,
+        heroFiles.map(file => '/visual-refresh/premium/' + file),
+        'each slide must use its corresponding image, never a duplicated placeholder');
+      await expect(page.locator('.barter-hero-carousel__slide .barter-hero-carousel__cta')).toHaveCount(4);
+      await expect(page.locator('.home-category-tile .premium-category-art')).toHaveCount(11);
+      const fades = await page.locator('.barter-hero-carousel__content').evaluateAll(els =>
+        els.map(el => getComputedStyle(el, '::before').backgroundImage));
+      assert(fades.every(fade => fade.includes('linear-gradient')),
+        'all four premium slides must have a smooth gradient between copy and imagery');
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => window.scrollTo(0, 0));
       const geometricSelectors = {
@@ -1074,11 +1093,11 @@ async function captureReferenceViewport(theme) {
         }
         return result;
       }, geometricSelectors);
-      await writeFile(join(output, 'reference-393x850-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
-      await page.screenshot({ path: join(output, 'reference-393x850-' + theme + '.png') });
+      await writeFile(join(output, 'reference-' + width + 'x' + height + '-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
+      await page.screenshot({ path: join(output, 'reference-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
       await expect(page.locator('.barter-hero-carousel__slide[data-active="true"]')).toHaveAttribute('id', 'barter-slide-exchange');
-      await page.screenshot({ path: join(output, 'hero-exchange-393x850-' + theme + '.png') });
+      await page.screenshot({ path: join(output, 'hero-exchange-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 3: Продажа и обмен вместе/ }).click();
       const heroHeadline = await page.locator('.barter-hero-carousel__slide[data-active="true"] h2')
         .evaluate(el => getComputedStyle(el).color);
@@ -1087,16 +1106,16 @@ async function captureReferenceViewport(theme) {
         els.map(el => ({ size: Math.round(el.getBoundingClientRect().width), color: getComputedStyle(el).backgroundColor })));
       assert(dots.every(dot => dot.size >= 8 && /255, 90, 10/.test(dot.color)),
         'all carousel indicators use rounded orange 8px+ dots');
-      await page.screenshot({ path: join(output, 'hero-one-listing-393x850-' + theme + '.png') });
+      await page.screenshot({ path: join(output, 'hero-one-listing-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 4: Договоритесь в сообщениях/ }).click();
-      await page.screenshot({ path: join(output, 'hero-messages-393x850-' + theme + '.png') });
+      await page.screenshot({ path: join(output, 'hero-messages-' + width + 'x' + height + '-' + theme + '.png') });
       await page.getByRole('button', { name: /Слайд 2: Предложения обмена/ }).click();
       await page.locator('.barter-hero-carousel__slide[data-active="true"] a').click();
       await expect(page).toHaveURL(/\/about\/features#exchange$/);
       await expect(page.getByRole('heading', { name: /Обменивайтесь без ограничений/ })).toBeVisible();
       const featuresHeadlineColor = await page.locator('main header h1').evaluate(el => getComputedStyle(el).color);
       assert.equal(featuresHeadlineColor, 'rgb(255, 255, 255)', 'features headline must remain readable over dark art');
-      await page.screenshot({ path: join(output, 'features-393x850-' + theme + '.png') });
+      await page.screenshot({ path: join(output, 'features-' + width + 'x' + height + '-' + theme + '.png') });
       await page.goto(baseURL + '/listing/fixture-visual-phone', { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('heading', { name: 'iPhone 15 Pro' })).toBeVisible();
       const detailSelectors = {
@@ -1125,8 +1144,8 @@ async function captureReferenceViewport(theme) {
         }
         return output;
       }, detailSelectors);
-      await writeFile(join(output, 'detail-393x850-' + theme + '-geometry.json'), JSON.stringify(detailGeometry, null, 2));
-      await page.screenshot({ path: join(output, 'detail-393x850-' + theme + '.png') });
+      await writeFile(join(output, 'detail-' + width + 'x' + height + '-' + theme + '-geometry.json'), JSON.stringify(detailGeometry, null, 2));
+      await page.screenshot({ path: join(output, 'detail-' + width + 'x' + height + '-' + theme + '.png') });
       assert.deepEqual(state.unexpected, [], 'no unhandled reference viewport fixture requests');
     } finally { await context.close(); }
   } finally { await browser.close(); }
@@ -1138,7 +1157,10 @@ try {
     await scenario(chromium, 390, theme);
     for (const width of [360, 440, 768, 820, 1280]) await scenario(width < 768 ? webkit : chromium, width, theme);
   }
-  for (const theme of ['light', 'dark']) await captureReferenceViewport(theme);
+  for (const theme of ['light', 'dark']) {
+    await captureReferenceViewport(theme, 393, 850);
+    await captureReferenceViewport(theme, 430, 932);
+  }
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage({ viewport: { width: 1200, height: 720 }, deviceScaleFactor: 1 });
