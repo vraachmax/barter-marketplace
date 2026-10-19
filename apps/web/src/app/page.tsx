@@ -13,6 +13,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { CatalogControls } from '@/components/catalog-controls';
 import { BarterHomeLogo } from '@/components/barter-home-logo';
+import QrScannerButton from '@/components/qr-scanner-button';
 import { CatalogModeToggle } from '@/components/catalog-mode-toggle';
 import { assertCatalogMode, catalogErrorMessage, parseCatalogMode, CATALOG_MODE_COOKIE, type CatalogMode } from '@/lib/catalog-mode';
 import { ChevronRight, Search, Sparkles } from 'lucide-react';
@@ -415,8 +416,8 @@ async function renderHome(sp: HomeSearchParams) {
       <header className="catalog-mobile-header sticky top-0 z-40 px-4 pb-3 md:hidden">
         <div className="mb-3 flex min-h-11 items-center justify-between gap-2">
           <BarterHomeLogo />
-          <div className="catalog-home-city">
-            <CatalogControls categories={categories} cities={russianCities} values={preservedListQuery} categoryId={urlCategoryId} trigger="city" />
+          <div className="catalog-home-qr">
+            <QrScannerButton />
           </div>
         </div>
         <div className="catalog-home-search-group flex h-[46px] min-w-0 items-center overflow-visible rounded-full bg-muted">
