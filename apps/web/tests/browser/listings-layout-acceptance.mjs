@@ -755,20 +755,6 @@ async function scenario(browserType, width, theme) {
       await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
       checks.push('opaque logo header, safe area plus 8px, and unobstructed branding');
     }
-    if (width === 390) {
-      const scannerTrigger = page.getByRole('button', { name: 'Сканировать QR-код' });
-      await expect(scannerTrigger).toBeVisible();
-      await scannerTrigger.click();
-      const scanner = page.getByRole('dialog', { name: 'Сканер QR-кода Barter' });
-      await expect(scanner).toBeVisible();
-      await expect(scanner.getByLabel('Выбрать фото QR-кода')).toHaveCount(1);
-      await shot(page, key + '-qr-scanner');
-      await scanner.getByRole('textbox', { name: 'Ссылка на объявление' }).fill('fixture-detail');
-      await scanner.getByRole('button', { name: 'Открыть' }).click();
-      await expect(page).toHaveURL(/\/listing\/fixture-detail$/);
-      await visit('/?mode=market&sort=new');
-      checks.push('real QR dialog with camera, image import and safe manual listing navigation');
-    }
     const markBox = await brandImages[0].boundingBox();
     const wordBox = await brandImages[1].boundingBox();
     assert(markBox.x + markBox.width <= wordBox.x, 'wordmark must not overlap the mark');
@@ -813,6 +799,20 @@ async function scenario(browserType, width, theme) {
     }
     if (key.includes('440')) console.log('BARTER_APPLE_ICON_IMAGE ' + appleBytes.toString('base64'));
     checks.push('full mark bounds, alignment, larger Apple/PWA artwork and maskable safe circle');
+    if (width === 390) {
+      const scannerTrigger = page.getByRole('button', { name: 'Сканировать QR-код' });
+      await expect(scannerTrigger).toBeVisible();
+      await scannerTrigger.click();
+      const scanner = page.getByRole('dialog', { name: 'Сканер QR-кода Barter' });
+      await expect(scanner).toBeVisible();
+      await expect(scanner.getByLabel('Выбрать фото QR-кода')).toHaveCount(1);
+      await shot(page, key + '-qr-scanner');
+      await scanner.getByRole('textbox', { name: 'Ссылка на объявление' }).fill('fixture-detail');
+      await scanner.getByRole('button', { name: 'Открыть' }).click();
+      await expect(page).toHaveURL(/\/listing\/fixture-detail$/);
+      await visit('/?mode=market&sort=new');
+      checks.push('real QR dialog with camera, image import and safe manual listing navigation');
+    }
     const toggle = page.getByRole('navigation', { name: 'Режим каталога' });
     for (const mode of ['market', 'barter', 'both']) {
       const label = mode === 'market' ? 'Покупка' : mode === 'barter' ? 'Обмен' : 'Оба';
