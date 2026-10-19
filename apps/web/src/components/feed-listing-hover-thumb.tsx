@@ -49,6 +49,9 @@ export default function FeedListingHoverThumb({
   const list = usablePhotoUrls(images).map((url) => ({ url }));
   const n = list.length;
   const [hoverIdx, setHoverIdx] = useState(0);
+  // Preserve a compact pagination row even when an announcement has many photos.
+  const dotStart = Math.max(0, Math.min(hoverIdx - 3, n - 7));
+  const visibleDots = n <= 7 ? list.map((_, i) => i) : Array.from({ length: 7 }, (_, i) => dotStart + i);
   const rafRef = useRef<number | null>(null);
   const pendingXRef = useRef<number | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -226,22 +229,20 @@ export default function FeedListingHoverThumb({
       </div>)}
       {badges}
       {n > 1 ? (
-        <>
-          <div
-            className="pointer-events-none absolute bottom-2.5 left-2 right-11 z-[3] flex justify-center gap-0.5"
-            aria-hidden
-          >
-            {list.map((_, i) => (
-              <div
-                key={i}
-                className={`h-0.5 min-w-[6px] flex-1 rounded-full transition-colors ${
- i === hoverIdx ? 'bg-card shadow-sm' : 'bg-card/45'
- }`}
-              />
-            ))}
-          </div>
-
-        </>
+        <div
+          className="pointer-events-none absolute bottom-[9px] inset-x-0 z-[3] flex items-center justify-center gap-[5px]"
+          data-photo-pagination="dots"
+          aria-hidden
+        >
+          {visibleDots.map(i => (
+            <span key={i}
+              data-active={i === hoverIdx ? 'true' : 'false'}
+              className={`h-[6px] w-[6px] shrink-0 rounded-full border border-white/70 shadow-[0_1px_3px_rgba(0,0,0,.4)] transition-[background,transform] duration-150 ${
+                i === hoverIdx ? 'scale-[1.16] bg-[#ff5a0a] !border-[#ff5a0a]' : 'bg-white/60'
+              }`}
+            />
+          ))}
+        </div>
       ) : null}
     </div>
   );
