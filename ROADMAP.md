@@ -1,3 +1,7 @@
+## 2026-10-19: premium heroes and category artwork — PR/CI pending
+
+Working branch \`assets/premium-hero-category-handoff-2026-10-19\` now contains 4 different WebP hero images, 16 individual premium category icons, exact manifest and React/CSS wiring with real CTA, fade and orange indicator dots. Tests include both 393×850 and 430×932 light/dark geometry and asset assertions. **Files uploaded to GitHub; branch not merged; no production rollout or visual/iPhone acceptance yet.** Next: PR and green CI, inspect real screenshots and check category filtering, then merge and verify deploy.
+
 ## 2026-10-19: premium assets for hero and category buttons — PENDING
 
 Owner requested upload of four new realistic product banners and 16 themed category icons, plus GitHub handoff for continuation in another chat. The handoff document and deterministic preparation script are committed on branch `assets/premium-hero-category-handoff-2026-10-19`; the optimized binaries remain only in the generated conversation ZIP because direct binary upload was blocked. **Nothing new is deployed.** Next: upload binaries from ZIP to `apps/web/public/visual-refresh/premium`, replace legacy banner artwork/baked CTA with real React UI and fade, map all existing API categories, test contrast/pagination and screenshot-compare at 393/430px.
