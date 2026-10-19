@@ -1468,19 +1468,7 @@ html[data-theme='dark'] .home-category-tile .category-art-dark { display:block !
   body .magic-nav .liquid-nav__items {
     height: 55px;
   }
-  /* Don't leave a black gap if the environment reports an inset only to
-     the fixed shell and not the tab bar (some installed iOS PWA versions). */
-  body .magic-nav::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: env(safe-area-inset-bottom, 0px);
-    background: var(--bg-page);
-    pointer-events: none;
-  }
+  /* The actual nav element paints the whole safe area; no pseudo-layer. */
   .listing-detail .listing-detail-grid {
     display: contents !important;
   }
