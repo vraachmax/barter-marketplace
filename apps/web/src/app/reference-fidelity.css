@@ -471,8 +471,10 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
   .messages-screen .messages-composer label:has(input[type='file']) {
     width:36px; height:36px; background:transparent; color:var(--fg-default);
   }
+  /* 36px reference icon inside a 44px accessible tap target. */
   .messages-screen .messages-composer button[aria-label='Отправить'] {
-    width:36px; height:36px; min-width:36px;
+    width:44px; height:44px; min-width:44px;
+    border-radius:50%;
   }
   html[data-theme='dark'] .messages-screen .thread-listing-preview {
     box-shadow:0 3px 14px rgba(0,0,0,.25);
