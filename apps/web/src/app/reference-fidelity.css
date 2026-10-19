@@ -273,6 +273,15 @@ html[data-theme='dark'] .claude-mobile-hero > .claude-banner-dark { display:bloc
     margin-top:5px;
   }
   .mobile-category-subfilter { height:33px; }
+  /* Category results must not touch the viewport or filter chips. */
+  body:has(.mobile-category-filters) main#feed .page-content-spacing {
+    padding:18px 16px calc(116px + env(safe-area-inset-bottom,0px)) !important;
+  }
+  body:has(.mobile-category-filters) main#feed .listing-grid {
+    column-gap:12px !important;row-gap:16px !important;
+  }
+  body:has(.mobile-category-filters) .home-mode-row { padding-inline:16px; }
+  body:has(.mobile-category-filters) .mobile-category-filters { row-gap:8px; }
   .mobile-category-filter:focus-visible,
   .mobile-category-subfilter:focus-visible {
     outline:2px solid var(--mode-accent);outline-offset:2px;
