@@ -463,6 +463,12 @@ async function scenario(browserType, width, theme) {
     await spacingCheck(page, width);
     const dock = page.getByRole('navigation', { name: 'Основная навигация', exact: true });
     if (width < 768) {
+      await page.evaluate(() => window.dispatchEvent(new Event('barter:pwa-diagnostics')));
+      const debugPanel = page.getByRole('dialog', { name: 'Диагностика PWA' });
+      await expect(debugPanel).toBeVisible();
+      await expect(debugPanel).toContainText('gap shell/nav:');
+      await debugPanel.getByRole('button', { name: 'Закрыть диагностику' }).click();
+      await expect(debugPanel).not.toBeVisible();
       await expect(dock).toBeVisible();
       for (const link of await dock.getByRole('link').all()) {
         const bounds = await contained(link);

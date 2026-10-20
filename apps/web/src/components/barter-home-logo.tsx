@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 import { unlockBarterDash } from '@/lib/barter-dash';
 
 /** Совпадает с брейкпоинтом `md` в Tailwind */
@@ -23,6 +24,20 @@ function clearHomeFilterCookies() {
  */
 export function BarterHomeLogo() {
   const router = useRouter();
+  const debugHold = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openedDiagnostics = useRef(false);
+  function startDebugHold() {
+    if (!matchMedia('(display-mode: standalone)').matches) return;
+    openedDiagnostics.current = false;
+    debugHold.current = setTimeout(() => {
+      openedDiagnostics.current = true;
+      window.dispatchEvent(new Event('barter:pwa-diagnostics'));
+    }, 1200);
+  }
+  function cancelDebugHold() {
+    if (debugHold.current) clearTimeout(debugHold.current);
+    debugHold.current = null;
+  }
 
   function registerDashTap(): boolean {
     const now = Date.now();
@@ -53,6 +68,7 @@ export function BarterHomeLogo() {
 
   function onLogoClick(e: React.MouseEvent<HTMLAnchorElement>) {
     if (typeof window === 'undefined') return;
+    if (openedDiagnostics.current) { openedDiagnostics.current = false; e.preventDefault(); return; }
 
     if (registerDashTap()) {
       e.preventDefault();
@@ -73,6 +89,13 @@ export function BarterHomeLogo() {
     <Link
       href="/"
       onClick={onLogoClick}
+      onTouchStart={startDebugHold}
+      onTouchEnd={cancelDebugHold}
+      onTouchCancel={cancelDebugHold}
+      onTouchMove={cancelDebugHold}
+      onContextMenu={event => {
+        if (matchMedia('(display-mode: standalone)').matches) event.preventDefault();
+      }}
       className="inline-flex min-h-11 w-fit shrink-0 items-center pl-[3px]"
       title="Главная — сбросить фильтры и поиск"
       aria-label="Бартер — на главную"

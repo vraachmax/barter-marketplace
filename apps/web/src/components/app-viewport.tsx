@@ -1,6 +1,7 @@
 'use client';
 import { DesktopNavigation } from './desktop-navigation';
 import { LiquidBottomNav } from './liquid-bottom-nav';
+import { PwaLayoutDiagnostics } from './pwa-layout-diagnostics';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, type ReactNode } from 'react';
 
@@ -20,6 +21,7 @@ export function AppViewport({ children }: { children: ReactNode }) {
       {/* Share the same viewport coordinate system with the scrolling app.
           iOS standalone WebKit can offset body-fixed UI from this shell. */}
       <LiquidBottomNav />
+      <PwaLayoutDiagnostics />
     </div>
   );
 }
