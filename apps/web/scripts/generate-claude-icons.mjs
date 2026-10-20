@@ -19,8 +19,11 @@ await mkdir(outDir, { recursive: true });
 async function icon(name, size, fill, maskable = false) {
   const height = Math.round(size * fill);
   const width = Math.round(height * 96 / 105);
-  const mark = await sharp(source)
-    .resize(width, height, { fit: 'contain' })
+  // The SVG viewBox has asymmetric empty padding. Trim the *actual painted*
+  // pixels before centering; otherwise large PWA icons shift left several px.
+  const cropped = await sharp(source, { density: 384 }).trim().png().toBuffer();
+  const mark = await sharp(cropped)
+    .resize(width, height, { fit: 'contain', background: '#00000000' })
     .png()
     .toBuffer();
   const background = sharp({
