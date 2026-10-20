@@ -161,10 +161,9 @@ export default function AuthPage() {
               placeholder="Телефон или email"
               aria-label="Телефон или email"
             />
-            {identifier ? (
-              <button type="button" className="barter-auth__field-action" aria-label="Очистить поле"
-                onClick={() => setIdentifier('')}><X size={18} strokeWidth={1.8} /></button>
-            ) : null}
+            <button type="button" className="barter-auth__field-action barter-auth__clear"
+              aria-label="Очистить поле" disabled={!identifier}
+              onClick={() => setIdentifier('')}><X size={18} strokeWidth={1.8} /></button>
           </label>
 
           <label className="barter-auth__field">

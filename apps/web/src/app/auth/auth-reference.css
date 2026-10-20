@@ -73,7 +73,7 @@
 }
 .barter-auth__field {
   display: flex; align-items: center; gap: 14px;
-  background: var(--auth-field); border-radius: 20px;
+  background: linear-gradient(110deg, #f1f1f4, #f5f5f7 55%, #f0f0f3); border-radius: 20px;
   width: 100%; height: clamp(55px, 7.1dvh, 66px);
   padding: 0 16px; color: #7d8595;
   border: 1px solid transparent;
@@ -94,6 +94,11 @@
   color: #7f8898; border-radius: 50%; cursor: pointer;
 }
 .barter-auth__field-action:active { background: #e3e4e8; }
+.barter-auth__clear svg {
+  padding: 4px; width: 25px; height: 25px;
+  border-radius: 50%; background: #e3e4e9;
+}
+.barter-auth__clear:disabled { opacity: 1; cursor: default; }
 .barter-auth__forgot-row {
   display: flex; justify-content: flex-end;
   min-height: 25px; align-items: center; margin-top: 0;
@@ -115,7 +120,8 @@
   color: #fff; font-size: clamp(16px, 4.35vw, 19px); font-weight: 750;
   cursor: pointer; box-shadow: 0 9px 25px rgba(255,90,10,.11);
 }
-.barter-auth__submit:disabled { opacity: .62; cursor: not-allowed; box-shadow: none; }
+.barter-auth__submit:disabled { opacity: 1; cursor: not-allowed; }
+.barter-auth__submit:disabled:focus-visible { outline: 2px solid #e84c00; }
 .barter-auth__submit:not(:disabled):active { transform: scale(.992); }
 .barter-auth__alternatives {
   margin-top: clamp(10px, 1.3dvh, 14px);

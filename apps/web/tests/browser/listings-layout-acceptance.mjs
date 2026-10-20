@@ -1068,7 +1068,13 @@ async function scenario(browserType, width, theme) {
     await expect(page.getByRole('navigation', { name: 'Основная навигация' })).toHaveCount(0);
     if (width < 768) {
       const positions = await page.evaluate(() => {
-        const rect = selector => document.querySelector(selector)?.getBoundingClientRect();
+        const rect = selector => {
+          const bounds = document.querySelector(selector)?.getBoundingClientRect();
+          return bounds ? {
+            x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height,
+            top: bounds.top, right: bounds.right, bottom: bounds.bottom, left: bounds.left,
+          } : null;
+        };
         return {
           first: rect('.barter-auth__field'),
           second: rect('.barter-auth__field:nth-child(2)'),
