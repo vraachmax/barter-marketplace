@@ -14,8 +14,9 @@ async function api(path, token, body, method = 'POST') {
 const categories = await api('/categories', null, undefined, 'GET');
 const flat = list => list.flatMap(c => [c, ...flat(c.children ?? [])]);
 const all = flat(Array.isArray(categories) ? categories : categories.items ?? []);
-const phoneCategory = all.find(c => /smartphone|mobile.phone|телефон|смартфон/i.test(c.slug + ' ' + c.title));
-const laptopCategory = all.find(c => /laptop|ноутбук/i.test(c.slug + ' ' + c.title));
+const electronics = all.find(c => c.slug === 'electronics');
+const phoneCategory = all.find(c => /smartphone|mobile.phone|телефон|смартфон/i.test(c.slug + ' ' + c.title)) ?? electronics;
+const laptopCategory = all.find(c => /laptop|ноутбук/i.test(c.slug + ' ' + c.title)) ?? electronics;
 if (!phoneCategory || !laptopCategory) throw new Error('Resolve phone and laptop categories before seeding.');
 const specs = [
  { email: 'exchange-alexander@example.test', name: 'Александр · тестовый аккаунт', title: 'iPhone 15 Pro 256 ГБ · тестовое объявление', categoryId: phoneCategory.id, priceRub: 65000, photo: 'iphone.jpg', source: 'StorresJayrMx, https://unsplash.com/photos/8GR3wQ8pUEE', description: 'Учебный сценарий: iPhone 15 Pro 256 ГБ, натуральный титан, в чехле. В примере комплект с кабелем и коробкой, без ремонта. Интересен обмен на ноутбук, доплату обсудим. Краснодар, район Авроры.' },
