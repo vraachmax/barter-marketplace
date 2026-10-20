@@ -11,8 +11,10 @@ import sharp from 'sharp';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const publicDir = path.join(root, 'public');
 const source = path.join(publicDir, 'brand/bubble-b-v3.svg');
-const outDir = path.join(publicDir, 'brand/barter-pwa-v1');
+const outDir = path.join(publicDir, 'brand/barter-pwa-v2');
+const appDir = path.join(root, 'src/app');
 await mkdir(outDir, { recursive: true });
+await mkdir(appDir, { recursive: true });
 
 // The approved vector's viewBox is 96x105. An opaque white app tile is
 // essential on iOS; the system draws its own rounded-corner mask.
@@ -47,4 +49,9 @@ await Promise.all([
 // iOS Safari also probes the conventional root path when saving a website.
 // Overwrite the old icon there as a fallback, not a second source of truth.
 await copyFile(path.join(outDir, 'apple-touch-icon.png'), path.join(publicDir, 'apple-touch-icon.png'));
+// Next App Router's canonical file-based metadata is more reliable in iOS
+// than a single handwritten metadata.apple link. This file is created before
+// next build/dev scans route metadata and receives an automatic cache-busted
+// /apple-icon link in the HTML head.
+await copyFile(path.join(outDir, 'apple-touch-icon.png'), path.join(appDir, 'apple-icon.png'));
 console.log('Barter iOS and PWA icons generated from approved Bubble B SVG');

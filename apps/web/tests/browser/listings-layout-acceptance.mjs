@@ -846,8 +846,9 @@ async function scenario(browserType, width, theme) {
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
-    assert.equal(appleHref, '/brand/barter-pwa-v1/apple-touch-icon.png');
-    assert((await page.locator('link[rel="manifest"]').getAttribute('href')).includes('barter-pwa-v1'), 'manifest cache key is bumped');
+    assert(appleHref.startsWith('/apple-icon'), 'Next.js canonical /app/apple-icon must win over the old metadata link');
+    assert(!appleHref.includes('barter-pwa-v2'), 'WebKit must not see the old cached icon');
+    assert((await page.locator('link[rel="manifest"]').getAttribute('href')).includes('barter-pwa-v2'), 'manifest cache key is bumped');
     const appleResponse = await page.request.get(baseURL + appleHref);
     assert.equal(appleResponse.status(), 200);
     const appleBytes = await appleResponse.body();
@@ -857,13 +858,16 @@ async function scenario(browserType, width, theme) {
     const rootApple = await page.request.get(baseURL + '/apple-touch-icon.png');
     assert.equal(rootApple.status(), 200, 'Safari fallback icon exists');
     assert((await rootApple.body()).equals(appleBytes), 'Safari fallback uses same approved mark');
+    const versionedApple = await page.request.get(baseURL + '/brand/barter-pwa-v2/apple-touch-icon.png');
+    assert.equal(versionedApple.status(), 200);
+    assert((await versionedApple.body()).equals(appleBytes), 'App Router Apple icon, root fallback and PWA resources must be identical');
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const manifestResponse = await page.request.get(baseURL + manifestHref);
     assert.equal(manifestResponse.status(), 200);
     const manifest = await manifestResponse.json();
     assert.equal(manifest.short_name, 'БАРТЕР');
     assert.equal(manifest.display, 'standalone');
-    assert(manifest.icons.every(icon => icon.src.startsWith('/brand/barter-pwa-v1/')), 'PWA manifest never references old icon assets');
+    assert(manifest.icons.every(icon => icon.src.startsWith('/brand/barter-pwa-v2/')), 'PWA manifest never references old icon assets');
     assert(manifest.icons.some(icon => icon.purpose === 'maskable' && icon.sizes === '512x512'));
     for (const icon of manifest.icons) {
       const response = await page.request.get(baseURL + icon.src);
@@ -877,7 +881,7 @@ async function scenario(browserType, width, theme) {
     assert.equal(await page.locator('link[href="/favicon.svg"]').count(), 0);
     for (const link of await page.locator('link[rel="icon"]').all()) {
       const href = await link.getAttribute('href');
-      assert(href.startsWith('/brand/barter-pwa-v1/'), 'no stale icon candidate');
+      assert(href.startsWith('/brand/barter-pwa-v2/'), 'no stale icon candidate');
       const res = await page.request.get(baseURL + href);
       assert.equal(res.status(), 200);
       await assertArtwork(await res.body(), 0.75);
