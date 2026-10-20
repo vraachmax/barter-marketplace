@@ -10,6 +10,9 @@ import {
   Lightbulb,
   Link2,
   Menu,
+  MoreHorizontal,
+  SquarePen,
+  Repeat2,
   MessageCircle,
   Phone,
   Plus,
@@ -59,11 +62,6 @@ function getChatTradeLabel(listing: ChatSummary['listing']): string {
   if (barter && listing?.saleEnabled === true) return 'Обмен / Покупка';
   return barter ? 'Обмен' : 'Покупка';
 }
-
-const MODE_COLOR: Record<'barter' | 'market', string> = {
-  barter: '#ff5a0a',
-  market: '#8b8b98', // Sale-only is neutral; exchange keeps the orange accent.
-};
 
 function formatListTime(iso: string | undefined): string {
   if (!iso) return '';
@@ -120,6 +118,7 @@ export default function MessagesPage() {
   const [peerTyping, setPeerTyping] = useState(false);
   const [listQuery, setListQuery] = useState('');
   const [listFilter, setListFilter] = useState<ChatListFilter>('all');
+  const [listMenuOpen, setListMenuOpen] = useState(false);
   const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
   const [quickRepliesBuyer, setQuickRepliesBuyer] = useState<SupportTemplate[]>([]);
   const [quickRepliesSeller, setQuickRepliesSeller] = useState<SupportTemplate[]>([]);
@@ -573,7 +572,7 @@ export default function MessagesPage() {
 
   return (
     <div
-      className="messages-screen flex min-h-0 flex-col bg-background text-foreground antialiased"
+      className="messages-screen messages-approved-screen flex min-h-0 flex-col bg-background text-foreground antialiased"
       data-thread-open={mobileThreadOpen && selectedChat ? "true" : undefined}
     >
       {/* Top bar — desktop */}
@@ -608,24 +607,43 @@ export default function MessagesPage() {
  mobileThreadOpen ? 'hidden md:flex' : 'flex flex-1 md:flex-none'
  }`}
         >
-          <div className="messages-sidebar-heading flex shrink-0 items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
-            <div className="flex min-w-0 items-center gap-2">
-              <h2 className="text-[29px] font-extrabold leading-[35px] tracking-[-.5px] md:text-lg">Сообщения</h2>
-              {totalUnread > 0 ? <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{totalUnread}</span> : null}
-            </div>
-            <button type="button" onClick={() => setSupportSheetOpen(true)} aria-label="Помощь и поддержка" className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"><CircleHelp size={21} aria-hidden /></button>
-          </div>
+          
+<div className="messages-sidebar-heading flex shrink-0 items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
+  <div className="flex min-w-0 items-center gap-2">
+    <h2 className="text-[29px] font-extrabold leading-[35px] tracking-[-.5px] md:text-lg">Сообщения</h2>
+    {totalUnread > 0 ? <span className="messages-heading-unread" aria-label={'Непрочитанных: ' + totalUnread}>{totalUnread > 99 ? '99+' : totalUnread}</span> : null}
+  </div>
+  <div className="messages-head-actions">
+    <div className="messages-head-menu-wrap">
+      <button type="button" className="messages-head-action" onClick={() => setListMenuOpen(value => !value)}
+        aria-label="Дополнительные действия" aria-expanded={listMenuOpen} aria-controls="messages-list-actions">
+        <MoreHorizontal size={21} aria-hidden />
+      </button>
+      {listMenuOpen ? (
+        <div id="messages-list-actions" className="messages-head-menu" role="group" aria-label="Действия со списком чатов">
+          <button type="button" onClick={() => { setListFilter('unread'); setListMenuOpen(false); }}>Непрочитанные ({totalUnread})</button>
+          <button type="button" onClick={() => { setListFilter('all'); setListQuery(''); setListMenuOpen(false); }}>Все сообщения</button>
+          <button type="button" onClick={() => { setSupportSheetOpen(true); setListMenuOpen(false); }}>Помощь и поддержка</button>
+        </div>
+      ) : null}
+    </div>
+    <Link href="/search" className="messages-head-action messages-head-compose"
+      aria-label="Начать новый диалог — выбрать объявление" title="Начать новый диалог">
+      <SquarePen size={21} strokeWidth={1.9} aria-hidden />
+    </Link>
+  </div>
+</div>
           {openError ? <div role="alert" className="px-4 pb-3 text-sm"><p>{openError}</p><Button variant="outline" className="mt-2" onClick={() => { setOpenError(''); setOpenAttempt(value => value + 1); }}>Повторить открытие</Button></div> : null}
           <div className="messages-list-controls shrink-0 px-4 pb-3">
             <div className="relative">
               <Search size={19} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <input type="search" value={listQuery} onChange={(e) => setListQuery(e.target.value)} aria-label="Поиск по диалогам" placeholder="Имя, объявление или сообщение"
+              <input type="search" value={listQuery} onChange={(e) => setListQuery(e.target.value)} aria-label="Поиск по диалогам" placeholder="Поиск по сообщениям"
                 className="messages-list-search h-11 w-full min-w-0 rounded-[17px] border border-transparent bg-muted pr-4 pl-11 text-[13px] outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/15" />
             </div>
             <div aria-label="Фильтр диалогов" className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
-              {([{ id: 'all', label: 'Все' }, { id: 'buyer', label: 'Покупаю' }, { id: 'seller', label: 'Продаю' }, { id: 'unread', label: 'Непрочитанные' }] as const).map((filter) => (
+              {([{ id: 'all', label: 'Все' }, { id: 'purchase', label: 'Покупка' }, { id: 'barter', label: 'Обмен' }] as const).map((filter) => (
                 <button key={filter.id} type="button" aria-pressed={listFilter === filter.id} onClick={() => setListFilter(filter.id)}
-                  className="messages-list-filter min-h-11 shrink-0 rounded-full bg-muted px-3 text-[12px] font-medium text-muted-foreground transition-colors aria-pressed:bg-[#ffede3] aria-pressed:text-[#ff5a0a]">{filter.label}</button>
+                  className="messages-list-filter min-h-11 shrink-0 rounded-full bg-muted px-3 text-[12px] font-medium text-muted-foreground transition-colors aria-pressed:bg-[#ffede3] aria-pressed:text-[#ff5a0a]">{filter.label}{filter.id === 'all' && totalUnread > 0 ? <span className="messages-filter-count">{totalUnread > 99 ? '99+' : totalUnread}</span> : null}</button>
               ))}
             </div>
           </div>
@@ -646,92 +664,42 @@ export default function MessagesPage() {
               </div>
             ) : null}
 
-            <ul className="p-2 pt-0">
+            <ul className="messages-chat-list p-2 pt-0">
               {filteredChats.map((c) => {
                 const active = c.id === selectedChatId;
                 const img = resolveAssetUrl(c.listing?.previewImageUrl ?? null);
                 const peer = c.peer;
                 const unread = c.unreadCount > 0;
                 const chatMode = getChatMode(c.listing);
-                const chatColor = MODE_COLOR[chatMode];
                 const unreadCountLabel = c.unreadCount > 9 ? '9+' : String(c.unreadCount);
                 return (
-                  <li key={c.id} className="mb-0.5">
-                    <button
-                      type="button"
-                      onClick={() => selectChat(c.id)}
-                      aria-pressed={active}
-                      className={`messages-chat-row flex min-h-[78px] w-full items-center gap-3 rounded-[16px] p-3 text-left transition ${
- active
- ? 'bg-primary/8 ring-1 ring-primary/15'
- : 'hover:bg-muted/60'
- }`}
-                    >
-                      <div className="relative shrink-0">
-                        {/*
-                          ВАЖНО: НЕ используем класс `.listing-thumb-wrap` —
-                          в globals.css на мобилке он принудительно ставит
-                          height: 140px !important (для крупных карточек
-                          объявлений), и наш 44×44 thumb растягивается в
-                          вытянутую пилюлю 44×140. Поэтому здесь plain div
-                          с обычным `h-11 w-11`.
-                        */}
-                        <div className="messages-chat-thumb h-12 w-12 overflow-hidden rounded-[13px] bg-muted">
-                          {img ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt="" className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                              <Store size={20} strokeWidth={1.8} aria-hidden />
-                            </div>
-                          )}
-                        </div>
-                        {unread ? (
-                          <span
-                            style={{ background: chatColor }}
-                            className="absolute -right-0.5 -top-0.5 h-3.5 min-w-3.5 rounded-full px-1 text-center text-[9px] font-bold leading-[14px] text-white ring-2 ring-card"
-                          >
-                            {unreadCountLabel}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span
-                            className={`line-clamp-1 text-[15px] leading-snug ${
- unread
- ? 'font-bold text-foreground'
- : 'font-semibold text-foreground'
- }`}
-                          >
-                            {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
-                          </span>
-                          <span className="shrink-0 text-[11px] text-muted-foreground">
-                            {formatListTime(c.lastMessage?.createdAt ?? c.updatedAt)}
-                          </span>
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-1">
-                          <span
-                            style={{
-                              background: `${chatColor}1a`,
-                              color: chatColor,
-                            }}
-                            className="inline-flex h-[14px] shrink-0 items-center rounded px-1 text-[9px] font-bold tracking-wide uppercase"
-                          >
-                            {getChatTradeLabel(c.listing)}
-                          </span>
-                          <span className="truncate text-xs text-muted-foreground">
-                            {c.listing?.title ?? 'Без объявления'}
-                          </span>
-                        </div>
-                        <div
-                          className={`mt-1 line-clamp-1 text-[13px] leading-snug ${
- unread ? 'font-medium text-foreground' : 'text-muted-foreground'
- }`}
-                        >
+                  <li key={c.id} className="messages-chat-item">
+                    <button type="button" onClick={() => selectChat(c.id)} aria-pressed={active}
+                      data-trade-mode={chatMode} data-unread={unread}
+                      className={active ? 'messages-chat-row is-active' : 'messages-chat-row'}>
+                      <span className="messages-chat-thumb">
+                        {img ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={img} alt="" className="h-full w-full object-cover" />
+                        ) : <Store size={23} strokeWidth={1.7} aria-hidden />}
+                      </span>
+                      <span className="messages-chat-main">
+                        <span className={unread ? 'messages-chat-name is-unread' : 'messages-chat-name'}>
+                          {peer?.name ?? peer?.email ?? peer?.phone ?? 'Собеседник'}
+                        </span>
+                        <span className="messages-chat-product">{c.listing?.title ?? 'Без объявления'}</span>
+                        <span className={unread ? 'messages-chat-preview is-unread' : 'messages-chat-preview'}>
                           {c.lastMessage?.text?.trim() ? c.lastMessage.text : 'Нет сообщений'}
-                        </div>
-                      </div>
+                        </span>
+                      </span>
+                      <span className="messages-chat-trailing">
+                        <span className="messages-chat-time">{formatListTime(c.lastMessage?.createdAt ?? c.updatedAt)}</span>
+                        <span className={chatMode === 'barter' ? 'messages-mode-badge is-exchange' : 'messages-mode-badge'}>
+                          {chatMode === 'barter' ? <Repeat2 size={12} strokeWidth={1.8} aria-hidden /> : null}
+                          {getChatTradeLabel(c.listing)}
+                        </span>
+                        {unread ? <span className="messages-unread-bubble">{unreadCountLabel}</span> : null}
+                      </span>
                     </button>
                   </li>
                 );

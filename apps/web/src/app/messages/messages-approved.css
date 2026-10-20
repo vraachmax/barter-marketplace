@@ -1,0 +1,69 @@
+/* Barter Messages / APPROVED reference, 20 Oct 2026
+ * Scope: /messages. Primary mobile mockup: 941×1672, adapted to CSS viewport
+ * 393px wide (use spacing tokens, never stretch the PNG as a webpage).
+ * Do not modify shared LiquidBottomNav from this route. */
+.messages-approved-screen .messages-head-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.messages-approved-screen .messages-head-menu-wrap{position:relative}
+.messages-approved-screen .messages-head-action{display:grid;place-items:center;width:44px;height:44px;min-height:44px;border-radius:15px;background:var(--bg-muted);color:var(--fg-default);border:0;outline-offset:2px}
+.messages-approved-screen .messages-head-compose{color:#ff5a0a;background:var(--bg-surface);box-shadow:0 3px 14px rgba(24,28,50,.06)}
+.messages-approved-screen .messages-head-menu{position:absolute;top:calc(100% + 8px);right:-52px;z-index:45;width:210px;overflow:hidden;padding:6px;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:16px;box-shadow:0 12px 34px rgba(20,20,24,.14)}
+.messages-approved-screen .messages-head-menu button{display:block;width:100%;min-height:44px;text-align:left;padding:10px 12px;color:var(--fg-default);border-radius:9px;font-size:13px;font-weight:500}
+.messages-approved-screen .messages-head-menu button:hover,.messages-approved-screen .messages-head-menu button:focus-visible{background:var(--bg-muted)}
+.messages-approved-screen .messages-heading-unread{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:12px;background:#ff5a0a;color:white;font-size:11px;font-weight:750}
+.messages-approved-screen .messages-filter-count{display:inline-grid;place-items:center;min-width:17px;height:17px;margin-left:5px;padding:0 4px;border-radius:9px;background:#fff;color:#ff5a0a;font-size:10px;font-weight:800}
+.messages-approved-screen .messages-chat-row{width:100%;text-align:left;display:flex;align-items:flex-start;gap:10px}
+.messages-approved-screen .messages-chat-thumb{display:grid;place-items:center;flex:none;overflow:hidden;background:var(--bg-muted);color:var(--fg-muted)}
+.messages-approved-screen .messages-chat-main{display:flex;flex:1;flex-direction:column;min-width:0}
+.messages-approved-screen .messages-chat-name,.messages-approved-screen .messages-chat-product,.messages-approved-screen .messages-chat-preview{display:block;min-width:0;overflow:hidden;word-break:break-word}
+.messages-approved-screen .messages-chat-name{font-weight:650;color:var(--fg-default);white-space:nowrap;text-overflow:ellipsis}
+.messages-approved-screen .messages-chat-name.is-unread{font-weight:800}
+.messages-approved-screen .messages-chat-product{color:var(--fg-muted);white-space:nowrap;text-overflow:ellipsis}
+.messages-approved-screen .messages-chat-preview{color:var(--fg-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
+.messages-approved-screen .messages-chat-preview.is-unread{color:var(--fg-default);font-weight:500}
+.messages-approved-screen .messages-chat-trailing{display:flex;flex:none;flex-direction:column;align-items:flex-end;gap:7px}
+.messages-approved-screen .messages-chat-time{white-space:nowrap;color:var(--fg-muted);font-variant-numeric:tabular-nums}
+.messages-approved-screen .messages-mode-badge{display:inline-flex;align-items:center;gap:4px;border-radius:10px;background:var(--bg-muted);color:var(--fg-muted);white-space:nowrap}
+.messages-approved-screen .messages-mode-badge.is-exchange{color:#ff5a0a;background:#fff0e8}
+.messages-approved-screen .messages-unread-bubble{display:grid;place-items:center;min-width:18px;height:18px;border-radius:99px;padding:0 4px;background:#ff5a0a;color:white;font-size:10px;line-height:1;font-weight:750}
+html[data-theme='dark'] .messages-approved-screen .messages-mode-badge.is-exchange{color:#ff9b6b;background:#38271f}
+html[data-theme='dark'] .messages-approved-screen .messages-head-compose{background:var(--bg-muted)}
+@media (max-width:767px){
+  .app-viewport .messages-screen.messages-approved-screen{background:var(--bg-page);height:100%;padding-top:0}
+  .messages-screen.messages-approved-screen .messages-sidebar{background:var(--bg-page);border:0}
+  .messages-screen.messages-approved-screen .messages-sidebar-heading{min-height:80px;padding:18px 16px 11px}
+  .messages-screen.messages-approved-screen .messages-sidebar-heading h2{font-size:30px;line-height:35px;font-weight:800;letter-spacing:-.85px}
+  .messages-screen.messages-approved-screen .messages-list-controls{padding:0 16px 13px}
+  .messages-screen.messages-approved-screen .messages-list-search{height:46px;border:0;border-radius:17px;background:var(--bg-muted);padding-left:46px;font-size:13.5px}
+  .messages-screen.messages-approved-screen .messages-list-controls>div:last-child{gap:7px;margin-top:10px;padding-bottom:0}
+  .messages-screen.messages-approved-screen .messages-list-filter{display:inline-flex;align-items:center;justify-content:center;min-height:36px;height:36px;border-radius:20px;padding:0 16px;background:var(--bg-muted);color:var(--fg-default);font-size:13px;font-weight:500}
+  .messages-screen.messages-approved-screen .messages-list-filter[aria-pressed='true']{background:#ff5a0a;color:#fff;font-weight:650}
+  .messages-screen.messages-approved-screen .messages-chat-list{padding:6px 14px 20px}
+  .messages-screen.messages-approved-screen .messages-chat-item{border-bottom:1px solid var(--border-default)}
+  .messages-screen.messages-approved-screen .messages-chat-row{min-height:85px;padding:11px 0;gap:11px;border-radius:0;background:transparent;box-shadow:none;ring:0}
+  .messages-screen.messages-approved-screen .messages-chat-row.is-active{background:var(--bg-muted)}
+  .messages-screen.messages-approved-screen .messages-chat-row:active{background:var(--bg-muted)}
+  .messages-screen.messages-approved-screen .messages-chat-thumb{width:56px;height:56px;border-radius:13px}
+  .messages-screen.messages-approved-screen .messages-chat-main{gap:2px;padding-top:1px}
+  .messages-screen.messages-approved-screen .messages-chat-name{font-size:15px;line-height:19px}
+  .messages-screen.messages-approved-screen .messages-chat-product{font-size:12px;line-height:17px}
+  .messages-screen.messages-approved-screen .messages-chat-preview{font-size:12px;line-height:17px}
+  .messages-screen.messages-approved-screen .messages-chat-trailing{width:77px;gap:7px;min-height:56px;padding-top:2px}
+  .messages-screen.messages-approved-screen .messages-chat-time{font-size:11px;line-height:14px}
+  .messages-screen.messages-approved-screen .messages-mode-badge{font-size:10.5px;line-height:18px;padding:1px 6px}
+  .messages-screen.messages-approved-screen .messages-unread-bubble{margin-top:auto}
+  /* Full-screen conversation preserves the approved separate chat reference. */
+  .messages-screen.messages-approved-screen[data-thread-open='true']{padding-bottom:max(4px,env(safe-area-inset-bottom,0px))!important}
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='incoming']{background:#f1f2f5;color:#0d1016;border:0}
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing']{background:#ff5a0a;color:white;border:0}
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing'] [data-message-meta]{color:rgba(255,255,255,.88)}
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing'] [data-message-meta] svg{color:#fff}
+  .messages-screen.messages-approved-screen .messages-composer{background:var(--bg-page);-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+@media (max-width:359px){
+  .messages-screen.messages-approved-screen .messages-chat-thumb{width:50px;height:50px}
+  .messages-screen.messages-approved-screen .messages-chat-trailing{width:68px}
+  .messages-screen.messages-approved-screen .messages-chat-row{gap:8px}
+  .messages-screen.messages-approved-screen .messages-list-filter{padding-inline:12px}
+}
+html[data-theme='dark'] .messages-screen.messages-approved-screen .message-bubble[data-direction='incoming']{background:#282a30;color:#f4f5f7}
+html[data-theme='dark'] .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing']{background:#ff650e;color:white}

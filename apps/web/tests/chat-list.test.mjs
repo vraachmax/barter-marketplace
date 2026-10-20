@@ -27,3 +27,15 @@ test('query and tab are combined without mutating the source', () => {
   assert.equal(chats.length, 3);
   assert.deepEqual(filterChatList(chats, 'не найдено', 'all'), []);
 });
+
+test('purchase/exchange tabs reflect listing trade mode, not buyer/seller role', () => {
+  const modes = [
+    { id: 'market', unreadCount: 0, listing: { title: 'Ноутбук', saleEnabled: true, barterEnabled: false } },
+    { id: 'barter', unreadCount: 1, listing: { title: 'Велосипед', saleEnabled: false, barterEnabled: true } },
+    { id: 'both', unreadCount: 2, listing: { title: 'Телефон', saleEnabled: true, barterEnabled: true } },
+    { id: 'legacy', unreadCount: 0, listing: { title: 'Часы' } },
+  ];
+  assert.deepEqual(filterChatList(modes, '', 'purchase').map(c => c.id), ['market', 'both', 'legacy']);
+  assert.deepEqual(filterChatList(modes, '', 'barter').map(c => c.id), ['barter', 'both']);
+  assert.deepEqual(filterChatList(modes, 'телефон', 'barter').map(c => c.id), ['both']);
+});

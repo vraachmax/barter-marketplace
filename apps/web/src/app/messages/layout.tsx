@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './messages-approved.css';
 
 export const metadata: Metadata = {
   title: 'Сообщения',
