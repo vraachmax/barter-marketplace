@@ -32,8 +32,10 @@ export const metadata: Metadata = {
       { url: '/brand/barter-pwa-v3/favicon-32.png', sizes: '32x32', type: 'image/png' },
       { url: '/brand/barter-pwa-v3/favicon-48.png', sizes: '48x48', type: 'image/png' },
     ],
-    // Apple icon is committed as src/app/apple-icon.png, so Next.js always
-    // includes the canonical rel=apple-touch-icon without build-time generation.
+    // Explicit metadata is required here: setting metadata.icons.icon can
+    // suppress Next.js file-based apple-icon metadata. Safari needs this
+    // exact rel="apple-touch-icon" link in the document head.
+    apple: [{ url: '/brand/barter-pwa-v3/apple-touch-icon.png?ios-icon=4', sizes: '180x180', type: 'image/png' }],
   },
   title: {
     default: SITE_NAME,

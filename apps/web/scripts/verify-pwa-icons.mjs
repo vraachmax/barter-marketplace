@@ -25,4 +25,7 @@ for(const [name,size] of assets){
     assert(data.equals(apple),'Apple icons must all be the same committed artwork: '+name);
   }
 }
-console.log('Committed Barter app icons verified ('+assets.length+' PNGs).');
+const layoutSource = await readFile(join(root, 'src/app/layout.tsx'), 'utf8');
+assert(layoutSource.includes("apple: [{ url: '/brand/barter-pwa-v3/apple-touch-icon.png?ios-icon=4'"),
+  'iOS homescreen icon must be present in metadata.icons.apple; file metadata can be suppressed by metadata.icons');
+console.log('Committed Barter app icons and explicit Apple link verified ('+assets.length+' PNGs).');

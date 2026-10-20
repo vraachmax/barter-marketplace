@@ -846,8 +846,8 @@ async function scenario(browserType, width, theme) {
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
-    assert(appleHref.startsWith('/apple-icon.png'), 'file-based Apple icon is served from a tracked PNG');
-    assert(!appleHref.includes('barter-pwa-v3'), 'WebKit must not see the old cached icon');
+    assert.equal(appleHref, '/brand/barter-pwa-v3/apple-touch-icon.png?ios-icon=4',
+      'Safari must receive the explicit, versioned 180px Apple icon from metadata.icons.apple');
     assert((await page.locator('link[rel="manifest"]').getAttribute('href')).includes('barter-pwa-v3'), 'manifest cache key is bumped');
     const appleResponse = await page.request.get(baseURL + appleHref);
     assert.equal(appleResponse.status(), 200);
@@ -862,6 +862,7 @@ async function scenario(browserType, width, theme) {
     assert.equal(versionedApple.status(), 200);
     assert((await versionedApple.body()).equals(appleBytes), 'App Router Apple icon, root fallback and PWA resources must be identical');
     assert(!appleHref.includes('barter-pwa-v2'), 'do not advertise obsolete Apple metadata links');
+    assert(!appleHref.startsWith('/apple-icon'), 'avoid relying on suppressed file-based metadata');
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const manifestResponse = await page.request.get(baseURL + manifestHref);
     assert.equal(manifestResponse.status(), 200);
