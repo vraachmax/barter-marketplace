@@ -1090,6 +1090,12 @@ async function captureReferenceViewport(theme, width = 393, height = 850) {
         'each slide must use its corresponding image, never a duplicated placeholder');
       await expect(page.locator('.barter-hero-carousel__slide .barter-hero-carousel__cta')).toHaveCount(4);
       await expect(page.locator('.home-category-tile .premium-category-art')).toHaveCount(11);
+      const iconPresentation = await page.locator('.home-category-tile .premium-category-art').evaluateAll(images =>
+        images.map(image => ({ src: image.getAttribute('src'), position: getComputedStyle(image).objectPosition,
+          width: image.getBoundingClientRect().width, height: image.getBoundingClientRect().height })));
+      assert(iconPresentation.every(item => item.src?.includes('.webp?v=20261020-centered') &&
+        item.position === '50% 50%' && Math.abs(item.width - item.height) < 1),
+        'centered category icons use the current, cache-busted WebP and remain square');
       const fades = await page.locator('.barter-hero-carousel__content').evaluateAll(els =>
         els.map(el => getComputedStyle(el, '::before').backgroundImage));
       assert(fades.every(fade => fade.includes('linear-gradient')),

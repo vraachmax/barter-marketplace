@@ -1,6 +1,6 @@
 {
   "project": "Barter",
-  "version": "premium-assets-2026-10-19",
+  "version": "premium-assets-centered-2026-10-20",
   "original_sources": [
     {
       "file": "премиальная_композиция_гаджетов_с_оранжевыми_лента.png",
@@ -67,8 +67,8 @@
         288,
         288
       ],
-      "bytes": 11680,
-      "sha256": "18290ef8f1df27cf70380fd97554da6b28d6171e46790f8c60634e0e64e0892c"
+      "bytes": 12766,
+      "sha256": "3e1f2c8c813431c761d66af57721b08cacd47cc5353382dec07bf69f48f297c8"
     },
     {
       "file": "categories/auto.webp",
@@ -77,8 +77,8 @@
         288,
         288
       ],
-      "bytes": 14326,
-      "sha256": "1c98231c0356318d65c0e40890a24f4c2cee496339783d4b62a79fe2c6074c27"
+      "bytes": 14908,
+      "sha256": "5616eb8f061080885366d69b3b633fc2d093773b6956c1ce7db4eebd7cc00eb7"
     },
     {
       "file": "categories/realty.webp",
@@ -87,8 +87,8 @@
         288,
         288
       ],
-      "bytes": 14918,
-      "sha256": "69aabe7cf49937d6626fe6ce79543db6c4776d7e6f6e0eddf6c0c815bd287f4f"
+      "bytes": 15448,
+      "sha256": "cf57583ba6b4c5c8218863a33d4219167218b12a0e2e2485ddcb160983f14f67"
     },
     {
       "file": "categories/clothes.webp",
@@ -97,8 +97,8 @@
         288,
         288
       ],
-      "bytes": 11440,
-      "sha256": "01be1be4f4cec85c691aa904ef8023aa414fc1ca9dc56c19cbb367c6cc87e700"
+      "bytes": 12082,
+      "sha256": "58b6552b3f7aea6eef6627e30d06f9dc8512b18596c9bddfddd34cbddf0e8dc9"
     },
     {
       "file": "categories/hobby.webp",
@@ -107,8 +107,8 @@
         288,
         288
       ],
-      "bytes": 11624,
-      "sha256": "3cbd422dc53c0874c2321a65535d97d59ea4dc63522b98102a505d557e60b958"
+      "bytes": 12496,
+      "sha256": "a6989af38fabc92610c3140957bec86c9b2776fcf610397f338f9ede4418cb5b"
     },
     {
       "file": "categories/special_equipment.webp",
@@ -117,8 +117,8 @@
         288,
         288
       ],
-      "bytes": 15844,
-      "sha256": "0c2735fc23f5c4589a7ceb59c0eb88db0e2d646a849811399c3e4fc81e9aeeb0"
+      "bytes": 16702,
+      "sha256": "d1f902fe768e53dcf0a42c70ae313663ce07d99ac0f2f1fed3ddf839f3bc2d98"
     },
     {
       "file": "categories/services.webp",
@@ -127,8 +127,8 @@
         288,
         288
       ],
-      "bytes": 12682,
-      "sha256": "5a183df59378b6f7a2b35374db1b88b87cb91d7b28098044bda5a1144d5f3612"
+      "bytes": 13828,
+      "sha256": "280b7770e3cdd495a6b33b73512fd5f2a58cf16734762d124f80bd2287ff8112"
     },
     {
       "file": "categories/parts.webp",
@@ -137,8 +137,8 @@
         288,
         288
       ],
-      "bytes": 14484,
-      "sha256": "8ba16e46ef84cb6bd59d107c8c5ba559c30e473a20862be221695e32ff17d4ac"
+      "bytes": 15542,
+      "sha256": "4245bf298021f6faa6b5bc96d35ea51a89473cc644f81bd0b3dad4e36c60f07a"
     },
     {
       "file": "categories/furniture.webp",
@@ -147,8 +147,8 @@
         288,
         288
       ],
-      "bytes": 10156,
-      "sha256": "ef6d5a21ac84d077d2923ccf7c0c6f12ae48ec0618bfc46a62640eda20472807"
+      "bytes": 11544,
+      "sha256": "194e569638eb159b466008fd6d7ef57cbf02a7935c3c98d6df066f48bb9dec7c"
     },
     {
       "file": "categories/kids.webp",
@@ -157,8 +157,8 @@
         288,
         288
       ],
-      "bytes": 17012,
-      "sha256": "c8007cf767e994cf187ed19cea114b0e08e6a75206728d1a18fbdb703b1e1384"
+      "bytes": 17388,
+      "sha256": "27b523a1e0f572222034de80cee56efb244288e8830d222727222e87e059bf80"
     },
     {
       "file": "categories/home.webp",
@@ -167,8 +167,8 @@
         288,
         288
       ],
-      "bytes": 12784,
-      "sha256": "8e85835ab6c59c1e7d85780c81ed3d126d6d5c397b8dc3c2f68744dfc4b537ef"
+      "bytes": 14654,
+      "sha256": "5745f2bb15dcf0651093c3ca4efceda31d888b68631da398617359e425ef89ac"
     },
     {
       "file": "categories/sports.webp",
@@ -177,8 +177,8 @@
         288,
         288
       ],
-      "bytes": 13450,
-      "sha256": "04c5ff51f91d38f851bcf4a280e28ad51f7f8b65b5c5bc7d9797c612e8cbec42"
+      "bytes": 14946,
+      "sha256": "867772d056500692054524f95aa1c4b27189a66826203c99c1e5613fd1bcee56"
     },
     {
       "file": "categories/beauty.webp",
@@ -187,8 +187,8 @@
         288,
         288
       ],
-      "bytes": 11796,
-      "sha256": "dd4dbd012909adebdeded06b2b22b01c8cf4ecc56636bb5bf6e927785b11b7a5"
+      "bytes": 13420,
+      "sha256": "274f1671e4f00111800909961dc24ce0d2e03c288d7cf7a87c0c8818b4e5601e"
     },
     {
       "file": "categories/pets.webp",
@@ -197,8 +197,8 @@
         288,
         288
       ],
-      "bytes": 14976,
-      "sha256": "3126aca76ca971bc0a5df5ecca45a4447bf61d1c47f1bf9bb472ec3b9f5fd3be"
+      "bytes": 16934,
+      "sha256": "44ce730cdc69a7fa6fbdea3aec532d40c9975c0762f8500953e84ef4afaa7b62"
     },
     {
       "file": "categories/photo.webp",
@@ -207,8 +207,8 @@
         288,
         288
       ],
-      "bytes": 14540,
-      "sha256": "741ae205a08725aa994f4b64df9ed893bd317feb2ff9bdd03a6b9c2386fec5d3"
+      "bytes": 16500,
+      "sha256": "20a912c51d558755f68c84e6e6f8058de8b881cdfba2349712a80cdcc79ab2eb"
     },
     {
       "file": "categories/all.webp",
@@ -217,10 +217,12 @@
         288,
         288
       ],
-      "bytes": 10726,
-      "sha256": "56200eba8e606b992797e43ae5c9cb8144bd522bc1e63bcdf507bfe90802cb2c"
+      "bytes": 11904,
+      "sha256": "717ec6675ffed4ec4cb534bbd62187d4db29570d9b9728952e0c5fc65f29ba21"
     }
   ],
-  "status": "assets-only; components are not integrated automatically",
-  "license_note": "Generated by user request; visually review third-party logo-like imagery before distribution"
+  "status": "integrated-on-home: sixteen centered category WebP icons, cache-busted URL",
+  "license_note": "Generated by user request; visually review third-party logo-like imagery before distribution",
+  "centered_atlas_source": "глянцевая_иконографика_категорий_товаров.png",
+  "rendering_note": "Each icon cropped from the detected circular center with a 288x288 feathered circular alpha mask."
 }

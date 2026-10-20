@@ -527,7 +527,7 @@ async function renderHome(sp: HomeSearchParams) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   className="premium-category-art"
-                  src={'/visual-refresh/premium/categories/' + categoryArt(cat) + '.webp'}
+                  src={'/visual-refresh/premium/categories/' + categoryArt(cat) + '.webp?v=20261020-centered'}
                   width={288}
                   height={288}
                   alt=""
