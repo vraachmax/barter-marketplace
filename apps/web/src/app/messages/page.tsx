@@ -36,6 +36,7 @@ import {
   SOCKET_URL,
 } from '@/lib/api';
 import { filterChatList, type ChatListFilter } from '@/lib/chat-list';
+import { getChatThumbnailFallback } from '@/lib/chat-thumbnail';
 import { Button } from '@/components/ui/button';
 import { AccountScreenHeader } from '@/components/account-screen-header';
 import { SupportSheet } from '@/components/support-sheet';
@@ -668,6 +669,7 @@ export default function MessagesPage() {
               {filteredChats.map((c) => {
                 const active = c.id === selectedChatId;
                 const img = resolveAssetUrl(c.listing?.previewImageUrl ?? null);
+                const fallbackThumb = getChatThumbnailFallback(c.listing);
                 const peer = c.peer;
                 const unread = c.unreadCount > 0;
                 const chatMode = getChatMode(c.listing);
@@ -678,11 +680,17 @@ export default function MessagesPage() {
                     <button type="button" onClick={() => selectChat(c.id)} aria-pressed={active}
                       data-trade-mode={chatMode} data-unread={unread}
                       className={active ? 'messages-chat-row is-active' : 'messages-chat-row'}>
-                      <span className="messages-chat-thumb">
-                        {img ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={img} alt="" className="h-full w-full object-cover" />
-                        ) : <Store size={23} strokeWidth={1.7} aria-hidden />}
+                      <span className="messages-chat-thumb" data-thumbnail-type={img ? 'listing' : 'category'}>
+                        <Store size={23} strokeWidth={1.7} aria-hidden />
+                        {/* Real photos first. A category illustration only if no photo is available. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={img ?? fallbackThumb} alt="" loading="lazy" decoding="async"
+                          className="messages-chat-thumb-image"
+                          onError={event => {
+                            const image = event.currentTarget;
+                            if (!image.src.endsWith(fallbackThumb)) image.src = fallbackThumb;
+                            else image.style.display = 'none';
+                          }} />
                       </span>
                       <span className="messages-chat-main">
                         <span className={unread ? 'messages-chat-name is-unread' : 'messages-chat-name'}>
