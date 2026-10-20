@@ -1057,6 +1057,46 @@ async function scenario(browserType, width, theme) {
       assert(!state.catalogReads.includes(null), 'new schema avoids the unscoped catalog payload');
       checks.push('five-step publication sends exchange-only once with optional valuation');
     }
+    // Match the approved portrait auth reference at the live mobile viewport.
+    // Provider capability is mocked; the form still talks to the real routes.
+    await context.route('**/auth/providers', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"yandex":{"enabled":true}}' }));
+    await visit('/auth');
+    await expect(page.getByRole('heading', { name: 'Вход', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Войти', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Продолжить с Яндекс ID/ })).toHaveAttribute('href', '/auth/yandex');
+    await expect(page.getByRole('navigation', { name: 'Основная навигация' })).toHaveCount(0);
+    if (width < 768) {
+      const positions = await page.evaluate(() => {
+        const rect = selector => document.querySelector(selector)?.getBoundingClientRect();
+        return {
+          first: rect('.barter-auth__field'),
+          second: rect('.barter-auth__field:nth-child(2)'),
+          login: rect('.barter-auth__submit'),
+          yandex: rect('.barter-auth__yandex'),
+          create: rect('.barter-auth__switch'),
+          footer: rect('.barter-auth__footer'),
+          viewportWidth: document.documentElement.clientWidth,
+          scrollWidth: document.documentElement.scrollWidth,
+        };
+      });
+      assert(positions.first && positions.second && positions.login &&
+        positions.yandex && positions.create && positions.footer, 'all approved auth elements are present');
+      assert(positions.first.height >= 52 && positions.second.height >= 52,
+        'auth fields use the correct tall mobile proportions');
+      assert(positions.login.y > positions.second.bottom &&
+        positions.yandex.y > positions.login.bottom &&
+        positions.create.y > positions.yandex.bottom &&
+        positions.footer.y > positions.create.bottom,
+        'auth controls match the reference order without overlapping');
+      assert(positions.viewportWidth >= positions.scrollWidth, 'no horizontal overflow on login');
+    }
+    await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Регистрация', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Уже есть аккаунт? Войти' })).toBeVisible();
+    await page.getByRole('button', { name: 'Уже есть аккаунт? Войти' }).click();
+    await expect(page.getByRole('heading', { name: 'Вход', exact: true })).toBeVisible();
+    checks.push('approved auth layout, provider, registration switch and hidden bottom dock');
     state.guest = true;
     await visit('/listings?tab=COMPLETED');
     await expect(page.getByRole('link', { name: 'Войти или зарегистрироваться' })).toHaveAttribute('href', '/auth?next=%2Flistings%3Ftab%3DCOMPLETED');

@@ -93,31 +93,38 @@ export default function AuthPage() {
   return (
     <main className="barter-auth" data-auth-screen="reference-2026-10">
       <div className="barter-auth__orb" aria-hidden="true">
-        <svg viewBox="0 0 600 440" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 491 443" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           <defs>
-            <linearGradient id="auth-orange" x1="95" y1="50" x2="530" y2="370" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#ff7408" stopOpacity=".06" />
-              <stop offset=".29" stopColor="#ff9a27" stopOpacity=".65" />
-              <stop offset=".58" stopColor="#ff6307" stopOpacity=".43" />
-              <stop offset="1" stopColor="#ffd38d" stopOpacity=".06" />
+            <linearGradient id="barter-auth-ribbon" x1="90" y1="330" x2="451" y2="48" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#ffe5bc" stopOpacity=".12"/>
+              <stop offset=".25" stopColor="#ffad59" stopOpacity=".63"/>
+              <stop offset=".51" stopColor="#ff771e" stopOpacity=".75"/>
+              <stop offset=".77" stopColor="#ff983e" stopOpacity=".56"/>
+              <stop offset="1" stopColor="#ffb16b" stopOpacity=".2"/>
             </linearGradient>
-            <linearGradient id="auth-shine" x1="245" y1="390" x2="518" y2="30" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#ffe1a5" stopOpacity="0" />
-              <stop offset=".45" stopColor="#fff9e9" stopOpacity=".8" />
-              <stop offset="1" stopColor="#ffffff" stopOpacity=".06" />
+            <linearGradient id="barter-auth-highlight" x1="122" y1="320" x2="470" y2="75" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#fff7e5" stopOpacity=".1"/>
+              <stop offset=".4" stopColor="white" stopOpacity=".86"/>
+              <stop offset=".66" stopColor="#fffaef" stopOpacity=".9"/>
+              <stop offset="1" stopColor="white" stopOpacity=".02"/>
             </linearGradient>
-            <filter id="auth-glow" x="-30%" y="-40%" width="160%" height="180%">
-              <feGaussianBlur stdDeviation="14" />
+            <radialGradient id="barter-auth-halo" cx="0" cy="0" r="1" gradientTransform="translate(345 220) rotate(159) scale(235 162)" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#ff9b41" stopOpacity=".32"/>
+              <stop offset="1" stopColor="#ff9b41" stopOpacity="0"/>
+            </radialGradient>
+            <filter id="barter-auth-soft" x="-25%" y="-30%" width="150%" height="160%">
+              <feGaussianBlur stdDeviation="12"/>
             </filter>
           </defs>
-          <path d="M620 56C499 39 321 68 221 161C120 256 161 359 337 374C432 385 538 338 620 265"
-            stroke="#ff9e49" strokeOpacity=".3" strokeWidth="66" filter="url(#auth-glow)"/>
-          <path d="M620 55C498 39 314 69 220 162C128 250 154 348 341 374C442 387 532 336 620 259"
-            stroke="url(#auth-orange)" strokeWidth="53"/>
-          <path d="M619 71C487 54 321 91 236 166C153 241 164 330 340 352C435 363 528 312 620 240"
-            stroke="url(#auth-shine)" strokeWidth="11"/>
-          <path d="M607 143C479 135 355 159 302 209C238 264 259 307 354 315C447 323 559 260 620 208"
-            stroke="#fff7e3" strokeOpacity=".63" strokeWidth="6"/>
+          <ellipse cx="340" cy="222" rx="243" ry="166" fill="url(#barter-auth-halo)"/>
+          <path d="M520 26C407 21 231 65 114 170C25 251 50 325 170 362C303 405 418 347 522 273"
+            stroke="#ff932f" strokeWidth="78" strokeOpacity=".24" filter="url(#barter-auth-soft)"/>
+          <path d="M520 26C407 21 231 65 114 170C25 251 50 325 170 362C303 405 418 347 522 273"
+            stroke="url(#barter-auth-ribbon)" strokeWidth="55" strokeLinecap="round"/>
+          <path d="M520 46C400 44 239 86 127 185C58 246 75 300 180 334C312 378 414 317 520 260"
+            stroke="url(#barter-auth-highlight)" strokeWidth="6" strokeLinecap="round"/>
+          <path d="M520 92C394 89 271 126 192 198C126 259 137 293 225 306C341 324 444 285 515 232"
+            stroke="#fff9eb" strokeOpacity=".75" strokeWidth="3.5" strokeLinecap="round"/>
         </svg>
       </div>
 
