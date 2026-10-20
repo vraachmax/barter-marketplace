@@ -148,6 +148,45 @@ export class ChatsService {
     if (!participant) throw new ForbiddenException('not_chat_participant');
   }
 
+  async assertCanSend(chatId: string, userId: string) {
+    await this.assertParticipant(chatId, userId);
+    const peers = await this.prisma.chatUser.findMany({ where: { chatId, userId: { not: userId } }, select: { userId: true } });
+    if (await this.prisma.userBlock.count({ where: { OR: peers.flatMap(p => [
+      { blockerId: userId, blockedId: p.userId }, { blockerId: p.userId, blockedId: userId },
+    ]) } })) throw new ForbiddenException('Отправка недоступна: пользователь заблокирован');
+  }
+
+  async details(chatId: string, userId: string) {
+    await this.assertParticipant(chatId, userId);
+    const peer = await this.prisma.chatUser.findFirst({ where: { chatId, userId: { not: userId } } });
+    if (!peer) throw new NotFoundException();
+    const [membership, block, blockedByPeer, sharedChats, media] = await Promise.all([
+      this.prisma.chatUser.findUnique({ where: { chatId_userId: { chatId, userId } } }),
+      this.prisma.userBlock.findUnique({ where: { blockerId_blockedId: { blockerId: userId, blockedId: peer.userId } } }),
+      this.prisma.userBlock.findUnique({ where: { blockerId_blockedId: { blockerId: peer.userId, blockedId: userId } } }),
+      this.prisma.chat.findMany({ where: { AND: [{ users: { some: { userId } } }, { users: { some: { userId: peer.userId } } }] }, select: { listing: { select: { id: true, title: true, priceRub: true, images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } } } } } }),
+      this.prisma.message.findMany({ where: { chatId, mediaUrl: { not: null } }, select: { id: true, mediaUrl: true, mediaType: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 200 }),
+    ]);
+    const listings = Array.from(new Map(sharedChats.filter(c => c.listing).map(c => [c.listing!.id, c.listing!])).values());
+    // Only the current user's favorites among shared listings, never peer's private collection.
+    const favorites = await this.prisma.favorite.findMany({ where: { userId, listingId: { in: listings.map(l => l.id) } }, select: { listingId: true } });
+    return { muted: membership?.muted ?? false, blocked: !!block, cannotSend: !!block || !!blockedByPeer, listings, favorites: listings.filter(l => favorites.some(f => f.listingId === l.id)), media };
+  }
+
+  async setting(chatId: string, userId: string, dto: { action: string; reason?: string }) {
+    await this.assertParticipant(chatId, userId);
+    const peer = await this.prisma.chatUser.findFirst({ where: { chatId, userId: { not: userId } } });
+    if (!peer) throw new NotFoundException();
+    if (dto.action === 'mute' || dto.action === 'unmute') await this.prisma.chatUser.update({ where: { chatId_userId: { chatId, userId } }, data: { muted: dto.action === 'mute' } });
+    if (dto.action === 'block') await this.prisma.userBlock.upsert({ where: { blockerId_blockedId: { blockerId: userId, blockedId: peer.userId } }, create: { blockerId: userId, blockedId: peer.userId }, update: {} });
+    if (dto.action === 'unblock') await this.prisma.userBlock.deleteMany({ where: { blockerId: userId, blockedId: peer.userId } });
+    if (dto.action === 'report') {
+      if (!dto.reason?.trim()) throw new BadRequestException('Укажите причину жалобы');
+      await this.prisma.supportTicket.create({ data: { userId, topic: 'Жалоба на собеседника', message: `Чат: ${chatId}; пользователь: ${peer.userId}\n${dto.reason}` } });
+    }
+    return this.details(chatId, userId);
+  }
+
   async getOrCreateByListing(listingId: string, userId: string) {
     const listing = await this.prisma.listing.findUnique({
       where: { id: listingId },
@@ -216,6 +255,7 @@ export class ChatsService {
           select: {
             userId: true,
             lastReadAt: true,
+            muted: true,
             user: {
               select: {
                 id: true,
@@ -266,6 +306,7 @@ export class ChatsService {
         : 'neutral';
       return {
         id: c.id,
+        muted: c.users.find(u => u.userId === userId)?.muted ?? false,
         updatedAt: c.updatedAt,
         listing: c.listing
           ? {
@@ -337,7 +378,7 @@ export class ChatsService {
     clientMessageId?: string,
     ctx?: { sessionId?: string; anonymousId?: string },
   ) {
-    await this.assertParticipant(chatId, userId);
+    await this.assertCanSend(chatId, userId);
     if (typeof text !== 'string' || !text.trim() || text.length > 4000) {
       throw new BadRequestException('invalid_message_text');
     }
@@ -472,7 +513,7 @@ export class ChatsService {
     chatId: string, userId: string, key: string | undefined,
     fingerprint: string, mediaType: MessageMediaType, text?: string,
   ) {
-    await this.assertParticipant(chatId, userId);
+    await this.assertCanSend(chatId, userId);
     if (text !== undefined && (typeof text !== 'string' || text.length > 4000)) {
       throw new BadRequestException('invalid_media_text');
     }
@@ -487,7 +528,7 @@ export class ChatsService {
       },
     });
     if (!existing) return null;
-    const caption = text?.trim() || (mediaType === 'VIDEO' ? 'Видео' : 'Фото');
+    const caption = text?.trim() || (mediaType === 'AUDIO' ? 'Голосовое сообщение' : mediaType === 'VIDEO' ? 'Видео' : 'Фото');
     if (existing.chatId !== chatId || existing.senderId !== userId ||
         existing.text !== caption || existing.mediaType !== mediaType ||
         existing.mediaFingerprint !== fingerprint || !existing.mediaUrl) {
@@ -518,7 +559,7 @@ export class ChatsService {
         this.prisma.message.create({
           data: {
             ...(id ? { id } : {}), chatId, senderId: userId,
-            text: text?.trim() || (mediaType === 'VIDEO' ? 'Видео' : 'Фото'),
+            text: text?.trim() || (mediaType === 'AUDIO' ? 'Голосовое сообщение' : mediaType === 'VIDEO' ? 'Видео' : 'Фото'),
             mediaUrl, mediaType, mediaFingerprint: fingerprint,
           },
           select: {

@@ -1,3 +1,18 @@
+## 2026-10-21: chat exchanges implemented locally; public push blocked
+
+Branch `feat/chat-exchange-2026-10-20`, base ea6b68c. Direct exchange lifecycle,
+contact details, voice recording, image-backed test seed, return-to-chat creation,
+and completed-exchange reviews implemented. Details and reference mapping:
+`docs/design/barter-2026-10/CHAT_EXCHANGE_IMPLEMENTATION.md`.
+API/web builds, 193 API + 94 web tests, four Chromium UI scenarios and PGlite
+migration/service smoke passed. Native PostgreSQL race/full-chain CI, WebKit,
+physical iPhone and live two-account acceptance remain required before release.
+Test listings are prepared, NOT created on production. Production unchanged.
+Automatic approval review denied public GitHub push for missing explicit public
+publication authorization. Do not retry via another transport; obtain user approval.
+Next: after authorization, push this branch, open PR, run native PostgreSQL and
+browser CI, inspect evidence, then release and run the explicit test-data seed.
+
 ## 2026-10-19: premium image binaries CONFIRMED in PR #79
 
 **Authoritative latest status (supersedes older historical notes below):** 4 distinct premium hero WebP, 16 individual premium category WebP and manifest are committed to `apps/web/public/visual-refresh/premium/` on branch `assets/premium-hero-category-handoff-2026-10-19` in asset commit `c4a82d8eb67afa14fd6b3c5b6f7559df4c21216c`. GitHub readback verified 4 hero files, 16 category files and the manifest. Each binary Git blob SHA was matched against its source, without base64 assets in runtime JS or CSS. Hero/carousel and category components already point at the new paths. PR #79 is DRAFT, not merged; production remains unchanged. CI/visual review and real iPhone/PWA acceptance are separate release gates. Next: review latest GitHub Web quality CI, open resulting light/dark 393×850 and 430×932 screenshots, resolve any regressions, and only then seek explicit release approval. Source PNGs stay in the separately supplied ZIP; browser uses optimized WebP.

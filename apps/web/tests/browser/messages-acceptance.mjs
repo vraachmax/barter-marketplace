@@ -68,6 +68,8 @@ async function install(context, state, theme) {
     if (path.startsWith('/socket.io')) return json({}, 400);
     if (path === '/auth/me') return json(state.user, req.headers().authorization && !state.guest ? 200 : 401);
     if (path === '/chats') return json(state.chats, state.guest ? 401 : state.rejectList ? 503 : 200);
+    if (/^\/chats\/[ab]\/offers$/.test(path)) return json([]);
+    if (/^\/chats\/[ab]\/details$/.test(path)) return json({ muted: false, blocked: false, cannotSend: false, listings: [], favorites: [], media: [] });
     if (path === '/support/templates' || path === '/support/faq') return json([]);
     if (path === '/support/advise') return json({ tip: null, suggestions: [] });
     const media = path.match(/^\/chats\/([ab])\/media$/);
@@ -286,7 +288,7 @@ async function scenario(type, width, theme) {
     checks.push('lost acknowledgement reuses key; new identical message uses a new key');
 
     // Real browser file input and multipart fetch; API persistence here is a fixture.
-    const fileInput = page.getByLabel('Прикрепить фото или видео');
+    const fileInput = page.getByLabel('Прикрепить фото, видео или аудио');
     const image = { name: 'attachment.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=', 'base64') };
     await fileInput.setInputFiles(image);
     await input.fill('Подпись к фото');

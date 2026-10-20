@@ -9,6 +9,8 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<{ status: (code: number) => { json: (body: unknown) => void } }>();
 
+    if (exception.message.includes('exchange_listing_reserved')) return res.status(HttpStatus.CONFLICT).json({ statusCode: 409, message: 'Вещь зарезервирована для обмена. Сначала отмените обмен.' });
+
     if (exception.code === 'P2022') {
       this.logger.error(`DB schema mismatch (missing column): ${exception.message}`);
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({

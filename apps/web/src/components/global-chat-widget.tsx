@@ -24,7 +24,7 @@ export function GlobalChatWidget() {
       .then((r) => (r.ok ? r.json() : []))
       .then((list: ChatSummary[]) => {
         setChats(list);
-        setUnread(list.reduce((s, c) => s + (c.unreadCount ?? 0), 0));
+        setUnread(list.reduce((s, c) => s + (c.muted ? 0 : c.unreadCount ?? 0), 0));
       })
       .catch(() => {});
   }, []);
@@ -40,7 +40,6 @@ export function GlobalChatWidget() {
     const socket = io(SOCKET_URL, { withCredentials: true, transports: ['websocket', 'polling'] });
     socketRef.current = socket;
     socket.on('message-created', () => {
-      setUnread((p) => p + 1);
       loadChats();
     });
     return () => { socket.disconnect(); socketRef.current = null; };

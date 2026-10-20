@@ -85,6 +85,15 @@ export class ReviewsService {
     };
   }
 
+  private async exchangeReviewState(authorId: string, sellerId: string, listingId: string) {
+    const offers = await this.prisma.exchangeOffer.findMany({
+      where: { items: { some: { listingId, ownerId: sellerId } }, OR: [
+        { senderId: authorId, recipientId: sellerId }, { senderId: sellerId, recipientId: authorId },
+      ] }, select: { status: true },
+    });
+    return offers.some(o => o.status === 'COMPLETED') ? 'completed' : offers.length ? 'pending' : 'none';
+  }
+
   async eligibility(authorId: string, listingId: string) {
     const listing = await this.prisma.listing.findUnique({
       where: { id: listingId },
@@ -105,6 +114,10 @@ export class ReviewsService {
     if (existing) {
       return { canReview: false, reason: 'already_reviewed' as const, sellerId, hasExistingReview: true };
     }
+
+    const exchangeState = await this.exchangeReviewState(authorId, sellerId, listingId);
+    if (exchangeState === 'completed') return { canReview: true, reason: 'ok' as const, sellerId };
+    if (exchangeState === 'pending') return { canReview: false, reason: 'exchange_not_completed' as const, sellerId };
 
     const chat = await this.prisma.chat.findFirst({
       where: {
@@ -172,6 +185,9 @@ export class ReviewsService {
     if (!listing) throw new NotFoundException('listing_not_found');
     if (listing.ownerId !== sellerId) throw new BadRequestException('listing_not_owned_by_seller');
 
+    const exchangeState = await this.exchangeReviewState(authorId, sellerId, dto.listingId);
+    if (exchangeState === 'pending') throw new ForbiddenException('Обмен ещё не подтверждён обеими сторонами');
+    if (exchangeState !== 'completed') {
     const chat = await this.prisma.chat.findFirst({
       where: {
         listingId: dto.listingId,
@@ -190,6 +206,8 @@ export class ReviewsService {
     ]);
     if (nAuthor < 1 || nSeller < 1) {
       throw new ForbiddenException('review_requires_mutual_messages');
+    }
+
     }
 
     return this.prisma.sellerReview.upsert({

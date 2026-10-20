@@ -17,7 +17,7 @@ export default function ListingContactActions({ listingId, sellerId, active, pho
     <div className="listing-contact-actions space-y-3">
       {active ? <>
         <div className="listing-primary-actions">
-          {barterEnabled ? <Button render={<Link href={`/messages?listingId=${listingId}`} />} variant="secondary" size="lg" disabled={!ready}>Обсудить обмен</Button> : null}
+          {barterEnabled ? <Button render={<Link href={`/messages?listingId=${listingId}&exchange=1`} />} variant="secondary" size="lg" disabled={!ready}>Предложить обмен</Button> : null}
           {saleEnabled !== false ? <Button render={<Link href={`/messages?listingId=${listingId}`} />} size="lg" disabled={!ready}>Написать продавцу</Button> : null}
         </div>
         <ShowPhoneButton listingId={listingId} phone={phone} email={email} />

@@ -1333,6 +1333,8 @@ function PostPublishScreen(props: {
   onResetFlow: () => void;
 }) {
   const { listingId, uploadedImages, uploading, onUploadMore, onResetFlow } = props;
+  const [returnChat, setReturnChat] = useState<string | null>(null);
+  useEffect(() => { setReturnChat(sessionStorage.getItem('barter-return-chat')); }, []);
   return (
     <div className="min-h-screen bg-muted text-foreground antialiased">
       <header className="border-b border-border bg-background px-4 py-4">
@@ -1365,6 +1367,7 @@ function PostPublishScreen(props: {
                 Карточка уже видна в поиске. Можно догрузить ещё фото или перейти к объявлению.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
+                {returnChat && <Link className="rounded-xl bg-primary px-4 py-2 text-white" href={`/messages?chatId=${encodeURIComponent(returnChat)}&exchange=1`} onClick={() => sessionStorage.removeItem('barter-return-chat')}>Вернуться к предложению обмена</Link>}
                 <Link
                   href={`/listing/${listingId}`}
                   className="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-bold text-white"
