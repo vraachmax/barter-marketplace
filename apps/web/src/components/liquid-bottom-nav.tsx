@@ -22,7 +22,7 @@ const CREATE_ITEMS = [
 /** The approved prototype, adapted to real routes. No per-frame React renders. */
 export function LiquidBottomNav() {
   const pathname = usePathname();
-  const visible = pathname !== '/new' && !pathname.startsWith('/listing/') && !pathname.startsWith('/games/barter-dash');
+  const visible = pathname !== '/new' && !pathname.startsWith('/listing/') && !pathname.startsWith('/games/barter-dash') && !pathname.startsWith('/auth');
   const activeIndex = NAV_ITEMS.findIndex(item => item.match(pathname));
   const [menuOpen, setMenuOpen] = useState(false);
 

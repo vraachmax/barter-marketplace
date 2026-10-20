@@ -1,0 +1,163 @@
+/* Approved 20 Oct Barter auth reference: white iOS surface, orange signature,
+   soft gray input pills and clear action hierarchy. Scoped to /auth only. */
+.barter-auth {
+  --auth-orange: #ff5a0a;
+  --auth-ink: #0b0b0e;
+  --auth-muted: #6e7381;
+  --auth-field: #f2f2f5;
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  min-height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+  color: var(--auth-ink);
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+}
+.barter-auth *, .barter-auth *::before, .barter-auth *::after { box-sizing: border-box; }
+.barter-auth__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+  padding: clamp(23px,3.2vh,40px) 20px max(32px, env(safe-area-inset-bottom, 0px));
+}
+.barter-auth__orb {
+  position: absolute; z-index: 0;
+  width: 470px;
+  height: 342px;
+  top: 12px;
+  left: calc(50% + 5px);
+  transform: translateX(-5%);
+  pointer-events: none;
+  opacity: .67;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 17%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent, #000 17%, #000 78%, transparent 100%);
+}
+.barter-auth__orb svg {display:block;width:100%;height:100%;}
+.barter-auth__brand-row { min-height: 44px; display: flex; align-items:center; }
+.barter-auth__brand {
+  display:inline-flex; align-items:center; gap:11px;
+  text-decoration:none; color:var(--auth-ink); width:fit-content;
+  min-height:44px; border-radius:10px;
+}
+.barter-auth__brand-mark { width:38px; height:42px; object-fit:contain; }
+.barter-auth__brand-word {
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.055em;
+  white-space: nowrap;
+}
+.barter-auth__intro { margin-top: clamp(33px,5vh,56px); max-width: 380px; }
+.barter-auth__intro h1 {
+  margin:0; font-size:clamp(33px,9vw,40px);
+  line-height:1.11; letter-spacing:-.042em; font-weight:850;
+}
+.barter-auth__intro p {
+  margin:12px 0 0; color:#666b78;
+  font-size: 16px; line-height:1.45; font-weight:400;
+}
+.barter-auth__form { margin-top: 26px; display:flex; flex-direction:column; gap:11px; }
+.barter-auth__field {
+  display:flex; align-items:center; gap:14px;
+  background:var(--auth-field); border-radius:19px;
+  width:100%; height:52px; padding:0 15px;
+  color:#7d8595; border:1px solid transparent;
+  transition: border-color .16s ease, background .16s ease;
+}
+.barter-auth__field:focus-within { border-color: #ff8a50; background:#f7f7f9; }
+.barter-auth__field > svg { flex-shrink:0; }
+.barter-auth__field input {
+  display:block; flex:1; min-width:0; height:100%;
+  border:0; outline:0; box-shadow:none;
+  background:transparent; color:var(--auth-ink);
+  font:inherit; font-size:16px;
+}
+.barter-auth__field input::placeholder { color:#8990a0; opacity:1; }
+.barter-auth__field-action {
+  flex:0 0 35px; width:35px; height:35px; border:0;
+  display:grid;place-items:center; background:transparent;
+  color:#7f8898;border-radius:50%; cursor:pointer;
+}
+.barter-auth__field-action:active { background:#e3e4e8; }
+.barter-auth__forgot-row {display:flex;justify-content:flex-end;min-height:25px;align-items:center;margin-top:2px;}
+.barter-auth__forgot-row button {
+  color:var(--auth-orange);font-size:13px;font-weight:600;
+  border:0;background:none;cursor:pointer;padding:3px 0;
+}
+.barter-auth__legal {font-size:12px;line-height:1.45;color:#838997;margin:4px 0;}
+.barter-auth__notice {font-size:12px;line-height:1.5;margin:0;padding:10px 12px;border-radius:12px;}
+.barter-auth__notice--error {color:#ab2418;background:#fff1ef;}
+.barter-auth__notice--info {color:#6a4a18;background:#fff3db;}
+.barter-auth__notice--ok {color:#236c41;background:#e8f7ed;}
+.barter-auth__submit {
+  margin-top: 10px; width:100%; min-height:52px;
+  border:0;border-radius:19px;
+  background:linear-gradient(115deg,#ff7316 0%,#ff5707 62%,#ff5a0a 100%);
+  color:#fff; font-size:16px; font-weight:750; cursor:pointer;
+  box-shadow:0 9px 25px rgba(255,90,10,.11);
+}
+.barter-auth__submit:disabled { opacity:.62; cursor:not-allowed; box-shadow:none; }
+.barter-auth__submit:not(:disabled):active { transform:scale(.992); }
+.barter-auth__alternatives {margin-top:11px;display:flex;flex-direction:column;gap:0;}
+.barter-auth__yandex {
+  min-height:52px; width:100%;
+  display:flex;align-items:center;justify-content:center;gap:16px;
+  border:1px solid #d6d8de;border-radius:19px;
+  color:#161619; background:#fff;
+  font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;
+}
+.barter-auth__yandex:active {background:#f7f7f9;}
+.barter-auth__yandex-mark {
+  display:grid;place-items:center;flex:0 0 29px;
+  width:29px;height:29px;border-radius:50%;
+  background:#fc3f1d;color:#fff;
+  font-size:21px;line-height:1;font-weight:750;font-family:Arial,sans-serif;
+}
+.barter-auth__divider {
+  display:flex;gap:15px;align-items:center;justify-content:center;
+  margin:20px 0 18px;color:#808694;font-size:12px;text-transform:lowercase;
+}
+.barter-auth__divider::before,.barter-auth__divider::after {
+  content:'';height:1px;background:#e0e2e7;flex:1;
+}
+.barter-auth__switch {
+  width:100%;min-height:50px;
+  border:0;border-radius:19px;
+  background:#f2f2f5;color:var(--auth-ink);
+  font-size:15px;font-weight:650;cursor:pointer;
+}
+.barter-auth__switch:active {background:#e8e8ed;}
+.barter-auth__footer {
+  margin:24px auto 0;display:flex;align-items:center;
+  justify-content:center;gap:13px;
+  max-width:345px;color:#858c9b;
+  font-size:12px;line-height:1.55;
+}
+.barter-auth__footer svg {flex:0 0 25px;}
+.barter-auth button:focus-visible,.barter-auth a:focus-visible {
+  outline:2px solid #ff5a0a; outline-offset:3px;
+}
+@media (max-width:359px) {
+  .barter-auth__content {padding-inline:16px;}
+  .barter-auth__brand-word {font-size:24px;}
+  .barter-auth__intro {margin-top:30px;}
+  .barter-auth__intro h1 {font-size:32px;}
+  .barter-auth__intro p {font-size:14px;}
+  .barter-auth__form {margin-top:20px;gap:9px;}
+  .barter-auth__footer {font-size:11px;}
+}
+@media (min-width:768px) {
+  .barter-auth__content {max-width:480px;padding-top:64px;padding-bottom:70px;}
+  .barter-auth__orb {left:50%;width:650px;height:430px;top:42px;}
+  .barter-auth__intro {margin-top:58px;}
+  .barter-auth__form {margin-top:32px;}
+}
+@media (prefers-reduced-motion:reduce) {
+  .barter-auth * {transition:none!important;}
+}

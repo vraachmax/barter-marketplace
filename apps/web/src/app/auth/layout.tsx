@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './auth-reference.css';
 
 export const metadata: Metadata = {
   title: 'Вход и регистрация',
