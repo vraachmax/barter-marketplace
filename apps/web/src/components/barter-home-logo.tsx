@@ -102,7 +102,7 @@ export function BarterHomeLogo() {
     >
       <span className="inline-flex items-center gap-3">
         <Image
-          src="/brand/claude-mark.png"
+          src="/brand/bubble-b-v3.svg"
           alt=""
           width={179}
           height={199}
@@ -110,7 +110,7 @@ export function BarterHomeLogo() {
           unoptimized
           className="h-[37px] w-[33px] shrink-0 object-contain md:h-10 md:w-9"
         />
-        <Image src="/brand/claude-word.png" alt="БАРТЕР" width={377} height={66} unoptimized className="brand-reference-word h-[21px] w-auto object-contain md:h-[24px]" />
+        <span className="brand-wordmark-sharp" aria-hidden="true">БАРТЕР</span>
         <span className="sr-only">БАРТЕР</span>
       </span>
     </Link>

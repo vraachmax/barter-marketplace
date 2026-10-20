@@ -155,8 +155,24 @@ html[data-theme='dark'] {
 
 /* Premium approved category atlas, exported to 16 unique, circular WebP files.
    All actual category IDs and links remain sourced from the live API. */
-.brand-reference-word { display:block; }
-html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
+/* iOS PWA: avoid WebKit raster downsampling of the header wordmark. */
+.brand-wordmark-sharp {
+  display:block;
+  color:var(--fg-default);
+  font-family:var(--font-sans),Arial,sans-serif;
+  font-size:21px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-.055em;
+  white-space:nowrap;
+  filter:none;
+  -webkit-filter:none;
+  text-shadow:none;
+  transform:none;
+}
+@media (min-width:768px) {
+  .brand-wordmark-sharp { font-size:24px; }
+}
 .home-category-tile[data-reference-bubble='true'] > span:first-child {
   position:relative; overflow:hidden; border-radius:50%;
   background:transparent !important; box-shadow:none !important;

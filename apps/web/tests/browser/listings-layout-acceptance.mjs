@@ -784,14 +784,23 @@ async function scenario(browserType, width, theme) {
     const logo = page.getByRole('link', { name: 'Бартер — на главную', exact: true }).filter({ visible: true });
     await expect(logo).toBeVisible();
     await expect(logo).toContainText('БАРТЕР');
-    // The approved logo is two real image assets: mark + Cyrillic wordmark.
-    const brandImages = await logo.locator('img').all();
-    assert.equal(brandImages.length, 2, 'mark and wordmark');
-    for (const brandImage of brandImages) {
-      await expect(brandImage).toHaveJSProperty('complete', true);
-      assert(await brandImage.evaluate(img => img.naturalWidth > 0), 'brand artwork is loaded');
-      await contained(brandImage);
-    }
+    // Native Cyrillic type and vector artwork avoid raster downscaling blur.
+    const brandMark = logo.locator('img');
+    await expect(brandMark).toHaveCount(1);
+    await expect(brandMark).toHaveAttribute('src', '/brand/bubble-b-v3.svg');
+    await expect(brandMark).toHaveJSProperty('complete', true);
+    assert(await brandMark.evaluate(img => img.naturalWidth > 0), 'vector mark is loaded');
+    const brandWord = logo.locator('.brand-wordmark-sharp');
+    await expect(brandWord).toHaveText('БАРТЕР');
+    const wordStyle = await brandWord.evaluate(el => {
+      const c = getComputedStyle(el);
+      return {filter:c.filter, shadow:c.textShadow, weight:Number(c.fontWeight)};
+    });
+    assert.equal(wordStyle.filter, 'none');
+    assert.equal(wordStyle.shadow, 'none');
+    assert(wordStyle.weight >= 800);
+    await contained(brandMark);
+    await contained(brandWord);
     await contained(logo);
     if (width < 768) {
       // Desktop WebKit has no physical notch. Exercise a nonzero safe area,
@@ -823,14 +832,17 @@ async function scenario(browserType, width, theme) {
       await page.evaluate(() => document.documentElement.style.removeProperty('--safe-area-top'));
       checks.push('opaque logo header, safe area plus 8px, and unobstructed branding');
     }
-    const markBox = await brandImages[0].boundingBox();
-    const wordBox = await brandImages[1].boundingBox();
+    const markBox = await brandMark.boundingBox();
+    const wordBox = await brandWord.boundingBox();
     assert(markBox.x + markBox.width <= wordBox.x, 'wordmark must not overlap the mark');
     assert(Math.abs(markBox.y + markBox.height / 2 - wordBox.y - wordBox.height / 2) < 1,
       'mark and name share a vertical center');
     const markResponse = await page.request.get(baseURL + '/brand/claude-mark.png');
     assert.equal(markResponse.status(), 200);
     await assertApprovedOrangeMark(await markResponse.body());
+    const svgLogo = await page.request.get(baseURL + '/brand/bubble-b-v3.svg');
+    assert.equal(svgLogo.status(), 200);
+    assert((await svgLogo.text()).includes('<svg'));
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
