@@ -1872,8 +1872,11 @@ html[data-theme='dark'] .brand-reference-word { filter:invert(1); }
       box-shadow: none;
       isolation: isolate;
     }
-    body .magic-nav {
-      top: auto;
+    /* Body-fixed positioning can use a different viewport on installed iOS.
+       Anchor the dock to the actual app shell, not the body layout viewport. */
+    .app-viewport > .magic-nav {
+      position: absolute !important;
+      top: auto !important;
       bottom: 0 !important;
       height: calc(55px + var(--mobile-dock-inset)) !important;
       padding-bottom: var(--mobile-dock-inset) !important;

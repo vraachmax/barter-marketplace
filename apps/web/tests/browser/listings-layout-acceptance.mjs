@@ -471,6 +471,12 @@ async function scenario(browserType, width, theme) {
       // Regression: the fixed iPhone dock must touch the bottom edge, not
       // float 50-70px above a black blank strip in standalone Safari.
       const dockBox = await dock.boundingBox();
+      const shellBox = await page.locator('.app-viewport').boundingBox();
+      assert(await dock.evaluate(el => el.parentElement?.classList.contains('app-viewport')),
+        'bottom navigation must live inside the app viewport, not next to it');
+      assert(dockBox && shellBox &&
+        Math.abs(dockBox.y + dockBox.height - shellBox.y - shellBox.height) < 2,
+        'bottom navigation must align with the app shell bottom edge');
       assert(dockBox && Math.abs(dockBox.y + dockBox.height - page.viewportSize().height) < 2,
         'mobile dock must extend through the bottom safe area');
       const bottomPadding = await dock.evaluate(el => parseFloat(getComputedStyle(el).paddingBottom) || 0);
