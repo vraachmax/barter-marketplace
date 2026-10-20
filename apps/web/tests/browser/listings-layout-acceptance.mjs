@@ -846,19 +846,24 @@ async function scenario(browserType, width, theme) {
     const apple = page.locator('link[rel="apple-touch-icon"]');
     await expect(apple).toHaveCount(1);
     const appleHref = await apple.getAttribute('href');
-    assert.equal(appleHref, '/brand/claude-pwa/apple-touch-icon.png');
+    assert.equal(appleHref, '/brand/barter-pwa-v1/apple-touch-icon.png');
+    assert((await page.locator('link[rel="manifest"]').getAttribute('href')).includes('barter-pwa-v1'), 'manifest cache key is bumped');
     const appleResponse = await page.request.get(baseURL + appleHref);
     assert.equal(appleResponse.status(), 200);
     const appleBytes = await appleResponse.body();
     assert.equal(appleBytes.readUInt32BE(16), 180);
     assert.equal(appleBytes.readUInt32BE(20), 180);
-    await assertArtwork(appleBytes, 0.65);
+    await assertArtwork(appleBytes, 0.75);
+    const rootApple = await page.request.get(baseURL + '/apple-touch-icon.png');
+    assert.equal(rootApple.status(), 200, 'Safari fallback icon exists');
+    assert((await rootApple.body()).equals(appleBytes), 'Safari fallback uses same approved mark');
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
     const manifestResponse = await page.request.get(baseURL + manifestHref);
     assert.equal(manifestResponse.status(), 200);
     const manifest = await manifestResponse.json();
     assert.equal(manifest.short_name, 'БАРТЕР');
     assert.equal(manifest.display, 'standalone');
+    assert(manifest.icons.every(icon => icon.src.startsWith('/brand/barter-pwa-v1/')), 'PWA manifest never references old icon assets');
     assert(manifest.icons.some(icon => icon.purpose === 'maskable' && icon.sizes === '512x512'));
     for (const icon of manifest.icons) {
       const response = await page.request.get(baseURL + icon.src);
@@ -867,15 +872,15 @@ async function scenario(browserType, width, theme) {
       const [w, h] = icon.sizes.split('x').map(Number);
       assert.equal(bytes.readUInt32BE(16), w);
       assert.equal(bytes.readUInt32BE(20), h);
-      await assertArtwork(bytes, icon.purpose === 'maskable' ? 0.52 : 0.65, false, icon.purpose === 'maskable');
+      await assertArtwork(bytes, icon.purpose === 'maskable' ? 0.52 : 0.75, false, icon.purpose === 'maskable');
     }
     assert.equal(await page.locator('link[href="/favicon.svg"]').count(), 0);
     for (const link of await page.locator('link[rel="icon"]').all()) {
       const href = await link.getAttribute('href');
-      assert(href.startsWith('/brand/claude-pwa/'), 'no stale icon candidate');
+      assert(href.startsWith('/brand/barter-pwa-v1/'), 'no stale icon candidate');
       const res = await page.request.get(baseURL + href);
       assert.equal(res.status(), 200);
-      await assertArtwork(await res.body(), 0.7, true);
+      await assertArtwork(await res.body(), 0.75);
     }
     if (key.includes('440')) console.log('BARTER_APPLE_ICON_IMAGE ' + appleBytes.toString('base64'));
     checks.push('full mark bounds, alignment, larger Apple/PWA artwork and maskable safe circle');
