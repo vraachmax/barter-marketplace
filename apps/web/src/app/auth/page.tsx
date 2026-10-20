@@ -92,40 +92,17 @@ export default function AuthPage() {
 
   return (
     <main className="barter-auth" data-auth-screen="reference-2026-10">
+      {/* Approved translucent amber-glass ribbon asset, not a CSS/SVG approximation. */}
       <div className="barter-auth__orb" aria-hidden="true">
-        <svg viewBox="0 0 491 443" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="barter-auth-ribbon" x1="90" y1="330" x2="451" y2="48" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#ffe5bc" stopOpacity=".12"/>
-              <stop offset=".25" stopColor="#ffad59" stopOpacity=".63"/>
-              <stop offset=".51" stopColor="#ff771e" stopOpacity=".75"/>
-              <stop offset=".77" stopColor="#ff983e" stopOpacity=".56"/>
-              <stop offset="1" stopColor="#ffb16b" stopOpacity=".2"/>
-            </linearGradient>
-            <linearGradient id="barter-auth-highlight" x1="122" y1="320" x2="470" y2="75" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#fff7e5" stopOpacity=".1"/>
-              <stop offset=".4" stopColor="white" stopOpacity=".86"/>
-              <stop offset=".66" stopColor="#fffaef" stopOpacity=".9"/>
-              <stop offset="1" stopColor="white" stopOpacity=".02"/>
-            </linearGradient>
-            <radialGradient id="barter-auth-halo" cx="0" cy="0" r="1" gradientTransform="translate(345 220) rotate(159) scale(235 162)" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#ff9b41" stopOpacity=".32"/>
-              <stop offset="1" stopColor="#ff9b41" stopOpacity="0"/>
-            </radialGradient>
-            <filter id="barter-auth-soft" x="-25%" y="-30%" width="150%" height="160%">
-              <feGaussianBlur stdDeviation="12"/>
-            </filter>
-          </defs>
-          <ellipse cx="340" cy="222" rx="243" ry="166" fill="url(#barter-auth-halo)"/>
-          <path d="M520 26C407 21 231 65 114 170C25 251 50 325 170 362C303 405 418 347 522 273"
-            stroke="#ff932f" strokeWidth="78" strokeOpacity=".24" filter="url(#barter-auth-soft)"/>
-          <path d="M520 26C407 21 231 65 114 170C25 251 50 325 170 362C303 405 418 347 522 273"
-            stroke="url(#barter-auth-ribbon)" strokeWidth="55" strokeLinecap="round"/>
-          <path d="M520 46C400 44 239 86 127 185C58 246 75 300 180 334C312 378 414 317 520 260"
-            stroke="url(#barter-auth-highlight)" strokeWidth="6" strokeLinecap="round"/>
-          <path d="M520 92C394 89 271 126 192 198C126 259 137 293 225 306C341 324 444 285 515 232"
-            stroke="#fff9eb" strokeOpacity=".75" strokeWidth="3.5" strokeLinecap="round"/>
-        </svg>
+        <Image
+          src="/auth/amber-glass-ribbon.webp"
+          alt=""
+          width={491}
+          height={443}
+          priority
+          unoptimized
+          className="barter-auth__ribbon-image"
+        />
       </div>
 
       <div className="barter-auth__content">
