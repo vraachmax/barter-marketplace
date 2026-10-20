@@ -875,7 +875,7 @@ export default function MessagesPage() {
                     {listingHref ? <Link href={listingHref}>Посмотреть объявление</Link> : null}
                     <button type="button" onClick={() => { setSupportSheetOpen(true); setThreadActionsOpen(false); }}>Помощь и поддержка</button>
                   </div>
-                ) : null>
+                ) : null}
               </div>
 
               {listingHref && selectedChat.listing ? (
