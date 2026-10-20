@@ -91,3 +91,219 @@ html[data-theme='dark'] .messages-screen.messages-approved-screen .message-bubbl
   .messages-screen.messages-approved-screen .messages-chat-product,
   .messages-screen.messages-approved-screen .messages-chat-preview{line-height:18px}
 }
+
+/* APPROVED CONVERSATION 2026-10-20 — screenshot source:
+   /Barter/Design References/approved-thread-2026-10-20.jpg
+   Content MUST come from the API, never from the illustration. */
+.messages-screen.messages-approved-screen .thread-header{position:relative}
+.messages-screen.messages-approved-screen .thread-menu-button{
+  border:0;background:var(--bg-muted);color:var(--fg-default);
+}
+.messages-screen.messages-approved-screen .thread-actions-popover{
+  position:absolute;z-index:70;right:12px;top:calc(100% + 6px);width:220px;
+  background:var(--bg-surface);color:var(--fg-default);
+  border:1px solid var(--border-default);border-radius:16px;
+  box-shadow:0 12px 30px rgba(12,18,35,.15);padding:6px;display:grid;gap:2px;
+}
+.messages-screen.messages-approved-screen .thread-actions-popover button,
+.messages-screen.messages-approved-screen .thread-actions-popover a{
+  text-align:left;padding:12px;border:0;border-radius:10px;font-size:13px;
+  color:var(--fg-default);background:transparent;
+}
+.messages-screen.messages-approved-screen .thread-actions-popover button:active,
+.messages-screen.messages-approved-screen .thread-actions-popover a:active{background:var(--bg-muted)}
+.messages-screen.messages-approved-screen .thread-date-row{
+  display:flex;justify-content:center;align-items:center;margin:11px 0 17px;
+}
+.messages-screen.messages-approved-screen .thread-date-row span{
+  border-radius:999px;background:var(--bg-muted);color:var(--fg-muted);
+  font-size:12px;line-height:25px;padding:0 15px;font-weight:500;
+}
+.messages-screen.messages-approved-screen .thread-photo-album{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
+  width:100%;min-width:0;max-width:360px;overflow:hidden;
+}
+.messages-screen.messages-approved-screen .thread-album-item{
+  position:relative;display:block;min-width:0;aspect-ratio:.79;
+  border:0;border-radius:10px;overflow:hidden;background:var(--bg-muted);
+}
+.messages-screen.messages-approved-screen .thread-album-item img{
+  display:block;width:100%;height:100%;object-fit:cover;
+}
+.messages-screen.messages-approved-screen .thread-album-more{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-weight:800;font-size:20px;background:rgba(0,0,0,.51);color:#fff;
+}
+.messages-screen.messages-approved-screen .thread-media-attachment button{display:block;width:100%;cursor:zoom-in}
+.messages-screen.messages-approved-screen .thread-input-shell{position:relative;flex:1;min-width:0}
+.messages-screen.messages-approved-screen .thread-input-shell textarea{
+  display:block;width:100%;padding-right:47px;resize:none;
+}
+.messages-screen.messages-approved-screen .thread-emoji-button{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;min-width:39px;height:39px;
+  color:var(--fg-muted);border:0;border-radius:50%;
+}
+.messages-screen.messages-approved-screen .thread-emoji-picker{
+  position:absolute;z-index:80;bottom:calc(100% + 10px);right:0;width:230px;
+  background:var(--bg-surface);border:1px solid var(--border-default);
+  border-radius:18px;padding:10px;box-shadow:0 12px 32px rgba(0,0,0,.14);
+  display:grid;grid-template-columns:repeat(4,1fr);gap:5px;
+}
+.messages-screen.messages-approved-screen .thread-emoji-picker button{
+  display:grid;place-items:center;height:43px;border-radius:9px;font-size:22px;
+}
+.messages-screen.messages-approved-screen .thread-emoji-picker button:active{background:var(--bg-muted)}
+.messages-screen.messages-approved-screen .thread-voice-status{
+  max-width:380px;margin:0 auto 6px;text-align:center;
+  color:var(--fg-muted);font-size:11px;line-height:1.35;
+}
+.messages-screen.messages-approved-screen .thread-gallery-backdrop{
+  position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.94);
+  display:grid;place-items:center;padding:20px;
+}
+.messages-screen.messages-approved-screen .thread-gallery-dialog{
+  position:relative;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;width:min(100%,700px);max-height:95dvh;color:#fff;
+}
+.messages-screen.messages-approved-screen .thread-gallery-dialog > img{
+  max-width:100%;max-height:76dvh;object-fit:contain;border-radius:8px;
+}
+.messages-screen.messages-approved-screen .thread-gallery-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;min-height:54px;padding:4px 6px;
+  font-variant-numeric:tabular-nums;color:#fff;
+}
+.messages-screen.messages-approved-screen .thread-gallery-toolbar button{
+  display:grid;place-items:center;width:44px;height:44px;
+}
+.messages-screen.messages-approved-screen .thread-gallery-navigation{
+  display:flex;justify-content:space-between;width:100%;padding:14px 0;
+}
+.messages-screen.messages-approved-screen .thread-gallery-navigation button{
+  min-width:60px;height:44px;font-size:35px;color:#fff;
+}
+@media(max-width:767px){
+  .messages-screen.messages-approved-screen .thread-header{
+    min-height:76px;height:76px;gap:10px;padding:7px 13px 8px 8px;
+    border:0;background:var(--bg-page);
+  }
+  .messages-screen.messages-approved-screen .thread-header > button[aria-label='Назад к списку']{
+    width:38px;height:44px;min-width:38px;padding:0;
+  }
+  .messages-screen.messages-approved-screen .thread-peer-avatar{
+    width:46px;height:46px;border-radius:50%;overflow:visible;
+  }
+  .messages-screen.messages-approved-screen .thread-peer-avatar img{border-radius:50%}
+  .messages-screen.messages-approved-screen .thread-header .thread-peer-name{
+    font-size:18px;font-weight:760;line-height:23px;letter-spacing:-.45px;
+  }
+  .messages-screen.messages-approved-screen .thread-header .thread-peer-status{
+    font-size:12.5px;line-height:18px;margin-top:1px;
+  }
+  .messages-screen.messages-approved-screen .thread-call-link,
+  .messages-screen.messages-approved-screen .thread-menu-button{
+    display:grid;place-items:center;width:41px;height:41px;
+    min-width:41px;border-radius:15px;background:var(--bg-muted);
+  }
+  .messages-screen.messages-approved-screen .thread-call-link{color:#ff5a0a}
+  .messages-screen.messages-approved-screen .thread-listing-preview{
+    flex-shrink:0;height:82px;min-height:82px;margin:4px 14px 9px;
+    border:0;background:var(--bg-muted);box-shadow:none;
+    border-radius:17px;padding:9px 12px;gap:12px;
+  }
+  .messages-screen.messages-approved-screen .thread-listing-image{
+    width:64px;height:64px;border-radius:13px;background:var(--bg-surface);
+  }
+  .messages-screen.messages-approved-screen .thread-listing-preview strong{
+    display:block;font-size:14.5px;line-height:19px;font-weight:730;letter-spacing:-.2px;
+  }
+  .messages-screen.messages-approved-screen .thread-listing-preview strong:last-child{
+    margin-top:4px;font-size:16px;line-height:20px;font-weight:800;
+  }
+  .messages-screen.messages-approved-screen .thread-listing-meta,
+  .messages-screen.messages-approved-screen .thread-listing-mode{display:none}
+  .messages-screen.messages-approved-screen .thread-listing-chevron{
+    display:block;color:var(--fg-muted);margin-left:auto;flex:none;
+  }
+  .messages-screen.messages-approved-screen[data-thread-open='true'] [data-thread-scroll]{
+    padding:4px 13px 12px;background:var(--bg-page);overscroll-behavior-y:contain;
+  }
+  .messages-screen.messages-approved-screen .messages-bubbles{max-width:100%;gap:9px}
+  .messages-screen.messages-approved-screen .thread-message-width{max-width:100%;gap:7px}
+  .messages-screen.messages-approved-screen .thread-message-avatar{
+    width:30px;height:30px;margin-top:4px;font-size:11px;
+  }
+  .messages-screen.messages-approved-screen .message-bubble{
+    font-size:14.5px;line-height:1.44;padding:10px 12px 10px;
+    border-radius:18px;overflow-wrap:anywhere;box-shadow:none;border:0;
+    position:relative;max-width:100%;
+  }
+  .messages-screen.messages-approved-screen .message-bubble .leading-relaxed{line-height:1.44}
+  .messages-screen.messages-approved-screen .message-bubble .whitespace-pre-wrap::after{
+    display:none;
+  }
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='incoming']{
+    background:#f1f2f5;color:#111318;border-radius:18px 18px 18px 6px;
+    margin-right:42px;margin-bottom:9px;
+  }
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing']{
+    background:#ff5a0a;color:white;border-radius:18px 18px 6px 18px;
+    margin-left:43px;margin-bottom:17px;
+  }
+  .messages-screen.messages-approved-screen .message-bubble [data-message-meta]{
+    position:absolute;bottom:-17px;font-size:10px;line-height:13px;
+    right:0;left:auto;margin:0;color:var(--fg-muted);white-space:nowrap;
+    display:flex;align-items:center;gap:3px;
+  }
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='incoming'] [data-message-meta]{
+    bottom:7px;right:-42px;color:var(--fg-muted);
+  }
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing'] [data-message-meta]{
+    right:1px;bottom:-18px;color:var(--fg-muted);
+  }
+  .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing'] [data-message-meta] svg{
+    width:16px;height:16px;color:#ff5a0a;
+  }
+  .messages-screen.messages-approved-screen .message-bubble[data-photo-album='true']{
+    background:transparent!important;color:var(--fg-default)!important;
+    padding:0;box-shadow:none;border:0;border-radius:0;
+    width:calc(100vw - 95px);max-width:330px;
+    margin-right:10px;margin-bottom:20px;
+  }
+  .messages-screen.messages-approved-screen .message-bubble[data-photo-album='true'] [data-message-meta]{
+    bottom:-18px;right:0;
+  }
+  .messages-screen.messages-approved-screen .thread-photo-album{gap:4px}
+  .messages-screen.messages-approved-screen .thread-album-item{border-radius:10px}
+  .messages-screen.messages-approved-screen .thread-media-attachment{max-width:min(72vw,360px)}
+  .messages-screen.messages-approved-screen .messages-composer{
+    padding:6px 12px max(8px, env(safe-area-inset-bottom, 0px));
+    background:var(--bg-page);border:0;box-shadow:none;
+  }
+  .messages-screen.messages-approved-screen .thread-compose-row{align-items:center;gap:8px}
+  .messages-screen.messages-approved-screen .messages-composer label:has(input[type='file']){
+    width:40px;height:40px;min-width:40px;border-radius:50%;
+    background:var(--bg-muted);color:var(--fg-default);
+  }
+  .messages-screen.messages-approved-screen .thread-input-shell textarea{
+    min-height:42px;height:42px;padding:9px 46px 8px 14px;
+    background:var(--bg-muted);border:0;border-radius:24px;
+    font-size:13.5px;line-height:23px;
+  }
+  .messages-screen.messages-approved-screen .messages-composer button[aria-label='Отправить'],
+  .messages-screen.messages-approved-screen .messages-composer button[aria-label='Голосовой ввод текста']{
+    width:44px;height:44px;min-width:44px;background:#ff5a0a;
+    color:#fff;opacity:1;border-radius:50%;
+  }
+  .messages-screen.messages-approved-screen .thread-gallery-backdrop{padding:12px}
+}
+html[data-theme='dark'] .messages-screen.messages-approved-screen .message-bubble[data-direction='incoming']{
+  background:#2c2d32;color:#f8f9fa;
+}
+html[data-theme='dark'] .messages-screen.messages-approved-screen .message-bubble[data-direction='outgoing']{
+  background:#ff6515;color:white;
+}
+html[data-theme='dark'] .messages-screen.messages-approved-screen .thread-gallery-backdrop{
+  background:rgba(0,0,0,.97);
+}

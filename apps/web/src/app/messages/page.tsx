@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Camera,
   Check,
@@ -10,6 +10,9 @@ import {
   Lightbulb,
   Link2,
   Menu,
+  Mic,
+  Smile,
+  ChevronRight,
   MoreHorizontal,
   SquarePen,
   Repeat2,
@@ -37,6 +40,7 @@ import {
 } from '@/lib/api';
 import { filterChatList, type ChatListFilter } from '@/lib/chat-list';
 import { getChatThumbnailSource } from '@/lib/chat-thumbnail';
+import { collectThreadAlbums, isNewThreadDay, threadDayLabel } from '@/lib/chat-thread-view';
 import { Button } from '@/components/ui/button';
 import { AccountScreenHeader } from '@/components/account-screen-header';
 import { SupportSheet } from '@/components/support-sheet';
@@ -127,6 +131,11 @@ export default function MessagesPage() {
   const [adviseBusy, setAdviseBusy] = useState(false);
   const [adviseDismissed, setAdviseDismissed] = useState(false);
   const [supportSheetOpen, setSupportSheetOpen] = useState(false);
+  const [threadActionsOpen, setThreadActionsOpen] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState('');
+  const [gallery, setGallery] = useState<{ urls: string[]; index: number } | null>(null);
   const [openError, setOpenError] = useState('');
   const [openAttempt, setOpenAttempt] = useState(0);
 
@@ -155,6 +164,7 @@ export default function MessagesPage() {
   const quickReplies = myRole === 'seller' ? quickRepliesSeller : quickRepliesBuyer;
 
   const filteredChats = useMemo(() => filterChatList(chats, listQuery, listFilter), [chats, listQuery, listFilter]);
+  const { starts: photoAlbums, hidden: hiddenAlbumPhotos } = useMemo(() => collectThreadAlbums(messages), [messages]);
 
   const totalUnread = useMemo(() => chats.reduce((acc, c) => acc + (c.unreadCount ?? 0), 0), [chats]);
 
@@ -522,6 +532,43 @@ export default function MessagesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChatId, myRole]);
 
+  function startVoiceInput() {
+    type Recognition = {
+      lang: string;
+      interimResults: boolean;
+      onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+      onerror: (() => void) | null;
+      start(): void;
+    };
+    const browser = window as Window & {
+      SpeechRecognition?: new () => Recognition;
+      webkitSpeechRecognition?: new () => Recognition;
+    };
+    const Ctor = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
+    if (!Ctor) {
+      setVoiceNotice('Для голосового ввода используйте микрофон клавиатуры.');
+      composerRef.current?.focus();
+      return;
+    }
+    try {
+      const recognition = new Ctor();
+      recognition.lang = 'ru-RU';
+      recognition.interimResults = false;
+      recognition.onresult = event => {
+        const words = Array.from(event.results).map(result => result[0]?.transcript ?? '').join(' ').trim();
+        if (words) setText(previous => previous.trim() ? previous.trim() + ' ' + words : words);
+        setVoiceNotice('');
+        composerRef.current?.focus();
+      };
+      recognition.onerror = () => setVoiceNotice('Голосовой ввод недоступен. Используйте микрофон клавиатуры.');
+      recognition.start();
+      setVoiceNotice('Говорите. Распознанный текст появится в поле ввода.');
+    } catch {
+      setVoiceNotice('Используйте микрофон клавиатуры для диктовки.');
+      composerRef.current?.focus();
+    }
+  }
+
   function insertQuickReply(template: SupportTemplate) {
     const current = text.trim();
     const next = current ? `${current} ${template.text}` : template.text;
@@ -815,14 +862,20 @@ export default function MessagesPage() {
                     <Phone size={20} strokeWidth={1.8} aria-hidden />
                   </a>
                 ) : null}
-                <button
-                  type="button"
-                  className="grid size-11 shrink-0 place-items-center rounded-full text-foreground transition hover:bg-muted"
-                  onClick={() => setSupportSheetOpen(true)}
-                  aria-label="Меню помощи"
-                >
-                  <Menu size={22} strokeWidth={1.8} aria-hidden />
+                <button type="button" className="thread-menu-button grid size-11 shrink-0 place-items-center rounded-full"
+                  onClick={() => setThreadActionsOpen(value => !value)}
+                  aria-label="Действия с перепиской" aria-expanded={threadActionsOpen}>
+                  <MoreHorizontal size={22} strokeWidth={1.8} aria-hidden />
                 </button>
+                {threadActionsOpen ? (
+                  <div className="thread-actions-popover" role="group" aria-label="Действия с перепиской">
+                    <button type="button" onClick={() => { setShowQuickReplies(value => !value); setThreadActionsOpen(false); }}>
+                      {showQuickReplies ? 'Скрыть быстрые ответы' : 'Быстрые ответы'}
+                    </button>
+                    {listingHref ? <Link href={listingHref}>Посмотреть объявление</Link> : null}
+                    <button type="button" onClick={() => { setSupportSheetOpen(true); setThreadActionsOpen(false); }}>Помощь и поддержка</button>
+                  </div>
+                ) : null>
               </div>
 
               {listingHref && selectedChat.listing ? (
@@ -839,14 +892,15 @@ export default function MessagesPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <strong className="block truncate text-[15px] leading-[18px]">{selectedChat.listing.title}</strong>
-                    <span className="mt-[3px] block truncate text-[10.5px] leading-[14px] text-muted-foreground">{selectedChat.listing.category?.title ?? selectedChat.listing.city}</span>
+                    <span className="thread-listing-meta mt-[3px] block truncate text-[10.5px] leading-[14px] text-muted-foreground">{selectedChat.listing.category?.title ?? selectedChat.listing.city}</span>
                     <strong className="mt-[5px] block text-[14.5px] leading-5">
                       {selectedChat.listing.priceRub == null ? 'Цена по запросу' : selectedChat.listing.priceRub.toLocaleString('ru-RU') + ' ₽'}
                     </strong>
                   </div>
-                  <span className="max-w-[100px] shrink-0 self-end pb-2 text-right text-[11.5px] leading-tight text-[#ff5a0a]">
+                  <span className="thread-listing-mode max-w-[100px] shrink-0 self-end pb-2 text-right text-[11.5px] leading-tight text-[#ff5a0a]">
                     {getChatTradeLabel(selectedChat.listing)}
                   </span>
+                  <ChevronRight className="thread-listing-chevron hidden" size={21} strokeWidth={1.8} aria-hidden />
                 </Link>
               ) : null}
 
@@ -860,10 +914,20 @@ export default function MessagesPage() {
                       Напишите первое сообщение — обычно отвечают быстрее, если указать удобное время связи.
                     </div>
                   ) : null}
-                  {messages.map((m) => {
+                  {messages.map((m, index) => {
+                    if (hiddenAlbumPhotos.has(m.id)) return null;
+                    const previous = messages[index - 1];
+                    const dayChip = isNewThreadDay(m.createdAt, previous?.createdAt)
+                      ? <div className="thread-date-row"><span>{threadDayLabel(m.createdAt)}</span></div>
+                      : null;
+                    const album = photoAlbums.get(m.id);
+                    const albumUrls = album?.map(photo => resolveAssetUrl(photo.mediaUrl))
+                      .filter((url): url is string => Boolean(url)) ?? [];
                     if (m.isAssistant) {
                       return (
-                        <div key={m.id} className="flex justify-center px-1">
+                        <Fragment key={m.id}>
+                          {dayChip}
+                          <div className="flex justify-center px-1">
                           <div className="max-w-[min(100%,560px)] rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-[15px] text-foreground">
                             <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-accent">
                               <span className="grid h-7 w-7 place-items-center rounded-lg bg-accent/10 text-white shadow-sm">
@@ -884,6 +948,7 @@ export default function MessagesPage() {
                             </div>
                           </div>
                         </div>
+                      </Fragment>
                       );
                     }
                     const isPeer = m.senderId === selectedChat.peer?.id;
@@ -891,7 +956,9 @@ export default function MessagesPage() {
                     // Пузырь «моих» сообщений красим в цвет режима чата:
                     // брендовый оранжевый используется в обоих режимах.
                     return (
-                      <div key={m.id} className={`flex ${isPeer ? 'justify-start' : 'justify-end'}`}>
+                      <Fragment key={m.id}>
+                        {dayChip}
+                        <div className={`flex ${isPeer ? 'justify-start' : 'justify-end'}`}>
                         <div
                           className={`thread-message-width flex max-w-[88%] md:max-w-[min(80%,520px)] gap-2 ${isPeer ? 'flex-row' : 'flex-row-reverse'}`}
                         >
@@ -903,32 +970,52 @@ export default function MessagesPage() {
                             от правого края экрана на лишние ~40px).
                           */}
                           {isPeer ? (
-                            <div className="mt-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-foreground md:flex">
-                              {peerInitials(selectedChat.peer)}
-                            </div>
+                            <div className="thread-message-avatar mt-1 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-[11px] font-bold text-foreground">
+                               {peerAvatarSrc ? (
+                                 // eslint-disable-next-line @next/next/no-img-element
+                                 <img src={peerAvatarSrc} alt="" className="h-full w-full object-cover" />
+                               ) : peerInitials(selectedChat.peer)}
+                             </div>
                           ) : null}
                           <div
                             data-direction={isPeer ? "incoming" : "outgoing"}
+                             data-photo-album={albumUrls.length > 1 ? "true" : undefined}
                             className={`message-bubble min-w-0 rounded-[19px] px-[15px] pt-[11px] pb-[7px] text-[12.8px] leading-[18px] shadow-none ${
  isPeer
  ? 'rounded-bl-md border border-border/60 bg-card text-foreground'
  : 'rounded-br-md text-white'
  }`}
                           >
-                            {mediaFull ? (
-                              <div
-                                className={`mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-border' : 'border border-white/20'}`}
-                              >
+                            {albumUrls.length > 1 ? (
+                              <div className="thread-photo-album" aria-label={'Фотографии: ' + albumUrls.length}>
+                                {albumUrls.slice(0, 4).map((url, photoIndex) => (
+                                  <button type="button" key={url + photoIndex} className="thread-album-item"
+                                    aria-label={'Открыть фотографию ' + (photoIndex + 1) + ' из ' + albumUrls.length}
+                                    onClick={() => setGallery({ urls: albumUrls, index: photoIndex })}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={url} alt="" loading="lazy" />
+                                    {photoIndex === 3 && albumUrls.length > 4 ? (
+                                      <span className="thread-album-more">+{albumUrls.length - 4}</span>
+                                    ) : null}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : mediaFull ? (
+                              <div className={`thread-media-attachment mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-border' : 'border border-white/20'}`}>
                                 {m.mediaType === 'VIDEO' ? (
                                   <video src={mediaFull} controls className="max-h-64 w-full object-contain" />
                                 ) : (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={mediaFull} alt="Вложение" className="max-h-64 w-full object-contain" />
+                                  <button type="button" onClick={() => setGallery({ urls: [mediaFull], index: 0 })}
+                                    aria-label="Открыть фотографию">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={mediaFull} alt="Вложение" className="max-h-64 w-full object-contain" />
+                                  </button>
                                 )}
                               </div>
                             ) : null}
-                            {m.text ? <div className="whitespace-pre-wrap leading-relaxed [overflow-wrap:anywhere]">{m.text}</div> : null}
-                            <div
+                            {m.text && !(m.mediaType === 'IMAGE' && m.text.trim() === 'Фото')
+                              ? <div className="whitespace-pre-wrap leading-relaxed [overflow-wrap:anywhere]">{m.text}</div> : null}
+                                                        <div
                               data-message-meta
                               className={`mt-1.5 flex items-center gap-2 text-[10px] ${
  isPeer ? 'justify-end text-muted-foreground' : 'justify-end text-white/80'
@@ -951,6 +1038,7 @@ export default function MessagesPage() {
                           </div>
                         </div>
                       </div>
+                    </Fragment>
                     );
                   })}
 
@@ -1029,7 +1117,7 @@ export default function MessagesPage() {
                   <Button variant="outline" className="mt-2" disabled={busy} onClick={() => void loadMessages(selectedChatId)}>Обновить переписку</Button>
                 </div> : null}
                 {/* Quick replies chips */}
-                {quickReplies.length > 0 ? (
+                {quickReplies.length > 0 && showQuickReplies ? (
                   <div className="mx-auto mb-1.5 flex max-w-3xl items-center gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Быстро:
@@ -1061,7 +1149,8 @@ export default function MessagesPage() {
                     </button>
                   </div>
                 ) : null}
-                <div className="mx-auto flex max-w-3xl items-end gap-2">
+                {voiceNotice ? <div className="thread-voice-status" role="status">{voiceNotice}</div> : null}
+                <div className="thread-compose-row mx-auto flex max-w-3xl items-end gap-2">
                   <label className="relative grid size-11 shrink-0 cursor-pointer place-items-center rounded-full bg-muted/60 text-muted-foreground transition focus-within:ring-2 focus-within:ring-primary hover:text-primary">
                     <Plus size={22} strokeWidth={1.8} aria-hidden />
                     <input
@@ -1076,6 +1165,7 @@ export default function MessagesPage() {
                       accept="image/*,video/*"
                     />
                   </label>
+                  <div className="thread-input-shell">
                   <textarea
                     ref={composerRef}
                     rows={1}
@@ -1100,24 +1190,39 @@ export default function MessagesPage() {
                     }}
                     disabled={busy}
                   />
+                  <button type="button" className="thread-emoji-button" aria-label="Выбрать эмодзи"
+                    aria-expanded={emojiOpen} onClick={() => setEmojiOpen(value => !value)}>
+                    <Smile size={22} strokeWidth={1.7} aria-hidden />
+                  </button>
+                  {emojiOpen ? (
+                    <div className="thread-emoji-picker" role="group" aria-label="Эмодзи">
+                      {['😊', '👍', '❤️', '🔥', '🙂', '😂', '🙏', '👌', '🎉', '😉', '🤝', '✨'].map(emoji => (
+                        <button type="button" key={emoji} onClick={() => {
+                          setText(previous => previous + emoji);
+                          setEmojiOpen(false); composerRef.current?.focus();
+                        }}>{emoji}</button>
+                      ))}
+                    </div>
+                  ) : null}
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
-                      if (selectedFile) {
-                        sendAttachment();
-                      } else {
-                        sendMessage();
-                      }
+                      if (!selectedFile && !text.trim()) startVoiceInput();
+                      else if (selectedFile) void sendAttachment();
+                      else void sendMessage();
                     }}
-                    disabled={busy || threadStatus !== 'ready' || (text.trim().length === 0 && !selectedFile)}
-                    aria-label="Отправить"
+                    disabled={busy || threadStatus !== 'ready'}
+                    aria-label={text.trim().length === 0 && !selectedFile ? 'Голосовой ввод текста' : 'Отправить'}
                     className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 md:w-auto md:px-4"
                   >
                     {busy ? (
                       <span className="inline-block size-4 animate-spin rounded-full border-2 border-white/40 border-t-transparent" aria-hidden />
                     ) : (
                       <>
-                        <Send size={18} strokeWidth={2} className="md:hidden" aria-hidden />
+                        {text.trim().length === 0 && !selectedFile
+                           ? <Mic size={21} strokeWidth={2} className="md:hidden" aria-hidden />
+                           : <Send size={18} strokeWidth={2} className="md:hidden" aria-hidden />}
                         <span className="hidden text-sm font-semibold md:inline">Отправить</span>
                       </>
                     )}
@@ -1129,6 +1234,25 @@ export default function MessagesPage() {
         </section>
       </div>
 
+      {gallery ? (
+        <div className="thread-gallery-backdrop" role="presentation" onClick={() => setGallery(null)}>
+          <div className="thread-gallery-dialog" role="dialog" aria-modal="true" aria-label="Просмотр вложений"
+            onClick={event => event.stopPropagation()}>
+            <div className="thread-gallery-toolbar">
+              <span>{gallery.index + 1} / {gallery.urls.length}</span>
+              <button type="button" aria-label="Закрыть галерею" onClick={() => setGallery(null)}><X size={25} /></button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={gallery.urls[gallery.index]} alt={'Фотография ' + (gallery.index + 1)} />
+            {gallery.urls.length > 1 ? (
+              <div className="thread-gallery-navigation">
+                <button type="button" aria-label="Предыдущая фотография" onClick={() => setGallery(g => g && ({ ...g, index: (g.index - 1 + g.urls.length) % g.urls.length }))}>‹</button>
+                <button type="button" aria-label="Следующая фотография" onClick={() => setGallery(g => g && ({ ...g, index: (g.index + 1) % g.urls.length }))}>›</button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       {/* Закреплённый support-chat sheet */}
       <SupportSheet open={supportSheetOpen} onClose={() => setSupportSheetOpen(false)} />
     </div>
