@@ -367,7 +367,7 @@ async function renderHome(sp: HomeSearchParams) {
     electronics: 'electronics', auto: 'auto', realty: 'realty', clothes: 'clothes',
     hobby: 'hobby', special_equipment: 'special_equipment', services: 'services',
     parts: 'parts', furniture: 'furniture', kids: 'kids', home: 'home',
-    sports: 'sports', beauty: 'beauty', pets: 'pets', photo: 'photo', all: 'all',
+    sports: 'sports', beauty: 'beauty', pets: 'pets', photo: 'photo', all: 'all', job: 'job',
   };
   const categoryArt = (cat: { slug: string; name: string }): string => {
     const label = (cat.slug + ' ' + cat.name).toLowerCase();

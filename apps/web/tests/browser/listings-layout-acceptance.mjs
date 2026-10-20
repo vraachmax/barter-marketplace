@@ -1155,15 +1155,19 @@ async function captureReferenceViewport(theme, width = 393, height = 850) {
       ];
       const iconFiles = [
         'electronics','auto','realty','clothes','hobby','special_equipment','services','parts',
-        'furniture','kids','home','sports','beauty','pets','photo','all',
+        'furniture','kids','home','sports','beauty','pets','photo','all','job',
       ].map(name => 'categories/' + name + '.webp');
       const premiumAssets = await page.evaluate(async paths => Promise.all(paths.map(async path => {
         const response = await fetch('/visual-refresh/premium/' + path);
         return { path, ok: response.ok, type: response.headers.get('content-type'), bytes: (await response.blob()).size };
       })), [...heroFiles, ...iconFiles]);
-      assert(premiumAssets.length === 20 && premiumAssets.every(asset =>
+      assert(premiumAssets.length === 21 && premiumAssets.every(asset =>
         asset.ok && /image\/webp/.test(asset.type ?? '') && asset.bytes > 5000),
-        'all four distinct hero WebP and sixteen category files must be served, nonempty and of WebP type');
+        'all four distinct hero WebP and seventeen category files must be served, nonempty and of WebP type');
+      const jobAsset = premiumAssets.find(asset => asset.path === 'categories/job.webp');
+      const otherAsset = premiumAssets.find(asset => asset.path === 'categories/all.webp');
+      assert(jobAsset && otherAsset && jobAsset.bytes !== otherAsset.bytes,
+        'Работа and Другое must have distinct category images');
       const heroImages = await page.locator('.barter-hero-carousel__slide .barter-hero-carousel__art')
         .evaluateAll(els => els.map(el => el.getAttribute('src')));
       assert.deepEqual(heroImages,
