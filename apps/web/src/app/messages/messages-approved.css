@@ -39,7 +39,7 @@ html[data-theme='dark'] .messages-approved-screen .messages-head-compose{backgro
   .messages-screen.messages-approved-screen .messages-list-filter[aria-pressed='true']{background:#ff5a0a;color:#fff;font-weight:650}
   .messages-screen.messages-approved-screen .messages-chat-list{padding:6px 14px 20px}
   .messages-screen.messages-approved-screen .messages-chat-item{border-bottom:1px solid var(--border-default)}
-  .messages-screen.messages-approved-screen .messages-chat-row{min-height:85px;padding:11px 0;gap:11px;border-radius:0;background:transparent;box-shadow:none;ring:0}
+  .messages-screen.messages-approved-screen .messages-chat-row{min-height:85px;padding:11px 0;gap:11px;border-radius:0;background:transparent;box-shadow:none;outline-offset:2px}
   .messages-screen.messages-approved-screen .messages-chat-row.is-active{background:var(--bg-muted)}
   .messages-screen.messages-approved-screen .messages-chat-row:active{background:var(--bg-muted)}
   .messages-screen.messages-approved-screen .messages-chat-thumb{width:56px;height:56px;border-radius:13px}

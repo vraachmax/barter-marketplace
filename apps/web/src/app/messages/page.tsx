@@ -671,6 +671,7 @@ export default function MessagesPage() {
                 const peer = c.peer;
                 const unread = c.unreadCount > 0;
                 const chatMode = getChatMode(c.listing);
+                const exchangeBadge = chatMode === 'barter' && listFilter !== 'purchase';
                 const unreadCountLabel = c.unreadCount > 9 ? '9+' : String(c.unreadCount);
                 return (
                   <li key={c.id} className="messages-chat-item">
@@ -694,9 +695,9 @@ export default function MessagesPage() {
                       </span>
                       <span className="messages-chat-trailing">
                         <span className="messages-chat-time">{formatListTime(c.lastMessage?.createdAt ?? c.updatedAt)}</span>
-                        <span className={chatMode === 'barter' ? 'messages-mode-badge is-exchange' : 'messages-mode-badge'}>
-                          {chatMode === 'barter' ? <Repeat2 size={12} strokeWidth={1.8} aria-hidden /> : null}
-                          {getChatTradeLabel(c.listing)}
+                        <span className={exchangeBadge ? 'messages-mode-badge is-exchange' : 'messages-mode-badge'}>
+                          {exchangeBadge ? <Repeat2 size={12} strokeWidth={1.8} aria-hidden /> : null}
+                          {exchangeBadge ? 'Обмен' : 'Покупка'}
                         </span>
                         {unread ? <span className="messages-unread-bubble">{unreadCountLabel}</span> : null}
                       </span>
