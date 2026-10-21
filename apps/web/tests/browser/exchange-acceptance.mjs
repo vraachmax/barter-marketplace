@@ -155,6 +155,45 @@ try {
     await incomingVoice.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
     await expect(incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true})).toBeVisible();
     await incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true}).click();
+    // Fake only microphone capture: production composer/recording state and UI
+    // are exercised unchanged in both Chromium and iPhone-sized WebKit.
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) },
+      });
+      class FakeRecorder {
+        static isTypeSupported(type) { return type === 'audio/webm'; }
+        constructor(_stream, options) { this.mimeType=options.mimeType; this.state='inactive'; this.onstop=null; this.ondataavailable=null; this.onerror=null; }
+        start() { this.state='recording'; }
+        stop() {
+          this.state='inactive';
+          this.ondataavailable?.({ data: new Blob([new Uint8Array(2048).fill(1)], { type: this.mimeType }) });
+          this.onstop?.();
+        }
+      }
+      Object.defineProperty(window, 'MediaRecorder', { configurable: true, value: FakeRecorder });
+    });
+    const recordButton = page.getByRole('button',{name:'Записать голосовое сообщение'});
+    await recordButton.click();
+    const recordingUi=page.getByRole('group',{name:'Идёт запись голосового сообщения'});
+    await expect(recordingUi).toBeVisible();
+    await expect(recordingUi.getByRole('timer')).toHaveText(/^00:\\d\\d$/);
+    await expect(recordingUi.locator('.thread-voice-recorder-wave span')).toHaveCount(23);
+    await page.screenshot({path:join(output,`recording-${width}-${theme}.png`)});
+    await recordingUi.getByRole('button',{name:'Отменить запись голосового сообщения'}).click();
+    await expect(recordingUi).toHaveCount(0);
+    await expect(page.getByRole('group',{name:'Голосовое сообщение готово к отправке'})).toHaveCount(0);
+    await recordButton.click();
+    await expect(recordingUi).toBeVisible();
+    await recordingUi.getByRole('button',{name:'Завершить запись голосового сообщения'}).click();
+    const voiceDraft=page.getByRole('group',{name:'Голосовое сообщение готово к отправке'});
+    await expect(voiceDraft).toBeVisible();
+    await expect(page.getByText('Голосовое сообщение.webm')).toHaveCount(0);
+    await expect(page.locator('audio[controls]')).toHaveCount(0);
+    await page.screenshot({path:join(output,`draft-${width}-${theme}.png`)});
+    await voiceDraft.getByRole('button',{name:'Удалить голосовое сообщение'}).click();
+    await expect(voiceDraft).toHaveCount(0);
     if (engine === 'webkit') {
       assert.equal(errors.length,0,errors.join('\n'));
       console.log(`PASS WebKit mobile ${width} ${theme}: voice alignment, playback and speed`);
