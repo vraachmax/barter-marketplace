@@ -178,7 +178,7 @@ try {
     await recordButton.click();
     const recordingUi=page.getByRole('group',{name:'Идёт запись голосового сообщения'});
     await expect(recordingUi).toBeVisible();
-    await expect(recordingUi.getByRole('timer')).toHaveText(/^00:\\d\\d$/);
+    await expect(recordingUi.getByRole('timer')).toHaveText(/^00:[0-9]{2}$/);
     await expect(recordingUi.locator('.thread-voice-recorder-wave span')).toHaveCount(23);
     await page.screenshot({path:join(output,`recording-${width}-${theme}.png`)});
     await recordingUi.getByRole('button',{name:'Отменить запись голосового сообщения'}).click();
