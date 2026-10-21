@@ -972,6 +972,7 @@ export default function MessagesPage() {
                     }
                     const isPeer = m.senderId === selectedChat.peer?.id;
                     const mediaFull = resolveAssetUrl(m.mediaUrl);
+                    const voiceOnly = m.mediaType === 'AUDIO' && Boolean(mediaFull) && (!m.text || m.text.trim() === 'Голосовое сообщение');
                     // Пузырь «моих» сообщений красим в цвет режима чата:
                     // брендовый оранжевый используется в обоих режимах.
                     return (
@@ -998,6 +999,7 @@ export default function MessagesPage() {
                           ) : null}
                           <div
                             data-direction={isPeer ? "incoming" : "outgoing"}
+                            data-voice-only={voiceOnly ? "true" : undefined}
                              data-photo-album={albumUrls.length > 1 ? "true" : undefined}
                             className={`message-bubble min-w-0 rounded-[19px] px-[15px] pt-[11px] pb-[7px] text-[12.8px] leading-[18px] shadow-none ${
  isPeer
@@ -1020,8 +1022,8 @@ export default function MessagesPage() {
                                 ))}
                               </div>
                             ) : mediaFull ? (
-                              <div className={`thread-media-attachment mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-border' : 'border border-white/20'}`}>
-                                {m.mediaType === 'AUDIO' ? <ChatAudio key={mediaFull} src={mediaFull} /> : m.mediaType === 'VIDEO' ? (
+                              <div className={m.mediaType === 'AUDIO' ? 'thread-media-attachment thread-media-attachment--audio' : `thread-media-attachment mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-border' : 'border border-white/20'}`}>
+                                {m.mediaType === 'AUDIO' ? <ChatAudio key={mediaFull} src={mediaFull} outgoing={!isPeer} /> : m.mediaType === 'VIDEO' ? (
                                   <video src={mediaFull} controls className="max-h-64 w-full object-contain" />
                                 ) : (
                                   <button type="button" onClick={() => setGallery({ urls: [mediaFull], index: 0 })}
