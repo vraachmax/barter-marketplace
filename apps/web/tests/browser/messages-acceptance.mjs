@@ -152,7 +152,7 @@ async function scenario(type, width, theme) {
         };
       });
       assert.equal(mobileMetrics.bubbleFont, '14.5px', 'Approved mobile message font');
-      assert.equal(mobileMetrics.bubbleLineHeight, '20.88px', 'Approved mobile message leading');
+      assert(Math.abs(parseFloat(mobileMetrics.bubbleLineHeight) - 14.5 * 1.44) < 0.02, 'Approved mobile message leading (subpixel rounding)');
       assert.equal(mobileMetrics.headerHeight, 76, 'Approved conversation top area');
       assert.equal(mobileMetrics.composerHeight, 42, 'Approved composer pill height');
       await page.screenshot({ path: join(output, key + '-reference-conversation.png') });
