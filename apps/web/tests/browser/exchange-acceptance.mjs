@@ -81,6 +81,7 @@ try {
       const footer=rect('.chat-audio-footer');
       const speed=rect('.chat-audio-speed');
       return {
+        bubbleCenter:bubble.top + bubble.height / 2,
         playCenter:play ? play.top + play.height / 2 : -1,
         waveCenter:track ? track.top + track.height / 2 : -1,
         footerTop:footer?.top ?? -1,
@@ -93,8 +94,12 @@ try {
         containerRight:bubble.right,
       };
     });
-    assert.ok(Math.abs(alignment.playCenter-alignment.waveCenter)<=1,
-      'Play and actual waveform must share their vertical center: '+JSON.stringify(alignment));
+    assert.ok(Math.abs(alignment.playCenter-alignment.bubbleCenter)<=1,
+      'Play must be vertically centered in the entire orange voice bubble: '+JSON.stringify(alignment));
+    assert.ok(alignment.waveCenter < alignment.playCenter,
+      'Waveform belongs to the upper-right row, with Play centered across both rows: '+JSON.stringify(alignment));
+    assert.ok(alignment.footerTop > alignment.playCenter,
+      'Metadata belongs to the lower-right row, beneath the centered Play control: '+JSON.stringify(alignment));
     assert.ok(alignment.footerTop>=alignment.waveBottom,
       'Time and speed must form a separate row below the waveform: '+JSON.stringify(alignment));
     assert.ok(alignment.playLeft>alignment.containerLeft && alignment.waveLeft>alignment.playLeft,
