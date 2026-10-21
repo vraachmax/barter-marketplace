@@ -26,7 +26,7 @@ try {
     messages.push({ id:'exchange_offer_first', text:'Предложение обмена', senderId:'peer', sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString() });
     const details = {muted:false,blocked:false,cannotSend:false,listings:[listing,laptop],favorites:[listing],media:[]};
     const writes=[];
-    const wav=Buffer.alloc(44+16000*2);wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(16000,24);wav.writeUInt32LE(32000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(32000,40);for(let n=0;n<16000;n++)wav.writeInt16LE(Math.round(Math.sin(n*.08)*6000*Math.sin(n/16000*Math.PI)),44+n*2);
+    const wav=Buffer.alloc(44+16000*2);wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(16000,24);wav.writeUInt32LE(32000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(32000,40);for(let n=0;n<16000;n++)wav.writeInt16LE(Math.round(Math.sin(n*.08)*6000*Math.sin(n/16000*Math.PI)*(0.25+0.75*Math.pow(Math.max(0,Math.sin(n/16000*Math.PI*10+0.3)),1.25))),44+n*2);
     await context.route('**/fixture-voice.wav',route=>route.fulfill({contentType:'audio/wav',body:wav}));
     await context.routeWebSocket(/.*/, socket=>socket.close());
     await context.route(url => url.hostname !== 'localhost' || url.pathname.startsWith('/api/backend/') || url.pathname==='/auth/me' || url.pathname==='/chats' || url.pathname.startsWith('/socket.io'), async route=>{
@@ -66,6 +66,18 @@ try {
     assert.equal(appearance.shellBackground,'rgba(0, 0, 0, 0)');
     assert.ok(appearance.height>=69 && appearance.height<=78,JSON.stringify(appearance));
     assert.ok(appearance.timestampBelow);
+    const footerGeometry=await outgoingVoice.evaluate(player=>{
+      const duration=player.querySelector('.chat-audio-time')?.getBoundingClientRect();
+      const speed=player.querySelector('.chat-audio-speed')?.getBoundingClientRect();
+      const track=player.querySelector('.chat-audio-track')?.getBoundingClientRect();
+      return {height:duration?.height ?? 0, durationRight:duration?.right ?? 0,
+        speedLeft:speed?.left ?? 0, speedRight:speed?.right ?? 0, trackRight:track?.right ?? 0};
+    });
+    assert.ok(footerGeometry.height<=20, 'Duration must remain on one line: '+JSON.stringify(footerGeometry));
+    assert.ok(footerGeometry.speedLeft>footerGeometry.durationRight,
+      'Speed and time should be in opposite footer columns: '+JSON.stringify(footerGeometry));
+    assert.ok(Math.abs(footerGeometry.speedRight-footerGeometry.trackRight)<=8,
+      'Speed must align with the end of the waveform: '+JSON.stringify(footerGeometry));
     const peakHeights=await outgoingVoice.locator('.chat-audio-wave span').evaluateAll(nodes=>
       nodes.map(node=>node.getBoundingClientRect().height));
     assert.ok(Math.max(...peakHeights)-Math.min(...peakHeights)>8,
