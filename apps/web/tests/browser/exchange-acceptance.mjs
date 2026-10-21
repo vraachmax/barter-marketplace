@@ -64,8 +64,20 @@ try {
     });
     assert.equal(appearance.background,'rgb(255, 100, 21)');
     assert.equal(appearance.shellBackground,'rgba(0, 0, 0, 0)');
-    assert.ok(appearance.height<=66,JSON.stringify(appearance));
+    assert.ok(appearance.height>=69 && appearance.height<=78,JSON.stringify(appearance));
     assert.ok(appearance.timestampBelow);
+    const peakHeights=await outgoingVoice.locator('.chat-audio-wave span').evaluateAll(nodes=>
+      nodes.map(node=>node.getBoundingClientRect().height));
+    assert.ok(Math.max(...peakHeights)-Math.min(...peakHeights)>8,
+      'The decoded voice waveform should retain audible dynamics');
+    await expect(outgoingVoice.getByRole('button',{name:'Скорость воспроизведения 1×. Изменить скорость'})).toBeVisible();
+    await outgoingVoice.getByRole('button',{name:'Скорость воспроизведения 1×. Изменить скорость'}).click();
+    await expect(outgoingVoice.getByRole('button',{name:'Скорость воспроизведения 1.5×. Изменить скорость'})).toBeVisible();
+    assert.equal(await outgoingVoice.locator('audio').evaluate(node=>node.playbackRate),1.5);
+    await outgoingVoice.getByRole('button',{name:'Скорость воспроизведения 1.5×. Изменить скорость'}).click();
+    assert.equal(await outgoingVoice.locator('audio').evaluate(node=>node.playbackRate),2);
+    await outgoingVoice.getByRole('button',{name:'Скорость воспроизведения 2×. Изменить скорость'}).click();
+    assert.equal(await outgoingVoice.locator('audio').evaluate(node=>node.playbackRate),1);
     assert.notEqual(await incomingVoice.evaluate(el=>getComputedStyle(el).backgroundColor),appearance.background);
     await page.screenshot({path:join(output,`voice-${width}-${theme}.png`)});
     await incomingVoice.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
