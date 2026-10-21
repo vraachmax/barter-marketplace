@@ -5,6 +5,8 @@ import { Pause, Play } from 'lucide-react';
 import './chat-audio.css';
 
 const time = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+let activeRecording: HTMLAudioElement | null = null;
+const speeds = [1, 1.5, 2] as const;
 
 /** The waveform is decoded from the recording; a seek bar remains if CORS/codec prevents decoding. */
 export function ChatAudio({ src }: { src: string }) {
@@ -14,6 +16,14 @@ export function ChatAudio({ src }: { src: string }) {
   const [position, setPosition] = useState(0);
   const [peaks, setPeaks] = useState<number[]>([]);
   const [error, setError] = useState('');
+  const [speed, setSpeed] = useState<number>(1);
+  useEffect(() => {
+    const element = audio.current;
+    return () => {
+      element?.pause();
+      if (activeRecording === element) activeRecording = null;
+    };
+  }, [src]);
   useEffect(() => {
     const controller = new AbortController();
     let context: AudioContext | undefined;
@@ -49,17 +59,29 @@ export function ChatAudio({ src }: { src: string }) {
     if (!audio.current.paused) audio.current.pause();
     else {
       setError('');
-      try { await audio.current.play(); } catch { setError('Не удалось воспроизвести. Попробуйте ещё раз.'); }
+      try { await audio.current.play(); } catch (cause) {
+        // Switching recordings or leaving the chat can interrupt a pending play().
+        if (!(cause instanceof DOMException && cause.name === 'AbortError')) setError('Не удалось воспроизвести. Попробуйте ещё раз.');
+      }
     }
   }
   return <div className="chat-audio">
-    <audio ref={audio} src={src} preload="metadata" onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration); }} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={e => setPosition(e.currentTarget.currentTime)} onError={() => setError('Запись недоступна. Попробуйте открыть её позже.')} />
+    <audio ref={audio} src={src} preload="metadata" onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration); }} onPlay={e => {
+      if (activeRecording && activeRecording !== e.currentTarget) activeRecording.pause();
+      activeRecording = e.currentTarget;
+      setPlaying(true);
+    }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={e => setPosition(e.currentTarget.currentTime)} onError={() => setError('Запись недоступна. Попробуйте открыть её позже.')} />
     <button type="button" className="chat-audio-toggle" aria-label={playing ? 'Приостановить голосовое сообщение' : 'Воспроизвести голосовое сообщение'} onClick={() => void toggle()}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
     <div className="chat-audio-track">
       {peaks.length > 0 && <div className="chat-audio-wave" aria-hidden>{peaks.map((peak, index) => <span key={index} style={{ height: `${Math.max(12, peak * 100)}%` }} data-played={duration > 0 && index / peaks.length <= position / duration} />)}</div>}
       <input className={peaks.length ? 'chat-audio-seek has-wave' : 'chat-audio-seek'} type="range" aria-label="Позиция голосового сообщения" aria-valuetext={`${time(position)} из ${time(duration)}`} min={0} max={duration || 1} step={.1} value={Math.min(position, duration || 1)} disabled={!duration} onChange={e => { if (audio.current) { audio.current.currentTime = Number(e.target.value); setPosition(Number(e.target.value)); } }} />
     </div>
     <span className="chat-audio-time">{time(playing || position > 0 ? position : duration)}</span>
+    <button type="button" className="chat-audio-speed" aria-label={`Скорость воспроизведения ${speed}×. Изменить скорость`} onClick={() => {
+      const next = speeds[(speeds.findIndex(value => value === speed) + 1) % speeds.length];
+      if (audio.current) audio.current.playbackRate = next;
+      setSpeed(next);
+    }}>{speed}×</button>
     {error && <p role="alert" className="chat-audio-error">{error}</p>}
   </div>;
 }

@@ -1,3 +1,27 @@
+## 2026-10-21: Telegram-style voice controls; production access blocked
+
+PR82 merged as 9c181972363a5ab5571ee68b098217c8074d8595. Production release
+is still blocked: Vercel explicitly rejects team_1C2wMLOvWO21CLlqN7v7D0iZ
+(vraachmaxs-projects) with 403. The connection needs its team access regranted.
+Do not bypass this scope denial or claim PR82 deployed. Last verified release is PR81.
+
+Voice follow-up on feat/telegram-voice-controls adds 1x/1.5x/2x playback,
+single active recording, unmount pause, and ignores expected play interruption.
+Existing decoded waveform, seeking and codec fallback remain. Browser acceptance
+now exercises actual playback rate, switching between two recordings and seeking.
+Local syntax/diff checks pass; CI and physical iPhone acceptance pending.
+
+Transcription is feasible through a server-side speech-to-text provider, but is not
+implemented or enabled. No working provider integration was found in API source.
+Required before shipping: server-only credentials, member-authorized message lookup,
+trusted stored audio (no arbitrary URL fetching), limits, cached transcript, and a
+clear user action before sending private voice content to the provider. Never add
+an inactive transcription button or expose provider credentials to the browser.
+Reference: https://developers.openai.com/api/docs/guides/speech-to-text
+
+Next: restore Vercel connection access and release the already-checked PR82 first;
+merge the voice follow-up only after its CI passes. PR80 remains untouched.
+
 ## 2026-10-21: PR82 reference follow-up ready for release
 
 Application commit 83adcb5a45d91e409d7d29ad9b220f98adc593b8 passed Web quality
