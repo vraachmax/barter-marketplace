@@ -4,6 +4,40 @@
 .messages-screen.messages-approved-screen .thread-input-shell textarea{font-size:16px}
 .messages-screen.messages-approved-screen .messages-composer button[aria-label="Записать голосовое сообщение"],.messages-screen.messages-approved-screen .messages-composer button[aria-label="Остановить запись"]{width:44px;height:44px;min-width:44px;background:#ff5a0a;color:white;border-radius:50%}
 
-.contact-identity{margin-top:-28px}.contact-identity h2{font-size:25px}.contact-group>button{min-height:60px}.contact-avatar>svg{box-sizing:content-box;padding-top:27px;width:44px;height:44px}.exchange-actions[data-pending]{grid-template-columns:1fr 1fr}.exchange-actions[data-pending]>.exchange-primary{grid-column:1/-1}.exchange-actions[data-pending]>button:not(.exchange-primary){font-size:12px}
+.contact-identity{margin-top:-28px}.contact-identity h2{font-size:25px}.contact-group>button{min-height:60px}.contact-avatar>svg{box-sizing:content-box;padding-top:27px;width:44px;height:44px}.exchange-actions[data-pending]{grid-template-columns:1fr}.exchange-actions[data-pending]>.exchange-primary{grid-column:1/-1}.exchange-actions[data-pending]>button:not(.exchange-primary){font-size:14px}
 
 .exchange-card,.exchange-overlay{--exchange-orange:#ff5a0a;color:var(--foreground);font-size:14px}.exchange-card button{cursor:pointer;touch-action:manipulation}.exchange-card button:disabled{opacity:.5;cursor:default}
+
+/* App-owned reference geometry, excluding the pictured phone bezel. */
+.exchange-card header>svg{box-sizing:content-box;padding:5px;border-radius:9px;background:#ff5a0a08;width:19px;height:19px}
+.exchange-card header{gap:7px}.exchange-card h3{font-size:15px;letter-spacing:-.3px}.exchange-status{padding:6px;font-size:10px;white-space:nowrap}
+.exchange-column{padding:10px}.exchange-item{align-items:flex-start;line-height:1.35}.exchange-item b{font-size:14px;line-height:1.2}.exchange-item>img,.exchange-item>svg{width:48px;height:52px}
+.exchange-card .exchange-actions{gap:8px}.exchange-card .exchange-money{font-size:12px;color:var(--fg-muted);font-weight:400}
+.contact-screen .contact-identity h2{font-size:26px;letter-spacing:-.6px}.contact-shortcuts{gap:7px}.contact-shortcuts>a,.contact-shortcuts>button{min-height:64px;font-size:12px;border-radius:17px}
+.contact-group{padding:0 12px}.contact-group>button{min-height:58px;gap:15px}.contact-group b{font-weight:650;letter-spacing:-.2px}.contact-danger>button>svg:last-child{color:inherit}
+@media(max-width:370px){.exchange-card header{flex-wrap:wrap}.exchange-status{margin-left:auto}.exchange-item{flex-direction:column}.contact-shortcuts>a,.contact-shortcuts>button{font-size:10px}}
+@media(max-width:767px){
+  .contact-screen{padding:12px 12px 24px}
+  .contact-identity{margin-top:-44px;margin-bottom:8px}
+  .contact-screen .contact-identity h2{font-size:24px;line-height:1.15;margin-top:6px}
+  .contact-identity p{font-size:13px;line-height:18px}
+  .contact-shortcuts{margin:8px 0 14px}
+  .contact-listing{padding:10px;gap:12px;margin:14px 0;border-radius:16px}
+  .contact-listing>img,.contact-listing>svg:first-child{width:68px;height:68px}
+  .contact-group{margin:14px 0;border-radius:16px}
+  .contact-group>button{min-height:56px;padding:8px 0}
+  .contact-danger>button{min-height:48px}
+}
+.exchange-card .exchange-money[hidden]{display:none}
+.exchange-column small{display:block;font-size:11px;line-height:15px}
+.exchange-item{margin-top:6px}.exchange-item>img,.exchange-item>svg{height:48px}
+.exchange-column{padding:9px}.exchange-terms{padding:8px 10px;margin-bottom:10px}
+@media(max-width:767px){
+  .contact-group>button{padding:6px 0}.contact-danger>button{padding:3px 0}
+  .messages-screen.messages-approved-screen:has(.exchange-card) .thread-header{height:62px;min-height:62px}
+  .messages-screen.messages-approved-screen:has(.exchange-card) .thread-listing-preview{height:66px;min-height:66px;padding:6px 8px;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:14px}
+  .messages-screen.messages-approved-screen:has(.exchange-card) .thread-listing-image{width:52px;height:52px;border-radius:9px}
+}
+html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing']{background:#ffeddf;color:var(--foreground)}
+html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing'] [data-message-meta]{color:var(--fg-muted)}
+html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing'] [data-message-meta] svg{color:#ff5a0a}

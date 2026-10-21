@@ -1,3 +1,86 @@
+## 2026-10-21: final chat comparison, PR82
+
+final result: passed
+
+Scope: reference-based production adaptation of exchange card, voice player and
+contact screen, not a claim of literal pixel identity or physical iPhone acceptance.
+
+Source: docs/design/barter-2026-10/approved-chat-2026-10-20/ three JPEGs, 864x1536.
+App-only source crop (72,106)-(792,1480), scaled from720x1374 to393x750.
+Implementation: CI39582404251, commit83adcb5, artifact12339335463,
+contact/offer/review at393x850 and430x850, DPR1, light/dark. Full combined comparisons:
+../contact-comparison-final.png and ../offer-comparison-final.png. The100px extra
+viewport height and fixture message order/content are documented differences, not
+used for pixel scoring. Focused offer/contact regions were inspected in the combined
+images. Artifacts are reproducible with tests/browser/exchange-acceptance.mjs.
+
+Iteration history:
+1. PR81: third inline action, native audio and excess contact spacing (P1/P2).
+2. 89bdd36: two-action card and discussion review, decoded waveform, contact spacing.
+   CI39581085276 passed. Combined contact/offer captures revealed excess exchange
+   header/listing/card density; contact danger rows remained too tall (P2).
+3. 83adcb5: exchange-specific62px header,66px listing, pale outgoing fill, reduced
+   item spacing and contact rows, no redundant new-offer shortcut while active.
+   Final combined captures show the intended hierarchy and complete safety controls.
+   No remaining actionable P0/P1/P2 in the reviewed scope.
+
+Five fidelity surfaces:
+- Typography: existing self-hosted Inter retained for shared product consistency;
+ 24px contact name,15px card/row headings,12-14px secondary/item copy. No clipping.
+- Rhythm: centered104px avatar, four shortcuts, listing, five-row group and danger
+ group match source order/proportions. Two offer columns and full-width actions.
+- Color: white/pale gray/orange in light, shared graphite in dark; exchange outgoing
+ uses pale orange, ordinary chat retains solid orange from first reference.
+- Images: listing photos come from real image URLs, never category illustrations.
+ Missing profile photo shows existing user fallback; no fictional online state.
+ Actual audio samples produce waveform, with accessible seek-bar fallback.
+- Copy: Discuss conditions / Decline match reference; acceptance is an explicit
+ second step. Singular item labels. Favorites remain private to current user.
+
+Intentional runtime differences: minimum44px primary targets exceed scaled mock
+buttons; expiry/reservation information is kept; prices, avatar, timestamps and
+message order use actual data; telephone control appears only when available.
+These account for additional offer height. No fake portrait, presence or call action.
+
+Verification: four Chromium exchange/contact scenarios, review/counteroffer payload,
+acceptance after review, mute/search, actual decoded test audio play/pause, no page
+errors. Existing message WebKit/Chromium, catalog/account tests and build passed.
+Public live test listing opened in cloud browser; only extension-level log errors,
+no application console error observed there. Authenticated cloud UI and physical
+microphone/iPhone/PWA are separate unverified gates, not inferred from CI.
+
+Follow-up P3: native-device font rendering and waveform decode availability vary by
+codec/browser. Verify on Maxim's iPhone without changing real account data.
+
+## 2026-10-21: chat reference follow-up
+
+final result: blocked
+
+Source: docs/design/barter-2026-10/approved-chat-2026-10-20/ (three JPEGs).
+Source pixels: 864x1536. Contact crop (72,106)-(792,1480), normalized to
+393x750; no pictured device bezel/status bar copied into the app. Implementation:
+exchange-ci-evidence/contact-393-light.png from PR81, 393x850 CSS/physical pixels,
+DPR1. Combined evidence: ../contact-comparison-before.png. Extra viewport height
+is not judged as drift. Fixture data differs (no avatar, offline, actual listing photos
+and prices); no fabricated presence or private favorites copied from reference.
+
+Findings and iteration history:
+- P1: three pending-offer actions instead of two. Fixed in source: Discuss conditions
+  opens explicit review with accept/counteroffer; Decline stays full width. Needs new capture.
+- P1: native browser audio controls. Replaced with play/pause, decoded waveform,
+  seek input and duration; graceful seek-bar fallback when decoding fails. Needs acceptance.
+- P2: contact identity starts about20px too low, cumulative spacing pushes block action
+  offscreen. Tightened mobile identity, shortcuts, card and row rhythm. Needs new capture.
+
+Five surfaces: reference uses system sans, current shared font is retained pending
+post-fix comparison; spacing fixes above; white/gray/orange and graphite dark tokens
+preserved; product photos are real licensed source assets, missing avatar is truthful;
+copy preserves pending/accepted semantics, privacy and reservation/expiry disclosures.
+
+Blockers: post-fix browser evidence and focused/full normalized comparison pending.
+Cloud browser shows sign-in screen; no credentials entered through lower-level APIs.
+Build success is not visual acceptance. Do not claim pixel parity or mobile-device QA.
+
 ## 2026-10-18: release CI follow-up
 
 251d45b: 6/6 account and 6/6 message browser scenarios passed. Catalog 8/12

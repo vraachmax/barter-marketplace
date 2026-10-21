@@ -41,6 +41,9 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   const [previousId, setPreviousId] = useState<string>();
   const [review, setReview] = useState(false);
   const [notice, setNotice] = useState('');
+  const [discussId, setDiscussId] = useState<string | null>(null);
+  const discussion = offers.find(o => o.id === discussId && o.status === 'PENDING');
+  const discussionOpen = Boolean(discussion);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
   const lock = useRef(false);
   const intentOpened = useRef(false);
@@ -62,12 +65,12 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     return () => { window.removeEventListener('barter-chat-details', open); window.removeEventListener('barter-exchange-refresh', update); };
   }, [refresh]);
   useEffect(() => {
-    if (!screen && !form) return;
+    if (!screen && !form && !discussionOpen) return;
     const previous = document.activeElement as HTMLElement | null;
     const dialog = document.querySelector<HTMLElement>('.exchange-overlay');
     const first = dialog?.querySelector<HTMLElement>('button, input, a'); first?.focus();
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !lock.current) { setScreen(null); setForm(false); }
+      if (e.key === 'Escape' && !lock.current) { setScreen(null); setForm(false); setDiscussId(null); }
       if (e.key !== 'Tab' || !dialog) return;
       const nodes = Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input,textarea,select')).filter(n => n.offsetParent !== null);
       const last = nodes[nodes.length - 1];
@@ -76,7 +79,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     };
     document.addEventListener('keydown', key);
     return () => { document.removeEventListener('keydown', key); previous?.focus(); };
-  }, [screen, form]);
+  }, [screen, form, discussionOpen]);
   async function action(offer: Offer, action: string) {
     if (lock.current) return; lock.current = true; setBusy(true); setError('');
     const r = await apiFetchJson<Offer>(`${root}/offers/${offer.id}`, { method: 'POST', body: JSON.stringify({ version: offer.version, action }) });
@@ -124,19 +127,19 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     return <fieldset><legend>{title}</legend>{list.length ? list.map(l => <label className="exchange-choice" key={l.id}><input type="checkbox" checked={ids.includes(l.id)} onChange={() => set(ids.includes(l.id) ? ids.filter(id => id !== l.id) : [...ids, l.id].slice(0, 10))} /><Photo url={l.images[0]?.url} /><span>{l.title}<b>{money(l.priceRub)}</b></span></label>) : <p>Нет доступных вещей для обмена. {mine && <Link href={`/new?tradeMode=barter`} onClick={() => sessionStorage.setItem('barter-return-chat', chat.id)}>Создать объявление</Link>}</p>}</fieldset>;
   }
   return <div className="chat-exchange">
-    {error && !screen && !form ? <div role="alert" className="exchange-error">{error}<button onClick={() => { setError(''); void refresh(); }}>Повторить</button></div> : null}
+    {error && !screen && !form && !discussion ? <div role="alert" className="exchange-error">{error}<button onClick={() => { setError(''); void refresh(); }}>Повторить</button></div> : null}
     {loading ? <p role="status" className="exchange-empty">Загрузка предложений…</p> : null}
     {details?.cannotSend ? <p className="exchange-error">Отправка сообщений недоступна: пользователь заблокирован.</p> : null}
-    {chat.listing?.barterEnabled && !details?.cannotSend ? <button className="exchange-start" disabled={busy} onClick={() => void openForm()}><Repeat2 size={19} />Предложить обмен</button> : null}
+    {chat.listing?.barterEnabled && !details?.cannotSend && !offers.some(o => ['PENDING', 'ACCEPTED'].includes(o.status)) ? <button className="exchange-start" disabled={busy} onClick={() => void openForm()}><Repeat2 size={19} />Предложить обмен</button> : null}
     {offers.map(offer => {
       const mine = offer.senderId !== peerId;
       const confirmed = offer.confirmations.some(c => c.userId !== peerId);
       const card = <article className="exchange-card" key={offer.id} id={`offer-${offer.id}`}>
         <header><Repeat2 /><h3>Предложение обмена</h3><span className="exchange-status"><Clock size={15} />{labels[offer.status] ?? offer.status}</span></header>
-        <div className="exchange-pair">{[true, false].map((own, idx) => <FragmentColumn key={String(own)} arrow={idx === 0}><small>{own ? 'Ваши вещи' : 'Его вещи'}</small>{offer.items.filter(i => (i.ownerId !== peerId) === own).map(i => <Link href={`/listing/${i.listingId}`} className="exchange-item" key={i.listingId}><Photo url={i.snapshot.imageUrl} /><span>{i.snapshot.title}<b>{money(i.snapshot.priceRub)}</b></span></Link>)}</FragmentColumn>)}</div>
+        <div className="exchange-pair">{[true, false].map((own, idx) => <FragmentColumn key={String(own)} arrow={idx === 0}><small>{offer.items.filter(i => (i.ownerId !== peerId) === own).length === 1 ? (own ? 'Ваш товар' : 'Его товар') : (own ? 'Ваши вещи' : 'Его вещи')}</small>{offer.items.filter(i => (i.ownerId !== peerId) === own).map(i => <Link href={`/listing/${i.listingId}`} className="exchange-item" key={i.listingId}><Photo url={i.snapshot.imageUrl} /><span>{i.snapshot.title}<b>{money(i.snapshot.priceRub)}</b></span></Link>)}</FragmentColumn>)}</div>
         <p className="exchange-terms">{offer.terms || 'Обмен без дополнительных условий'}</p>
-        <p className="exchange-money">{offer.cashKopecks === 0 ? 'Без доплаты' : ((offer.cashKopecks > 0) === mine ? 'Вы доплачиваете ' : 'Вам доплачивают ') + money(Math.abs(offer.cashKopecks) / 100)}</p>
-        {offer.status === 'PENDING' && !mine ? <div className="exchange-actions" data-pending><button className="exchange-primary" disabled={busy || details?.cannotSend} onClick={() => void action(offer, 'accept')}>Принять условия</button><button disabled={busy} onClick={() => void openForm(offer)}>Предложить новые условия</button><button disabled={busy} onClick={() => void action(offer, 'decline')}>Отклонить</button></div> : null}
+        <p className="exchange-money" hidden={offer.cashKopecks === 0}>{offer.cashKopecks === 0 ? 'Без доплаты' : ((offer.cashKopecks > 0) === mine ? 'Вы доплачиваете ' : 'Вам доплачивают ') + money(Math.abs(offer.cashKopecks) / 100)}</p>
+        {offer.status === 'PENDING' && !mine ? <div className="exchange-actions" data-pending><button className="exchange-primary" disabled={busy || details?.cannotSend} onClick={() => setDiscussId(offer.id)}>Обсудить условия</button><button disabled={busy} onClick={() => void action(offer, 'decline')}>Отклонить</button></div> : null}
         {offer.status === 'PENDING' && mine ? <button className="exchange-secondary" disabled={busy} onClick={() => void action(offer, 'cancel')}>Отозвать предложение</button> : null}
         {offer.status === 'ACCEPTED' ? <div className="exchange-actions"><p>{confirmed ? 'Вы подтвердили передачу. Ожидаем вторую сторону.' : 'Согласуйте встречу в чате. Подтверждайте только после получения вещей.'}</p>{!confirmed && <button className="exchange-primary" disabled={busy} onClick={() => { if (window.confirm('Вы получили все вещи и согласованную доплату? Подтвердить завершение со своей стороны?')) void action(offer, 'confirm'); }}>Я получил вещи</button>}{offer.confirmations.length === 0 ? <button disabled={busy} onClick={() => void action(offer, 'cancel')}>Отменить обмен и снять резерв</button> : <button onClick={() => { setReason('Проблема с обменом ' + offer.id); setScreen('report'); }}>Проблема с передачей</button>}</div> : null}
         {offer.status === 'COMPLETED' && <Link className="exchange-secondary" style={{ display: 'block' }} href={`/listing/${offer.items.find(i => i.ownerId === peerId)?.listingId}`}>Оставить отзыв об обмене</Link>}
@@ -145,6 +148,14 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
       const target = typeof document === 'undefined' ? null : document.getElementById(`exchange_offer_${offer.id}`);
       return target ? createPortal(card, target, offer.id) : card;
     })}
+    {discussion ? <div className="exchange-overlay" role="dialog" aria-modal="true" aria-label="Обсудить условия"><div className="contact-screen exchange-form"><header className="contact-toolbar"><button aria-label="Назад к переписке" disabled={busy} onClick={() => setDiscussId(null)}><ChevronLeft /></button><h2>Обсудить условия</h2></header>
+      {error && <p role="alert" className="exchange-error">{error}</p>}
+      <h3>Вы передаёте</h3>{listingRows(discussion.items.filter(i => i.ownerId !== peerId).map(i => ({ id:i.listingId, ...i.snapshot, images:i.snapshot.imageUrl ? [{url:i.snapshot.imageUrl}] : [] })))}
+      <h3>Вы получаете</h3>{listingRows(discussion.items.filter(i => i.ownerId === peerId).map(i => ({ id:i.listingId, ...i.snapshot, images:i.snapshot.imageUrl ? [{url:i.snapshot.imageUrl}] : [] })))}
+      <p>{discussion.terms || 'Без дополнительных условий'}</p><p><b>{discussion.cashKopecks === 0 ? 'Без доплаты' : (discussion.cashKopecks > 0 ? 'Вам доплачивают ' : 'Вы доплачиваете ') + money(Math.abs(discussion.cashKopecks)/100)}</b></p>
+      <p>Принятие резервирует вещи на 7 дней. Подтвердить завершение нужно каждому участнику после передачи вещей.</p>
+      <div className="exchange-actions"><button className="exchange-primary" disabled={busy || details?.cannotSend} onClick={() => void action(discussion, 'accept')}>Принять условия</button><button disabled={busy || details?.cannotSend} onClick={() => { setDiscussId(null); void openForm(discussion); }}>Предложить новые условия</button><button onClick={() => setDiscussId(null)}>Вернуться в переписку</button></div>
+    </div></div> : null}
     {screen ? <div className="exchange-overlay" role="dialog" aria-modal="true" aria-label="Информация о собеседнике">
       <div className="contact-screen"><header className="contact-toolbar"><button aria-label="Назад к переписке" onClick={() => setScreen(screen === 'info' ? null : 'info')}><ChevronLeft /></button>{screen !== 'info' && <b>{{ search: 'Поиск в переписке', media: 'Файлы и медиа', listings: 'Общие объявления', favorites: 'Моё избранное', report: 'Пожаловаться' }[screen]}</b>}</header>
         {error && <p role="alert" className="exchange-error">{error}</p>}{notice && <p role="status">{notice}</p>}
