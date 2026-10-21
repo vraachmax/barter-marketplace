@@ -73,6 +73,34 @@ try {
       return {height:duration?.height ?? 0, durationRight:duration?.right ?? 0,
         speedLeft:speed?.left ?? 0, speedRight:speed?.right ?? 0, trackRight:track?.right ?? 0};
     });
+    const alignment=await outgoingVoice.evaluate(player=>{
+      const rect=(selector)=>player.querySelector(selector)?.getBoundingClientRect();
+      const bubble=player.getBoundingClientRect();
+      const play=rect('.chat-audio-toggle');
+      const track=rect('.chat-audio-track');
+      const footer=rect('.chat-audio-footer');
+      const speed=rect('.chat-audio-speed');
+      return {
+        playCenter:play ? play.top + play.height / 2 : -1,
+        waveCenter:track ? track.top + track.height / 2 : -1,
+        footerTop:footer?.top ?? -1,
+        waveBottom:track?.bottom ?? -1,
+        playLeft:play?.left ?? -1,
+        waveLeft:track?.left ?? -1,
+        waveRight:track?.right ?? -1,
+        speedRight:speed?.right ?? -1,
+        containerLeft:bubble.left,
+        containerRight:bubble.right,
+      };
+    });
+    assert.ok(Math.abs(alignment.playCenter-alignment.waveCenter)<=1,
+      'Play and actual waveform must share their vertical center: '+JSON.stringify(alignment));
+    assert.ok(alignment.footerTop>=alignment.waveBottom,
+      'Time and speed must form a separate row below the waveform: '+JSON.stringify(alignment));
+    assert.ok(alignment.playLeft>alignment.containerLeft && alignment.waveLeft>alignment.playLeft,
+      'Player controls must remain within two aligned columns: '+JSON.stringify(alignment));
+    assert.ok(alignment.speedRight<=alignment.containerRight,
+      'Speed must remain inside the message: '+JSON.stringify(alignment));
     assert.ok(footerGeometry.height<=20, 'Duration must remain on one line: '+JSON.stringify(footerGeometry));
     assert.ok(footerGeometry.speedLeft>footerGeometry.durationRight,
       'Speed and time should be in opposite footer columns: '+JSON.stringify(footerGeometry));
