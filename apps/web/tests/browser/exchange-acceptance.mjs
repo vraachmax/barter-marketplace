@@ -162,13 +162,28 @@ try {
         configurable: true,
         value: { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) },
       });
+      // A real, seekable two-second WAV, not arbitrary bytes.
+      // The test checks rendering and playback as well as recording controls.
+      const samples = 32000;
+      const buffer = new ArrayBuffer(44 + samples * 2);
+      const wav = new DataView(buffer);
+      const ascii = (offset, value) => { for (let i=0; i<value.length; i++) wav.setUint8(offset+i,value.charCodeAt(i)); };
+      ascii(0,'RIFF'); wav.setUint32(4,36+samples*2,true); ascii(8,'WAVE');
+      ascii(12,'fmt '); wav.setUint32(16,16,true); wav.setUint16(20,1,true);
+      wav.setUint16(22,1,true); wav.setUint32(24,16000,true); wav.setUint32(28,32000,true);
+      wav.setUint16(32,2,true); wav.setUint16(34,16,true); ascii(36,'data');
+      wav.setUint32(40,samples*2,true);
+      for(let i=0; i<samples; i++) {
+        const energy = .2 + .8 * Math.abs(Math.sin(i / 16000 * Math.PI * 7));
+        wav.setInt16(44+i*2,Math.round(10500 * Math.sin(i * .097) * energy),true);
+      }
       class FakeRecorder {
-        static isTypeSupported(type) { return type === 'audio/webm'; }
+        static isTypeSupported(type) { return type === 'audio/wav'; }
         constructor(_stream, options) { this.mimeType=options.mimeType; this.state='inactive'; this.onstop=null; this.ondataavailable=null; this.onerror=null; }
         start() { this.state='recording'; }
         stop() {
           this.state='inactive';
-          this.ondataavailable?.({ data: new Blob([new Uint8Array(2048).fill(1)], { type: this.mimeType }) });
+          this.ondataavailable?.({ data: new Blob([buffer], { type: this.mimeType }) });
           this.onstop?.();
         }
       }
@@ -189,8 +204,12 @@ try {
     await recordingUi.getByRole('button',{name:'Завершить запись голосового сообщения'}).click();
     const voiceDraft=page.getByRole('group',{name:'Голосовое сообщение готово к отправке'});
     await expect(voiceDraft).toBeVisible();
-    await expect(page.getByText('Голосовое сообщение.webm')).toHaveCount(0);
+    await expect(page.getByText('Голосовое сообщение.wav')).toHaveCount(0);
     await expect(page.locator('audio[controls]')).toHaveCount(0);
+    await expect(voiceDraft.locator('.chat-audio-wave span')).toHaveCount(36);
+    await voiceDraft.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
+    await expect(voiceDraft.locator('audio')).toHaveJSProperty('paused', false);
+    await voiceDraft.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true}).click();
     await page.screenshot({path:join(output,`draft-${width}-${theme}.png`)});
     await voiceDraft.getByRole('button',{name:'Удалить голосовое сообщение'}).click();
     await expect(voiceDraft).toHaveCount(0);
