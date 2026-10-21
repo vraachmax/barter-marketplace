@@ -1,3 +1,32 @@
+## 2026-10-21: chat reference follow-up
+
+final result: blocked
+
+Source: docs/design/barter-2026-10/approved-chat-2026-10-20/ (three JPEGs).
+Source pixels: 864x1536. Contact crop (72,106)-(792,1480), normalized to
+393x750; no pictured device bezel/status bar copied into the app. Implementation:
+exchange-ci-evidence/contact-393-light.png from PR81, 393x850 CSS/physical pixels,
+DPR1. Combined evidence: ../contact-comparison-before.png. Extra viewport height
+is not judged as drift. Fixture data differs (no avatar, offline, actual listing photos
+and prices); no fabricated presence or private favorites copied from reference.
+
+Findings and iteration history:
+- P1: three pending-offer actions instead of two. Fixed in source: Discuss conditions
+  opens explicit review with accept/counteroffer; Decline stays full width. Needs new capture.
+- P1: native browser audio controls. Replaced with play/pause, decoded waveform,
+  seek input and duration; graceful seek-bar fallback when decoding fails. Needs acceptance.
+- P2: contact identity starts about20px too low, cumulative spacing pushes block action
+  offscreen. Tightened mobile identity, shortcuts, card and row rhythm. Needs new capture.
+
+Five surfaces: reference uses system sans, current shared font is retained pending
+post-fix comparison; spacing fixes above; white/gray/orange and graphite dark tokens
+preserved; product photos are real licensed source assets, missing avatar is truthful;
+copy preserves pending/accepted semantics, privacy and reservation/expiry disclosures.
+
+Blockers: post-fix browser evidence and focused/full normalized comparison pending.
+Cloud browser shows sign-in screen; no credentials entered through lower-level APIs.
+Build success is not visual acceptance. Do not claim pixel parity or mobile-device QA.
+
 ## 2026-10-18: release CI follow-up
 
 251d45b: 6/6 account and 6/6 message browser scenarios passed. Catalog 8/12

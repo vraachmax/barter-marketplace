@@ -1,3 +1,19 @@
+## 2026-10-21: chat release verified; reference fidelity follow-up
+
+PR #81 merged as 3b742ae; Vercel production READY and Render API LIVE on the
+same commit. Native PostgreSQL and all four CI workflows passed. The two labelled
+test listings and dialogue were created through the public API. Live acceptance
+verified both photos, accept/reserve, cancel/release and persisted mute/unmute;
+a fresh pending offer remains for testing. No secrets are committed.
+
+Current follow-up: reference-style two-action offer card with an explicit discussion
+review, single-item labels, tighter contact layout and a custom voice player whose
+waveform is decoded from the actual recording. Production build passes; full repo
+lint has pre-existing errors, no reported errors in the new audio/exchange components.
+Visual and browser acceptance for this follow-up are pending, not claimed complete.
+Next: inspect CI screenshots against reference, resolve drift, release only after checks.
+Physical iPhone recording/PWA and authenticated cloud-browser checks remain unverified.
+
 ## 2026-10-21: PR #81 authorized; PostgreSQL passed, browser follow-up
 
 Maxim explicitly authorized public publication, CI, release after successful checks,

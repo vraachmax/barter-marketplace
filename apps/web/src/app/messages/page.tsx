@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ChatAudio } from '@/components/chat-audio';
 import { ChatExchange } from '@/components/chat-exchange';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
@@ -1020,7 +1021,7 @@ export default function MessagesPage() {
                               </div>
                             ) : mediaFull ? (
                               <div className={`thread-media-attachment mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-border' : 'border border-white/20'}`}>
-                                {m.mediaType === 'AUDIO' ? <audio src={mediaFull} controls preload="metadata" className="max-w-full" aria-label="Голосовое сообщение" /> : m.mediaType === 'VIDEO' ? (
+                                {m.mediaType === 'AUDIO' ? <ChatAudio key={mediaFull} src={mediaFull} /> : m.mediaType === 'VIDEO' ? (
                                   <video src={mediaFull} controls className="max-h-64 w-full object-contain" />
                                 ) : (
                                   <button type="button" onClick={() => setGallery({ urls: [mediaFull], index: 0 })}
