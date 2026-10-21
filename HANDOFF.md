@@ -1,3 +1,25 @@
+## 2026-10-21: PR82 reference follow-up ready for release
+
+Application commit 83adcb5a45d91e409d7d29ad9b220f98adc593b8 passed Web quality
+39582404251 (build, regression, account/catalog/messages and four exchange scenarios)
+and dependency audit 39582404794. Final screenshots from artifact 12339335463 were
+opened and compared side by side with normalized source images. The final documentation
+commit does not change application code. Release through PR82 is authorized by Maxim.
+
+Implemented: two-action pending offer, explicit discussion/acceptance/counteroffer,
+compact exchange header/listing and pale-orange outgoing exchange messages, tighter
+contact layout, actual-recording waveform/play/pause/seek with fallback. Ordinary
+sale-chat styling is preserved. Reservation and confirmation backend is unchanged.
+PR81 is already deployed; two labelled demo listings and pending test dialogue exist.
+Live API verified accept/reserve, cancel/release, images and saved mute/unmute.
+Test access was supplied privately in barter-test-access.txt, never committed.
+
+Limits: screenshots use isolated fixture data; cloud browser verified the public test
+listing, but authenticated cloud UI and physical iPhone recording/PWA remain unverified.
+Do not claim literal pixel identity: 44px actions, expiry disclosure, real data and
+missing phone/avatar availability are intentional runtime differences. See design-qa.md.
+Next: merge PR82 and verify production READY; then physical iPhone acceptance.
+
 ## 2026-10-21: chat release verified; reference fidelity follow-up
 
 PR #81 merged as 3b742ae; Vercel production READY and Render API LIVE on the

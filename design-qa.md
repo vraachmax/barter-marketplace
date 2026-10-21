@@ -1,3 +1,57 @@
+## 2026-10-21: final chat comparison, PR82
+
+final result: passed
+
+Scope: reference-based production adaptation of exchange card, voice player and
+contact screen, not a claim of literal pixel identity or physical iPhone acceptance.
+
+Source: docs/design/barter-2026-10/approved-chat-2026-10-20/ three JPEGs, 864x1536.
+App-only source crop (72,106)-(792,1480), scaled from720x1374 to393x750.
+Implementation: CI39582404251, commit83adcb5, artifact12339335463,
+contact/offer/review at393x850 and430x850, DPR1, light/dark. Full combined comparisons:
+../contact-comparison-final.png and ../offer-comparison-final.png. The100px extra
+viewport height and fixture message order/content are documented differences, not
+used for pixel scoring. Focused offer/contact regions were inspected in the combined
+images. Artifacts are reproducible with tests/browser/exchange-acceptance.mjs.
+
+Iteration history:
+1. PR81: third inline action, native audio and excess contact spacing (P1/P2).
+2. 89bdd36: two-action card and discussion review, decoded waveform, contact spacing.
+   CI39581085276 passed. Combined contact/offer captures revealed excess exchange
+   header/listing/card density; contact danger rows remained too tall (P2).
+3. 83adcb5: exchange-specific62px header,66px listing, pale outgoing fill, reduced
+   item spacing and contact rows, no redundant new-offer shortcut while active.
+   Final combined captures show the intended hierarchy and complete safety controls.
+   No remaining actionable P0/P1/P2 in the reviewed scope.
+
+Five fidelity surfaces:
+- Typography: existing self-hosted Inter retained for shared product consistency;
+ 24px contact name,15px card/row headings,12-14px secondary/item copy. No clipping.
+- Rhythm: centered104px avatar, four shortcuts, listing, five-row group and danger
+ group match source order/proportions. Two offer columns and full-width actions.
+- Color: white/pale gray/orange in light, shared graphite in dark; exchange outgoing
+ uses pale orange, ordinary chat retains solid orange from first reference.
+- Images: listing photos come from real image URLs, never category illustrations.
+ Missing profile photo shows existing user fallback; no fictional online state.
+ Actual audio samples produce waveform, with accessible seek-bar fallback.
+- Copy: Discuss conditions / Decline match reference; acceptance is an explicit
+ second step. Singular item labels. Favorites remain private to current user.
+
+Intentional runtime differences: minimum44px primary targets exceed scaled mock
+buttons; expiry/reservation information is kept; prices, avatar, timestamps and
+message order use actual data; telephone control appears only when available.
+These account for additional offer height. No fake portrait, presence or call action.
+
+Verification: four Chromium exchange/contact scenarios, review/counteroffer payload,
+acceptance after review, mute/search, actual decoded test audio play/pause, no page
+errors. Existing message WebKit/Chromium, catalog/account tests and build passed.
+Public live test listing opened in cloud browser; only extension-level log errors,
+no application console error observed there. Authenticated cloud UI and physical
+microphone/iPhone/PWA are separate unverified gates, not inferred from CI.
+
+Follow-up P3: native-device font rendering and waveform decode availability vary by
+codec/browser. Verify on Maxim's iPhone without changing real account data.
+
 ## 2026-10-21: chat reference follow-up
 
 final result: blocked
