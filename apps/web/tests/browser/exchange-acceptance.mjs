@@ -95,6 +95,21 @@ try {
         containerRight:bubble.right,
       };
     });
+    for (const [direction, voice] of [['outgoing', outgoingVoice], ['incoming', incomingVoice]]) {
+      const glyph = await voice.evaluate(player => {
+        const button = player.querySelector('.chat-audio-toggle')?.getBoundingClientRect();
+        const ring = player.querySelector('.chat-audio-play-ring')?.getBoundingClientRect();
+        if (!button || !ring) return null;
+        return {
+          dx: (ring.left + ring.width / 2) - (button.left + button.width / 2),
+          dy: (ring.top + ring.height / 2) - (button.top + button.height / 2),
+          ringWidth: ring.width,
+          buttonWidth: button.width,
+        };
+      });
+      assert.ok(glyph && Math.abs(glyph.dx) <= 0.6 && Math.abs(glyph.dy) <= 0.6,
+        `The white Play ring must be centered in the orange circle (${direction}): ${JSON.stringify(glyph)}`);
+    }
     assert.ok(Math.abs(alignment.playCenter-alignment.bubbleCenter)<=1,
       'Play must be vertically centered in the entire orange voice bubble: '+JSON.stringify(alignment));
     assert.ok(Math.abs(alignment.waveCenter-alignment.playCenter)<=1,
