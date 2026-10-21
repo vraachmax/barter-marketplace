@@ -43,6 +43,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   const [notice, setNotice] = useState('');
   const [discussId, setDiscussId] = useState<string | null>(null);
   const discussion = offers.find(o => o.id === discussId && o.status === 'PENDING');
+  const discussionOpen = Boolean(discussion);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
   const lock = useRef(false);
   const intentOpened = useRef(false);
@@ -64,7 +65,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     return () => { window.removeEventListener('barter-chat-details', open); window.removeEventListener('barter-exchange-refresh', update); };
   }, [refresh]);
   useEffect(() => {
-    if (!screen && !form && !discussion) return;
+    if (!screen && !form && !discussionOpen) return;
     const previous = document.activeElement as HTMLElement | null;
     const dialog = document.querySelector<HTMLElement>('.exchange-overlay');
     const first = dialog?.querySelector<HTMLElement>('button, input, a'); first?.focus();
@@ -78,7 +79,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     };
     document.addEventListener('keydown', key);
     return () => { document.removeEventListener('keydown', key); previous?.focus(); };
-  }, [screen, form, discussion]);
+  }, [screen, form, discussionOpen]);
   async function action(offer: Offer, action: string) {
     if (lock.current) return; lock.current = true; setBusy(true); setError('');
     const r = await apiFetchJson<Offer>(`${root}/offers/${offer.id}`, { method: 'POST', body: JSON.stringify({ version: offer.version, action }) });
