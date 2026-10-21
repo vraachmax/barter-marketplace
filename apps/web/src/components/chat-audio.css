@@ -106,10 +106,12 @@
   border-radius: 4px;
 }
 .chat-audio-footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
   min-height: 18px;
 }
 .chat-audio-speed {
@@ -117,6 +119,7 @@
   place-items: center;
   min-width: 34px;
   min-height: 28px;
+  justify-self: end;
   margin-block: -5px;
   padding: 0 3px;
   border: 0;
@@ -136,6 +139,10 @@
   font-size: 13px;
   line-height: 16px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  min-width: max-content;
 }
 .chat-audio[data-direction='incoming'] .chat-audio-time { color: var(--fg-muted); }
 .chat-audio-error {
