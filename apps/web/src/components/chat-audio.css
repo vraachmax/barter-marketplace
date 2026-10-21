@@ -24,6 +24,7 @@
 }
 .chat-audio > audio { display: none; }
 .chat-audio-toggle {
+  position: relative;
   display: grid;
   grid-column: 1;
   grid-row: 1;
@@ -45,8 +46,15 @@
   color: #fff;
 }
 .chat-audio-play-ring {
+  /* Anchor the glyph to the real button circle, not its inherited grid
+     placement: mobile WebKit was drawing this ring visibly to the left. */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   width: 24px;
   height: 24px;
   border: 2px solid currentColor;
