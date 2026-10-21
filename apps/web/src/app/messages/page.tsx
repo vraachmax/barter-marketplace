@@ -586,7 +586,7 @@ export default function MessagesPage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (selectedChatIdRef.current !== chatId) { stream.getTracks().forEach(track => track.stop()); return; }
-      const mimeType = ['audio/mp4', 'audio/webm', 'audio/ogg'].find(type => MediaRecorder.isTypeSupported(type));
+      const mimeType = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/wav'].find(type => MediaRecorder.isTypeSupported(type));
       if (!mimeType) { stream.getTracks().forEach(track => track.stop()); setVoiceNotice('Формат записи не поддерживается.'); return; }
       const recorder = new MediaRecorder(stream, { mimeType });
       recorderRef.current = recorder;
@@ -604,11 +604,11 @@ export default function MessagesPage() {
         if (recordingCancelledRef.current || selectedChatIdRef.current !== chatId) return;
         const blob = new Blob(chunks, { type: mimeType });
         if (!blob.size) { setVoiceNotice('Запись пуста. Попробуйте ещё раз.'); return; }
-        const file = new File([blob], 'Голосовое сообщение.' + (mimeType === 'audio/mp4' ? 'm4a' : mimeType === 'audio/ogg' ? 'ogg' : 'webm'), { type: mimeType });
+        const file = new File([blob], 'Голосовое сообщение.' + (mimeType === 'audio/mp4' ? 'm4a' : mimeType === 'audio/ogg' ? 'ogg' : mimeType === 'audio/wav' ? 'wav' : 'webm'), { type: mimeType });
         setDrafts(previous => ({ ...previous, [chatId]: { text: previous[chatId]?.text ?? '', file } }));
         setVoiceNotice('');
       };
-      recorder.onerror = () => { setVoiceNotice('Не удалось записать голосовое сообщение.'); cancelVoiceInput(); };
+      recorder.onerror = () => { cancelVoiceInput(); setVoiceNotice('Не удалось записать голосовое сообщение.'); };
       recorder.start(250);
       setRecordingStream(stream);
       setRecordingStartedAt(Date.now());
