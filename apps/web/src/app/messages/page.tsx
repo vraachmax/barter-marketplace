@@ -1242,7 +1242,7 @@ export default function MessagesPage() {
                         {text.trim().length === 0 && !selectedFile
                            ? <Mic size={21} strokeWidth={2} className="md:hidden" aria-hidden />
                            : <Send size={18} strokeWidth={2} className="md:hidden" aria-hidden />}
-                        <span className="hidden text-sm font-semibold md:inline">Отправить</span>
+                        <span className="hidden text-sm font-semibold md:inline">{recording ? 'Остановить' : !text.trim() && !selectedFile ? 'Записать' : 'Отправить'}</span>
                       </>
                     )}
                   </button>

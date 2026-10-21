@@ -129,7 +129,7 @@ async function scenario(type, width, theme) {
   const key = type.name() + '-' + width + '-' + theme;
   const checks = [];
   const input = page.getByRole('textbox', { name: 'Сообщение', exact: true });
-  const send = page.getByRole('button', { name: 'Отправить', exact: true });
+  const send = page.locator('.messages-composer').getByRole('button', { name: /^(Отправить|Записать голосовое сообщение)$/ });
   const choose = async name => {
     if (width < 768 && await page.getByRole('button', { name: 'Назад к списку' }).isVisible()) await page.getByRole('button', { name: 'Назад к списку' }).click();
     await page.getByRole('button', { name: new RegExp(name) }).click();
@@ -151,10 +151,10 @@ async function scenario(type, width, theme) {
           composerHeight: Math.round(composer.getBoundingClientRect().height),
         };
       });
-      assert.equal(mobileMetrics.bubbleFont, '12.8px', 'Claude mobile message font');
-      assert.equal(mobileMetrics.bubbleLineHeight, '18px', 'Claude mobile message leading');
-      assert.equal(mobileMetrics.headerHeight, 61, 'Measured Claude conversation top area');
-      assert.equal(mobileMetrics.composerHeight, 36, 'Claude composer pill height');
+      assert.equal(mobileMetrics.bubbleFont, '14.5px', 'Approved mobile message font');
+      assert.equal(mobileMetrics.bubbleLineHeight, '20.88px', 'Approved mobile message leading');
+      assert.equal(mobileMetrics.headerHeight, 76, 'Approved conversation top area');
+      assert.equal(mobileMetrics.composerHeight, 42, 'Approved composer pill height');
       await page.screenshot({ path: join(output, key + '-reference-conversation.png') });
       checks.push('reference mobile conversation geometry and screenshot');
     }
@@ -444,9 +444,9 @@ async function referenceConversation(theme) {
       };
     });
     await writeFile(join(output, 'reference-conversation-393x850-' + theme + '-geometry.json'), JSON.stringify(geometry, null, 2));
-    assert.equal(Math.round(geometry.header.height), 61);
-    assert.equal(Math.round(geometry.listing.height), 80);
-    assert.equal(Math.round(geometry.input.height), 36);
+    assert.equal(Math.round(geometry.header.height), 76);
+    assert.equal(Math.round(geometry.listing.height), 82);
+    assert.equal(Math.round(geometry.input.height), 42);
     console.log('BARTER_MESSAGES_REFERENCE_PASS ' + theme);
   } finally { await context.close(); await browser.close(); }
 }

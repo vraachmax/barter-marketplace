@@ -31,6 +31,6 @@ The script has been syntax-checked but **has not been run against production**. 
 - Native iPhone microphone permission, keyboard, installed PWA and WebKit still need device/CI acceptance. No claim of pixel-perfect parity.
 - Browser fixtures isolate API responses; they do not prove live account/database integration. Live two-account testing and seeding follow successful backend release.
 
-## Publication block
+## Publication authorization and CI follow-up
 
-Automatic approval review rejected pushing the branch to the public GitHub repository, explicitly citing missing authorization for public source/document publication. No workaround was used. Local commits contain the work. User confirmation for public push is required before PR/CI/release; production remains unchanged.
+The initial public push was blocked pending authorization. Maxim explicitly authorized public publication, CI, release after successful checks and test seeding on 2026-10-21. PR #81 is open. Native PostgreSQL 16 migration rehearsal and exchange/message acceptance passed. Existing follow-redirects advisories were fixed with version 1.16.1; security CI passed. Browser follow-up updates assertions left behind by the prior approved thread redesign and handles the shared send/record action. Production release and live test seeding are still pending at this checkpoint.

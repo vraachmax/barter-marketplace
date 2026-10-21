@@ -1,3 +1,16 @@
+## 2026-10-21: PR #81 authorized; PostgreSQL passed, browser follow-up
+
+Maxim explicitly authorized public publication, CI, release after successful checks,
+and test listings. PR #81 is open; production is still unchanged at this checkpoint.
+Native PostgreSQL 16 migration rehearsal and exchange/message acceptance passed.
+OSV found existing dev-only follow-redirects 1.16.0 advisories; lockfile updated to
+1.16.1 and security CI passed. Demo seed now uses the existing Electronics root
+when phone/laptop subcategories are absent. Browser follow-up synchronizes stale
+61/80/36 px assertions with the already-published approved 76/82/42 px layout and
+checks the shared send/record action. No visual layout assertions are removed.
+Next: finish PR browser CI, merge, verify Render/Vercel release and live test accounts.
+Physical iPhone microphone/PWA acceptance remains unverified.
+
 ## 2026-10-21: chat exchanges implemented locally; public push blocked
 
 Branch `feat/chat-exchange-2026-10-20`, base ea6b68c. Direct exchange lifecycle,
