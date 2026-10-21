@@ -61,6 +61,12 @@ jobs:
         run: node apps/web/tests/browser/exchange-acceptance.mjs
         env:
           BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: iPhone-sized WebKit voice acceptance
+        if: ${{ !cancelled() && steps.browser-tools.outcome == 'success' }}
+        run: node apps/web/tests/browser/exchange-acceptance.mjs
+        env:
+          BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+          BARTER_BROWSER_ENGINE: webkit
       - name: Upload exchange evidence
         if: always()
         uses: actions/upload-artifact@v4

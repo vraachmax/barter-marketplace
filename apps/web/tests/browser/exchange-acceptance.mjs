@@ -6,16 +6,17 @@ import { fileURLToPath } from 'node:url';
 import { resolve, join } from 'node:path';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const require = createRequire(join(process.env.BARTER_BROWSER_TOOLS, 'package.json'));
-const { chromium, expect } = require('@playwright/test');
+const { chromium, webkit, expect } = require('@playwright/test');
+const engine = process.env.BARTER_BROWSER_ENGINE === 'webkit' ? 'webkit' : 'chromium';
 const server = spawn(process.execPath, [resolve(root, '../../node_modules/next/dist/bin/next'), 'start', '-H', '127.0.0.1', '-p', '3203'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
 server.stderr.on('data', b => process.stderr.write(b));
-const output = resolve(root, 'test-results/exchange'); await mkdir(output, { recursive: true });
+const output = resolve(root, 'test-results/exchange', engine); await mkdir(output, { recursive: true });
 let browser;
 try {
   for (let i=0;i<60;i++) { try { if ((await fetch('http://localhost:3203/messages')).ok) break; } catch {} await new Promise(r=>setTimeout(r,500)); }
-  browser = await chromium.launch({ ...(process.env.BARTER_CHROMIUM_PATH ? { executablePath: process.env.BARTER_CHROMIUM_PATH, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] } : {}) });
+  browser = await (engine === 'webkit' ? webkit : chromium).launch({ ...(engine === 'chromium' && process.env.BARTER_CHROMIUM_PATH ? { executablePath: process.env.BARTER_CHROMIUM_PATH, args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] } : {}) });
   for (const theme of ['light','dark']) for (const width of [393,430]) {
-    const context = await browser.newContext({ viewport: { width, height: 850 }, colorScheme: theme });
+    const context = await browser.newContext({ viewport: { width, height: 850 }, colorScheme: theme, isMobile: engine === 'webkit', hasTouch: engine === 'webkit' });
     await context.addInitScript(theme => { localStorage.setItem('barter_token', 'isolated-exchange-fixture'); localStorage.setItem('barter_theme_pref', theme.toUpperCase()); }, theme);
     const listing = { id: 'iphone', title: 'iPhone 15 Pro 256GB', ownerId: 'peer', priceRub: 65000, previewImageUrl: 'http://localhost:3203/demo-exchange/iphone.jpg', images: [{ url:'http://localhost:3203/demo-exchange/iphone.jpg' }], saleEnabled: true, barterEnabled: true, city: 'Краснодар' };
     const laptop = { id:'macbook', ownerId:'me', title:'MacBook Air M2', priceRub:70000, images:[{url:'http://localhost:3203/demo-exchange/macbook.jpg'}] };
@@ -96,10 +97,12 @@ try {
     });
     assert.ok(Math.abs(alignment.playCenter-alignment.bubbleCenter)<=1,
       'Play must be vertically centered in the entire orange voice bubble: '+JSON.stringify(alignment));
-    assert.ok(alignment.waveCenter < alignment.playCenter,
-      'Waveform belongs to the upper-right row, with Play centered across both rows: '+JSON.stringify(alignment));
+    assert.ok(Math.abs(alignment.waveCenter-alignment.playCenter)<=1,
+      'Play and the waveform must share the same horizontal centerline: '+JSON.stringify(alignment));
+    assert.ok(Math.abs(alignment.waveCenter-alignment.bubbleCenter)<=1,
+      'Waveform must be vertically centered in the entire voice bubble: '+JSON.stringify(alignment));
     assert.ok(alignment.footerTop > alignment.playCenter,
-      'Metadata belongs to the lower-right row, beneath the centered Play control: '+JSON.stringify(alignment));
+      'Time and speed belong below the shared visual axis: '+JSON.stringify(alignment));
     assert.ok(alignment.footerTop>=alignment.waveBottom,
       'Time and speed must form a separate row below the waveform: '+JSON.stringify(alignment));
     assert.ok(alignment.playLeft>alignment.containerLeft && alignment.waveLeft>alignment.playLeft,
@@ -124,10 +127,25 @@ try {
     await outgoingVoice.getByRole('button',{name:'Скорость воспроизведения 2×. Изменить скорость'}).click();
     assert.equal(await outgoingVoice.locator('audio').evaluate(node=>node.playbackRate),1);
     assert.notEqual(await incomingVoice.evaluate(el=>getComputedStyle(el).backgroundColor),appearance.background);
+    const incomingGeometry=await incomingVoice.evaluate(player=>{
+      const box=player.getBoundingClientRect(), play=player.querySelector('.chat-audio-toggle')?.getBoundingClientRect(),
+        track=player.querySelector('.chat-audio-track')?.getBoundingClientRect();
+      return { bubble:(box.top+box.bottom)/2, play:play?(play.top+play.bottom)/2:-1,
+        wave:track?(track.top+track.bottom)/2:-1 };
+    });
+    assert.ok(Math.abs(incomingGeometry.bubble-incomingGeometry.play)<=1 &&
+      Math.abs(incomingGeometry.bubble-incomingGeometry.wave)<=1,
+      'Incoming voice player needs the same axis: '+JSON.stringify(incomingGeometry));
     await page.screenshot({path:join(output,`voice-${width}-${theme}.png`)});
     await incomingVoice.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
     await expect(incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true})).toBeVisible();
     await incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true}).click();
+    if (engine === 'webkit') {
+      assert.equal(errors.length,0,errors.join('\n'));
+      console.log(`PASS WebKit mobile ${width} ${theme}: voice alignment, playback and speed`);
+      await context.close();
+      continue;
+    }
     await page.locator('.exchange-card').scrollIntoViewIfNeeded();
     await expect(page.locator('.exchange-card img').first()).toHaveJSProperty('naturalWidth', 1000);
     await page.screenshot({path:join(output,`offer-${width}-${theme}.png`)});
