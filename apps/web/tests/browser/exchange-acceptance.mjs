@@ -21,6 +21,7 @@ try {
     const laptop = { id:'macbook', ownerId:'me', title:'MacBook Air M2', priceRub:70000, images:[{url:'http://localhost:3203/demo-exchange/macbook.jpg'}] };
     const chat = { id:'demo', listing, peer: {id:'peer',name:'Александр'}, myRole:'buyer', unreadCount:0, updatedAt:new Date().toISOString() };
     const messages = [{id:'voice',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()},{id:'welcome',text:'Здравствуйте! Можно обсудить обмен?',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()}];
+    messages.push({id:'voice-outgoing',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'me',sender:{id:'me',name:'Максим'},createdAt:new Date().toISOString()});
     let offers = [{ id:'first',senderId:'peer',recipientId:'me',status:'PENDING',version:1,cashKopecks:0,terms:'Предлагаю обмен, как думаете?',expiresAt:new Date(Date.now()+86400000).toISOString(),createdAt:new Date().toISOString(),confirmations:[],items:[{listingId:'iphone',ownerId:'peer',snapshot:{title:listing.title,priceRub:65000,imageUrl:listing.previewImageUrl}},{listingId:'macbook',ownerId:'me',snapshot:{title:laptop.title,priceRub:70000,imageUrl:laptop.images[0].url}}]}];
     messages.push({ id:'exchange_offer_first', text:'Предложение обмена', senderId:'peer', sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString() });
     const details = {muted:false,blocked:false,cannotSend:false,listings:[listing,laptop],favorites:[listing],media:[]};
@@ -49,10 +50,27 @@ try {
     const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto('http://localhost:3203/messages?chatId=demo');
     await expect(page.getByText('Предлагаю обмен, как думаете?')).toBeVisible();
-    await expect(page.locator('.chat-audio-wave span')).toHaveCount(36);
-    await page.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
-    await expect(page.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true})).toBeVisible();
-    await page.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true}).click();
+    await expect(page.locator('.chat-audio-wave span')).toHaveCount(72);
+    const incomingVoice=page.locator('.chat-audio[data-direction="incoming"]');
+    const outgoingVoice=page.locator('.chat-audio[data-direction="outgoing"]');
+    await expect(incomingVoice).toBeVisible();
+    await expect(outgoingVoice).toBeVisible();
+    const appearance=await outgoingVoice.evaluate(player=>{
+      const shell=player.closest('.message-bubble'),meta=shell?.querySelector('[data-message-meta]');
+      const rect=player.getBoundingClientRect();
+      return {height:rect.height,background:getComputedStyle(player).backgroundColor,
+        shellBackground:shell?getComputedStyle(shell).backgroundColor:'',
+        timestampBelow:Boolean(meta&&meta.getBoundingClientRect().top>=rect.bottom)};
+    });
+    assert.equal(appearance.background,'rgb(255, 100, 21)');
+    assert.equal(appearance.shellBackground,'rgba(0, 0, 0, 0)');
+    assert.ok(appearance.height<=66,JSON.stringify(appearance));
+    assert.ok(appearance.timestampBelow);
+    assert.notEqual(await incomingVoice.evaluate(el=>getComputedStyle(el).backgroundColor),appearance.background);
+    await page.screenshot({path:join(output,`voice-${width}-${theme}.png`)});
+    await incomingVoice.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
+    await expect(incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true})).toBeVisible();
+    await incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true}).click();
     await page.locator('.exchange-card').scrollIntoViewIfNeeded();
     await expect(page.locator('.exchange-card img').first()).toHaveJSProperty('naturalWidth', 1000);
     await page.screenshot({path:join(output,`offer-${width}-${theme}.png`)});

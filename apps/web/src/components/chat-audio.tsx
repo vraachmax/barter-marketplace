@@ -7,7 +7,7 @@ import './chat-audio.css';
 const time = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
 /** The waveform is decoded from the recording; a seek bar remains if CORS/codec prevents decoding. */
-export function ChatAudio({ src }: { src: string }) {
+export function ChatAudio({ src, outgoing = false }: { src: string; outgoing?: boolean }) {
   const audio = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -36,7 +36,10 @@ export function ChatAudio({ src }: { src: string }) {
           return Math.sqrt(sum / Math.max(1, end - index * step));
         });
         const maximum = Math.max(...values, .001);
-        setPeaks(values.map(value => value / maximum));
+        setPeaks(values.map((value, index) => {
+          const smoothed = (values[Math.max(0, index - 1)] + 2 * value + values[Math.min(values.length - 1, index + 1)]) / 4;
+          return Math.sqrt(smoothed / maximum);
+        }));
         setDuration(buffer.duration);
       } catch { /* Audio playback does not depend on waveform decoding. */ }
       finally { if (context && context.state !== 'closed') void context.close(); }
@@ -52,14 +55,14 @@ export function ChatAudio({ src }: { src: string }) {
       try { await audio.current.play(); } catch { setError('Не удалось воспроизвести. Попробуйте ещё раз.'); }
     }
   }
-  return <div className="chat-audio">
+  return <div className="chat-audio" data-direction={outgoing ? 'outgoing' : 'incoming'}>
     <audio ref={audio} src={src} preload="metadata" onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration); }} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={e => setPosition(e.currentTarget.currentTime)} onError={() => setError('Запись недоступна. Попробуйте открыть её позже.')} />
     <button type="button" className="chat-audio-toggle" aria-label={playing ? 'Приостановить голосовое сообщение' : 'Воспроизвести голосовое сообщение'} onClick={() => void toggle()}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
-    <div className="chat-audio-track">
-      {peaks.length > 0 && <div className="chat-audio-wave" aria-hidden>{peaks.map((peak, index) => <span key={index} style={{ height: `${Math.max(12, peak * 100)}%` }} data-played={duration > 0 && index / peaks.length <= position / duration} />)}</div>}
+    <div className="chat-audio-body"><div className="chat-audio-track">
+      {peaks.length > 0 && <div className="chat-audio-wave" aria-hidden>{peaks.map((peak, index) => <span key={index} style={{ height: `${Math.max(18, Math.min(96, Math.round(peak * 100)))}%` }} data-played={duration > 0 && index / peaks.length <= position / duration} />)}</div>}
       <input className={peaks.length ? 'chat-audio-seek has-wave' : 'chat-audio-seek'} type="range" aria-label="Позиция голосового сообщения" aria-valuetext={`${time(position)} из ${time(duration)}`} min={0} max={duration || 1} step={.1} value={Math.min(position, duration || 1)} disabled={!duration} onChange={e => { if (audio.current) { audio.current.currentTime = Number(e.target.value); setPosition(Number(e.target.value)); } }} />
     </div>
-    <span className="chat-audio-time">{time(playing || position > 0 ? position : duration)}</span>
+    <div className="chat-audio-footer"><span className="chat-audio-time">{time(playing || position > 0 ? position : duration)}</span></div></div>
     {error && <p role="alert" className="chat-audio-error">{error}</p>}
   </div>;
 }
