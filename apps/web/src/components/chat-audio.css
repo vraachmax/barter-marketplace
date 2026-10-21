@@ -5,8 +5,8 @@
   gap: 11px;
   width: 278px;
   max-width: 100%;
-  min-height: 56px;
-  padding: 7px 10px;
+  min-height: 70px;
+  padding: 9px 12px;
   border-radius: 20px 20px 6px 20px;
   background: #ff6415;
   color: #fff;
@@ -20,9 +20,9 @@
 .chat-audio-toggle {
   display: grid;
   place-items: center;
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -35,7 +35,16 @@
   background: #ff6415;
   color: #fff;
 }
-.chat-audio-toggle svg { width: 19px; height: 19px; }
+.chat-audio-play-ring {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.chat-audio-play-ring svg { width: 12px; height: 12px; }
+.chat-audio-play-ring svg.lucide-play { transform: translateX(1px); }
 .chat-audio-toggle:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
@@ -47,13 +56,13 @@
   justify-content: center;
   gap: 1px;
   min-width: 0;
-  height: 40px;
+  height: 50px;
 }
 .chat-audio-track {
   position: relative;
   flex: none;
   width: 100%;
-  height: 24px;
+  height: 30px;
 }
 .chat-audio-wave {
   display: flex;
@@ -66,9 +75,9 @@
 .chat-audio-wave span {
   flex: 0 1 3px;
   width: 3px;
-  min-width: 1px;
+  min-width: 2px;
   border-radius: 3px;
-  background: rgb(255 255 255 / 47%);
+  background: rgb(255 255 255 / 60%);
 }
 .chat-audio-wave span[data-played='true'] { background: #fff; }
 .chat-audio[data-direction='incoming'] .chat-audio-wave span {
@@ -96,12 +105,44 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
-.chat-audio-footer { display: flex; align-items: center; min-height: 12px; }
+.chat-audio-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 18px;
+}
+.chat-audio-speed {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 28px;
+  justify-self: end;
+  margin-block: -5px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgb(255 255 255 / 75%);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 500;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.chat-audio-speed:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.chat-audio[data-direction='incoming'] .chat-audio-speed { color: var(--fg-muted); }
 .chat-audio-time {
   color: rgb(255 255 255 / 90%);
-  font-size: 11px;
-  line-height: 12px;
+  font-size: 13px;
+  line-height: 16px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  min-width: max-content;
 }
 .chat-audio[data-direction='incoming'] .chat-audio-time { color: var(--fg-muted); }
 .chat-audio-error {
