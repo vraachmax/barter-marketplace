@@ -28,3 +28,16 @@
   .contact-group>button{min-height:56px;padding:8px 0}
   .contact-danger>button{min-height:48px}
 }
+.exchange-card .exchange-money[hidden]{display:none}
+.exchange-column small{display:block;font-size:11px;line-height:15px}
+.exchange-item{margin-top:6px}.exchange-item>img,.exchange-item>svg{height:48px}
+.exchange-column{padding:9px}.exchange-terms{padding:8px 10px;margin-bottom:10px}
+@media(max-width:767px){
+  .contact-group>button{padding:6px 0}.contact-danger>button{padding:3px 0}
+  .messages-screen.messages-approved-screen:has(.exchange-card) .thread-header{height:62px;min-height:62px}
+  .messages-screen.messages-approved-screen:has(.exchange-card) .thread-listing-preview{height:66px;min-height:66px;padding:6px 8px;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:14px}
+  .messages-screen.messages-approved-screen:has(.exchange-card) .thread-listing-image{width:52px;height:52px;border-radius:9px}
+}
+html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing']{background:#ffeddf;color:var(--foreground)}
+html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing'] [data-message-meta]{color:var(--fg-muted)}
+html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing'] [data-message-meta] svg{color:#ff5a0a}

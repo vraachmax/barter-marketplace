@@ -67,13 +67,14 @@ try {
     await expect(page.locator('.contact-search-result')).toHaveCount(1);
     await page.getByRole('button',{name:'Назад к переписке'}).click();
     await page.getByRole('button',{name:'Назад к переписке'}).click();
-    await page.getByRole('button',{name:'Предложить обмен',exact:true}).click();
+    await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
+    await page.getByRole('button',{name:'Предложить новые условия',exact:true}).click();
     await page.getByRole('checkbox').first().check();
     await page.getByRole('button',{name:'Проверить предложение'}).click();
     await expect(page.getByText('Деньги через площадку не переводятся.',{exact:false})).toBeVisible();
     await page.screenshot({path:join(output,`review-${width}-${theme}.png`)});
     await page.getByRole('button',{name:'Отправить предложение',exact:true}).click();
-    const sent=writes.find(w=>w.clientKey);assert.deepEqual(sent.giveIds,['macbook']);assert.deepEqual(sent.receiveIds,['iphone']);assert.equal(sent.cashKopecks,0);
+    const sent=writes.find(w=>w.clientKey);assert.deepEqual(sent.giveIds,['macbook']);assert.deepEqual(sent.receiveIds,['iphone']);assert.equal(sent.cashKopecks,0);assert.equal(sent.previousId,'first');
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await expect(page.getByRole('dialog',{name:'Обсудить условия',exact:true})).toBeVisible();
     assert.equal(writes.some(w=>w.action==='accept'),false);
