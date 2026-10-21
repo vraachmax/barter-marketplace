@@ -56,6 +56,18 @@ jobs:
         run: node apps/web/tests/browser/messages-acceptance.mjs
         env:
           BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Exchange and contact browser acceptance
+        if: ${{ !cancelled() && steps.browser-tools.outcome == 'success' }}
+        run: node apps/web/tests/browser/exchange-acceptance.mjs
+        env:
+          BARTER_BROWSER_TOOLS: ${{ runner.temp }}/barter-browser-tools
+      - name: Upload exchange evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exchange-browser-evidence
+          path: apps/web/test-results/exchange/
+          retention-days: 14
       - name: Upload messages evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1364,6 +1364,7 @@ export class ListingsService {
 
   async update(userId: string, listingId: string, dto: UpdateListingDto) {
     await this.assertOwner(userId, listingId);
+    if (await this.prisma.exchangeReservation.findUnique({ where: { listingId } })) throw new BadRequestException('Вещь зарезервирована для обмена. Сначала отмените обмен.');
 
     const current = await this.prisma.listing.findUnique({
       where: { id: listingId },
@@ -1453,6 +1454,7 @@ export class ListingsService {
 
   async updateStatus(userId: string, listingId: string, dto: UpdateListingStatusDto) {
     await this.assertOwner(userId, listingId);
+    if (await this.prisma.exchangeReservation.findUnique({ where: { listingId } })) throw new BadRequestException('Вещь зарезервирована для обмена. Сначала отмените обмен.');
 
     const cur = await this.prisma.listing.findUnique({
       where: { id: listingId },
@@ -1489,6 +1491,9 @@ export class ListingsService {
 
   async remove(userId: string, listingId: string) {
     await this.assertOwner(userId, listingId);
+    if (await this.prisma.exchangeItem.count({ where: { listingId } })) {
+      throw new BadRequestException('Объявление связано с обменом. Снимите его с публикации вместо удаления.');
+    }
     const [chats, listingImages] = await Promise.all([
       this.prisma.chat.findMany({
         where: { listingId },
@@ -1634,6 +1639,7 @@ export class ListingsService {
 
   async deleteImage(userId: string, listingId: string, imageId: string) {
     await this.assertOwner(userId, listingId);
+    if (await this.prisma.exchangeReservation.findUnique({ where: { listingId } })) throw new BadRequestException('Вещь зарезервирована для обмена. Сначала отмените обмен.');
     const image = await this.prisma.listingImage.findFirst({
       where: { id: imageId, listingId },
       select: { url: true },

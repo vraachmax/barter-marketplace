@@ -56,7 +56,7 @@ function ReviewEditor({ sellerId, listingId }: { sellerId: string; listingId: st
   if (!elig) return <p role="status" className="pt-3 text-sm text-muted-foreground">Проверяем условия…</p>;
   if (elig.reason === 'is_owner') return <p className="pt-3 text-sm text-muted-foreground">Это ваше объявление. Отзыв могут оставить покупатели после переписки.</p>;
   if (elig.reason === 'already_reviewed') return <p role="status" className="pt-3 text-sm">{status === 'ok' ? 'Спасибо! Ваш отзыв сохранён.' : 'Вы уже оставили отзыв по этому объявлению.'}</p>;
-  if (!elig.canReview) return <div className="space-y-3 pt-3"><p className="text-sm leading-6 text-muted-foreground">{elig.reason === 'need_mutual_messages' ? 'Отзыв станет доступен после обмена сообщениями с продавцом.' : elig.reason === 'no_chat' ? 'Сначала обсудите объявление с продавцом в чате.' : 'Сейчас отзыв недоступен.'}</p><Button render={<Link href={`/messages?listingId=${listingId}`} />} variant="secondary">Открыть переписку</Button></div>;
+  if (!elig.canReview) return <div className="space-y-3 pt-3"><p className="text-sm leading-6 text-muted-foreground">{elig.reason === 'exchange_not_completed' ? 'Отзыв об обмене станет доступен после подтверждения передачи обеими сторонами.' : elig.reason === 'need_mutual_messages' ? 'Отзыв станет доступен после обмена сообщениями с продавцом.' : elig.reason === 'no_chat' ? 'Сначала обсудите объявление с продавцом в чате.' : 'Сейчас отзыв недоступен.'}</p><Button render={<Link href={`/messages?listingId=${listingId}`} />} variant="secondary">Открыть переписку</Button></div>;
   return (
     <form onSubmit={(event) => void submit(event)} className="space-y-4 pt-4">
       <label className="block space-y-2 text-sm font-medium"><span>Оценка</span>

@@ -99,6 +99,7 @@ export type FavoriteItem = {
 };
 
 export type ChatSummary = {
+  muted?: boolean;
   id: string;
   updatedAt: string;
   unreadCount: number;
@@ -161,7 +162,7 @@ export type ChatMessage = {
   /** Сообщение от бота-помощника площадки */
   isAssistant?: boolean;
   mediaUrl?: string | null;
-  mediaType?: 'IMAGE' | 'VIDEO' | null;
+  mediaType?: 'IMAGE' | 'VIDEO' | 'AUDIO' | null;
   sender: {
     id: string;
     name: string | null;
@@ -176,7 +177,8 @@ export type ReviewEligibility = {
     | 'is_owner'
     | 'already_reviewed'
     | 'no_chat'
-    | 'need_mutual_messages';
+    | 'need_mutual_messages'
+    | 'exchange_not_completed';
   sellerId?: string;
   hasExistingReview?: boolean;
 };

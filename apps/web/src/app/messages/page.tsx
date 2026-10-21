@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ChatExchange } from '@/components/chat-exchange';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Camera,
@@ -97,6 +98,12 @@ export default function MessagesPage() {
   const [drafts, setDrafts] = useState<Record<string, { text: string; file: File | null }>>({});
   const text = drafts[selectedChatId]?.text ?? '';
   const selectedFile = drafts[selectedChatId]?.file ?? null;
+  const [audioDraftUrl, setAudioDraftUrl] = useState('');
+  useEffect(() => {
+    if (!selectedFile?.type.startsWith('audio/')) { setAudioDraftUrl(''); return; }
+    const url = URL.createObjectURL(selectedFile); setAudioDraftUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedFile]);
   function setText(value: string | ((previous: string) => string)) {
     const id = selectedChatIdRef.current;
     setDrafts(previous => {
@@ -135,6 +142,15 @@ export default function MessagesPage() {
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [voiceNotice, setVoiceNotice] = useState('');
+  const [recording, setRecording] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (recorderRef.current) { recorderRef.current.onstop = null; if (recorderRef.current.state !== 'inactive') recorderRef.current.stop(); }
+    recordingStreamRef.current?.getTracks().forEach(track => track.stop());
+    if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+  }, []);
   const [gallery, setGallery] = useState<{ urls: string[]; index: number } | null>(null);
   const [openError, setOpenError] = useState('');
   const [openAttempt, setOpenAttempt] = useState(0);
@@ -196,6 +212,8 @@ export default function MessagesPage() {
 
   useEffect(() => {
     selectedChatIdRef.current = selectedChatId;
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+    setVoiceNotice('');
   }, [selectedChatId]);
 
   useEffect(() => {
@@ -402,6 +420,10 @@ export default function MessagesPage() {
         void loadChats(true);
       },
     );
+    socket.on('exchange-updated', (payload: { chatId: string }) => {
+      if (payload.chatId === selectedChatIdRef.current) { void loadMessages(payload.chatId); window.dispatchEvent(new Event('barter-exchange-refresh')); }
+      void loadChats(true);
+    });
     socket.on('presence-snapshot', (payload: { onlineUserIds?: string[]; lastSeenByUser?: Record<string, string> } | null | undefined) => {
       if (!payload) return;
       const onlineMap: Record<string, boolean> = {};
@@ -532,41 +554,35 @@ export default function MessagesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChatId, myRole]);
 
-  function startVoiceInput() {
-    type Recognition = {
-      lang: string;
-      interimResults: boolean;
-      onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-      onerror: (() => void) | null;
-      start(): void;
-    };
-    const browser = window as Window & {
-      SpeechRecognition?: new () => Recognition;
-      webkitSpeechRecognition?: new () => Recognition;
-    };
-    const Ctor = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
-    if (!Ctor) {
-      setVoiceNotice('Для голосового ввода используйте микрофон клавиатуры.');
-      composerRef.current?.focus();
-      return;
+  async function startVoiceInput() {
+    if (recorderRef.current?.state === 'recording') { recorderRef.current.stop(); return; }
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      setVoiceNotice('Браузер не поддерживает запись аудио. Можно прикрепить аудиофайл.'); return;
     }
+    const chatId = selectedChatId;
     try {
-      const recognition = new Ctor();
-      recognition.lang = 'ru-RU';
-      recognition.interimResults = false;
-      recognition.onresult = event => {
-        const words = Array.from(event.results).map(result => result[0]?.transcript ?? '').join(' ').trim();
-        if (words) setText(previous => previous.trim() ? previous.trim() + ' ' + words : words);
-        setVoiceNotice('');
-        composerRef.current?.focus();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (selectedChatIdRef.current !== chatId) { stream.getTracks().forEach(t => t.stop()); return; }
+      recordingStreamRef.current = stream;
+      const mimeType = ['audio/webm', 'audio/mp4', 'audio/ogg'].find(type => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) { stream.getTracks().forEach(t => t.stop()); setVoiceNotice('Формат записи не поддерживается.'); return; }
+      const recorder = new MediaRecorder(stream, { mimeType });
+      recorderRef.current = recorder;
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+        setRecording(false);
+        const blob = new Blob(chunks, { type: mimeType });
+        if (!blob.size) return;
+        const file = new File([blob], 'Голосовое сообщение.' + (mimeType === 'audio/mp4' ? 'm4a' : mimeType === 'audio/ogg' ? 'ogg' : 'webm'), { type: mimeType });
+        setDrafts(previous => ({ ...previous, [chatId]: { text: previous[chatId]?.text ?? '', file } }));
+        setVoiceNotice('Запись готова. Прослушайте и нажмите отправить.');
       };
-      recognition.onerror = () => setVoiceNotice('Голосовой ввод недоступен. Используйте микрофон клавиатуры.');
-      recognition.start();
-      setVoiceNotice('Говорите. Распознанный текст появится в поле ввода.');
-    } catch {
-      setVoiceNotice('Используйте микрофон клавиатуры для диктовки.');
-      composerRef.current?.focus();
-    }
+      recorder.start(); setRecording(true); setVoiceNotice('Идёт запись. Нажмите микрофон, чтобы остановить. Максимум 2 минуты.');
+      recordingTimerRef.current = setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, 120000);
+    } catch { setRecording(false); setVoiceNotice('Нет доступа к микрофону. Разрешите его в настройках браузера.'); }
   }
 
   function insertQuickReply(template: SupportTemplate) {
@@ -824,7 +840,7 @@ export default function MessagesPage() {
                     <img src={peerAvatarSrc} alt="" className="h-full w-full rounded-full object-cover" />
                   ) : peerInitials(selectedChat.peer)}
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1" role="button" tabIndex={0} aria-label="Информация о собеседнике" onClick={() => window.dispatchEvent(new Event('barter-chat-details'))} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') window.dispatchEvent(new Event('barter-chat-details')); }}>
                   <div className="thread-peer-name truncate text-base font-semibold leading-tight text-foreground">
                     {selectedChat.peer?.name ?? 'Собеседник'}
                   </div>
@@ -863,7 +879,7 @@ export default function MessagesPage() {
                   </a>
                 ) : null}
                 <button type="button" className="thread-menu-button grid size-11 shrink-0 place-items-center rounded-full"
-                  onClick={() => setThreadActionsOpen(value => !value)}
+                  onClick={() => window.dispatchEvent(new Event('barter-chat-details'))}
                   aria-label="Действия с перепиской" aria-expanded={threadActionsOpen}>
                   <MoreHorizontal size={22} strokeWidth={1.8} aria-hidden />
                 </button>
@@ -907,6 +923,7 @@ export default function MessagesPage() {
               {/* Messages */}
               <div ref={messagesScrollRef} data-thread-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background px-3 py-2 md:px-5">
                 <div className="messages-bubbles mx-auto max-w-3xl space-y-[7px]">
+                  <ChatExchange key={selectedChat.id} chat={selectedChat} messages={messages} peerStatus={peerStatus} onChanged={() => { void loadMessages(selectedChat.id); void loadChats(true); }} onOpenMedia={(urls, index) => setGallery({ urls, index })} />
                   {threadStatus === 'loading' ? <p role="status" className="py-8 text-center text-sm text-muted-foreground">Загрузка переписки…</p> : null}
                   {threadStatus === 'error' ? <div role="alert" className="rounded-2xl border border-border bg-card p-4 text-sm"><p>Не удалось загрузить переписку</p><Button variant="outline" className="mt-3" onClick={() => void loadMessages(selectedChatId)}>Обновить переписку</Button></div> : null}
                   {threadStatus === 'ready' && messages.length === 0 ? (
@@ -915,6 +932,7 @@ export default function MessagesPage() {
                     </div>
                   ) : null}
                   {messages.map((m, index) => {
+                    if (m.id.startsWith('exchange_offer_')) return <div key={m.id} id={m.id} />;
                     if (hiddenAlbumPhotos.has(m.id)) return null;
                     const previous = messages[index - 1];
                     const dayChip = isNewThreadDay(m.createdAt, previous?.createdAt)
@@ -1002,7 +1020,7 @@ export default function MessagesPage() {
                               </div>
                             ) : mediaFull ? (
                               <div className={`thread-media-attachment mb-2 overflow-hidden rounded-xl ${isPeer ? 'border border-border' : 'border border-white/20'}`}>
-                                {m.mediaType === 'VIDEO' ? (
+                                {m.mediaType === 'AUDIO' ? <audio src={mediaFull} controls preload="metadata" className="max-w-full" aria-label="Голосовое сообщение" /> : m.mediaType === 'VIDEO' ? (
                                   <video src={mediaFull} controls className="max-h-64 w-full object-contain" />
                                 ) : (
                                   <button type="button" onClick={() => setGallery({ urls: [mediaFull], index: 0 })}
@@ -1013,7 +1031,7 @@ export default function MessagesPage() {
                                 )}
                               </div>
                             ) : null}
-                            {m.text && !(m.mediaType === 'IMAGE' && m.text.trim() === 'Фото')
+                            {m.text && !(m.mediaType === 'AUDIO' && m.text.trim() === 'Голосовое сообщение') && !(m.mediaType === 'IMAGE' && m.text.trim() === 'Фото')
                               ? <div className="whitespace-pre-wrap leading-relaxed [overflow-wrap:anywhere]">{m.text}</div> : null}
                                                         <div
                               data-message-meta
@@ -1136,6 +1154,7 @@ export default function MessagesPage() {
                   </div>
                 ) : null}
 
+                {audioDraftUrl ? <audio src={audioDraftUrl} controls className="mb-2 max-w-full" /> : null}
                 {selectedFile ? (
                   <div className="mb-1.5 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs">
                     <Camera size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
@@ -1155,14 +1174,14 @@ export default function MessagesPage() {
                     <Plus size={22} strokeWidth={1.8} aria-hidden />
                     <input
                       type="file"
-                      aria-label="Прикрепить фото или видео"
+                      aria-label="Прикрепить фото, видео или аудио"
                       disabled={busy}
                       className="absolute inset-0 w-full cursor-pointer opacity-0"
                       onChange={(e) => {
                         const file = e.currentTarget.files?.[0];
                         if (file) setSelectedFile(file);
                       }}
-                      accept="image/*,video/*"
+                      accept="image/*,video/*,audio/*"
                     />
                   </label>
                   <div className="thread-input-shell">
@@ -1171,7 +1190,7 @@ export default function MessagesPage() {
                     rows={1}
                     maxLength={4000}
                     aria-label="Сообщение"
-                    className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-[18px] border-0 bg-muted px-4 py-2.5 text-[12.5px] leading-6 placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-[18px] border-0 bg-muted px-4 py-2.5 text-[16px] leading-6 placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Написать сообщение..."
                     value={text}
                     onChange={(e) => {
@@ -1208,12 +1227,12 @@ export default function MessagesPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!selectedFile && !text.trim()) startVoiceInput();
+                      if (recording || (!selectedFile && !text.trim())) void startVoiceInput();
                       else if (selectedFile) void sendAttachment();
                       else void sendMessage();
                     }}
                     disabled={busy || threadStatus !== 'ready'}
-                    aria-label={text.trim().length === 0 && !selectedFile ? 'Голосовой ввод текста' : 'Отправить'}
+                    aria-label={recording ? 'Остановить запись' : text.trim().length === 0 && !selectedFile ? 'Записать голосовое сообщение' : 'Отправить'}
                     className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 md:w-auto md:px-4"
                   >
                     {busy ? (
@@ -1223,7 +1242,7 @@ export default function MessagesPage() {
                         {text.trim().length === 0 && !selectedFile
                            ? <Mic size={21} strokeWidth={2} className="md:hidden" aria-hidden />
                            : <Send size={18} strokeWidth={2} className="md:hidden" aria-hidden />}
-                        <span className="hidden text-sm font-semibold md:inline">Отправить</span>
+                        <span className="hidden text-sm font-semibold md:inline">{recording ? 'Остановить' : !text.trim() && !selectedFile ? 'Записать' : 'Отправить'}</span>
                       </>
                     )}
                   </button>

@@ -1,3 +1,5 @@
+import { ExchangeController } from './exchange.controller';
+import { ExchangeService } from './exchange.service';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AnalyticsModule } from '../analytics/analytics.module';
@@ -17,7 +19,7 @@ import { getJwtSecret } from '../config/security';
       secret: getJwtSecret(),
     }),
   ],
-  controllers: [ChatsController],
-  providers: [ChatsService, ChatsGateway],
+  controllers: [ChatsController, ExchangeController],
+  providers: [ChatsService, ChatsGateway, ExchangeService],
 })
 export class ChatsModule {}

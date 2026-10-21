@@ -49,6 +49,7 @@ describe('category barter policy', () => {
         {
           provide: PrismaService,
           useValue: {
+            exchangeReservation: { findUnique: jest.fn().mockResolvedValue(null) },
             category: {
               findUnique: findCategory,
               findMany: jest.fn().mockResolvedValue([

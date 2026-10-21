@@ -17,6 +17,10 @@ const MIME_EXTENSIONS: Record<string, string> = {
   'image/avif': '.avif',
   'image/heic': '.heic',
   'image/heif': '.heif',
+  'audio/webm': '.webm',
+  'audio/mp4': '.m4a',
+  'audio/ogg': '.ogg',
+  'audio/mpeg': '.mp3',
   'video/mp4': '.mp4',
   'video/webm': '.webm',
   'video/quicktime': '.mov',
@@ -40,8 +44,9 @@ function safeSegment(raw: string): string {
   return value;
 }
 
-export function getMediaType(file: Express.Multer.File): 'IMAGE' | 'VIDEO' {
+export function getMediaType(file: Express.Multer.File): 'IMAGE' | 'VIDEO' | 'AUDIO' {
   const mime = normalizeMimeType(file.mimetype);
+  if (mime.startsWith('audio/') && MIME_EXTENSIONS[mime]) return 'AUDIO';
   if (IMAGE_MIME_TYPES.has(mime)) return 'IMAGE';
   if (VIDEO_MIME_TYPES.has(mime)) return 'VIDEO';
   throw new BadRequestException('unsupported_media_type');

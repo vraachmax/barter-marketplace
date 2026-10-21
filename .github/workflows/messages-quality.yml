@@ -13,6 +13,7 @@ on:
       - 'apps/api/test/vehicle-catalog.cjs'
       - 'apps/api/prisma/**'
       - 'apps/api/test/messages-idempotency.cjs'
+      - 'apps/api/test/exchange-offers.cjs'
       - 'apps/api/test/messages-socket.cjs'
       - 'apps/api/test/messages-media.cjs'
       - 'apps/api/src/storage/**'
@@ -61,6 +62,8 @@ jobs:
         run: npm test -w @app/api -- --runInBand listings categories
       - name: Listing modes HTTP and PostgreSQL acceptance
         run: node apps/api/test/listing-trade-modes.cjs
+      - name: Exchange concurrency and lifecycle acceptance
+        run: node apps/api/test/exchange-offers.cjs
       - name: HTTP and PostgreSQL message acceptance
         run: node apps/api/test/messages-idempotency.cjs
       - name: Socket.IO and PostgreSQL acceptance

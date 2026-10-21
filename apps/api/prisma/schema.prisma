@@ -431,6 +431,7 @@ model Chat {
 
   users    ChatUser[]
   messages Message[]
+  exchangeOffers ExchangeOffer[]
 
   @@index([updatedAt])
 }
@@ -439,6 +440,7 @@ model ChatUser {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   lastReadAt DateTime?
+  muted Boolean @default(false)
 
   chatId String
   chat   Chat   @relation(fields: [chatId], references: [id])
@@ -594,6 +596,7 @@ enum SupportTicketStatus {
 enum MessageMediaType {
   IMAGE
   VIDEO
+  AUDIO
 }
 
 /// События поведения пользователя (рекомендации, ранжирование, воронки)
@@ -626,3 +629,64 @@ model UserBehaviorEvent {
   @@index([type, createdAt])
 }
 
+
+// Every counteroffer is an immutable revision; actions only change its lifecycle.
+model ExchangeOffer {
+  id String @id @default(cuid())
+  chatId String
+  chat Chat @relation(fields: [chatId], references: [id])
+  senderId String
+  recipientId String
+  clientKey String
+  previousId String? @unique
+  status String @default("PENDING")
+  version Int @default(1)
+  cashKopecks Int @default(0)
+  terms String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items ExchangeItem[]
+  reservations ExchangeReservation[]
+  confirmations ExchangeConfirmation[]
+  events ExchangeAudit[]
+  @@unique([senderId, clientKey])
+  @@index([chatId, createdAt])
+  @@index([status, expiresAt])
+}
+model ExchangeItem {
+  id String @id @default(cuid())
+  offerId String
+  offer ExchangeOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  listingId String
+  ownerId String
+  snapshot Json
+  @@unique([offerId, listingId])
+}
+model ExchangeReservation {
+  listingId String @id
+  offerId String
+  offer ExchangeOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+model ExchangeConfirmation {
+  offerId String
+  offer ExchangeOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  userId String
+  createdAt DateTime @default(now())
+  @@id([offerId, userId])
+}
+model ExchangeAudit {
+  id String @id @default(cuid())
+  offerId String
+  offer ExchangeOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  userId String
+  action String
+  createdAt DateTime @default(now())
+}
+model UserBlock {
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+  @@id([blockerId, blockedId])
+}
