@@ -1,5 +1,146 @@
-.chat-audio{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:250px;max-width:100%;padding:7px 9px;background:var(--bg-muted);color:var(--foreground);border-radius:22px}
-.chat-audio-toggle{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:50%;background:#ff5a0a;color:#fff;cursor:pointer}
-.chat-audio-toggle svg{width:18px;height:18px}.chat-audio-track{position:relative;flex:1;min-width:60px;height:32px}.chat-audio-wave{display:flex;align-items:center;justify-content:space-between;gap:2px;height:100%;pointer-events:none}.chat-audio-wave span{width:3px;min-width:1px;border-radius:2px;background:var(--fg-muted);opacity:.55}.chat-audio-wave span[data-played=true]{background:#ff5a0a;opacity:1}
-.chat-audio-seek{position:absolute;inset:0;width:100%;height:100%;margin:0;accent-color:#ff5a0a;cursor:pointer}.chat-audio-seek.has-wave{opacity:0}.chat-audio-track:focus-within{outline:2px solid #ff5a0a;outline-offset:4px;border-radius:4px}.chat-audio-time{font-size:12px;color:var(--fg-muted);font-variant-numeric:tabular-nums}.chat-audio-error{flex-basis:100%;font-size:12px}
-.messages-screen .thread-media-attachment:has(.chat-audio){border:0;margin:0;overflow:visible}
+/* The message bubble itself is the player; no nested audio capsule. */
+.chat-audio {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 278px;
+  max-width: 100%;
+  min-height: 56px;
+  padding: 7px 10px;
+  border-radius: 20px 20px 6px 20px;
+  background: #ff6415;
+  color: #fff;
+  box-sizing: border-box;
+}
+.chat-audio[data-direction='incoming'] {
+  border-radius: 20px 20px 20px 6px;
+  background: var(--bg-muted);
+  color: var(--foreground);
+}
+.chat-audio-toggle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 24%);
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.chat-audio[data-direction='incoming'] .chat-audio-toggle {
+  background: #ff6415;
+  color: #fff;
+}
+.chat-audio-toggle svg { width: 19px; height: 19px; }
+.chat-audio-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.chat-audio-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  height: 40px;
+}
+.chat-audio-track {
+  position: relative;
+  flex: none;
+  width: 100%;
+  height: 24px;
+}
+.chat-audio-wave {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  height: 100%;
+  pointer-events: none;
+}
+.chat-audio-wave span {
+  flex: 0 1 3px;
+  width: 3px;
+  min-width: 1px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 47%);
+}
+.chat-audio-wave span[data-played='true'] { background: #fff; }
+.chat-audio[data-direction='incoming'] .chat-audio-wave span {
+  background: var(--fg-muted);
+  opacity: .55;
+}
+.chat-audio[data-direction='incoming'] .chat-audio-wave span[data-played='true'] {
+  background: #ff6415;
+  opacity: 1;
+}
+.chat-audio-seek {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  accent-color: #fff;
+  cursor: pointer;
+  touch-action: pan-x;
+}
+.chat-audio-seek.has-wave { opacity: 0; }
+.chat-audio[data-direction='incoming'] .chat-audio-seek { accent-color: #ff6415; }
+.chat-audio-track:focus-within {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.chat-audio-footer { display: flex; align-items: center; min-height: 12px; }
+.chat-audio-time {
+  color: rgb(255 255 255 / 90%);
+  font-size: 11px;
+  line-height: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.chat-audio[data-direction='incoming'] .chat-audio-time { color: var(--fg-muted); }
+.chat-audio-error {
+  flex-basis: 100%;
+  width: 100%;
+  font-size: 11px;
+  line-height: 1.3;
+}
+/* Remove the existing message shell for audio-only messages, including the
+   barter-thread pale outgoing override. Keep timestamps below the bubble. */
+.messages-screen .message-bubble[data-voice-only='true'] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+}
+.messages-screen .message-bubble[data-voice-only='true'][data-direction='incoming'] {
+  align-items: flex-start;
+}
+.messages-screen .message-bubble[data-voice-only='true'] [data-message-meta] {
+  margin-top: 4px;
+  padding: 0 2px;
+  color: var(--fg-muted) !important;
+}
+.messages-screen .message-bubble[data-voice-only='true'] [data-message-meta] svg {
+  color: #ff6415;
+}
+.messages-screen .thread-media-attachment:has(.chat-audio) {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0;
+  overflow: visible;
+}
+@media (max-width: 370px) {
+  .chat-audio { gap: 8px; padding-inline: 8px; }
+}
