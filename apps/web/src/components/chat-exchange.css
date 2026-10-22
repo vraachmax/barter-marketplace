@@ -72,3 +72,5 @@ html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exc
 }
 .exchange-handoff-note { color: var(--fg-muted); font-size: 13px; }
 .exchange-handoff-sheet .exchange-secondary { margin-top: 12px; }
+
+.exchange-handoff-expired { display:grid; place-items:center; width:min(240px,75vw); height:240px; margin:20px auto; border:2px dashed var(--border-default); border-radius:12px; color:var(--fg-muted); }
