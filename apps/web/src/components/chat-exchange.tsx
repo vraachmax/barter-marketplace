@@ -69,12 +69,12 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     return () => { window.removeEventListener('barter-chat-details', open); window.removeEventListener('barter-exchange-refresh', update); };
   }, [refresh]);
   useEffect(() => {
-    if (!screen && !form && !discussionOpen) return;
+    if (!screen && !form && !discussionOpen && !handoff && !scanned) return;
     const previous = document.activeElement as HTMLElement | null;
     const dialog = document.querySelector<HTMLElement>('.exchange-overlay');
     const first = dialog?.querySelector<HTMLElement>('button, input, a'); first?.focus();
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !lock.current) { setScreen(null); setForm(false); setDiscussId(null); }
+      if (e.key === 'Escape' && !lock.current) { setScreen(null); setForm(false); setDiscussId(null); setHandoff(null); setScanned(null); }
       if (e.key !== 'Tab' || !dialog) return;
       const nodes = Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input,textarea,select')).filter(n => n.offsetParent !== null);
       const last = nodes[nodes.length - 1];
@@ -83,7 +83,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     };
     document.addEventListener('keydown', key);
     return () => { document.removeEventListener('keydown', key); previous?.focus(); };
-  }, [screen, form, discussionOpen]);
+  }, [screen, form, discussionOpen, handoff, scanned]);
   async function action(offer: Offer, action: string, qrToken?: string): Promise<boolean> {
     if (lock.current) return false;
     lock.current = true; setBusy(true); setError('');
