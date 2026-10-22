@@ -98,7 +98,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       throw new ConflictException('Предложивший обмен ещё не подтвердил свою сторону');
     const parts = code?.split('.');
     if (!parts || parts.length !== 4 || parts[0] !== 'BX1' || parts[1] !== offer.id ||
-      !/^\\d{10}$/.test(parts[2]) || !/^[a-f0-9]{64}$/.test(parts[3]))
+      !/^\d{10}$/.test(parts[2]) || !/^[a-f0-9]{64}$/.test(parts[3]))
       throw new BadRequestException('Недействительный QR-код обмена');
     const expires = Number(parts[2]);
     const now = Math.floor(Date.now() / 1000);
