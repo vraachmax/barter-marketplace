@@ -1,0 +1,117 @@
+/* In the composer: Telegram-inspired, Barter-branded live microphone state. */
+.thread-voice-recorder {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  max-width: 768px;
+  min-height: 52px;
+  padding: 4px 5px 4px 13px;
+  border-radius: 26px;
+  background: var(--bg-muted, #242529);
+  color: var(--foreground, #fff);
+  box-sizing: border-box;
+}
+.thread-voice-recorder-live {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  color: #ff6415;
+}
+.thread-voice-recorder-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff6415;
+  box-shadow: 0 0 0 3px rgb(255 100 21 / 15%);
+  animation: barter-voice-pulse 1.3s ease-in-out infinite;
+}
+.thread-voice-recorder-time {
+  color: var(--foreground, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.thread-voice-recorder-wave {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1 1 0;
+  min-width: 20px;
+  height: 28px;
+  gap: 2px;
+  overflow: hidden;
+}
+.thread-voice-recorder-wave span {
+  flex: 1 1 2px;
+  max-width: 3px;
+  min-width: 1px;
+  border-radius: 3px;
+  background: #ff6415;
+  opacity: .85;
+  transition: height 95ms ease;
+}
+.thread-voice-recorder-cancel,
+.thread-voice-recorder-finish {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.thread-voice-recorder-cancel {
+  background: transparent;
+  color: var(--fg-muted, #a3a3a3);
+}
+.thread-voice-recorder-finish {
+  background: #ff6415;
+  color: white;
+}
+.thread-voice-recorder-cancel:focus-visible,
+.thread-voice-recorder-finish:focus-visible,
+.thread-voice-draft-delete:focus-visible {
+  outline: 2px solid #ff6415;
+  outline-offset: 2px;
+}
+.thread-voice-draft {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.thread-voice-draft .chat-audio {
+  max-width: min(278px, calc(100% - 56px));
+}
+.thread-voice-draft-delete {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-muted, #242529);
+  color: var(--fg-muted, #a3a3a3);
+  cursor: pointer;
+}
+@keyframes barter-voice-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(.78); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thread-voice-recorder-dot { animation: none; }
+  .thread-voice-recorder-wave span { transition: none; }
+}
+@media (max-width: 370px) {
+  .thread-voice-recorder { gap: 5px; padding-left: 9px; }
+  .thread-voice-recorder-cancel,
+  .thread-voice-recorder-finish { width: 38px; height: 38px; }
+  .thread-voice-recorder-wave { gap: 1px; }
+}

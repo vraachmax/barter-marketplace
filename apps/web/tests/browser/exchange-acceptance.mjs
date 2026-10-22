@@ -155,6 +155,58 @@ try {
     await incomingVoice.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
     await expect(incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true})).toBeVisible();
     await incomingVoice.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true}).click();
+    // Fake only microphone capture: production composer/recording state and UI
+    // are exercised unchanged in both Chromium and iPhone-sized WebKit.
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: { getUserMedia: async () => ({ getTracks: () => [{ stop() {} }] }) },
+      });
+      // A real three-second AAC/M4A recording, supported by mobile Safari.
+      // Silence is intentional: no fake speech is needed to verify playback.
+      const buffer = Uint8Array.from(atob('AAAAHGZ0eXBNNEEgAAACAE00QSBpc29taXNvMgAAA15tb292AAAAbG12aGQAAAAAAAAAAAAAAAAAAAPoAAALuAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACiXRyYWsAAABcdGtoZAAAAAMAAAAAAAAAAAAAAAEAAAAAAAALuAAAAAAAAAAAAAAAAQEAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAACRlZHRzAAAAHGVsc3QAAAAAAAAAAQAAC7gAAAQAAAEAAAAAAgFtZGlhAAAAIG1kaGQAAAAAAAAAAAAAAAAAAB9AAABhwFXEAAAAAAAtaGRscgAAAAAAAAAAc291bgAAAAAAAAAAAAAAAFNvdW5kSGFuZGxlcgAAAAGsbWluZgAAABBzbWhkAAAAAAAAAAAAAAAkZGluZgAAABxkcmVmAAAAAAAAAAEAAAAMdXJsIAAAAAEAAAFwc3RibAAAAGpzdHNkAAAAAAAAAAEAAABabXA0YQAAAAAAAAABAAAAAAAAAAAAAQAQAAAAAB9AAAAAAAA2ZXNkcwAAAAADgICAJQABAASAgIAXQBUAAAAAABOIAAABKwWAgIAFFYhW5QAGgICAAQIAAAAgc3R0cwAAAAAAAAACAAAAGAAABAAAAAABAAABwAAAABxzdHNjAAAAAAAAAAEAAAABAAAAGQAAAAEAAAB4c3RzegAAAAAAAAAAAAAAGQAAABUAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAUc3RjbwAAAAAAAAABAAADigAAABpzZ3BkAQAAAHJvbGwAAAACAAAAAf//AAAAHHNiZ3AAAAAAcm9sbAAAAAEAAAAZAAAAAQAAAGF1ZHRhAAAAWW1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALGlsc3QAAAAkqXRvbwAAABxkYXRhAAAAAQAAAABMYXZmNjEuNy4xMDMAAAAIZnJlZQAAAH1tZGF03gIATGF2YzYxLjE5LjEwMQACMEAOARggBwEYIAcBGCAHARggBwEYIAcBGCAHARggBwEYIAcBGCAHARggBwEYIAcBGCAHARggBwEYIAcBGCAHARggBwEYIAcBGCAHARggBwEYIAcBGCAHARggBwEYIAcBGCAH'), char => char.charCodeAt(0)).buffer;
+      class FakeRecorder {
+        static isTypeSupported(type) { return type === 'audio/mp4'; }
+        constructor(_stream, options) { this.mimeType=options.mimeType; this.state='inactive'; this.onstop=null; this.ondataavailable=null; this.onerror=null; }
+        start() { this.state='recording'; }
+        stop() {
+          this.state='inactive';
+          this.ondataavailable?.({ data: new Blob([buffer], { type: this.mimeType }) });
+          this.onstop?.();
+        }
+      }
+      Object.defineProperty(window, 'MediaRecorder', { configurable: true, value: FakeRecorder });
+    });
+    const recordButton = page.getByRole('button',{name:'Записать голосовое сообщение'});
+    await recordButton.click();
+    const recordingUi=page.getByRole('group',{name:'Идёт запись голосового сообщения'});
+    await expect(recordingUi).toBeVisible();
+    await expect(recordingUi.getByRole('timer')).toHaveText(/^00:[0-9]{2}$/);
+    await expect(recordingUi.locator('.thread-voice-recorder-wave span')).toHaveCount(23);
+    await page.screenshot({path:join(output,`recording-${width}-${theme}.png`)});
+    await recordingUi.getByRole('button',{name:'Отменить запись голосового сообщения'}).click();
+    await expect(recordingUi).toHaveCount(0);
+    await expect(page.getByRole('group',{name:'Голосовое сообщение готово к отправке'})).toHaveCount(0);
+    await recordButton.click();
+    await expect(recordingUi).toBeVisible();
+    await recordingUi.getByRole('button',{name:'Завершить запись голосового сообщения'}).click();
+    const voiceDraft=page.getByRole('group',{name:'Голосовое сообщение готово к отправке'});
+    await expect(voiceDraft).toBeVisible();
+    await expect(page.getByText('Голосовое сообщение.m4a')).toHaveCount(0);
+    await expect(page.locator('audio[controls]')).toHaveCount(0);
+    await expect(voiceDraft.locator('.chat-audio-wave span')).toHaveCount(36);
+    // CI Linux WebKit's GStreamer build cannot play local M4A blob fixtures,
+    // even though actual iOS Safari supports them. Do not misreport that this
+    // synthetic test validates physical iPhone audio playback.
+    await expect(voiceDraft.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true})).toBeVisible();
+    if (engine === 'chromium') {
+      await voiceDraft.getByRole('button',{name:'Воспроизвести голосовое сообщение',exact:true}).click();
+      await expect(voiceDraft.locator('audio')).toHaveJSProperty('paused', false);
+      await voiceDraft.getByRole('button',{name:'Приостановить голосовое сообщение',exact:true}).click();
+    }
+    await page.screenshot({path:join(output,`draft-${width}-${theme}.png`)});
+    await voiceDraft.getByRole('button',{name:'Удалить голосовое сообщение'}).click();
+    await expect(voiceDraft).toHaveCount(0);
     if (engine === 'webkit') {
       assert.equal(errors.length,0,errors.join('\n'));
       console.log(`PASS WebKit mobile ${width} ${theme}: voice alignment, playback and speed`);

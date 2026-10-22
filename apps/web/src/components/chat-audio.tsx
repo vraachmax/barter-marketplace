@@ -5,6 +5,10 @@ import { Pause, Play } from 'lucide-react';
 import './chat-audio.css';
 
 const BAR_COUNT = 36;
+// A subtle progress rail when the browser can play audio but cannot decode
+// it through AudioContext (possible on iOS/Safari). Not a claimed recording waveform.
+const FALLBACK_LEVELS = Array.from({ length: BAR_COUNT }, (_, i) =>
+  .19 + .10 * Math.abs(Math.sin(i * 1.83)) + .06 * Math.abs(Math.cos(i * .74)));
 const RATES = [1, 1.5, 2] as const;
 type PlaybackRate = typeof RATES[number];
 const time = (seconds: number) => {
@@ -110,13 +114,13 @@ export function ChatAudio({ src, outgoing = false }: { src: string; outgoing?: b
     </button>
     <div className="chat-audio-body">
       <div className="chat-audio-track">
-        {peaks.length > 0 && <div className="chat-audio-wave" aria-hidden="true">
-          {peaks.map((peak, index) => (
+        <div className="chat-audio-wave" aria-hidden="true" data-fallback={peaks.length === 0 ? 'true' : undefined}>
+          {(peaks.length ? peaks : FALLBACK_LEVELS).map((peak, index) => (
             <span key={index} style={{ height: `${Math.max(16, Math.round(16 + peak * 84))}%` }}
-              data-played={duration > 0 && index / peaks.length <= position / duration} />
+              data-played={duration > 0 && index / BAR_COUNT <= position / duration} />
           ))}
-        </div>}
-        <input className={peaks.length ? 'chat-audio-seek has-wave' : 'chat-audio-seek'}
+        </div>
+        <input className="chat-audio-seek has-wave"
           type="range" aria-label="Позиция голосового сообщения"
           aria-valuetext={`${time(position)} из ${time(duration)}`}
           min={0} max={duration || 1} step={0.1} value={Math.min(position, duration || 1)}

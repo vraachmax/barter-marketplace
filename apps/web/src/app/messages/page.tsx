@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ChatAudio } from '@/components/chat-audio';
+import { VoiceRecordingIndicator } from '@/components/voice-recording-indicator';
 import { ChatExchange } from '@/components/chat-exchange';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
@@ -17,6 +18,7 @@ import {
   ChevronRight,
   MoreHorizontal,
   SquarePen,
+  Trash2,
   Repeat2,
   MessageCircle,
   Phone,
@@ -144,6 +146,10 @@ export default function MessagesPage() {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [voiceNotice, setVoiceNotice] = useState('');
   const [recording, setRecording] = useState(false);
+  const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
+  const [recordingStartedAt, setRecordingStartedAt] = useState(0);
+  const recordingCancelledRef = useRef(false);
+  const recordingPendingRef = useRef(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingStreamRef = useRef<MediaStream | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -555,35 +561,65 @@ export default function MessagesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChatId, myRole]);
 
+  function stopVoiceInput() {
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+  }
+
+  function cancelVoiceInput() {
+    recordingCancelledRef.current = true;
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+    if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+    recordingStreamRef.current?.getTracks().forEach(track => track.stop());
+    setRecording(false);
+    setRecordingStream(null);
+    setVoiceNotice('');
+  }
+
   async function startVoiceInput() {
-    if (recorderRef.current?.state === 'recording') { recorderRef.current.stop(); return; }
+    if (recordingPendingRef.current || recorderRef.current?.state === 'recording') return;
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       setVoiceNotice('Браузер не поддерживает запись аудио. Можно прикрепить аудиофайл.'); return;
     }
-    const chatId = selectedChatId;
+    const chatId = selectedChatIdRef.current;
+    recordingPendingRef.current = true;
+    recordingCancelledRef.current = false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (selectedChatIdRef.current !== chatId) { stream.getTracks().forEach(t => t.stop()); return; }
-      recordingStreamRef.current = stream;
-      const mimeType = ['audio/webm', 'audio/mp4', 'audio/ogg'].find(type => MediaRecorder.isTypeSupported(type));
-      if (!mimeType) { stream.getTracks().forEach(t => t.stop()); setVoiceNotice('Формат записи не поддерживается.'); return; }
+      if (selectedChatIdRef.current !== chatId) { stream.getTracks().forEach(track => track.stop()); return; }
+      const mimeType = ['audio/mp4', 'audio/webm', 'audio/ogg', 'audio/wav'].find(type => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) { stream.getTracks().forEach(track => track.stop()); setVoiceNotice('Формат записи не поддерживается.'); return; }
       const recorder = new MediaRecorder(stream, { mimeType });
       recorderRef.current = recorder;
+      recordingStreamRef.current = stream;
       const chunks: Blob[] = [];
-      recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
       recorder.onstop = () => {
-        stream.getTracks().forEach(t => t.stop());
+        stream.getTracks().forEach(track => track.stop());
+        if (recordingStreamRef.current === stream) recordingStreamRef.current = null;
+        if (recorderRef.current === recorder) recorderRef.current = null;
         if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+        recordingTimerRef.current = null;
         setRecording(false);
+        setRecordingStream(null);
+        if (recordingCancelledRef.current || selectedChatIdRef.current !== chatId) return;
         const blob = new Blob(chunks, { type: mimeType });
-        if (!blob.size) return;
-        const file = new File([blob], 'Голосовое сообщение.' + (mimeType === 'audio/mp4' ? 'm4a' : mimeType === 'audio/ogg' ? 'ogg' : 'webm'), { type: mimeType });
+        if (!blob.size) { setVoiceNotice('Запись пуста. Попробуйте ещё раз.'); return; }
+        const file = new File([blob], 'Голосовое сообщение.' + (mimeType === 'audio/mp4' ? 'm4a' : mimeType === 'audio/ogg' ? 'ogg' : mimeType === 'audio/wav' ? 'wav' : 'webm'), { type: mimeType });
         setDrafts(previous => ({ ...previous, [chatId]: { text: previous[chatId]?.text ?? '', file } }));
-        setVoiceNotice('Запись готова. Прослушайте и нажмите отправить.');
+        setVoiceNotice('');
       };
-      recorder.start(); setRecording(true); setVoiceNotice('Идёт запись. Нажмите микрофон, чтобы остановить. Максимум 2 минуты.');
+      recorder.onerror = () => { cancelVoiceInput(); setVoiceNotice('Не удалось записать голосовое сообщение.'); };
+      recorder.start(250);
+      setRecordingStream(stream);
+      setRecordingStartedAt(Date.now());
+      setRecording(true);
+      setVoiceNotice('');
       recordingTimerRef.current = setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, 120000);
-    } catch { setRecording(false); setVoiceNotice('Нет доступа к микрофону. Разрешите его в настройках браузера.'); }
+    } catch {
+      setRecording(false);
+      setRecordingStream(null);
+      setVoiceNotice('Нет доступа к микрофону. Разрешите его в настройках браузера.');
+    } finally { recordingPendingRef.current = false; }
   }
 
   function insertQuickReply(template: SupportTemplate) {
@@ -1157,22 +1193,28 @@ export default function MessagesPage() {
                   </div>
                 ) : null}
 
-                {audioDraftUrl ? <audio src={audioDraftUrl} controls className="mb-2 max-w-full" /> : null}
-                {selectedFile ? (
-                  <div className="mb-1.5 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs">
-                    <Camera size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
-                    <span className="min-w-0 flex-1 truncate font-medium text-primary">{selectedFile.name}</span>
-                    <button
-                      type="button"
-                      className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
-                      onClick={() => setSelectedFile(null)}
-                    >
-                      Убрать
+                {audioDraftUrl ? (
+                  <div className="thread-voice-draft" role="group" aria-label="Голосовое сообщение готово к отправке">
+                    <ChatAudio src={audioDraftUrl} />
+                    <button type="button" className="thread-voice-draft-delete"
+                      aria-label="Удалить голосовое сообщение" onClick={() => setSelectedFile(null)}>
+                      <Trash2 size={20} aria-hidden="true" />
                     </button>
                   </div>
                 ) : null}
+                {selectedFile && !selectedFile.type.startsWith('audio/') ? (
+                  <div className="mb-1.5 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1.5 text-xs">
+                    <Camera size={16} strokeWidth={1.8} className="shrink-0" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate font-medium text-primary">{selectedFile.name}</span>
+                    <button type="button" className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
+                      onClick={() => setSelectedFile(null)}>Убрать</button>
+                  </div>
+                ) : null}
                 {voiceNotice ? <div className="thread-voice-status" role="status">{voiceNotice}</div> : null}
-                <div className="thread-compose-row mx-auto flex max-w-3xl items-end gap-2">
+                {recording ? (
+                  <VoiceRecordingIndicator stream={recordingStream} startedAt={recordingStartedAt}
+                    onCancel={cancelVoiceInput} onFinish={stopVoiceInput} />
+                ) : <div className="thread-compose-row mx-auto flex max-w-3xl items-end gap-2">
                   <label className="relative grid size-11 shrink-0 cursor-pointer place-items-center rounded-full bg-muted/60 text-muted-foreground transition focus-within:ring-2 focus-within:ring-primary hover:text-primary">
                     <Plus size={22} strokeWidth={1.8} aria-hidden />
                     <input
@@ -1230,12 +1272,12 @@ export default function MessagesPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (recording || (!selectedFile && !text.trim())) void startVoiceInput();
+                      if (!selectedFile && !text.trim()) void startVoiceInput();
                       else if (selectedFile) void sendAttachment();
                       else void sendMessage();
                     }}
                     disabled={busy || threadStatus !== 'ready'}
-                    aria-label={recording ? 'Остановить запись' : text.trim().length === 0 && !selectedFile ? 'Записать голосовое сообщение' : 'Отправить'}
+                    aria-label={text.trim().length === 0 && !selectedFile ? 'Записать голосовое сообщение' : 'Отправить'}
                     className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 md:w-auto md:px-4"
                   >
                     {busy ? (
@@ -1245,11 +1287,11 @@ export default function MessagesPage() {
                         {text.trim().length === 0 && !selectedFile
                            ? <Mic size={21} strokeWidth={2} className="md:hidden" aria-hidden />
                            : <Send size={18} strokeWidth={2} className="md:hidden" aria-hidden />}
-                        <span className="hidden text-sm font-semibold md:inline">{recording ? 'Остановить' : !text.trim() && !selectedFile ? 'Записать' : 'Отправить'}</span>
+                        <span className="hidden text-sm font-semibold md:inline">{!text.trim() && !selectedFile ? 'Записать' : 'Отправить'}</span>
                       </>
                     )}
                   </button>
-                </div>
+                </div>}
               </div>
             </>
           )}
