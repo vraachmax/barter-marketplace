@@ -20,6 +20,9 @@ export class ExchangeController {
     this.gateway.server.to(`chat:${id}`).emit('exchange-updated', { chatId: id });
     return offer;
   }
+  @Get('offers/:offerId/confirmation-qr') qr(@Req() req: any, @Param('chatId') id: string, @Param('offerId') offerId: string) {
+    return this.exchanges.handoffQr(id, offerId, req.user.id);
+  }
   @Get('details') details(@Req() req: any, @Param('chatId') id: string) { return this.chats.details(id, req.user.id); }
   @Post('settings') setting(@Req() req: any, @Param('chatId') id: string, @Body() dto: ChatSettingDto) { return this.chats.setting(id, req.user.id, dto); }
 }
