@@ -43,7 +43,7 @@ try {
       if(path==='/chats/demo/settings'){const body=req.postDataJSON();writes.push(body);if(body.action==='mute')details.muted=true;if(body.action==='block'){details.blocked=true;details.cannotSend=true;}return json(details);}
       if(path==='/chats/demo/offers'&&req.method()==='GET')return json(offers);
       if(path==='/chats/demo/offers'&&req.method()==='POST'){writes.push(req.postDataJSON());return json({...offers[0],id:'second'});}
-      if(path==='/chats/demo/offers/first'){const body=req.postDataJSON();writes.push(body);offers=[{...offers[0],status:body.action==='accept'?'ACCEPTED':'DECLINED',version:2}];return json(offers[0]);}
+      if(path==='/chats/demo/offers/first'){const body=req.postDataJSON();writes.push(body);offers=[{...offers[0],status:body.action==='accept'?'ACCEPTED':body.action==='confirm'?'COMPLETED':'DECLINED',version:body.action==='accept'?2:4,confirmations:body.action==='confirm'?[{userId:'peer'},{userId:'me'}]:offers[0].confirmations}];return json(offers[0]);}
       if(path==='/support/advise')return json({tip:null,suggestions:[]});
       if(path==='/support/templates'||path==='/support/faq')return json([]);
       return json({},404);
@@ -241,6 +241,20 @@ try {
     await page.getByRole('button',{name:'Принять условия',exact:true}).click();
     await expect(page.getByText('Ожидаем подтверждения и QR-кода от предложившего обмен.')).toBeVisible();
     await expect(page.getByRole('button',{name:'Я получил вещи',exact:true})).toHaveCount(0);
+    // The proposer confirms on their device; the peer must scan their key.
+    offers=[{...offers[0],version:3,confirmations:[{userId:'peer'}]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    const scanQr=page.getByRole('button',{name:'Сканировать QR подтверждения обмена'});
+    await expect(scanQr).toBeVisible();
+    await scanQr.click();
+    const testQr='BX1.first.1792699999.'+'a'.repeat(64);
+    await page.getByRole('textbox',{name:'Код обмена'}).fill(testQr);
+    await page.getByRole('button',{name:'Открыть',exact:true}).click();
+    await expect(page.getByRole('dialog',{name:'Проверка подтверждения обмена'})).toBeVisible();
+    await page.screenshot({path:join(output,`handoff-confirm-${width}-${theme}.png`)});
+    await page.getByRole('button',{name:'Я получил вещи и подтверждаю обмен'}).click();
+    assert.equal(writes.some(w=>w.action==='confirm'&&w.qrToken===testQr),true);
+    await expect(page.getByText('Обмен завершён')).toBeVisible();
     assert.equal(errors.length,0,errors.join('\n'));
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
