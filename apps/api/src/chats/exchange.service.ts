@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PLATFORM_ASSISTANT_EMAIL, PLATFORM_ASSISTANT_NAME } from '../platform.constants';
 import { ChatsService } from './chats.service';
+import { getJwtSecret } from '../config/security';
 import { CreateExchangeDto, ExchangeActionDto } from './exchange.dto';
 
 function fingerprint(l: { title: string; description: string; priceRub: number | null; ownerId: string; city: string; categoryId: string; attributes: unknown; exchangePreferences: unknown; images: { url: string }[] }) {
@@ -56,6 +57,59 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
     const reserved = await this.prisma.exchangeReservation.findMany({ select: { listingId: true } });
     return this.prisma.listing.findMany({ where: { ownerId: { in: [userId, peer.userId] }, status: 'ACTIVE', barterEnabled: true, id: { notIn: reserved.map(r => r.listingId) } }, select: { id: true, ownerId: true, title: true, priceRub: true, images: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } } }, take: 200 });
   }
+
+  /**
+   * A short-lived, recipient-bound handoff key. Not a receipt or proof that goods
+   * were delivered. Only the exchange proposer can display it after confirming
+   * their own receipt; the other authenticated party must scan AND consent.
+   */
+  private handoffSignature(
+    offer: { id: string; chatId: string; senderId: string; recipientId: string; version: number },
+    expires: number,
+  ) {
+    const purposeKey = createHash('sha256').update('barter:exchange-handoff:v1:').update(getJwtSecret()).digest();
+    return createHmac('sha256', purposeKey)
+      .update(JSON.stringify([offer.id, offer.chatId, offer.senderId, offer.recipientId, offer.version, expires]))
+      .digest('hex');
+  }
+
+  async handoffQr(chatId: string, offerId: string, userId: string) {
+    await this.chats.assertParticipant(chatId, userId);
+    const offer = await this.prisma.exchangeOffer.findUnique({ where: { id: offerId }, include });
+    if (!offer || offer.chatId !== chatId) throw new NotFoundException();
+    if (offer.senderId !== userId) throw new ForbiddenException('QR показывает только предложивший обмен');
+    if (offer.status !== 'ACCEPTED') throw new ConflictException('Согласуйте обмен перед подтверждением');
+    if (!offer.confirmations.some(c => c.userId === userId))
+      throw new ConflictException('Сначала подтвердите получение вещей со своей стороны');
+    if (offer.confirmations.some(c => c.userId === offer.recipientId))
+      throw new ConflictException('Вторая сторона уже подтвердила передачу');
+    const expires = Math.min(Math.floor(offer.expiresAt.getTime() / 1000), Math.floor(Date.now() / 1000) + 120);
+    if (expires <= Math.floor(Date.now() / 1000)) throw new ConflictException('Срок предложения истёк');
+    return { code: `BX1.${offer.id}.${expires}.${this.handoffSignature(offer, expires)}`, expiresAt: new Date(expires * 1000).toISOString() };
+  }
+
+  private validateHandoffQr(
+    offer: { id: string; chatId: string; senderId: string; recipientId: string; version: number; expiresAt: Date; confirmations: { userId: string }[] },
+    userId: string,
+    code: string | undefined,
+  ) {
+    if (userId !== offer.recipientId) throw new ForbiddenException('Этот QR предназначен другому участнику');
+    if (!offer.confirmations.some(c => c.userId === offer.senderId))
+      throw new ConflictException('Предложивший обмен ещё не подтвердил свою сторону');
+    const parts = code?.split('.');
+    if (!parts || parts.length !== 4 || parts[0] !== 'BX1' || parts[1] !== offer.id ||
+      !/^\\d{10}$/.test(parts[2]) || !/^[a-f0-9]{64}$/.test(parts[3]))
+      throw new BadRequestException('Недействительный QR-код обмена');
+    const expires = Number(parts[2]);
+    const now = Math.floor(Date.now() / 1000);
+    if (expires <= now || expires > now + 120 || expires > Math.floor(offer.expiresAt.getTime() / 1000))
+      throw new ConflictException('QR-код обмена истёк. Попросите обновить его');
+    const expected = Buffer.from(this.handoffSignature(offer, expires), 'hex');
+    const actual = Buffer.from(parts[3], 'hex');
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
+      throw new BadRequestException('QR-код не принадлежит этой сделке');
+  }
+
   async create(chatId: string, userId: string, dto: CreateExchangeDto) {
     await this.chats.assertCanSend(chatId, userId);
     return this.transaction(async tx => {
@@ -94,15 +148,19 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
   }
   async act(chatId: string, offerId: string, userId: string, dto: ExchangeActionDto) {
     await this.chats.assertParticipant(chatId, userId);
-    if (dto.action === 'accept') await this.chats.assertCanSend(chatId, userId);
+    if (dto.action === 'accept' || dto.action === 'confirm') await this.chats.assertCanSend(chatId, userId);
     return this.transaction(async tx => {
       await this.expire(tx);
       const offer = await tx.exchangeOffer.findUnique({ where: { id: offerId }, include });
       if (!offer || offer.chatId !== chatId) throw new NotFoundException();
       if (![offer.senderId, offer.recipientId].includes(userId)) throw new ForbiddenException();
-      // Confirmation retries must never complete the other participant's side.
+      // One participant's retry can never confirm the other participant's side.
       if (dto.action === 'confirm' && offer.confirmations.some(c => c.userId === userId)) return offer;
       if (offer.version !== dto.version) throw new ConflictException('Предложение изменилось. Обновите страницу.');
+      // A peer can only complete the exchange by scanning the signer's fresh
+      // QR key in their own account. A plain confirm request must be rejected.
+      if (dto.action === 'confirm' && offer.recipientId === userId)
+        this.validateHandoffQr(offer, userId, dto.qrToken);
       let status: string;
       if (dto.action === 'accept' || dto.action === 'decline') {
         if (offer.recipientId !== userId) throw new ForbiddenException();
