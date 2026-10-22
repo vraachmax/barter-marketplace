@@ -60,7 +60,8 @@ async function main() {
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version }), /QR/);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code.slice(0, -1) + (qr.code.endsWith('a') ? 'b' : 'a') }), /QR/);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: 'BX1.fake.1111111111.'+'0'.repeat(64) }), /QR/);
-    await assert.rejects(service.handoffQr(room.id, accepted.id, users[2].id));
+    const outsider = users.find(u => u.id !== accepted.senderId && u.id !== accepted.recipientId);
+    await assert.rejects(service.handoffQr(room.id, accepted.id, outsider.id));
     const done = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
     assert.equal(done.status, 'COMPLETED'); assert.equal(done.confirmations.length, 2);
     const replayPeer = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
