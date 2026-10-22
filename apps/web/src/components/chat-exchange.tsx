@@ -45,6 +45,14 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   const [notice, setNotice] = useState('');
   const [discussId, setDiscussId] = useState<string | null>(null);
   const [handoff, setHandoff] = useState<{ offerId: string; code: string; expiresAt: string } | null>(null);
+  const [qrClock, setQrClock] = useState(Date.now());
+  useEffect(() => {
+    if (!handoff) return;
+    setQrClock(Date.now());
+    const timer = window.setInterval(() => setQrClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [handoff]);
+  const qrSecondsLeft = handoff ? Math.max(0, Math.ceil((Date.parse(handoff.expiresAt) - qrClock) / 1000)) : 0;
   const [scanned, setScanned] = useState<{ offerId: string; code: string } | null>(null);
   const discussion = offers.find(o => o.id === discussId && o.status === 'PENDING');
   const discussionOpen = Boolean(discussion);
@@ -195,8 +203,8 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     {handoff ? <div className="exchange-overlay" role="dialog" aria-modal="true" aria-label="QR-код подтверждения обмена">
       <div className="contact-screen exchange-handoff-sheet">
         <header className="contact-toolbar"><button type="button" aria-label="Закрыть QR" onClick={() => setHandoff(null)}><X /></button><h2>Подтверждение обмена</h2></header>
-        <p>Покажите этот QR второму участнику. Код действует до {new Date(handoff.expiresAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}.</p>
-        <ExchangeHandoffQr code={handoff.code} />
+        <p>Покажите этот QR второму участнику. {qrSecondsLeft > 0 ? `Действителен ещё ${Math.floor(qrSecondsLeft / 60)}:${String(qrSecondsLeft % 60).padStart(2, '0')}` : 'Срок действия закончился. Обновите код.'}</p>
+        {qrSecondsLeft > 0 ? <ExchangeHandoffQr code={handoff.code} /> : <p role="status" className="exchange-handoff-expired">QR-код истёк</p>}
         <p className="exchange-handoff-note">Второй участник должен войти в свой аккаунт, отсканировать код и самостоятельно подтвердить получение вещей. QR не гарантирует передачу товаров или денег.</p>
         <button className="exchange-secondary" disabled={busy} onClick={() => { const offer = offers.find(x => x.id === handoff.offerId); if (offer) void displayHandoffQr(offer); }}>Обновить QR</button>
       </div>
