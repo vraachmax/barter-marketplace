@@ -151,7 +151,7 @@ export default function QrScannerButton({ onExchangeCode }: { onExchangeCode?: (
       <button type="button" aria-label={onExchangeCode ? 'Сканировать QR подтверждения обмена' : 'Сканировать QR-код'} title={onExchangeCode ? 'Сканировать QR обмена' : 'Сканировать QR-код'}
         onClick={() => { setError(''); setManual(''); setOpen(true); }}
         className={onExchangeCode ? 'exchange-qr-trigger' : 'grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[var(--bg-surface)] text-foreground shadow-[0_3px_14px_rgba(24,24,48,.07)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff5a0a]'}>
-        <ScanQrCode size={20} strokeWidth={2} aria-hidden />
+        <ScanQrCode size={20} strokeWidth={2} aria-hidden />{onExchangeCode ? <span>Сканировать QR-код</span> : null}
       </button>
       <dialog ref={dialog} onCancel={() => setOpen(false)}
         aria-label="Сканер QR-кода Barter"
