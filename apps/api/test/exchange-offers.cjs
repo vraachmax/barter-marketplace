@@ -44,6 +44,8 @@ async function main() {
     await assert.rejects(db.listing.update({ where: { id: listings[0].id }, data: { priceRub: 20000 } }), /exchange_listing_reserved/);
     await db.$disconnect(); await db.$connect();
     console.log('PASS counteroffer, concurrent acceptance and reserved item edits');
+    await assert.rejects(service.handoffQr(room.id, accepted.id, accepted.senderId), /Сначала подтвердите/);
+    await assert.rejects(service.handoffQr(room.id, accepted.id, accepted.recipientId));
     const confirmed = await service.act(room.id, accepted.id, accepted.senderId, { action: 'confirm', version: accepted.version });
     const receivedItem = accepted.items.find(i => i.ownerId !== accepted.senderId);
     assert.equal((await reviews.eligibility(accepted.senderId, receivedItem.listingId)).reason, 'exchange_not_completed');
@@ -51,8 +53,19 @@ async function main() {
     const replay = await service.act(room.id, accepted.id, accepted.senderId, { action: 'confirm', version: accepted.version });
     assert.equal(replay.confirmations.length, 1);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'cancel', version: confirmed.version }));
-    const done = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version });
+    // Only the proposer can display the short-lived QR after confirming first.
+    const qr = await service.handoffQr(room.id, accepted.id, accepted.senderId);
+    assert.match(qr.code, /^BX1\\.[^.]+\\.[0-9]{10}\\.[a-f0-9]{64}$/);
+    assert.ok(new Date(qr.expiresAt).getTime() - Date.now() <= 120000);
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version }), /QR/);
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code.replace(/.$/, 'f') }), /QR/);
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: 'BX1.fake.1111111111.'+'0'.repeat(64) }), /QR/);
+    await assert.rejects(service.handoffQr(room.id, accepted.id, users[2].id));
+    const done = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
     assert.equal(done.status, 'COMPLETED'); assert.equal(done.confirmations.length, 2);
+    const replayPeer = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
+    assert.equal(replayPeer.confirmations.length, 2);
+    await assert.rejects(service.handoffQr(room.id, accepted.id, accepted.senderId), /Согласуйте|Сначала/);
     assert.equal(await db.exchangeReservation.count({ where: { offerId: accepted.id } }), 0);
     assert.equal((await db.listing.findUnique({ where: { id: listings[0].id } })).status, 'SOLD');
     assert.equal((await reviews.eligibility(accepted.senderId, receivedItem.listingId)).canReview, true);
