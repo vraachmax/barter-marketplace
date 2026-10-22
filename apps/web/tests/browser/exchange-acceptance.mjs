@@ -7,6 +7,8 @@ import { resolve, join } from 'node:path';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const require = createRequire(join(process.env.BARTER_BROWSER_TOOLS, 'package.json'));
 const { chromium, webkit, expect } = require('@playwright/test');
+const sharp = require('sharp');
+const jsQR = require('jsqr');
 const engine = process.env.BARTER_BROWSER_ENGINE === 'webkit' ? 'webkit' : 'chromium';
 const server = spawn(process.execPath, [resolve(root, '../../node_modules/next/dist/bin/next'), 'start', '-H', '127.0.0.1', '-p', '3203'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
 server.stderr.on('data', b => process.stderr.write(b));
@@ -42,6 +44,7 @@ try {
       if(path==='/chats/demo/exchange-choices')return json([listing,laptop]);
       if(path==='/chats/demo/settings'){const body=req.postDataJSON();writes.push(body);if(body.action==='mute')details.muted=true;if(body.action==='block'){details.blocked=true;details.cannotSend=true;}return json(details);}
       if(path==='/chats/demo/offers'&&req.method()==='GET')return json(offers);
+      if(path==='/chats/demo/offers/first/confirmation-qr')return json({code:'BX1.first.1792700000.'+'b'.repeat(64),expiresAt:new Date(Date.now()+120000).toISOString()});
       if(path==='/chats/demo/offers'&&req.method()==='POST'){writes.push(req.postDataJSON());return json({...offers[0],id:'second'});}
       if(path==='/chats/demo/offers/first'){const body=req.postDataJSON();writes.push(body);offers=[{...offers[0],status:body.action==='accept'?'ACCEPTED':body.action==='confirm'?'COMPLETED':'DECLINED',version:body.action==='accept'?2:4,confirmations:body.action==='confirm'?[{userId:'peer'},{userId:'me'}]:offers[0].confirmations}];return json(offers[0]);}
       if(path==='/support/advise')return json({tip:null,suggestions:[]});
@@ -255,6 +258,19 @@ try {
     await page.getByRole('button',{name:'Я получил вещи и подтверждаю обмен'}).click();
     assert.equal(writes.some(w=>w.action==='confirm'&&w.qrToken===testQr),true);
     await expect(page.getByText('Обмен завершён')).toBeVisible();
+    // Re-render as proposer with a confirmed first-side receipt. Scan the real
+    // generated QR pixels, not just the existence of an SVG element.
+    offers=[{...offers[0],status:'ACCEPTED',senderId:'me',recipientId:'peer',version:3,confirmations:[{userId:'me'}]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await page.getByRole('button',{name:'Показать QR подтверждения'}).click();
+    const handoffDialog=page.getByRole('dialog',{name:'QR-код подтверждения обмена'});
+    await expect(handoffDialog).toBeVisible();
+    const qrPng=await handoffDialog.getByRole('img',{name:'Одноразовый QR-код подтверждения обмена'}).screenshot();
+    const decoded=await sharp(qrPng).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    const read=jsQR(new Uint8ClampedArray(decoded.data),decoded.info.width,decoded.info.height,{inversionAttempts:'attemptBoth'});
+    assert.equal(read?.data,'BX1.first.1792700000.'+'b'.repeat(64));
+    await page.screenshot({path:join(output,`handoff-qr-${width}-${theme}.png`)});
+    await handoffDialog.getByRole('button',{name:'Закрыть QR'}).click();
     assert.equal(errors.length,0,errors.join('\n'));
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
