@@ -41,3 +41,34 @@
 html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing']{background:#ffeddf;color:var(--foreground)}
 html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing'] [data-message-meta]{color:var(--fg-muted)}
 html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exchange-card) .message-bubble[data-direction='outgoing'] [data-message-meta] svg{color:#ff5a0a}
+
+/* Two-key exchange handoff: QR and camera are local to the private chat. */
+.exchange-qr-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 24px;
+  padding: 10px 15px;
+  background: #ff6415;
+  color: #fff;
+  font-weight: 650;
+  cursor: pointer;
+}
+.exchange-qr-trigger:focus-visible { outline: 2px solid #ff6415; outline-offset: 3px; }
+.exchange-handoff-sheet { text-align: center; }
+.exchange-handoff-sheet > p { margin: 12px 0; line-height: 1.5; }
+.exchange-handoff-sheet > h3 { text-align: left; margin-top: 15px; }
+.exchange-handoff-qr {
+  display: block;
+  width: min(240px, 75vw);
+  aspect-ratio: 1;
+  margin: 20px auto;
+  border-radius: 12px;
+  background: #fff;
+}
+.exchange-handoff-note { color: var(--fg-muted); font-size: 13px; }
+.exchange-handoff-sheet .exchange-secondary { margin-top: 12px; }
