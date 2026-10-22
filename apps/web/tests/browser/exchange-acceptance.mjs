@@ -239,7 +239,8 @@ try {
     await expect(page.getByRole('dialog',{name:'Обсудить условия',exact:true})).toBeVisible();
     assert.equal(writes.some(w=>w.action==='accept'),false);
     await page.getByRole('button',{name:'Принять условия',exact:true}).click();
-    await expect(page.getByRole('button',{name:'Я получил вещи',exact:true})).toBeVisible();
+    await expect(page.getByText('Ожидаем подтверждения и QR-кода от предложившего обмен.')).toBeVisible();
+    await expect(page.getByRole('button',{name:'Я получил вещи',exact:true})).toHaveCount(0);
     assert.equal(errors.length,0,errors.join('\n'));
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
