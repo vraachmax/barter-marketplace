@@ -12,6 +12,7 @@ export class CreateExchangeDto {
 export class ExchangeActionDto {
   @IsInt() @Min(1) version!: number;
   @IsIn(['accept', 'decline', 'cancel', 'confirm']) action!: 'accept' | 'decline' | 'cancel' | 'confirm';
+  @IsOptional() @IsString() @MaxLength(180) qrToken?: string;
 }
 export class ChatSettingDto {
   @IsIn(['mute', 'unmute', 'block', 'unblock', 'report']) action!: string;
