@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ExchangeService } from './exchange.service';
 import { CreateExchangeDto, ExchangeActionDto, ChatSettingDto } from './exchange.dto';
@@ -20,7 +20,7 @@ export class ExchangeController {
     this.gateway.server.to(`chat:${id}`).emit('exchange-updated', { chatId: id });
     return offer;
   }
-  @Get('offers/:offerId/confirmation-qr') qr(@Req() req: any, @Param('chatId') id: string, @Param('offerId') offerId: string) {
+  @Get('offers/:offerId/confirmation-qr') @Header('Cache-Control', 'no-store') qr(@Req() req: any, @Param('chatId') id: string, @Param('offerId') offerId: string) {
     return this.exchanges.handoffQr(id, offerId, req.user.id);
   }
   @Get('details') details(@Req() req: any, @Param('chatId') id: string) { return this.chats.details(id, req.user.id); }
