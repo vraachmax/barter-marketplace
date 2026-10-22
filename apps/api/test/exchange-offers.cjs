@@ -55,10 +55,10 @@ async function main() {
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'cancel', version: confirmed.version }));
     // Only the proposer can display the short-lived QR after confirming first.
     const qr = await service.handoffQr(room.id, accepted.id, accepted.senderId);
-    assert.match(qr.code, /^BX1\\.[^.]+\\.[0-9]{10}\\.[a-f0-9]{64}$/);
+    assert.match(qr.code, /^BX1\.[^.]+\.[0-9]{10}\.[a-f0-9]{64}$/);
     assert.ok(new Date(qr.expiresAt).getTime() - Date.now() <= 120000);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version }), /QR/);
-    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code.replace(/.$/, 'f') }), /QR/);
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code.slice(0, -1) + (qr.code.endsWith('a') ? 'b' : 'a') }), /QR/);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: 'BX1.fake.1111111111.'+'0'.repeat(64) }), /QR/);
     await assert.rejects(service.handoffQr(room.id, accepted.id, users[2].id));
     const done = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
