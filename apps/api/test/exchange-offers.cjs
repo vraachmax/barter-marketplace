@@ -60,6 +60,9 @@ async function main() {
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version }), /QR/);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code.slice(0, -1) + (qr.code.endsWith('a') ? 'b' : 'a') }), /QR/);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: 'BX1.fake.1111111111.'+'0'.repeat(64) }), /QR/);
+    const qrParts = qr.code.split('.');
+    const expiredQr = [qrParts[0], qrParts[1], String(Number(qrParts[2]) - 300), qrParts[3]].join('.');
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: expiredQr }), /истёк/);
     const outsider = users.find(u => u.id !== accepted.senderId && u.id !== accepted.recipientId);
     await assert.rejects(service.handoffQr(room.id, accepted.id, outsider.id));
     const done = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
