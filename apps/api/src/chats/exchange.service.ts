@@ -124,10 +124,12 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (![offer.senderId, offer.recipientId].includes(userId)) throw new ForbiddenException();
       if (offer.status !== 'ACCEPTED' || offer.handoffMethod !== 'DELIVERY')
         throw new ConflictException('Трек-номер доступен только для согласованной доставки');
-      if (offer.confirmations.length) throw new ConflictException('Передача уже подтверждена. Изменение доставки заблокировано.');
       const existing = offer.shipping && typeof offer.shipping === 'object' && !Array.isArray(offer.shipping)
         ? offer.shipping as Record<string, unknown> : {};
       const side = userId === offer.senderId ? 'sender' : 'recipient';
+      // A late shipment reference can still be provided after the other party
+      // confirmed. However, an already-published reference is immutable then.
+      if (offer.confirmations.length && existing[side]) throw new ConflictException('Передача уже подтверждена. Изменение доставки заблокировано.');
       const shipping = { ...existing, [side]: { carrier, trackingNumber, submittedAt: new Date().toISOString() } };
       const updated = await tx.exchangeOffer.update({ where: { id: offer.id }, data: { shipping: shipping as Prisma.InputJsonObject }, include });
       await tx.exchangeAudit.create({ data: { offerId: offer.id, userId, action: 'tracking_added' } });
