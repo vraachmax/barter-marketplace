@@ -76,6 +76,37 @@ async function main() {
     await reviews.create(accepted.senderId, receivedItem.ownerId, { listingId: receivedItem.listingId, rating: 5, text: 'Completed fixture exchange' });
     console.log('PASS independent confirmations, replay, no unilateral cancellation, completion and review eligibility');
 
+    // Both remote methods must work without QR, still with two independent
+    // confirmations. Tracking numbers are self-reported, not carrier verified.
+    for (const method of ['DELIVERY','ONLINE']) {
+      const aItem = await db.listing.create({data:{title:'Remote fixture '+method+' A',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[1].id,categoryId:category.id,priceRub:2500}});
+      const bItem = await db.listing.create({data:{title:'Remote fixture '+method+' B',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[0].id,categoryId:category.id,priceRub:2600}});
+      const offer = await service.create(rooms[0].id, users[1].id, {
+        clientKey:randomUUID(), giveIds:[aItem.id], receiveIds:[bItem.id],
+        cashKopecks:0, terms:'Both parties agree to '+method,
+        handoffMethod:method, validDays:7
+      });
+      assert.equal(offer.handoffMethod,method);
+      const acceptedRemote = await service.act(rooms[0].id,offer.id,users[0].id,{action:'accept',version:1});
+      await assert.rejects(service.handoffQr(rooms[0].id,offer.id,users[1].id),/QR|Сначала/);
+      if (method==='DELIVERY') {
+        const shipment = await service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'});
+        assert.equal(shipment.shipping.sender.trackingNumber,'0123456789');
+        await service.updateShipment(rooms[0].id,offer.id,users[0].id,{carrier:'Почта',trackingNumber:'99999999'});
+        await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[2].id,{carrier:'Wrong',trackingNumber:'99999999'}));
+      } else {
+        await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'}),/доставки/);
+      }
+      const confirmedRemote = await service.act(rooms[0].id,offer.id,users[0].id,{action:'confirm',version:acceptedRemote.version});
+      assert.equal(confirmedRemote.status,'ACCEPTED');
+      if(method==='DELIVERY') await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'}),/заблокировано/);
+      const completed = await service.act(rooms[0].id,offer.id,users[1].id,{action:'confirm',version:confirmedRemote.version});
+      assert.equal(completed.status,'COMPLETED');
+      assert.equal(completed.confirmations.length,2);
+      await assert.rejects(service.handoffQr(rooms[0].id,offer.id,users[1].id));
+      console.log('PASS '+method+' remote bilateral confirmation without QR and immutable handoff');
+    }
+
     await db.listing.updateMany({ where: { categoryId: category.id }, data: { status: 'ACTIVE' } });
     const stale = await service.create(rooms[0].id, users[1].id, dto(1));
     await db.listing.update({ where: { id: listings[0].id }, data: { description: 'Changed terms' } });
