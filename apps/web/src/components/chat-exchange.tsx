@@ -197,7 +197,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
               const shipment = offer.shipping?.[side];
               return <p key={side} className="exchange-shipment-line"><b>{side === (mine ? 'sender':'recipient') ? 'Ваше отправление' : 'Отправление собеседника'}:</b> {shipment ? `${shipment.carrier} · ${shipment.trackingNumber}` : 'данные ещё не добавлены'}</p>;
             })}
-            {!confirmed && offer.confirmations.length === 0 ? <>
+            {!confirmed && (offer.confirmations.length === 0 || !offer.shipping?.[mine ? 'sender' : 'recipient']) ? <>
               {shippingOfferId === offer.id ? <div className="exchange-shipment-form">
                 <label>Служба доставки<input value={carrier} maxLength={80} placeholder="Например, СДЭК" onChange={e => setCarrier(e.target.value)} /></label>
                 <label>Трек-номер<input value={trackingNumber} maxLength={100} placeholder="Номер отправления" onChange={e => setTrackingNumber(e.target.value)} /></label>
