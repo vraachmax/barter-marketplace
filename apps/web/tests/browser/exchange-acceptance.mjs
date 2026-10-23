@@ -238,6 +238,14 @@ try {
     await page.getByRole('button',{name:'Назад к переписке'}).click();
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await page.getByRole('button',{name:'Предложить новые условия',exact:true}).click();
+    const formDialog=page.getByRole('dialog',{name:'Предложить обмен'});
+    await expect(formDialog.getByText('1. Выберите способ передачи')).toBeVisible();
+    const methodAboveGoods=await formDialog.evaluate(dialog=>{
+      const method=dialog.querySelector('.exchange-method-picker');
+      const goods=dialog.querySelector('.exchange-form-section');
+      return Boolean(method&&goods&&method.getBoundingClientRect().top<goods.getBoundingClientRect().top);
+    });
+    assert.equal(methodAboveGoods,true,'Delivery method must appear before item pickers');
     await page.getByRole('checkbox').first().check();
     await expect(page.getByRole('radio',{name:/Личная встреча/})).toBeChecked();
     await page.getByRole('radio',{name:/Доставка/}).check();
@@ -247,10 +255,16 @@ try {
     await page.getByRole('button',{name:'Проверить предложение'}).click();
     await expect(page.getByText('Деньги через площадку не переводятся.',{exact:false})).toBeVisible();
     await page.screenshot({path:join(output,`review-${width}-${theme}.png`)});
+    const reviewActions=await formDialog.locator('.exchange-form-actions > button').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};}));
+    assert.equal(reviewActions.length,2);
+    assert.ok(reviewActions[1].top-reviewActions[0].bottom>=10,'Review actions must be separated by at least 10px');
+    assert.ok(reviewActions.every(r=>r.height>=44 && r.left>=0 && r.right<=width),'Review actions must fit mobile viewport');
     await page.getByRole('button',{name:'Отправить предложение',exact:true}).click();
     const sent=writes.find(w=>w.clientKey);assert.deepEqual(sent.giveIds,['macbook']);assert.deepEqual(sent.receiveIds,['iphone']);assert.equal(sent.cashKopecks,0);assert.equal(sent.previousId,'first');assert.equal(sent.handoffMethod,'MEETING');
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await expect(page.getByRole('dialog',{name:'Обсудить условия',exact:true})).toBeVisible();
+    const negotiationGap=await page.locator('.exchange-actions-negotiation > button').evaluateAll(nodes=>nodes.slice(1).map((n,i)=>n.getBoundingClientRect().top-nodes[i].getBoundingClientRect().bottom));
+    assert.ok(negotiationGap.length>=2 && negotiationGap.every(gap=>gap>=10),'Negotiation actions must not touch');
     assert.equal(writes.some(w=>w.action==='accept'),false);
     await page.getByRole('button',{name:'Принять условия',exact:true}).click();
     await expect(page.getByText('Ожидаем подтверждения и QR-кода от предложившего обмен.')).toBeVisible();
