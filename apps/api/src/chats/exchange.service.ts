@@ -116,7 +116,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
     const carrier = dto.carrier.trim();
     const trackingNumber = dto.trackingNumber.trim();
     if (carrier.length < 2 || carrier.length > 80 || trackingNumber.length < 4 || trackingNumber.length > 100 ||
-      /[<>\\r\\n]/.test(carrier + trackingNumber))
+      /[<>\r\n]/.test(carrier + trackingNumber))
       throw new BadRequestException('Проверьте службу доставки и трек-номер');
     return this.transaction(async tx => {
       const offer = await tx.exchangeOffer.findUnique({ where: { id: offerId }, include });
