@@ -46,6 +46,11 @@ try {
       if(path==='/chats/demo/settings'){const body=req.postDataJSON();writes.push(body);if(body.action==='mute')details.muted=true;if(body.action==='block'){details.blocked=true;details.cannotSend=true;}return json(details);}
       if(path==='/chats/demo/offers'&&req.method()==='GET')return json(offers);
       if(path==='/chats/demo/offers/first/confirmation-qr')return json({code:'BX1.first.1792700000.'+'b'.repeat(64),expiresAt:new Date(Date.now()+120000).toISOString()});
+      if(path==='/chats/demo/offers/first/shipment'){
+        const payload=req.postDataJSON();writes.push({shipment:payload});
+        offers=[{...offers[0],shipping:{...(offers[0].shipping||{}),recipient:{...payload,submittedAt:new Date().toISOString()}}}];
+        return json(offers[0]);
+      }
       if(path==='/chats/demo/offers'&&req.method()==='POST'){writes.push(req.postDataJSON());return json({...offers[0],id:'second'});}
       if(path==='/chats/demo/offers/first'){const body=req.postDataJSON();writes.push(body);offers=[{...offers[0],status:body.action==='accept'?'ACCEPTED':body.action==='confirm'?'COMPLETED':'DECLINED',version:body.action==='accept'?2:4,confirmations:body.action==='confirm'?[{userId:'peer'},{userId:'me'}]:offers[0].confirmations}];return json(offers[0]);}
       if(path==='/support/advise')return json({tip:null,suggestions:[]});
@@ -277,6 +282,24 @@ try {
     assert.equal(read?.data,'BX1.first.1792700000.'+'b'.repeat(64));
     await page.screenshot({path:join(output,`handoff-qr-${width}-${theme}.png`)});
     await handoffDialog.getByRole('button',{name:'Закрыть QR'}).click();
+    // Delivery and remote confirmation must not depend on the meeting QR.
+    offers=[{...offers[0],handoffMethod:'DELIVERY',senderId:'peer',recipientId:'me',status:'ACCEPTED',version:2,shipping:{sender:{carrier:'СДЭК',trackingNumber:'ABC12345',submittedAt:new Date().toISOString()}},confirmations:[]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await expect(page.getByText('Доставка',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Добавить трек-номер'}).click();
+    await page.getByRole('textbox',{name:'Служба доставки'}).fill('Почта России');
+    await page.getByRole('textbox',{name:'Трек-номер'}).fill('123456789001');
+    await page.getByRole('button',{name:'Сохранить отправление'}).click();
+    assert.equal(writes.some(w=>w.shipment?.trackingNumber==='123456789001'),true);
+    await expect(page.getByText('Почта России · 123456789001')).toBeVisible();
+    await page.screenshot({path:join(output,`exchange-delivery-${width}-${theme}.png`)});
+    await expect(page.getByRole('button',{name:'Подтвердить получение'})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Сканировать QR подтверждения обмена'})).toHaveCount(0);
+    offers=[{...offers[0],handoffMethod:'ONLINE',shipping:null,version:2,confirmations:[]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await expect(page.getByText('Онлайн-обмен',{exact:true})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Подтвердить выполнение'})).toBeVisible();
+    await page.screenshot({path:join(output,`exchange-online-${width}-${theme}.png`});
     assert.equal(errors.length,0,errors.join('\n'));
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
