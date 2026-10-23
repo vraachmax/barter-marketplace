@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowRight, Ban, Bell, ChevronLeft, ChevronRight, Clock, Heart, Image as ImageIcon, MoreHorizontal, Package, Repeat2, Search, TriangleAlert, User, X } from 'lucide-react';
+import { ArrowRight, Ban, Bell, ChevronLeft, ChevronRight, Clock, Heart, Image as ImageIcon, MoreHorizontal, Package, QrCode, Repeat2, Search, Smartphone, TriangleAlert, Truck, User, X } from 'lucide-react';
 import { apiFetchJson, resolveAssetUrl, type ChatMessage, type ChatSummary } from '@/lib/api';
 import './chat-exchange.css';
 import QrScannerButton from './qr-scanner-button';
@@ -303,6 +303,9 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
         <label key={option.id} className={`exchange-method-choice ${method === option.id ? 'is-selected' : ''}`}>
           <input type="radio" name="exchange-handoff-method" value={option.id} checked={method === option.id}
             onChange={() => setMethod(option.id)} />
+          <span className="exchange-method-icon" aria-hidden="true">
+            {option.id === 'MEETING' ? <QrCode size={21} /> : option.id === 'DELIVERY' ? <Truck size={21} /> : <Smartphone size={21} />}
+          </span>
           <span><b>{option.title}</b><small>{option.description}</small></span>
         </label>)}</fieldset>
         <label>Условия встречи или передачи<textarea value={terms} maxLength={2000} onChange={e => setTerms(e.target.value)} placeholder="Например, встреча в Краснодаре, район Авроры" /></label><label>Срок предложения<select value={days} onChange={e => setDays(e.target.value)}>{[1, 3, 7, 14, 30].map(d => <option key={d} value={d}>{d} дн.</option>)}</select></label><button className="exchange-primary" disabled={!valid} onClick={() => setReview(true)}>Проверить предложение</button></>}
