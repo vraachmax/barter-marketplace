@@ -6,6 +6,7 @@ export class CreateExchangeDto {
   // Positive: proposer pays. Negative: proposer receives. Stored in kopecks.
   @IsInt() @Min(-2000000000) @Max(2000000000) cashKopecks!: number;
   @IsString() @MaxLength(2000) terms!: string;
+  @IsOptional() @IsIn(['MEETING', 'DELIVERY', 'ONLINE']) handoffMethod?: 'MEETING' | 'DELIVERY' | 'ONLINE';
   @IsInt() @Min(1) @Max(30) validDays!: number;
   @IsOptional() @IsString() previousId?: string;
 }
@@ -17,4 +18,10 @@ export class ExchangeActionDto {
 export class ChatSettingDto {
   @IsIn(['mute', 'unmute', 'block', 'unblock', 'report']) action!: string;
   @IsOptional() @IsString() @MaxLength(2000) reason?: string;
+}
+
+/** Tracking is participant-supplied. No carrier verification is implied. */
+export class ExchangeShipmentDto {
+  @IsString() @MaxLength(80) carrier!: string;
+  @IsString() @MaxLength(100) trackingNumber!: string;
 }
