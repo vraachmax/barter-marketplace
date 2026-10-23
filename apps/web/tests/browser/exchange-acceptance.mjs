@@ -26,7 +26,7 @@ try {
     const chat = { id:'demo', listing, peer: {id:'peer',name:'Александр'}, myRole:'buyer', unreadCount:0, updatedAt:new Date().toISOString() };
     const messages = [{id:'voice',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()},{id:'welcome',text:'Здравствуйте! Можно обсудить обмен?',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()}];
     messages.push({id:'voice-outgoing',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'me',sender:{id:'me',name:'Максим'},createdAt:new Date().toISOString()});
-    let offers = [{ id:'first',senderId:'peer',recipientId:'me',status:'PENDING',version:1,cashKopecks:0,terms:'Предлагаю обмен, как думаете?',expiresAt:new Date(Date.now()+86400000).toISOString(),createdAt:new Date().toISOString(),confirmations:[],items:[{listingId:'iphone',ownerId:'peer',snapshot:{title:listing.title,priceRub:65000,imageUrl:listing.previewImageUrl}},{listingId:'macbook',ownerId:'me',snapshot:{title:laptop.title,priceRub:70000,imageUrl:laptop.images[0].url}}]}];
+    let offers = [{ id:'first',senderId:'peer',recipientId:'me',status:'PENDING',version:1,handoffMethod:'MEETING',cashKopecks:0,terms:'Предлагаю обмен, как думаете?',expiresAt:new Date(Date.now()+86400000).toISOString(),createdAt:new Date().toISOString(),confirmations:[],items:[{listingId:'iphone',ownerId:'peer',snapshot:{title:listing.title,priceRub:65000,imageUrl:listing.previewImageUrl}},{listingId:'macbook',ownerId:'me',snapshot:{title:laptop.title,priceRub:70000,imageUrl:laptop.images[0].url}}]}];
     messages.push({ id:'exchange_offer_first', text:'Предложение обмена', senderId:'peer', sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString() });
     const details = {muted:false,blocked:false,cannotSend:false,listings:[listing,laptop],favorites:[listing],media:[]};
     const writes=[];
@@ -234,11 +234,16 @@ try {
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await page.getByRole('button',{name:'Предложить новые условия',exact:true}).click();
     await page.getByRole('checkbox').first().check();
+    await expect(page.getByRole('radio',{name:/Личная встреча/})).toBeChecked();
+    await page.getByRole('radio',{name:/Доставка/}).check();
+    await expect(page.getByRole('radio',{name:/Доставка/})).toBeChecked();
+    await page.screenshot({path:join(output,`exchange-methods-${width}-${theme}.png`)});
+    await page.getByRole('radio',{name:/Личная встреча/}).check();
     await page.getByRole('button',{name:'Проверить предложение'}).click();
     await expect(page.getByText('Деньги через площадку не переводятся.',{exact:false})).toBeVisible();
     await page.screenshot({path:join(output,`review-${width}-${theme}.png`)});
     await page.getByRole('button',{name:'Отправить предложение',exact:true}).click();
-    const sent=writes.find(w=>w.clientKey);assert.deepEqual(sent.giveIds,['macbook']);assert.deepEqual(sent.receiveIds,['iphone']);assert.equal(sent.cashKopecks,0);assert.equal(sent.previousId,'first');
+    const sent=writes.find(w=>w.clientKey);assert.deepEqual(sent.giveIds,['macbook']);assert.deepEqual(sent.receiveIds,['iphone']);assert.equal(sent.cashKopecks,0);assert.equal(sent.previousId,'first');assert.equal(sent.handoffMethod,'MEETING');
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await expect(page.getByRole('dialog',{name:'Обсудить условия',exact:true})).toBeVisible();
     assert.equal(writes.some(w=>w.action==='accept'),false);
