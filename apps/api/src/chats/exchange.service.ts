@@ -129,7 +129,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
         ? offer.shipping as Record<string, unknown> : {};
       const side = userId === offer.senderId ? 'sender' : 'recipient';
       const shipping = { ...existing, [side]: { carrier, trackingNumber, submittedAt: new Date().toISOString() } };
-      const updated = await tx.exchangeOffer.update({ where: { id: offer.id }, data: { shipping }, include });
+      const updated = await tx.exchangeOffer.update({ where: { id: offer.id }, data: { shipping: shipping as Prisma.InputJsonObject }, include });
       await tx.exchangeAudit.create({ data: { offerId: offer.id, userId, action: 'tracking_added' } });
       await tx.message.create({ data: { chatId, senderId: userId, text: 'Участник добавил данные отправления. Статус доставки перевозчиком не проверен.' } });
       await tx.chat.update({ where: { id: chatId }, data: { updatedAt: new Date() } });
