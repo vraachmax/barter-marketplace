@@ -28,7 +28,7 @@ export function listingPathFromQr(raw: string, currentHost: string): string | nu
 
 type QrReader = typeof import('jsqr')['default'];
 
-export default function QrScannerButton() {
+export default function QrScannerButton({ onExchangeCode }: { onExchangeCode?: (code: string) => boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
@@ -39,6 +39,15 @@ export default function QrScannerButton() {
   const canvas = useRef<HTMLCanvasElement>(null);
 
   const onCode = useCallback((raw: string): boolean => {
+    if (onExchangeCode) {
+      if (!onExchangeCode(raw.trim())) {
+        setError('Это не QR-код подтверждения текущего обмена.');
+        return false;
+      }
+      setError('');
+      setOpen(false);
+      return true;
+    }
     const path = listingPathFromQr(raw, window.location.hostname);
     if (!path) {
       setError('QR-код не содержит ссылку на объявление Barter.');
@@ -48,7 +57,7 @@ export default function QrScannerButton() {
     setOpen(false);
     router.push(path);
     return true;
-  }, [router]);
+  }, [router, onExchangeCode]);
 
   useEffect(() => {
     const el = dialog.current;
@@ -139,10 +148,10 @@ export default function QrScannerButton() {
 
   return (
     <>
-      <button type="button" aria-label="Сканировать QR-код" title="Сканировать QR-код"
+      <button type="button" aria-label={onExchangeCode ? 'Сканировать QR подтверждения обмена' : 'Сканировать QR-код'} title={onExchangeCode ? 'Сканировать QR обмена' : 'Сканировать QR-код'}
         onClick={() => { setError(''); setManual(''); setOpen(true); }}
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[var(--bg-surface)] text-foreground shadow-[0_3px_14px_rgba(24,24,48,.07)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff5a0a]">
-        <ScanQrCode size={20} strokeWidth={2} aria-hidden />
+        className={onExchangeCode ? 'exchange-qr-trigger' : 'grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[var(--bg-surface)] text-foreground shadow-[0_3px_14px_rgba(24,24,48,.07)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ff5a0a]'}>
+        <ScanQrCode size={20} strokeWidth={2} aria-hidden />{onExchangeCode ? <span>Сканировать QR-код</span> : null}
       </button>
       <dialog ref={dialog} onCancel={() => setOpen(false)}
         aria-label="Сканер QR-кода Barter"
@@ -150,7 +159,7 @@ export default function QrScannerButton() {
         <div className="flex items-center justify-between gap-2 px-5 pt-5 pb-3">
           <div>
             <h2 className="text-[20px] font-bold">Сканировать QR-код</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Откройте объявление Barter по QR-коду</p>
+            <p className="mt-1 text-xs text-muted-foreground">{onExchangeCode ? 'Наведите камеру на QR другого участника обмена' : 'Откройте объявление Barter по QR-коду'}</p>
           </div>
           <button onClick={() => setOpen(false)} type="button" aria-label="Закрыть сканер"
             className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--bg-muted)]"><X size={20} aria-hidden /></button>
@@ -175,7 +184,7 @@ export default function QrScannerButton() {
           </label>
           <form onSubmit={event => { event.preventDefault(); onCode(manual); }} className="flex gap-2">
             <input value={manual} onChange={event => setManual(event.target.value)}
-              aria-label="Ссылка на объявление" placeholder="Ссылка или код объявления"
+              aria-label={onExchangeCode ? "Код обмена" : "Ссылка на объявление"} placeholder={onExchangeCode ? "Код обмена BX1..." : "Ссылка или код объявления"}
               className="min-w-0 min-h-11 flex-1 rounded-xl bg-[var(--bg-muted)] px-3 text-sm outline-none focus:ring-2 focus:ring-[#ff5a0a]" />
             <button type="submit" className="min-h-11 shrink-0 rounded-xl bg-[#ff5a0a] px-4 text-sm font-semibold text-white">Открыть</button>
           </form>

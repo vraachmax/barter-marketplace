@@ -1,10 +1,11 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PLATFORM_ASSISTANT_EMAIL, PLATFORM_ASSISTANT_NAME } from '../platform.constants';
 import { ChatsService } from './chats.service';
-import { CreateExchangeDto, ExchangeActionDto } from './exchange.dto';
+import { getJwtSecret } from '../config/security';
+import { CreateExchangeDto, ExchangeActionDto, ExchangeShipmentDto } from './exchange.dto';
 
 function fingerprint(l: { title: string; description: string; priceRub: number | null; ownerId: string; city: string; categoryId: string; attributes: unknown; exchangePreferences: unknown; images: { url: string }[] }) {
   return createHash('sha256').update(JSON.stringify([l.title, l.description, l.priceRub, l.ownerId, l.city, l.categoryId, l.attributes, l.exchangePreferences, l.images.map(i => i.url)])).digest('hex');
@@ -56,6 +57,88 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
     const reserved = await this.prisma.exchangeReservation.findMany({ select: { listingId: true } });
     return this.prisma.listing.findMany({ where: { ownerId: { in: [userId, peer.userId] }, status: 'ACTIVE', barterEnabled: true, id: { notIn: reserved.map(r => r.listingId) } }, select: { id: true, ownerId: true, title: true, priceRub: true, images: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } } }, take: 200 });
   }
+
+  /**
+   * A short-lived, recipient-bound handoff key. Not a receipt or proof that goods
+   * were delivered. Only the exchange proposer can display it after confirming
+   * their own receipt; the other authenticated party must scan AND consent.
+   */
+  private handoffSignature(
+    offer: { id: string; chatId: string; senderId: string; recipientId: string; version: number },
+    expires: number,
+  ) {
+    const purposeKey = createHash('sha256').update('barter:exchange-handoff:v1:').update(getJwtSecret()).digest();
+    return createHmac('sha256', purposeKey)
+      .update(JSON.stringify([offer.id, offer.chatId, offer.senderId, offer.recipientId, offer.version, expires]))
+      .digest('hex');
+  }
+
+  async handoffQr(chatId: string, offerId: string, userId: string) {
+    await this.chats.assertParticipant(chatId, userId);
+    const offer = await this.prisma.exchangeOffer.findUnique({ where: { id: offerId }, include });
+    if (!offer || offer.chatId !== chatId) throw new NotFoundException();
+    if (offer.senderId !== userId) throw new ForbiddenException('QR показывает только предложивший обмен');
+    if (offer.status !== 'ACCEPTED') throw new ConflictException('Согласуйте обмен перед подтверждением');
+    if (offer.handoffMethod !== 'MEETING') throw new ConflictException('QR используется только для личной встречи');
+    if (!offer.confirmations.some(c => c.userId === userId))
+      throw new ConflictException('Сначала подтвердите получение вещей со своей стороны');
+    if (offer.confirmations.some(c => c.userId === offer.recipientId))
+      throw new ConflictException('Вторая сторона уже подтвердила передачу');
+    const expires = Math.min(Math.floor(offer.expiresAt.getTime() / 1000), Math.floor(Date.now() / 1000) + 120);
+    if (expires <= Math.floor(Date.now() / 1000)) throw new ConflictException('Срок предложения истёк');
+    return { code: `BX1.${offer.id}.${expires}.${this.handoffSignature(offer, expires)}`, expiresAt: new Date(expires * 1000).toISOString() };
+  }
+
+  private validateHandoffQr(
+    offer: { id: string; chatId: string; senderId: string; recipientId: string; version: number; expiresAt: Date; confirmations: { userId: string }[] },
+    userId: string,
+    code: string | undefined,
+  ) {
+    if (userId !== offer.recipientId) throw new ForbiddenException('Этот QR предназначен другому участнику');
+    if (!offer.confirmations.some(c => c.userId === offer.senderId))
+      throw new ConflictException('Предложивший обмен ещё не подтвердил свою сторону');
+    const parts = code?.split('.');
+    if (!parts || parts.length !== 4 || parts[0] !== 'BX1' || parts[1] !== offer.id ||
+      !/^\d{10}$/.test(parts[2]) || !/^[a-f0-9]{64}$/.test(parts[3]))
+      throw new BadRequestException('Недействительный QR-код обмена');
+    const expires = Number(parts[2]);
+    const now = Math.floor(Date.now() / 1000);
+    if (expires <= now || expires > now + 120 || expires > Math.floor(offer.expiresAt.getTime() / 1000))
+      throw new ConflictException('QR-код обмена истёк. Попросите обновить его');
+    const expected = Buffer.from(this.handoffSignature(offer, expires), 'hex');
+    const actual = Buffer.from(parts[3], 'hex');
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
+      throw new BadRequestException('QR-код не принадлежит этой сделке');
+  }
+
+  async updateShipment(chatId: string, offerId: string, userId: string, dto: ExchangeShipmentDto) {
+    await this.chats.assertCanSend(chatId, userId);
+    const carrier = dto.carrier.trim();
+    const trackingNumber = dto.trackingNumber.trim();
+    if (carrier.length < 2 || carrier.length > 80 || trackingNumber.length < 4 || trackingNumber.length > 100 ||
+      /[<>\r\n]/.test(carrier + trackingNumber))
+      throw new BadRequestException('Проверьте службу доставки и трек-номер');
+    return this.transaction(async tx => {
+      const offer = await tx.exchangeOffer.findUnique({ where: { id: offerId }, include });
+      if (!offer || offer.chatId !== chatId) throw new NotFoundException();
+      if (![offer.senderId, offer.recipientId].includes(userId)) throw new ForbiddenException();
+      if (offer.status !== 'ACCEPTED' || offer.handoffMethod !== 'DELIVERY')
+        throw new ConflictException('Трек-номер доступен только для согласованной доставки');
+      const existing = offer.shipping && typeof offer.shipping === 'object' && !Array.isArray(offer.shipping)
+        ? offer.shipping as Record<string, unknown> : {};
+      const side = userId === offer.senderId ? 'sender' : 'recipient';
+      // A late shipment reference can still be provided after the other party
+      // confirmed. However, an already-published reference is immutable then.
+      if (offer.confirmations.length && existing[side]) throw new ConflictException('Передача уже подтверждена. Изменение доставки заблокировано.');
+      const shipping = { ...existing, [side]: { carrier, trackingNumber, submittedAt: new Date().toISOString() } };
+      const updated = await tx.exchangeOffer.update({ where: { id: offer.id }, data: { shipping: shipping as Prisma.InputJsonObject }, include });
+      await tx.exchangeAudit.create({ data: { offerId: offer.id, userId, action: 'tracking_added' } });
+      await tx.message.create({ data: { chatId, senderId: userId, text: 'Участник добавил данные отправления. Статус доставки перевозчиком не проверен.' } });
+      await tx.chat.update({ where: { id: chatId }, data: { updatedAt: new Date() } });
+      return updated;
+    });
+  }
+
   async create(chatId: string, userId: string, dto: CreateExchangeDto) {
     await this.chats.assertCanSend(chatId, userId);
     return this.transaction(async tx => {
@@ -64,7 +147,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (replay) {
         const give = replay.items.filter(i => i.ownerId === userId).map(i => i.listingId).sort();
         const receive = replay.items.filter(i => i.ownerId !== userId).map(i => i.listingId).sort();
-        if (replay.chatId !== chatId || replay.terms !== dto.terms || replay.cashKopecks !== dto.cashKopecks || (replay.previousId ?? undefined) !== dto.previousId || JSON.stringify(give) !== JSON.stringify([...dto.giveIds].sort()) || JSON.stringify(receive) !== JSON.stringify([...dto.receiveIds].sort())) throw new ConflictException('Ключ предложения уже использован');
+        if (replay.chatId !== chatId || replay.terms !== dto.terms || replay.handoffMethod !== (dto.handoffMethod ?? 'MEETING') || replay.cashKopecks !== dto.cashKopecks || (replay.previousId ?? undefined) !== dto.previousId || JSON.stringify(give) !== JSON.stringify([...dto.giveIds].sort()) || JSON.stringify(receive) !== JSON.stringify([...dto.receiveIds].sort())) throw new ConflictException('Ключ предложения уже использован');
         return replay;
       }
       const peer = await tx.chatUser.findFirst({ where: { chatId, userId: { not: userId } } });
@@ -82,7 +165,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (await tx.exchangeReservation.count({ where: { listingId: { in: ids } } })) throw new ConflictException('Вещь уже зарезервирована');
       const offer = await tx.exchangeOffer.create({ data: {
         chatId, senderId: userId, recipientId: peer.userId, clientKey: dto.clientKey,
-        previousId: dto.previousId, cashKopecks: dto.cashKopecks, terms: dto.terms,
+        previousId: dto.previousId, cashKopecks: dto.cashKopecks, terms: dto.terms, handoffMethod: dto.handoffMethod ?? 'MEETING',
         expiresAt: new Date(Date.now() + dto.validDays * 86400000),
         items: { create: listings.map(l => ({ listingId: l.id, ownerId: l.ownerId, snapshot: { title: l.title, priceRub: l.priceRub, imageUrl: l.images[0]?.url ?? null, fingerprint: fingerprint(l) } })) },
         events: { create: { userId, action: 'create' } },
@@ -94,15 +177,19 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
   }
   async act(chatId: string, offerId: string, userId: string, dto: ExchangeActionDto) {
     await this.chats.assertParticipant(chatId, userId);
-    if (dto.action === 'accept') await this.chats.assertCanSend(chatId, userId);
+    if (dto.action === 'accept' || dto.action === 'confirm') await this.chats.assertCanSend(chatId, userId);
     return this.transaction(async tx => {
       await this.expire(tx);
       const offer = await tx.exchangeOffer.findUnique({ where: { id: offerId }, include });
       if (!offer || offer.chatId !== chatId) throw new NotFoundException();
       if (![offer.senderId, offer.recipientId].includes(userId)) throw new ForbiddenException();
-      // Confirmation retries must never complete the other participant's side.
+      // One participant's retry can never confirm the other participant's side.
       if (dto.action === 'confirm' && offer.confirmations.some(c => c.userId === userId)) return offer;
       if (offer.version !== dto.version) throw new ConflictException('Предложение изменилось. Обновите страницу.');
+      // A peer can only complete the exchange by scanning the signer's fresh
+      // QR key in their own account. A plain confirm request must be rejected.
+      if (dto.action === 'confirm' && offer.handoffMethod === 'MEETING' && offer.recipientId === userId)
+        this.validateHandoffQr(offer, userId, dto.qrToken);
       let status: string;
       if (dto.action === 'accept' || dto.action === 'decline') {
         if (offer.recipientId !== userId) throw new ForbiddenException();
@@ -115,7 +202,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
             const item = offer.items.find(i => i.listingId === l.id)!;
             return l.status !== 'ACTIVE' || !l.barterEnabled || l.ownerId !== item.ownerId || fingerprint(l) !== (item.snapshot as any).fingerprint;
           })) throw new ConflictException('Объявление изменилось. Создайте новое предложение.');
-          await tx.exchangeReservation.createMany({ data: offer.items.map(i => ({ listingId: i.listingId, offerId, expiresAt: new Date(Date.now() + 7 * 86400000) })) });
+          await tx.exchangeReservation.createMany({ data: offer.items.map(i => ({ listingId: i.listingId, offerId, expiresAt: new Date(Date.now() + (offer.handoffMethod === 'MEETING' ? 7 : 30) * 86400000) })) });
         }
       } else if (dto.action === 'cancel') {
         if (!['PENDING', 'ACCEPTED'].includes(offer.status)) throw new ConflictException('Предложение уже закрыто');
@@ -139,7 +226,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       const text = { accept: 'Условия обмена согласованы. Вещи зарезервированы.', decline: 'Предложение обмена отклонено.', cancel: 'Обмен отменён. Резерв снят.', confirm: status === 'COMPLETED' ? 'Обе стороны подтвердили передачу. Обмен завершён.' : 'Передача подтверждена одной стороной. Ожидаем вторую.' }[dto.action];
       await tx.message.create({ data: { chatId, senderId: userId, text } });
       await tx.chat.update({ where: { id: chatId }, data: { updatedAt: new Date() } });
-      return tx.exchangeOffer.update({ where: { id: offerId }, data: { status, version: { increment: 1 }, ...(dto.action === 'accept' ? { expiresAt: new Date(Date.now() + 7 * 86400000) } : {}) }, include });
+      return tx.exchangeOffer.update({ where: { id: offerId }, data: { status, version: { increment: 1 }, ...(dto.action === 'accept' ? { expiresAt: new Date(Date.now() + (offer.handoffMethod === 'MEETING' ? 7 : 30) * 86400000) } : {}) }, include });
     });
   }
 }

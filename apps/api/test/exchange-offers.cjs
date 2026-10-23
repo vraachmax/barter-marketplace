@@ -44,6 +44,8 @@ async function main() {
     await assert.rejects(db.listing.update({ where: { id: listings[0].id }, data: { priceRub: 20000 } }), /exchange_listing_reserved/);
     await db.$disconnect(); await db.$connect();
     console.log('PASS counteroffer, concurrent acceptance and reserved item edits');
+    await assert.rejects(service.handoffQr(room.id, accepted.id, accepted.senderId), /Сначала подтвердите/);
+    await assert.rejects(service.handoffQr(room.id, accepted.id, accepted.recipientId));
     const confirmed = await service.act(room.id, accepted.id, accepted.senderId, { action: 'confirm', version: accepted.version });
     const receivedItem = accepted.items.find(i => i.ownerId !== accepted.senderId);
     assert.equal((await reviews.eligibility(accepted.senderId, receivedItem.listingId)).reason, 'exchange_not_completed');
@@ -51,13 +53,62 @@ async function main() {
     const replay = await service.act(room.id, accepted.id, accepted.senderId, { action: 'confirm', version: accepted.version });
     assert.equal(replay.confirmations.length, 1);
     await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'cancel', version: confirmed.version }));
-    const done = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version });
+    // Only the proposer can display the short-lived QR after confirming first.
+    const qr = await service.handoffQr(room.id, accepted.id, accepted.senderId);
+    assert.match(qr.code, /^BX1\.[^.]+\.[0-9]{10}\.[a-f0-9]{64}$/);
+    assert.ok(new Date(qr.expiresAt).getTime() - Date.now() <= 120000);
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version }), /QR/);
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code.slice(0, -1) + (qr.code.endsWith('a') ? 'b' : 'a') }), /QR/);
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: 'BX1.fake.1111111111.'+'0'.repeat(64) }), /QR/);
+    const qrParts = qr.code.split('.');
+    const expiredQr = [qrParts[0], qrParts[1], String(Number(qrParts[2]) - 300), qrParts[3]].join('.');
+    await assert.rejects(service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: expiredQr }), /истёк/);
+    const outsider = users.find(u => u.id !== accepted.senderId && u.id !== accepted.recipientId);
+    await assert.rejects(service.handoffQr(room.id, accepted.id, outsider.id));
+    const done = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
     assert.equal(done.status, 'COMPLETED'); assert.equal(done.confirmations.length, 2);
+    const replayPeer = await service.act(room.id, accepted.id, accepted.recipientId, { action: 'confirm', version: confirmed.version, qrToken: qr.code });
+    assert.equal(replayPeer.confirmations.length, 2);
+    await assert.rejects(service.handoffQr(room.id, accepted.id, accepted.senderId), /Согласуйте|Сначала/);
     assert.equal(await db.exchangeReservation.count({ where: { offerId: accepted.id } }), 0);
     assert.equal((await db.listing.findUnique({ where: { id: listings[0].id } })).status, 'SOLD');
     assert.equal((await reviews.eligibility(accepted.senderId, receivedItem.listingId)).canReview, true);
     await reviews.create(accepted.senderId, receivedItem.ownerId, { listingId: receivedItem.listingId, rating: 5, text: 'Completed fixture exchange' });
     console.log('PASS independent confirmations, replay, no unilateral cancellation, completion and review eligibility');
+
+    // Both remote methods must work without QR, still with two independent
+    // confirmations. Tracking numbers are self-reported, not carrier verified.
+    for (const method of ['DELIVERY','ONLINE']) {
+      const aItem = await db.listing.create({data:{title:'Remote fixture '+method+' A',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[1].id,categoryId:category.id,priceRub:2500}});
+      const bItem = await db.listing.create({data:{title:'Remote fixture '+method+' B',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[0].id,categoryId:category.id,priceRub:2600}});
+      const offer = await service.create(rooms[0].id, users[1].id, {
+        clientKey:randomUUID(), giveIds:[aItem.id], receiveIds:[bItem.id],
+        cashKopecks:0, terms:'Both parties agree to '+method,
+        handoffMethod:method, validDays:7
+      });
+      assert.equal(offer.handoffMethod,method);
+      const acceptedRemote = await service.act(rooms[0].id,offer.id,users[0].id,{action:'accept',version:1});
+      await assert.rejects(service.handoffQr(rooms[0].id,offer.id,users[1].id),/QR|Сначала/);
+      if (method==='DELIVERY') {
+        const shipment = await service.updateShipment(rooms[0].id,offer.id,users[0].id,{carrier:'Почта',trackingNumber:'99999999'});
+        assert.equal(shipment.shipping.recipient.trackingNumber,'99999999');
+        await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[2].id,{carrier:'Wrong',trackingNumber:'99999999'}));
+      } else {
+        await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'}),/доставки/);
+      }
+      const confirmedRemote = await service.act(rooms[0].id,offer.id,users[0].id,{action:'confirm',version:acceptedRemote.version});
+      assert.equal(confirmedRemote.status,'ACCEPTED');
+      if(method==='DELIVERY') {
+        const late = await service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'});
+        assert.equal(late.shipping.sender.trackingNumber,'0123456789');
+        await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'987654321'}),/заблокировано/);
+      }
+      const completed = await service.act(rooms[0].id,offer.id,users[1].id,{action:'confirm',version:confirmedRemote.version});
+      assert.equal(completed.status,'COMPLETED');
+      assert.equal(completed.confirmations.length,2);
+      await assert.rejects(service.handoffQr(rooms[0].id,offer.id,users[1].id));
+      console.log('PASS '+method+' remote bilateral confirmation without QR and immutable handoff');
+    }
 
     await db.listing.updateMany({ where: { categoryId: category.id }, data: { status: 'ACTIVE' } });
     const stale = await service.create(rooms[0].id, users[1].id, dto(1));

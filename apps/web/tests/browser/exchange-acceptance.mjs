@@ -7,6 +7,9 @@ import { resolve, join } from 'node:path';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const require = createRequire(join(process.env.BARTER_BROWSER_TOOLS, 'package.json'));
 const { chromium, webkit, expect } = require('@playwright/test');
+const webRequire = createRequire(resolve(root, 'package.json'));
+const sharp = webRequire('sharp');
+const jsQR = webRequire('jsqr');
 const engine = process.env.BARTER_BROWSER_ENGINE === 'webkit' ? 'webkit' : 'chromium';
 const server = spawn(process.execPath, [resolve(root, '../../node_modules/next/dist/bin/next'), 'start', '-H', '127.0.0.1', '-p', '3203'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
 server.stderr.on('data', b => process.stderr.write(b));
@@ -23,7 +26,7 @@ try {
     const chat = { id:'demo', listing, peer: {id:'peer',name:'Александр'}, myRole:'buyer', unreadCount:0, updatedAt:new Date().toISOString() };
     const messages = [{id:'voice',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()},{id:'welcome',text:'Здравствуйте! Можно обсудить обмен?',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()}];
     messages.push({id:'voice-outgoing',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'me',sender:{id:'me',name:'Максим'},createdAt:new Date().toISOString()});
-    let offers = [{ id:'first',senderId:'peer',recipientId:'me',status:'PENDING',version:1,cashKopecks:0,terms:'Предлагаю обмен, как думаете?',expiresAt:new Date(Date.now()+86400000).toISOString(),createdAt:new Date().toISOString(),confirmations:[],items:[{listingId:'iphone',ownerId:'peer',snapshot:{title:listing.title,priceRub:65000,imageUrl:listing.previewImageUrl}},{listingId:'macbook',ownerId:'me',snapshot:{title:laptop.title,priceRub:70000,imageUrl:laptop.images[0].url}}]}];
+    let offers = [{ id:'first',senderId:'peer',recipientId:'me',status:'PENDING',version:1,handoffMethod:'MEETING',cashKopecks:0,terms:'Предлагаю обмен, как думаете?',expiresAt:new Date(Date.now()+86400000).toISOString(),createdAt:new Date().toISOString(),confirmations:[],items:[{listingId:'iphone',ownerId:'peer',snapshot:{title:listing.title,priceRub:65000,imageUrl:listing.previewImageUrl}},{listingId:'macbook',ownerId:'me',snapshot:{title:laptop.title,priceRub:70000,imageUrl:laptop.images[0].url}}]}];
     messages.push({ id:'exchange_offer_first', text:'Предложение обмена', senderId:'peer', sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString() });
     const details = {muted:false,blocked:false,cannotSend:false,listings:[listing,laptop],favorites:[listing],media:[]};
     const writes=[];
@@ -42,8 +45,14 @@ try {
       if(path==='/chats/demo/exchange-choices')return json([listing,laptop]);
       if(path==='/chats/demo/settings'){const body=req.postDataJSON();writes.push(body);if(body.action==='mute')details.muted=true;if(body.action==='block'){details.blocked=true;details.cannotSend=true;}return json(details);}
       if(path==='/chats/demo/offers'&&req.method()==='GET')return json(offers);
+      if(path==='/chats/demo/offers/first/confirmation-qr')return json({code:'BX1.first.1792700000.'+'b'.repeat(64),expiresAt:new Date(Date.now()+120000).toISOString()});
+      if(path==='/chats/demo/offers/first/shipment'){
+        const payload=req.postDataJSON();writes.push({shipment:payload});
+        offers=[{...offers[0],shipping:{...(offers[0].shipping||{}),recipient:{...payload,submittedAt:new Date().toISOString()}}}];
+        return json(offers[0]);
+      }
       if(path==='/chats/demo/offers'&&req.method()==='POST'){writes.push(req.postDataJSON());return json({...offers[0],id:'second'});}
-      if(path==='/chats/demo/offers/first'){const body=req.postDataJSON();writes.push(body);offers=[{...offers[0],status:body.action==='accept'?'ACCEPTED':'DECLINED',version:2}];return json(offers[0]);}
+      if(path==='/chats/demo/offers/first'){const body=req.postDataJSON();writes.push(body);offers=[{...offers[0],status:body.action==='accept'?'ACCEPTED':body.action==='confirm'?'COMPLETED':'DECLINED',version:body.action==='accept'?2:4,confirmations:body.action==='confirm'?[{userId:'peer'},{userId:'me'}]:offers[0].confirmations}];return json(offers[0]);}
       if(path==='/support/advise')return json({tip:null,suggestions:[]});
       if(path==='/support/templates'||path==='/support/faq')return json([]);
       return json({},404);
@@ -229,17 +238,91 @@ try {
     await page.getByRole('button',{name:'Назад к переписке'}).click();
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await page.getByRole('button',{name:'Предложить новые условия',exact:true}).click();
+    const formDialog=page.getByRole('dialog',{name:'Предложить обмен'});
+    await expect(formDialog.getByText('1. Выберите способ передачи')).toBeVisible();
+    const methodAboveGoods=await formDialog.evaluate(dialog=>{
+      const method=dialog.querySelector('.exchange-method-picker');
+      const goods=dialog.querySelector('.exchange-form-section');
+      return Boolean(method&&goods&&method.getBoundingClientRect().top<goods.getBoundingClientRect().top);
+    });
+    assert.equal(methodAboveGoods,true,'Delivery method must appear before item pickers');
     await page.getByRole('checkbox').first().check();
+    await expect(page.getByRole('radio',{name:/Личная встреча/})).toBeChecked();
+    await page.getByRole('radio',{name:/Доставка/}).check();
+    await expect(page.getByRole('radio',{name:/Доставка/})).toBeChecked();
+    await page.screenshot({path:join(output,`exchange-methods-${width}-${theme}.png`)});
+    await page.getByRole('radio',{name:/Личная встреча/}).check();
     await page.getByRole('button',{name:'Проверить предложение'}).click();
-    await expect(page.getByText('Деньги через площадку не переводятся.',{exact:false})).toBeVisible();
+    await expect(page.getByText('площадка не проверяет фактическую передачу товаров и денег.',{exact:false})).toBeVisible();
+    const reviewMethod=formDialog.locator('.exchange-method-review');
+    await expect(reviewMethod).toBeVisible();
+    await expect(reviewMethod.getByRole('radio',{name:'Личная встреча'})).toBeChecked();
+    await reviewMethod.getByRole('radio',{name:'Доставка'}).check();
+    await expect(reviewMethod.getByRole('radio',{name:'Доставка'})).toBeChecked();
+    await expect(formDialog.getByText('После принятия: резерв на 30 дней.',{exact:false})).toBeVisible();
+    await page.screenshot({path:join(output,`review-delivery-${width}-${theme}.png`)});
+    await reviewMethod.getByRole('radio',{name:'Личная встреча'}).check();
+    await expect(formDialog.getByText('После принятия: резерв на 7 дней.',{exact:false})).toBeVisible();
     await page.screenshot({path:join(output,`review-${width}-${theme}.png`)});
+    const reviewActions=await formDialog.locator('.exchange-form-actions > button').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};}));
+    assert.equal(reviewActions.length,2);
+    assert.ok(reviewActions[1].top-reviewActions[0].bottom>=14,'Review actions must be separated by at least 10px');
+    assert.ok(reviewActions.every(r=>r.height>=44 && r.left>=0 && r.right<=width),'Review actions must fit mobile viewport');
     await page.getByRole('button',{name:'Отправить предложение',exact:true}).click();
-    const sent=writes.find(w=>w.clientKey);assert.deepEqual(sent.giveIds,['macbook']);assert.deepEqual(sent.receiveIds,['iphone']);assert.equal(sent.cashKopecks,0);assert.equal(sent.previousId,'first');
+    const sent=writes.find(w=>w.clientKey);assert.deepEqual(sent.giveIds,['macbook']);assert.deepEqual(sent.receiveIds,['iphone']);assert.equal(sent.cashKopecks,0);assert.equal(sent.previousId,'first');assert.equal(sent.handoffMethod,'MEETING');
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await expect(page.getByRole('dialog',{name:'Обсудить условия',exact:true})).toBeVisible();
+    const negotiationGap=await page.locator('.exchange-actions-negotiation > button').evaluateAll(nodes=>nodes.slice(1).map((n,i)=>n.getBoundingClientRect().top-nodes[i].getBoundingClientRect().bottom));
+    assert.ok(negotiationGap.length>=2 && negotiationGap.every(gap=>gap>=10),'Negotiation actions must not touch');
     assert.equal(writes.some(w=>w.action==='accept'),false);
     await page.getByRole('button',{name:'Принять условия',exact:true}).click();
-    await expect(page.getByRole('button',{name:'Я получил вещи',exact:true})).toBeVisible();
+    await expect(page.getByText('Ожидаем QR от предложившего обмен.')).toBeVisible();
+    await expect(page.getByRole('button',{name:'Я получил вещи',exact:true})).toHaveCount(0);
+    // The proposer confirms on their device; the peer must scan their key.
+    offers=[{...offers[0],version:3,confirmations:[{userId:'peer'}]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    const scanQr=page.getByRole('button',{name:'Сканировать QR подтверждения обмена'});
+    await expect(scanQr).toBeVisible();
+    await scanQr.click();
+    const testQr='BX1.first.1792699999.'+'a'.repeat(64);
+    await page.getByRole('textbox',{name:'Код обмена'}).fill(testQr);
+    await page.getByRole('button',{name:'Открыть',exact:true}).click();
+    await expect(page.getByRole('dialog',{name:'Проверка подтверждения обмена'})).toBeVisible();
+    await page.screenshot({path:join(output,`handoff-confirm-${width}-${theme}.png`)});
+    await page.getByRole('button',{name:'Я получил вещи и подтверждаю обмен'}).click();
+    assert.equal(writes.some(w=>w.action==='confirm'&&w.qrToken===testQr),true);
+    await expect(page.getByText('Обмен завершён')).toBeVisible();
+    // Re-render as proposer with a confirmed first-side receipt. Scan the real
+    // generated QR pixels, not just the existence of an SVG element.
+    offers=[{...offers[0],status:'ACCEPTED',senderId:'me',recipientId:'peer',version:3,confirmations:[{userId:'me'}]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await page.getByRole('button',{name:'Показать QR подтверждения'}).click();
+    const handoffDialog=page.getByRole('dialog',{name:'QR-код подтверждения обмена'});
+    await expect(handoffDialog).toBeVisible();
+    const qrPng=await handoffDialog.getByRole('img',{name:'Одноразовый QR-код подтверждения обмена'}).screenshot();
+    const decoded=await sharp(qrPng).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    const read=jsQR(new Uint8ClampedArray(decoded.data),decoded.info.width,decoded.info.height,{inversionAttempts:'attemptBoth'});
+    assert.equal(read?.data,'BX1.first.1792700000.'+'b'.repeat(64));
+    await page.screenshot({path:join(output,`handoff-qr-${width}-${theme}.png`)});
+    await handoffDialog.getByRole('button',{name:'Закрыть QR'}).click();
+    // Delivery and remote confirmation must not depend on the meeting QR.
+    offers=[{...offers[0],handoffMethod:'DELIVERY',senderId:'peer',recipientId:'me',status:'ACCEPTED',version:2,shipping:{sender:{carrier:'СДЭК',trackingNumber:'ABC12345',submittedAt:new Date().toISOString()}},confirmations:[]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await expect(page.getByText('Доставка',{exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Добавить трек-номер'}).click();
+    await page.getByRole('textbox',{name:'Служба доставки'}).fill('Почта России');
+    await page.getByRole('textbox',{name:'Трек-номер'}).fill('123456789001');
+    await page.getByRole('button',{name:'Сохранить отправление'}).click();
+    assert.equal(writes.some(w=>w.shipment?.trackingNumber==='123456789001'),true);
+    await expect(page.getByText('Почта России · 123456789001')).toBeVisible();
+    await page.screenshot({path:join(output,`exchange-delivery-${width}-${theme}.png`)});
+    await expect(page.getByRole('button',{name:'Подтвердить получение'})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Сканировать QR подтверждения обмена'})).toHaveCount(0);
+    offers=[{...offers[0],handoffMethod:'ONLINE',shipping:null,version:2,confirmations:[]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await expect(page.getByText('Онлайн-обмен',{exact:true})).toBeVisible();
+    await expect(page.getByRole('button',{name:'Подтвердить выполнение'})).toBeVisible();
+    await page.screenshot({path:join(output,`exchange-online-${width}-${theme}.png`)});
     assert.equal(errors.length,0,errors.join('\n'));
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
