@@ -299,7 +299,7 @@ try {
     await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
     await expect(page.getByText('Онлайн-обмен',{exact:true})).toBeVisible();
     await expect(page.getByRole('button',{name:'Подтвердить выполнение'})).toBeVisible();
-    await page.screenshot({path:join(output,`exchange-online-${width}-${theme}.png`});
+    await page.screenshot({path:join(output,`exchange-online-${width}-${theme}.png`)});
     assert.equal(errors.length,0,errors.join('\n'));
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
