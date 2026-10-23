@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Header, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ExchangeService } from './exchange.service';
-import { CreateExchangeDto, ExchangeActionDto, ChatSettingDto } from './exchange.dto';
+import { CreateExchangeDto, ExchangeActionDto, ExchangeShipmentDto, ChatSettingDto } from './exchange.dto';
 import { ChatsService } from './chats.service';
 import { ChatsGateway } from './chats.gateway';
 @UseGuards(AuthGuard('jwt'))
@@ -19,6 +19,9 @@ export class ExchangeController {
     const offer = await this.exchanges.act(id, offerId, req.user.id, dto);
     this.gateway.server.to(`chat:${id}`).emit('exchange-updated', { chatId: id });
     return offer;
+  }
+  @Post('offers/:offerId/shipment') shipment(@Req() req: any, @Param('chatId') id: string, @Param('offerId') offerId: string, @Body() dto: ExchangeShipmentDto) {
+    return this.exchanges.updateShipment(id, offerId, req.user.id, dto);
   }
   @Get('offers/:offerId/confirmation-qr') @Header('Cache-Control', 'no-store') qr(@Req() req: any, @Param('chatId') id: string, @Param('offerId') offerId: string) {
     return this.exchanges.handoffQr(id, offerId, req.user.id);
