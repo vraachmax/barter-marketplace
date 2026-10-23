@@ -90,16 +90,19 @@ async function main() {
       const acceptedRemote = await service.act(rooms[0].id,offer.id,users[0].id,{action:'accept',version:1});
       await assert.rejects(service.handoffQr(rooms[0].id,offer.id,users[1].id),/QR|Сначала/);
       if (method==='DELIVERY') {
-        const shipment = await service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'});
-        assert.equal(shipment.shipping.sender.trackingNumber,'0123456789');
-        await service.updateShipment(rooms[0].id,offer.id,users[0].id,{carrier:'Почта',trackingNumber:'99999999'});
+        const shipment = await service.updateShipment(rooms[0].id,offer.id,users[0].id,{carrier:'Почта',trackingNumber:'99999999'});
+        assert.equal(shipment.shipping.recipient.trackingNumber,'99999999');
         await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[2].id,{carrier:'Wrong',trackingNumber:'99999999'}));
       } else {
         await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'}),/доставки/);
       }
       const confirmedRemote = await service.act(rooms[0].id,offer.id,users[0].id,{action:'confirm',version:acceptedRemote.version});
       assert.equal(confirmedRemote.status,'ACCEPTED');
-      if(method==='DELIVERY') await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'}),/заблокировано/);
+      if(method==='DELIVERY') {
+        const late = await service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'0123456789'});
+        assert.equal(late.shipping.sender.trackingNumber,'0123456789');
+        await assert.rejects(service.updateShipment(rooms[0].id,offer.id,users[1].id,{carrier:'СДЭК',trackingNumber:'987654321'}),/заблокировано/);
+      }
       const completed = await service.act(rooms[0].id,offer.id,users[1].id,{action:'confirm',version:confirmedRemote.version});
       assert.equal(completed.status,'COMPLETED');
       assert.equal(completed.confirmations.length,2);
