@@ -93,3 +93,86 @@ html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exc
 .exchange-method-icon { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; border-radius:14px; background:var(--bg-muted); color:var(--exchange-orange); }
 .exchange-method-choice.is-selected .exchange-method-icon { background:#ff64151c; }
 .exchange-method-choice > span:last-child { min-width:0; flex:1; }
+
+/* Mobile exchange action hierarchy. Keep independently tappable controls
+   visibly separated on every offer, review, delivery and confirmation screen. */
+.chat-exchange .exchange-start {
+  width: min(100%, 540px);
+  min-height: 52px;
+  margin: 16px auto 20px;
+  padding: 13px 18px;
+  border-radius: 17px;
+  background: var(--exchange-orange);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.chat-exchange .exchange-actions { gap: 12px; margin-top: 18px; }
+.chat-exchange .exchange-actions > button,
+.chat-exchange .exchange-form-actions > button,
+.chat-exchange .exchange-shipment-form > button,
+.chat-exchange .exchange-handoff-sheet > button {
+  min-height: 48px;
+  box-sizing: border-box;
+  line-height: 1.35;
+  white-space: normal;
+}
+.chat-exchange .exchange-form-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 22px 0 8px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.chat-exchange .exchange-form-actions > button { width: 100%; }
+.chat-exchange .exchange-form-intro {
+  margin-top: 16px;
+  padding: 14px 15px;
+  background: var(--bg-muted);
+  border-radius: 17px;
+}
+.chat-exchange .exchange-form-intro b { font-size: 15px; font-weight: 700; }
+.chat-exchange .exchange-form-intro p {
+  margin: 6px 0 0;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+.chat-exchange .exchange-form-section {
+  margin: 24px 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.chat-exchange .exchange-method-picker {
+  min-width: 0;
+  margin: 14px 0 24px;
+  gap: 12px;
+}
+.chat-exchange .exchange-method-choice {
+  min-width: 0;
+  min-height: 78px;
+  gap: 12px;
+}
+.chat-exchange .exchange-method-choice > span:last-child {
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+.chat-exchange .exchange-method-choice small { line-height: 1.4; }
+.chat-exchange .exchange-actions-negotiation {
+  margin-top: 22px;
+  gap: 12px;
+}
+.chat-exchange .exchange-actions-negotiation .exchange-tertiary {
+  color: var(--fg-muted);
+  background: transparent;
+  border: 1px solid var(--border-default);
+}
+.chat-exchange .exchange-shipment-form { gap: 12px; margin-top: 4px; }
+.chat-exchange .exchange-handoff-sheet > .exchange-primary + .exchange-secondary,
+.chat-exchange .exchange-handoff-sheet > .exchange-secondary + .exchange-secondary { margin-top: 12px; }
+.chat-exchange .exchange-card > .exchange-secondary { display: block; margin-top: 14px; text-align: center; }
+@media(max-width:400px) {
+  .chat-exchange .contact-screen { padding-inline: 14px; }
+  .chat-exchange .exchange-method-choice { gap: 9px; padding-inline: 10px; }
+  .chat-exchange .exchange-method-choice.is-selected { padding-inline: 9px; }
+  .chat-exchange .exchange-method-icon { width: 38px; flex-basis: 38px; }
+}
