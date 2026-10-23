@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PLATFORM_ASSISTANT_EMAIL, PLATFORM_ASSISTANT_NAME } from '../platform.constants';
 import { ChatsService } from './chats.service';
 import { getJwtSecret } from '../config/security';
-import { CreateExchangeDto, ExchangeActionDto } from './exchange.dto';
+import { CreateExchangeDto, ExchangeActionDto, ExchangeShipmentDto } from './exchange.dto';
 
 function fingerprint(l: { title: string; description: string; priceRub: number | null; ownerId: string; city: string; categoryId: string; attributes: unknown; exchangePreferences: unknown; images: { url: string }[] }) {
   return createHash('sha256').update(JSON.stringify([l.title, l.description, l.priceRub, l.ownerId, l.city, l.categoryId, l.attributes, l.exchangePreferences, l.images.map(i => i.url)])).digest('hex');
@@ -79,6 +79,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
     if (!offer || offer.chatId !== chatId) throw new NotFoundException();
     if (offer.senderId !== userId) throw new ForbiddenException('QR показывает только предложивший обмен');
     if (offer.status !== 'ACCEPTED') throw new ConflictException('Согласуйте обмен перед подтверждением');
+    if (offer.handoffMethod !== 'MEETING') throw new ConflictException('QR используется только для личной встречи');
     if (!offer.confirmations.some(c => c.userId === userId))
       throw new ConflictException('Сначала подтвердите получение вещей со своей стороны');
     if (offer.confirmations.some(c => c.userId === offer.recipientId))
@@ -110,6 +111,32 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('QR-код не принадлежит этой сделке');
   }
 
+  async updateShipment(chatId: string, offerId: string, userId: string, dto: ExchangeShipmentDto) {
+    await this.chats.assertCanSend(chatId, userId);
+    const carrier = dto.carrier.trim();
+    const trackingNumber = dto.trackingNumber.trim();
+    if (carrier.length < 2 || carrier.length > 80 || trackingNumber.length < 4 || trackingNumber.length > 100 ||
+      /[<>\\r\\n]/.test(carrier + trackingNumber))
+      throw new BadRequestException('Проверьте службу доставки и трек-номер');
+    return this.transaction(async tx => {
+      const offer = await tx.exchangeOffer.findUnique({ where: { id: offerId }, include });
+      if (!offer || offer.chatId !== chatId) throw new NotFoundException();
+      if (![offer.senderId, offer.recipientId].includes(userId)) throw new ForbiddenException();
+      if (offer.status !== 'ACCEPTED' || offer.handoffMethod !== 'DELIVERY')
+        throw new ConflictException('Трек-номер доступен только для согласованной доставки');
+      if (offer.confirmations.length) throw new ConflictException('Передача уже подтверждена. Изменение доставки заблокировано.');
+      const existing = offer.shipping && typeof offer.shipping === 'object' && !Array.isArray(offer.shipping)
+        ? offer.shipping as Record<string, unknown> : {};
+      const side = userId === offer.senderId ? 'sender' : 'recipient';
+      const shipping = { ...existing, [side]: { carrier, trackingNumber, submittedAt: new Date().toISOString() } };
+      const updated = await tx.exchangeOffer.update({ where: { id: offer.id }, data: { shipping }, include });
+      await tx.exchangeAudit.create({ data: { offerId: offer.id, userId, action: 'tracking_added' } });
+      await tx.message.create({ data: { chatId, senderId: userId, text: 'Участник добавил данные отправления. Статус доставки перевозчиком не проверен.' } });
+      await tx.chat.update({ where: { id: chatId }, data: { updatedAt: new Date() } });
+      return updated;
+    });
+  }
+
   async create(chatId: string, userId: string, dto: CreateExchangeDto) {
     await this.chats.assertCanSend(chatId, userId);
     return this.transaction(async tx => {
@@ -118,7 +145,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (replay) {
         const give = replay.items.filter(i => i.ownerId === userId).map(i => i.listingId).sort();
         const receive = replay.items.filter(i => i.ownerId !== userId).map(i => i.listingId).sort();
-        if (replay.chatId !== chatId || replay.terms !== dto.terms || replay.cashKopecks !== dto.cashKopecks || (replay.previousId ?? undefined) !== dto.previousId || JSON.stringify(give) !== JSON.stringify([...dto.giveIds].sort()) || JSON.stringify(receive) !== JSON.stringify([...dto.receiveIds].sort())) throw new ConflictException('Ключ предложения уже использован');
+        if (replay.chatId !== chatId || replay.terms !== dto.terms || replay.handoffMethod !== (dto.handoffMethod ?? 'MEETING') || replay.cashKopecks !== dto.cashKopecks || (replay.previousId ?? undefined) !== dto.previousId || JSON.stringify(give) !== JSON.stringify([...dto.giveIds].sort()) || JSON.stringify(receive) !== JSON.stringify([...dto.receiveIds].sort())) throw new ConflictException('Ключ предложения уже использован');
         return replay;
       }
       const peer = await tx.chatUser.findFirst({ where: { chatId, userId: { not: userId } } });
@@ -136,7 +163,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (await tx.exchangeReservation.count({ where: { listingId: { in: ids } } })) throw new ConflictException('Вещь уже зарезервирована');
       const offer = await tx.exchangeOffer.create({ data: {
         chatId, senderId: userId, recipientId: peer.userId, clientKey: dto.clientKey,
-        previousId: dto.previousId, cashKopecks: dto.cashKopecks, terms: dto.terms,
+        previousId: dto.previousId, cashKopecks: dto.cashKopecks, terms: dto.terms, handoffMethod: dto.handoffMethod ?? 'MEETING',
         expiresAt: new Date(Date.now() + dto.validDays * 86400000),
         items: { create: listings.map(l => ({ listingId: l.id, ownerId: l.ownerId, snapshot: { title: l.title, priceRub: l.priceRub, imageUrl: l.images[0]?.url ?? null, fingerprint: fingerprint(l) } })) },
         events: { create: { userId, action: 'create' } },
@@ -159,7 +186,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (offer.version !== dto.version) throw new ConflictException('Предложение изменилось. Обновите страницу.');
       // A peer can only complete the exchange by scanning the signer's fresh
       // QR key in their own account. A plain confirm request must be rejected.
-      if (dto.action === 'confirm' && offer.recipientId === userId)
+      if (dto.action === 'confirm' && offer.handoffMethod === 'MEETING' && offer.recipientId === userId)
         this.validateHandoffQr(offer, userId, dto.qrToken);
       let status: string;
       if (dto.action === 'accept' || dto.action === 'decline') {
@@ -173,7 +200,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
             const item = offer.items.find(i => i.listingId === l.id)!;
             return l.status !== 'ACTIVE' || !l.barterEnabled || l.ownerId !== item.ownerId || fingerprint(l) !== (item.snapshot as any).fingerprint;
           })) throw new ConflictException('Объявление изменилось. Создайте новое предложение.');
-          await tx.exchangeReservation.createMany({ data: offer.items.map(i => ({ listingId: i.listingId, offerId, expiresAt: new Date(Date.now() + 7 * 86400000) })) });
+          await tx.exchangeReservation.createMany({ data: offer.items.map(i => ({ listingId: i.listingId, offerId, expiresAt: new Date(Date.now() + (offer.handoffMethod === 'MEETING' ? 7 : 30) * 86400000) })) });
         }
       } else if (dto.action === 'cancel') {
         if (!['PENDING', 'ACCEPTED'].includes(offer.status)) throw new ConflictException('Предложение уже закрыто');
@@ -197,7 +224,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       const text = { accept: 'Условия обмена согласованы. Вещи зарезервированы.', decline: 'Предложение обмена отклонено.', cancel: 'Обмен отменён. Резерв снят.', confirm: status === 'COMPLETED' ? 'Обе стороны подтвердили передачу. Обмен завершён.' : 'Передача подтверждена одной стороной. Ожидаем вторую.' }[dto.action];
       await tx.message.create({ data: { chatId, senderId: userId, text } });
       await tx.chat.update({ where: { id: chatId }, data: { updatedAt: new Date() } });
-      return tx.exchangeOffer.update({ where: { id: offerId }, data: { status, version: { increment: 1 }, ...(dto.action === 'accept' ? { expiresAt: new Date(Date.now() + 7 * 86400000) } : {}) }, include });
+      return tx.exchangeOffer.update({ where: { id: offerId }, data: { status, version: { increment: 1 }, ...(dto.action === 'accept' ? { expiresAt: new Date(Date.now() + (offer.handoffMethod === 'MEETING' ? 7 : 30) * 86400000) } : {}) }, include });
     });
   }
 }
