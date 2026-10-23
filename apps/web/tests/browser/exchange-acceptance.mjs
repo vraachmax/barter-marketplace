@@ -276,7 +276,7 @@ try {
     assert.ok(negotiationGap.length>=2 && negotiationGap.every(gap=>gap>=10),'Negotiation actions must not touch');
     assert.equal(writes.some(w=>w.action==='accept'),false);
     await page.getByRole('button',{name:'Принять условия',exact:true}).click();
-    await expect(page.getByText('Ожидаем подтверждения и QR-кода от предложившего обмен.')).toBeVisible();
+    await expect(page.getByText('Ожидаем QR от предложившего обмен.')).toBeVisible();
     await expect(page.getByRole('button',{name:'Я получил вещи',exact:true})).toHaveCount(0);
     // The proposer confirms on their device; the peer must scan their key.
     offers=[{...offers[0],version:3,confirmations:[{userId:'peer'}]}];
