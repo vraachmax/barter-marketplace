@@ -32,6 +32,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Browser acceptance syntax
+        run: node --check apps/web/tests/browser/exchange-acceptance.mjs
       - name: Web regression tests
         run: npm run test -w @app/web
       - name: Production build and TypeScript
