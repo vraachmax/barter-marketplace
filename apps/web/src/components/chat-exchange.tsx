@@ -175,6 +175,22 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     const list = choices.filter(l => (l.ownerId !== peerId) === mine);
     return <fieldset><legend>{title}</legend>{list.length ? list.map(l => <label className="exchange-choice" key={l.id}><input type="checkbox" checked={ids.includes(l.id)} onChange={() => set(ids.includes(l.id) ? ids.filter(id => id !== l.id) : [...ids, l.id].slice(0, 10))} /><Photo url={l.images[0]?.url} /><span>{l.title}<b>{money(l.priceRub)}</b></span></label>) : <p>Нет доступных вещей для обмена. {mine && <Link href={`/new?tradeMode=barter`} onClick={() => sessionStorage.setItem('barter-return-chat', chat.id)}>Создать объявление</Link>}</p>}</fieldset>;
   }
+  function handoffSelector(reviewMode = false) {
+    return <fieldset className={`exchange-method-picker ${reviewMode ? 'exchange-method-review' : ''}`}>
+      <legend>{reviewMode ? 'Способ передачи · можно изменить' : 'Как будет проходить обмен?'}</legend>
+      {methodOptions.map(option => (
+        <label key={option.id} className={`exchange-method-choice ${method === option.id ? 'is-selected' : ''}`}>
+          <input type="radio" name="exchange-handoff-method" value={option.id}
+            checked={method === option.id} onChange={() => setMethod(option.id)}
+            aria-label={option.title} />
+          <span className="exchange-method-icon" aria-hidden="true">
+            {option.id === 'MEETING' ? <QrCode size={21} /> : option.id === 'DELIVERY' ? <Truck size={21} /> : <Smartphone size={21} />}
+          </span>
+          <span><b>{option.title}</b><small>{option.description}</small></span>
+        </label>
+      ))}
+    </fieldset>;
+  }
   return <div className="chat-exchange">
     {error && !screen && !form && !discussion ? <div role="alert" className="exchange-error">{error}<button onClick={() => { setError(''); void refresh(); }}>Повторить</button></div> : null}
     {loading ? <p role="status" className="exchange-empty">Загрузка предложений…</p> : null}
@@ -299,18 +315,13 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
         {screen === 'report' ? <><p>Опиши, что произошло. В поддержку попадут причина и номер диалога.</p><textarea className="exchange-input" maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} placeholder="Причина жалобы" /><button className="exchange-primary" disabled={busy || !reason.trim()} onClick={() => void setting('report')}>Отправить жалобу</button></> : null}
       </div></div> : null}
     {form ? <div className="exchange-overlay" role="dialog" aria-modal="true" aria-label="Предложить обмен"><div className="contact-screen exchange-form"><header className="contact-toolbar"><button disabled={busy} onClick={() => setForm(false)} aria-label="Закрыть"><X /></button><h2>{review ? 'Проверьте предложение' : 'Предложить обмен'}</h2></header>{error && <p role="alert" className="exchange-error">{error}</p>}
-      {review ? <><h3>Вы предлагаете</h3>{listingRows(choices.filter(l => give.includes(l.id)))}<h3>Вы получаете</h3>{listingRows(choices.filter(l => receive.includes(l.id)))}<p><b>{amount === 0 ? 'Без доплаты' : (amount > 0 ? 'Вы доплачиваете ' : 'Вам доплачивают ') + money(Math.abs(amount) / 100)}</b></p><p>{terms || 'Без дополнительных условий'}</p><p><b>Способ: {methodLabels[method]}</b></p><p>Срок предложения: {days} дн.</p><p>После принятия: резерв на {method === 'MEETING' ? 7 : 30} дней. Способ меняется только новым предложением. Оба участника подтверждают свою сторону, площадка не проверяет фактическую передачу товаров и денег.</p><div className="exchange-form-actions"><button disabled={busy} className="exchange-primary" onClick={() => void submit()}>{busy ? 'Отправляем…' : 'Отправить предложение'}</button><button disabled={busy} className="exchange-secondary" onClick={() => setReview(false)}>Изменить</button></div></> : <><div className="exchange-form-intro">
+      {review ? <><h3>Вы предлагаете</h3>{listingRows(choices.filter(l => give.includes(l.id)))}<h3>Вы получаете</h3>{listingRows(choices.filter(l => receive.includes(l.id)))}<p><b>{amount === 0 ? 'Без доплаты' : (amount > 0 ? 'Вы доплачиваете ' : 'Вам доплачивают ') + money(Math.abs(amount) / 100)}</b></p><p>{terms || 'Без дополнительных условий'}</p><div className="exchange-review-transfer">
+        <h3>Как вы передадите товары?</h3>
+        {handoffSelector(true)}
+      </div><p>Срок предложения: {days} дн.</p><p>После принятия: резерв на {method === 'MEETING' ? 7 : 30} дней. Способ меняется только новым предложением. Оба участника подтверждают свою сторону, площадка не проверяет фактическую передачу товаров и денег.</p><div className="exchange-form-actions"><button disabled={busy} className="exchange-primary" onClick={() => void submit()}>{busy ? 'Отправляем…' : 'Отправить предложение'}</button><button disabled={busy} className="exchange-secondary" onClick={() => setReview(false)}>Изменить</button></div></> : <><div className="exchange-form-intro">
         <b>1. Выберите способ передачи</b>
         <p>Вы и второй участник должны согласиться с этим способом перед завершением обмена.</p>
-      </div><fieldset className="exchange-method-picker"><legend>Как будет проходить обмен?</legend>{methodOptions.map(option =>
-        <label key={option.id} className={`exchange-method-choice ${method === option.id ? 'is-selected' : ''}`}>
-          <input type="radio" name="exchange-handoff-method" value={option.id} checked={method === option.id}
-            onChange={() => setMethod(option.id)} />
-          <span className="exchange-method-icon" aria-hidden="true">
-            {option.id === 'MEETING' ? <QrCode size={21} /> : option.id === 'DELIVERY' ? <Truck size={21} /> : <Smartphone size={21} />}
-          </span>
-          <span><b>{option.title}</b><small>{option.description}</small></span>
-        </label>)}</fieldset>
+      </div>{handoffSelector()}
       <h3 className="exchange-form-section">2. Товары для обмена</h3>{picker('Вы предлагаете', true, give, setGive)}{picker('Вы получаете', false, receive, setReceive)}<h3 className="exchange-form-section">3. Доплата и условия</h3><label>Доплата<select value={direction} onChange={e => setDirection(e.target.value)}><option value="none">Без доплаты</option><option value="pay">Я доплачу</option><option value="receive">Хочу доплату</option></select></label>{direction !== 'none' && <label>Сумма, ₽<input type="number" min="0.01" max="20000000" step="0.01" value={cash} onChange={e => setCash(e.target.value)} /></label>}
         <label>Условия встречи или передачи<textarea value={terms} maxLength={2000} onChange={e => setTerms(e.target.value)} placeholder="Например, встреча в Краснодаре, район Авроры" /></label><label>Срок предложения<select value={days} onChange={e => setDays(e.target.value)}>{[1, 3, 7, 14, 30].map(d => <option key={d} value={d}>{d} дн.</option>)}</select></label><div className="exchange-form-actions"><button className="exchange-primary" disabled={!valid} onClick={() => setReview(true)}>Проверить предложение</button></div></>}
     </div></div> : null}
