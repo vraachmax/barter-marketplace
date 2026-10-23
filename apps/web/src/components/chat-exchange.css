@@ -89,3 +89,7 @@ html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exc
 .exchange-shipment-form { display:grid; gap:8px; background:var(--bg-muted); border-radius:16px; padding:12px; }
 .exchange-shipment-form label { display:grid; gap:4px; font-size:12px; color:var(--fg-muted); }
 .exchange-shipment-form input { width:100%; min-width:0; height:44px; border:1px solid var(--border-default); border-radius:12px; background:var(--bg-surface); padding:8px 11px; color:var(--foreground); font-size:16px; }
+
+.exchange-method-icon { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; border-radius:14px; background:var(--bg-muted); color:var(--exchange-orange); }
+.exchange-method-choice.is-selected .exchange-method-icon { background:#ff64151c; }
+.exchange-method-choice > span:last-child { min-width:0; flex:1; }
