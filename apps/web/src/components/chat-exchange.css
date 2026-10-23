@@ -185,3 +185,62 @@ html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exc
 @media(max-width:350px) {
   .chat-exchange .contact-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+
+/* Review stage must show and allow changing the handoff, not hide it below
+   a paragraph. Consistent spacing between primary and secondary buttons. */
+.chat-exchange .exchange-review-transfer {
+  margin: 20px 0 18px;
+  padding: 16px 14px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+}
+.chat-exchange .exchange-review-transfer > h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.chat-exchange .exchange-method-review {
+  margin: 0;
+  gap: 10px;
+}
+.chat-exchange .exchange-method-review legend {
+  font-size: 12px;
+  color: var(--fg-muted);
+  padding: 0 0 8px;
+}
+.chat-exchange .exchange-method-review .exchange-method-choice {
+  background: var(--bg-surface);
+  min-height: 62px;
+  padding: 9px 12px;
+  gap: 10px;
+}
+.chat-exchange .exchange-method-review .exchange-method-choice.is-selected {
+  background: color-mix(in srgb, #ff6415 9%, var(--bg-surface));
+  padding: 8px 11px;
+}
+.chat-exchange .exchange-method-review .exchange-method-icon {
+  flex-basis: 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+}
+.chat-exchange .exchange-method-review .exchange-method-choice small {
+  display: none;
+}
+.chat-exchange .exchange-form-actions {
+  gap: 16px;
+  margin-top: 24px;
+}
+.chat-exchange .exchange-form-actions > button {
+  display: block;
+  min-height: 52px;
+  margin: 0;
+  padding: 13px 16px;
+  border-radius: 18px;
+}
+.chat-exchange .exchange-form-actions > button:focus-visible,
+.chat-exchange .exchange-method-choice:focus-within {
+  outline: 2px solid #ff6415;
+  outline-offset: 2px;
+}
