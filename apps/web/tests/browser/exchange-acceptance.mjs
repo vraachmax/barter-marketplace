@@ -253,7 +253,7 @@ try {
     await page.screenshot({path:join(output,`exchange-methods-${width}-${theme}.png`)});
     await page.getByRole('radio',{name:/Личная встреча/}).check();
     await page.getByRole('button',{name:'Проверить предложение'}).click();
-    await expect(page.getByText('Деньги через площадку не переводятся.',{exact:false})).toBeVisible();
+    await expect(page.getByText('площадка не проверяет фактическую передачу товаров и денег.',{exact:false})).toBeVisible();
     const reviewMethod=formDialog.locator('.exchange-method-review');
     await expect(reviewMethod).toBeVisible();
     await expect(reviewMethod.getByRole('radio',{name:'Личная встреча'})).toBeChecked();
