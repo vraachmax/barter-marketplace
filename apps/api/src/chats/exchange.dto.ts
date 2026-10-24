@@ -1,4 +1,4 @@
-import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 export class CreateExchangeDto {
   @IsUUID('4') clientKey!: string;
   @IsArray() @ArrayMinSize(1) @ArrayMaxSize(10) @ArrayUnique() @IsString({ each: true }) giveIds!: string[];
@@ -7,6 +7,7 @@ export class CreateExchangeDto {
   @IsInt() @Min(-2000000000) @Max(2000000000) cashKopecks!: number;
   @IsString() @MaxLength(2000) terms!: string;
   @IsOptional() @IsIn(['MEETING', 'DELIVERY', 'ONLINE']) handoffMethod?: 'MEETING' | 'DELIVERY' | 'ONLINE';
+  @IsOptional() @IsBoolean() requestHandoffException?: boolean;
   @IsInt() @Min(1) @Max(30) validDays!: number;
   @IsOptional() @IsString() previousId?: string;
 }
@@ -14,6 +15,7 @@ export class ExchangeActionDto {
   @IsInt() @Min(1) version!: number;
   @IsIn(['accept', 'decline', 'cancel', 'confirm']) action!: 'accept' | 'decline' | 'cancel' | 'confirm';
   @IsOptional() @IsString() @MaxLength(180) qrToken?: string;
+  @IsOptional() @IsBoolean() acknowledgeHandoffException?: boolean;
 }
 export class ChatSettingDto {
   @IsIn(['mute', 'unmute', 'block', 'unblock', 'report']) action!: string;
