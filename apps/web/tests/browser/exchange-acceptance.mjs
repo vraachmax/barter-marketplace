@@ -363,6 +363,7 @@ try {
     await page.screenshot({path:join(output,`exchange-online-${width}-${theme}.png`)});
     assert.equal(errors.length,0,errors.join('\n'));
     // Two delivery-only listings must automatically suggest DELIVERY, not a meeting.
+    const originalOffer=offers[0];
     offers=[];
     listing.exchangePreferences={handoffMethods:['DELIVERY']};
     laptop.exchangePreferences={handoffMethods:['DELIVERY']};
@@ -384,6 +385,18 @@ try {
     await expect(formDialog.getByRole('button',{name:'Проверить предложение'})).toBeEnabled();
     await page.screenshot({path:join(output,`exchange-exception-${width}-${theme}.png`)});
     await formDialog.getByRole('button',{name:'Закрыть'}).click();
+    // Counterparty must explicitly acknowledge an exception before acceptance.
+    offers=[{...originalOffer,status:'PENDING',version:1,handoffMethod:'DELIVERY',handoffException:true,confirmations:[]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
+    await expect(page.getByText('Запрос исключения',{exact:true})).toBeVisible();
+    const consentAccept=page.getByRole('button',{name:'Принять условия',exact:true});
+    await expect(consentAccept).toBeDisabled();
+    await page.getByRole('checkbox',{name:/Я согласен/}).check();
+    await expect(consentAccept).toBeEnabled();
+    await consentAccept.click();
+    assert.ok(writes.some(w=>w.action==='accept'&&w.acknowledgeHandoffException===true),
+      'Acceptance of incompatible delivery requires affirmative recipient consent');
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
   }
