@@ -401,6 +401,8 @@ try {
     // Counterparty must explicitly acknowledge an exception before acceptance.
     offers=[{...originalOffer,status:'PENDING',version:1,handoffMethod:'DELIVERY',handoffException:true,confirmations:[]}];
     await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await expect(page.locator('.exchange-card')).toHaveCount(1);
+    await expect(page.getByRole('dialog',{name:'Обсудить условия'})).toHaveCount(0);
     await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
     await expect(page.getByText('Запрос исключения',{exact:true})).toBeVisible();
     const consentAccept=page.getByRole('button',{name:'Принять условия',exact:true});
