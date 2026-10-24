@@ -69,6 +69,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   }, [handoff]);
   const qrSecondsLeft = handoff ? Math.max(0, Math.ceil((Date.parse(handoff.expiresAt) - qrClock) / 1000)) : 0;
   const [scanned, setScanned] = useState<{ offerId: string; code: string } | null>(null);
+  useEffect(() => setAcknowledgedException(false), [discussId]);
   const discussion = offers.find(o => o.id === discussId && o.status === 'PENDING');
   const discussionOpen = Boolean(discussion);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
