@@ -644,6 +644,7 @@ model ExchangeOffer {
   cashKopecks Int @default(0)
   terms String
   handoffMethod String @default("MEETING")
+  handoffException Boolean @default(false)
   shipping Json?
   expiresAt DateTime
   createdAt DateTime @default(now())
