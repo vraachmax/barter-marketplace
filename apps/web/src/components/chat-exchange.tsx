@@ -115,6 +115,12 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     try {
       const r = await apiFetchJson<Offer>(`${root}/offers/${offer.id}`, { method: 'POST', body: JSON.stringify({ version: offer.version, action, ...(qrToken ? { qrToken } : {}), ...(acknowledgeException ? { acknowledgeHandoffException: true } : {}) }) });
       if (!r.ok) { setError(r.message); return false; }
+      if (action === 'accept' || action === 'decline' || action === 'cancel') {
+        // The prior discussion must never reopen if a later refresh returns
+        // a pending revision of the same offer.
+        setDiscussId(null);
+        setAcknowledgedException(false);
+      }
       await refresh(); onChanged();
       return true;
     } finally { lock.current = false; setBusy(false); }
