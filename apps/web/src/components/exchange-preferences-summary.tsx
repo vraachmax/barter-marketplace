@@ -1,4 +1,4 @@
-import type { ExchangePreferences } from '@/lib/exchange-preferences';
+import { handoffLabels, type ExchangePreferences } from '@/lib/exchange-preferences';
 import type { Category } from '@/lib/api';
 import { WantedItemSummary } from '@/components/wanted-item-summary';
 import Link from 'next/link';
@@ -6,6 +6,7 @@ export function ExchangePreferencesSummary({ value, categories }: { value: Excha
   const names = value.wantedCategoryIds.map(id => categories.find(c => c.id === id)?.title).filter(Boolean);
   return <section className="space-y-3 rounded-3xl border border-border bg-card p-4 sm:p-6" aria-label="Условия обмена">
     <h2 className="text-lg font-semibold">Что интересно взамен</h2>
+    <p className="text-sm"><b>Способы передачи:</b> {value.handoffMethods?.length ? value.handoffMethods.map(m=>handoffLabels[m]).join(', ') : 'Владелец ещё не указал'}</p>
     {value.anyOffer ? <p>Рассмотрю любые предложения</p> : null}
     {value.wantedItems?.length ? <div><p className="text-sm text-muted-foreground">Конкретные пожелания, любой из вариантов:</p><ul className="mt-2 space-y-3">{value.wantedItems.map((item, index) => <WantedItemSummary key={index} item={item} category={categories.find(c => c.id === item.categoryId)} />)}</ul></div> : null}
     {value.wantedItems?.some(item => item.attributes.auto_make) ? <p className="text-xs text-muted-foreground">Каталог авто неполный. <Link href="/vehicle-data" className="underline">Источник данных</Link></p> : null}

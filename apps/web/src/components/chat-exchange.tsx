@@ -7,18 +7,19 @@ import { apiFetchJson, resolveAssetUrl, type ChatMessage, type ChatSummary } fro
 import './chat-exchange.css';
 import QrScannerButton from './qr-scanner-button';
 import { ExchangeHandoffQr } from './exchange-handoff-qr';
+import { listedHandoffMethods } from '@/lib/exchange-preferences';
 
 type Item = { listingId: string; ownerId: string; snapshot: { title: string; priceRub: number | null; imageUrl: string | null } };
 type Method = 'MEETING' | 'DELIVERY' | 'ONLINE';
 type Shipment = { carrier: string; trackingNumber: string; submittedAt: string };
-type Offer = { id: string; senderId: string; recipientId: string; status: string; version: number; handoffMethod: Method; shipping?: { sender?: Shipment; recipient?: Shipment } | null; cashKopecks: number; terms: string; expiresAt: string; createdAt: string; items: Item[]; confirmations: { userId: string }[] };
+type Offer = { id: string; senderId: string; recipientId: string; status: string; version: number; handoffMethod: Method; handoffException?: boolean; shipping?: { sender?: Shipment; recipient?: Shipment } | null; cashKopecks: number; terms: string; expiresAt: string; createdAt: string; items: Item[]; confirmations: { userId: string }[] };
 const methodLabels: Record<Method, string> = { MEETING: 'Личная встреча · QR', DELIVERY: 'Доставка', ONLINE: 'Онлайн-обмен' };
 const methodOptions: { id: Method; title: string; description: string }[] = [
   { id:'MEETING', title:'Личная встреча', description:'Одноразовый QR при передаче вещей' },
   { id:'DELIVERY', title:'Доставка', description:'Трек-номера и независимые подтверждения получения' },
   { id:'ONLINE', title:'Онлайн', description:'Подтверждение выполнения договорённостей двумя сторонами' },
 ];
-type Listing = { id: string; ownerId?: string; title: string; priceRub: number | null; images: { url: string }[] };
+type Listing = { id: string; ownerId?: string; title: string; priceRub: number | null; exchangePreferences?: { handoffMethods?: Method[] } | null; images: { url: string }[] };
 type Details = { muted: boolean; blocked: boolean; cannotSend: boolean; listings: Listing[]; favorites: Listing[]; media: { id: string; mediaUrl: string; mediaType: string }[] };
 const labels: Record<string, string> = { PENDING: 'Ожидает ответа', ACCEPTED: 'Условия согласованы', DECLINED: 'Отклонено', CANCELLED: 'Отменено', EXPIRED: 'Срок истёк', SUPERSEDED: 'Новые условия', COMPLETED: 'Обмен завершён' };
 const money = (n: number | null) => n == null ? 'Цена не указана' : n.toLocaleString('ru-RU') + ' ₽';
@@ -49,6 +50,8 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   const [terms, setTerms] = useState('');
   const [days, setDays] = useState('7');
   const [method, setMethod] = useState<Method>('MEETING');
+  const [requestException, setRequestException] = useState(false);
+  const [acknowledgedException, setAcknowledgedException] = useState(false);
   const [shippingOfferId, setShippingOfferId] = useState<string | null>(null);
   const [carrier, setCarrier] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -66,6 +69,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   }, [handoff]);
   const qrSecondsLeft = handoff ? Math.max(0, Math.ceil((Date.parse(handoff.expiresAt) - qrClock) / 1000)) : 0;
   const [scanned, setScanned] = useState<{ offerId: string; code: string } | null>(null);
+  useEffect(() => setAcknowledgedException(false), [discussId]);
   const discussion = offers.find(o => o.id === discussId && o.status === 'PENDING');
   const discussionOpen = Boolean(discussion);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
@@ -104,11 +108,11 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     document.addEventListener('keydown', key);
     return () => { document.removeEventListener('keydown', key); previous?.focus(); };
   }, [screen, form, discussionOpen, handoff, scanned]);
-  async function action(offer: Offer, action: string, qrToken?: string): Promise<boolean> {
+  async function action(offer: Offer, action: string, qrToken?: string, acknowledgeException = false): Promise<boolean> {
     if (lock.current) return false;
     lock.current = true; setBusy(true); setError('');
     try {
-      const r = await apiFetchJson<Offer>(`${root}/offers/${offer.id}`, { method: 'POST', body: JSON.stringify({ version: offer.version, action, ...(qrToken ? { qrToken } : {}) }) });
+      const r = await apiFetchJson<Offer>(`${root}/offers/${offer.id}`, { method: 'POST', body: JSON.stringify({ version: offer.version, action, ...(qrToken ? { qrToken } : {}), ...(acknowledgeException ? { acknowledgeHandoffException: true } : {}) }) });
       if (!r.ok) { setError(r.message); return false; }
       await refresh(); onChanged();
       return true;
@@ -147,9 +151,17 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     const r = await apiFetchJson<Listing[]>(`${root}/exchange-choices`);
     setBusy(false);
     if (!r.ok) { setError(r.message); return; }
-    setChoices(r.data); setPreviousId(offer?.id); setGive(offer?.items.filter(i => i.ownerId !== peerId).map(i => i.listingId) ?? []);
-    setReceive(offer?.items.filter(i => i.ownerId === peerId).map(i => i.listingId) ?? (chat.listing && chat.listing.ownerId === peerId ? [chat.listing.id] : []));
-    setCash(''); setDirection('none'); setTerms(offer?.terms ?? ''); setMethod(offer?.handoffMethod ?? 'MEETING'); setReview(false); setForm(true); setScreen(null);
+    const ownIds = offer?.items.filter(i => i.ownerId !== peerId).map(i => i.listingId) ?? [];
+    const peerIds = offer?.items.filter(i => i.ownerId === peerId).map(i => i.listingId) ??
+      (chat.listing && chat.listing.ownerId === peerId ? [chat.listing.id] : []);
+    const selected = r.data.filter(l => [...ownIds, ...peerIds].includes(l.id));
+    const intersection = methodOptions.filter(option => selected.length && selected.length === ownIds.length + peerIds.length &&
+      selected.every(l => listedHandoffMethods(l.exchangePreferences).includes(option.id)));
+    setChoices(r.data); setPreviousId(offer?.id); setGive(ownIds); setReceive(peerIds);
+    setCash(''); setDirection('none'); setTerms(offer?.terms ?? '');
+    setMethod(offer?.handoffMethod ?? intersection[0]?.id ?? 'MEETING');
+    setRequestException(!!offer?.handoffException); setAcknowledgedException(false);
+    setReview(false); setForm(true); setScreen(null);
   }
   useEffect(() => {
     if (!loading && !intentOpened.current && new URLSearchParams(window.location.search).get('exchange') === '1') {
@@ -159,12 +171,19 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     // The chat key remounts this component for a different conversation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
+  const selectedChoices = choices.filter(l => give.includes(l.id) || receive.includes(l.id));
+  const totalChoices = give.length + receive.length;
+  const haveAllChoices = totalChoices > 0 && selectedChoices.length === totalChoices;
+  const supportedMethods = methodOptions.filter(option => haveAllChoices &&
+    selectedChoices.every(l => listedHandoffMethods(l.exchangePreferences).includes(option.id)));
+  const methodCompatible = supportedMethods.some(option => option.id === method);
+  const exceptionRequired = haveAllChoices && !methodCompatible;
   const amount = direction === 'none' ? 0 : Math.round(Number(cash) * 100) * (direction === 'pay' ? 1 : -1);
-  const valid = give.length > 0 && receive.length > 0 && (direction === 'none' || (Number.isFinite(amount) && Math.abs(amount) > 0 && Math.abs(amount) <= 2000000000));
+  const valid = give.length > 0 && receive.length > 0 && haveAllChoices && (!exceptionRequired || requestException) && (direction === 'none' || (Number.isFinite(amount) && Math.abs(amount) > 0 && Math.abs(amount) <= 2000000000));
   async function submit() {
     if (!valid || lock.current) return;
     lock.current = true; setBusy(true); setError('');
-    const payload = JSON.stringify({ giveIds: give, receiveIds: receive, cashKopecks: amount, terms, handoffMethod: method, validDays: Number(days), previousId });
+    const payload = JSON.stringify({ giveIds: give, receiveIds: receive, cashKopecks: amount, terms, handoffMethod: method, requestHandoffException: exceptionRequired && requestException, validDays: Number(days), previousId });
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: crypto.randomUUID() };
     const r = await apiFetchJson<Offer>(`${root}/offers`, { method: 'POST', body: JSON.stringify({ ...JSON.parse(payload), clientKey: attempt.current.key }) });
     if (r.ok) { setForm(false); attempt.current = null; await refresh(); onChanged(); } else setError(r.message);
@@ -178,17 +197,27 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   function handoffSelector(reviewMode = false) {
     return <fieldset className={`exchange-method-picker ${reviewMode ? 'exchange-method-review' : ''}`}>
       <legend>{reviewMode ? 'Способ передачи · можно изменить' : 'Как будет проходить обмен?'}</legend>
-      {methodOptions.map(option => (
-        <label key={option.id} className={`exchange-method-choice ${method === option.id ? 'is-selected' : ''}`}>
+      {methodOptions.map(option => {
+        const compatible = supportedMethods.some(candidate => candidate.id === option.id);
+        return <label key={option.id} className={`exchange-method-choice ${method === option.id ? 'is-selected' : ''}`}>
+
           <input type="radio" name="exchange-handoff-method" value={option.id}
-            checked={method === option.id} onChange={() => setMethod(option.id)}
+            checked={method === option.id} onChange={() => { setMethod(option.id); setRequestException(false); }}
             aria-label={option.title} />
           <span className="exchange-method-icon" aria-hidden="true">
             {option.id === 'MEETING' ? <QrCode size={21} /> : option.id === 'DELIVERY' ? <Truck size={21} /> : <Smartphone size={21} />}
           </span>
-          <span><b>{option.title}</b><small>{option.description}</small></span>
+          <span><b>{option.title}</b>
+            <small>{compatible ? option.description : haveAllChoices ? 'Требует отдельного согласия обоих участников' : 'Выберите товары, чтобы проверить совместимость'}</small>
+          </span>
+        </label>;
+      })}
+      {exceptionRequired ? <div className="exchange-method-exception" role="note">
+        <p>Этот способ передачи не разрешён всеми выбранными объявлениями. Можно запросить исключение, но собеседник должен будет отдельно согласиться.</p>
+        <label><input type="checkbox" checked={requestException} onChange={e => setRequestException(e.target.checked)}/>
+          <span>Я хочу предложить этот способ как исключение и понимаю, что он не согласован заранее.</span>
         </label>
-      ))}
+      </div> : haveAllChoices ? <p className="exchange-method-compatible">Способ передачи разрешён обоими объявлениями.</p> : null}
     </fieldset>;
   }
   return <div className="chat-exchange">
@@ -202,7 +231,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
       const card = <article className="exchange-card" key={offer.id} id={`offer-${offer.id}`}>
         <header><Repeat2 /><h3>Предложение обмена</h3><span className="exchange-status"><Clock size={15} />{labels[offer.status] ?? offer.status}</span></header>
         <div className="exchange-pair">{[true, false].map((own, idx) => <FragmentColumn key={String(own)} arrow={idx === 0}><small>{offer.items.filter(i => (i.ownerId !== peerId) === own).length === 1 ? (own ? 'Ваш товар' : 'Его товар') : (own ? 'Ваши вещи' : 'Его вещи')}</small>{offer.items.filter(i => (i.ownerId !== peerId) === own).map(i => <Link href={`/listing/${i.listingId}`} className="exchange-item" key={i.listingId}><Photo url={i.snapshot.imageUrl} /><span>{i.snapshot.title}<b>{money(i.snapshot.priceRub)}</b></span></Link>)}</FragmentColumn>)}</div>
-        <p className="exchange-method-label">{methodLabels[offer.handoffMethod ?? 'MEETING']}</p><p className="exchange-terms">{offer.terms || 'Без дополнительных условий'}</p>
+        <p className="exchange-method-label">{methodLabels[offer.handoffMethod ?? 'MEETING']}{offer.handoffException ? ' · Запрос исключения' : ''}</p><p className="exchange-terms">{offer.terms || 'Без дополнительных условий'}</p>
         <p className="exchange-money" hidden={offer.cashKopecks === 0}>{offer.cashKopecks === 0 ? 'Без доплаты' : ((offer.cashKopecks > 0) === mine ? 'Вы доплачиваете ' : 'Вам доплачивают ') + money(Math.abs(offer.cashKopecks) / 100)}</p>
         {offer.status === 'PENDING' && !mine ? <div className="exchange-actions" data-pending><button className="exchange-primary" disabled={busy || details?.cannotSend} onClick={() => setDiscussId(offer.id)}>Обсудить условия</button><button disabled={busy} onClick={() => void action(offer, 'decline')}>Отклонить</button></div> : null}
         {offer.status === 'PENDING' && mine ? <button className="exchange-secondary" disabled={busy} onClick={() => void action(offer, 'cancel')}>Отозвать предложение</button> : null}
@@ -298,8 +327,15 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
       <h3>Вы получаете</h3>{listingRows(discussion.items.filter(i => i.ownerId === peerId).map(i => ({ id:i.listingId, ...i.snapshot, images:i.snapshot.imageUrl ? [{url:i.snapshot.imageUrl}] : [] })))}
       <p>{discussion.terms || 'Без дополнительных условий'}</p><p><b>{discussion.cashKopecks === 0 ? 'Без доплаты' : (discussion.cashKopecks > 0 ? 'Вам доплачивают ' : 'Вы доплачиваете ') + money(Math.abs(discussion.cashKopecks)/100)}</b></p>
       <p><b>Способ передачи: {methodLabels[discussion.handoffMethod ?? 'MEETING']}</b></p>
+      {discussion.handoffException ? <div className="exchange-method-exception" role="note">
+        <b>Запрос исключения</b>
+        <p>Этот способ не входит в условия как минимум одного объявления. Принятие изменит согласованные условия только для этой сделки.</p>
+        <label><input type="checkbox" checked={acknowledgedException} onChange={e => setAcknowledgedException(e.target.checked)}/>
+          <span>Я согласен(-на) на этот способ передачи для данного обмена.</span>
+        </label>
+      </div> : null}
       <p>Принятие резервирует вещи на {discussion.handoffMethod === 'MEETING' ? 7 : 30} дней. Изменение способа потребует нового предложения. Каждый самостоятельно подтверждает получение.</p>
-      <div className="exchange-actions exchange-actions-negotiation"><button className="exchange-primary" disabled={busy || details?.cannotSend} onClick={() => void action(discussion, 'accept')}>Принять условия</button><button className="exchange-secondary" disabled={busy || details?.cannotSend} onClick={() => { setDiscussId(null); void openForm(discussion); }}>Предложить новые условия</button><button className="exchange-tertiary" onClick={() => setDiscussId(null)}>Вернуться в переписку</button></div>
+      <div className="exchange-actions exchange-actions-negotiation"><button className="exchange-primary" disabled={busy || details?.cannotSend || (!!discussion.handoffException && !acknowledgedException)} onClick={() => void action(discussion, 'accept', undefined, acknowledgedException)}>Принять условия</button><button className="exchange-secondary" disabled={busy || details?.cannotSend} onClick={() => { setDiscussId(null); void openForm(discussion); }}>Предложить новые условия</button><button className="exchange-tertiary" onClick={() => setDiscussId(null)}>Вернуться в переписку</button></div>
     </div></div> : null}
     {screen ? <div className="exchange-overlay" role="dialog" aria-modal="true" aria-label="Информация о собеседнике">
       <div className="contact-screen"><header className="contact-toolbar"><button aria-label="Назад к переписке" onClick={() => setScreen(screen === 'info' ? null : 'info')}><ChevronLeft /></button>{screen !== 'info' && <b>{{ search: 'Поиск в переписке', media: 'Файлы и медиа', listings: 'Общие объявления', favorites: 'Моё избранное', report: 'Пожаловаться' }[screen]}</b>}</header>
@@ -318,7 +354,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
       {review ? <><h3>Вы предлагаете</h3>{listingRows(choices.filter(l => give.includes(l.id)))}<h3>Вы получаете</h3>{listingRows(choices.filter(l => receive.includes(l.id)))}<p><b>{amount === 0 ? 'Без доплаты' : (amount > 0 ? 'Вы доплачиваете ' : 'Вам доплачивают ') + money(Math.abs(amount) / 100)}</b></p><p>{terms || 'Без дополнительных условий'}</p><div className="exchange-review-transfer">
         <h3>Как вы передадите товары?</h3>
         {handoffSelector(true)}
-      </div><p>Срок предложения: {days} дн.</p><p>После принятия: резерв на {method === 'MEETING' ? 7 : 30} дней. Способ меняется только новым предложением. Оба участника подтверждают свою сторону, площадка не проверяет фактическую передачу товаров и денег.</p><div className="exchange-form-actions"><button disabled={busy} className="exchange-primary" onClick={() => void submit()}>{busy ? 'Отправляем…' : 'Отправить предложение'}</button><button disabled={busy} className="exchange-secondary" onClick={() => setReview(false)}>Изменить</button></div></> : <><div className="exchange-form-intro">
+      </div><p>Срок предложения: {days} дн.</p><p>После принятия: резерв на {method === 'MEETING' ? 7 : 30} дней. Способ меняется только новым предложением. Оба участника подтверждают свою сторону, площадка не проверяет фактическую передачу товаров и денег.</p><div className="exchange-form-actions"><button disabled={busy || !valid} className="exchange-primary" onClick={() => void submit()}>{busy ? 'Отправляем…' : 'Отправить предложение'}</button><button disabled={busy} className="exchange-secondary" onClick={() => setReview(false)}>Изменить</button></div></> : <><div className="exchange-form-intro">
         <b>1. Выберите способ передачи</b>
         <p>Вы и второй участник должны согласиться с этим способом перед завершением обмена.</p>
       </div>{handoffSelector()}

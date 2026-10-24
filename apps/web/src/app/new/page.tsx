@@ -437,12 +437,16 @@ export default function NewListingPage() {
     submitting.current = true;
     setBusy(true);
     setSubmitStatus({ kind: 'idle' });
-    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number; structuredWishesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
+    const capability = await apiFetchJson<{ tradeModesVersion?: number; exchangePreferencesVersion?: number; structuredWishesVersion?: number; handoffPreferencesVersion?: number }>('/listings/capabilities', { cache: 'no-store' });
     if (!capability.ok || capability.data?.tradeModesVersion !== 1 || capability.data?.exchangePreferencesVersion !== 1) {
       submitting.current = false;
       setBusy(false);
       setSubmitStatus({ kind: 'error', msg: TRADE_MODES_UNAVAILABLE });
       return;
+    }
+    if (payload.exchangePreferences && capability.data?.handoffPreferencesVersion !== 1) {
+      submitting.current = false; setBusy(false);
+      setSubmitStatus({kind:'error',msg:'Сервер пока не поддерживает способы передачи. Заполненная форма сохранена.'}); return;
     }
     if (!supportsStructuredWishes(capability.data, payload.exchangePreferences)) {
       submitting.current = false;

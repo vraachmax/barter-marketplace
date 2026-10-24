@@ -17,9 +17,25 @@ export function ExchangePreferencesField({ value, onChange, categories, onCatalo
   }, []);
   const blocked = (value.wantedItems ?? []).some((item, index) => statuses[wantedItemStatusKey(index, item)] !== false);
   useEffect(() => { onCatalogStatusChange(blocked); }, [blocked, onCatalogStatusChange]);
+  const methodChoices = [
+    {id:'MEETING',title:'Личная встреча',description:'Передача вещей при встрече'},
+    {id:'DELIVERY',title:'Доставка',description:'Отправка товаров перевозчиком'},
+    {id:'ONLINE',title:'Онлайн',description:'Цифровые товары и услуги'},
+  ] as const;
   const field = 'mt-2 min-h-12 w-full rounded-2xl border border-border bg-muted/50 px-4 py-3 text-base text-foreground';
   return <fieldset className="space-y-4 rounded-3xl border border-border p-4">
     <legend className="px-2 text-base font-semibold">Что хотите взамен?</legend>
+    <section className="space-y-3" aria-label="Допустимые способы передачи при обмене">
+      <h3 className="text-sm font-semibold">Как готовы обменяться?</h3>
+      <p className="text-sm text-muted-foreground">Отметьте все допустимые варианты. Другие способы можно предложить только как исключение, которое вы должны отдельно согласовать.</p>
+      {methodChoices.map(option => <label key={option.id} className="flex min-h-[64px] items-center gap-3 rounded-2xl border border-border bg-muted/30 px-3 py-3">
+        <input type="checkbox" className="h-5 w-5 shrink-0 accent-[#ff6415]" checked={!!value.handoffMethods?.includes(option.id)}
+          onChange={event => onChange({ ...value, handoffMethods: event.target.checked
+            ? [...(value.handoffMethods ?? []),option.id] : (value.handoffMethods ?? []).filter(id => id !== option.id) })}/>
+        <span className="min-w-0"><span className="block text-sm font-semibold">{option.title}</span><span className="block text-xs text-muted-foreground">{option.description}</span></span>
+      </label>)}
+      {!value.handoffMethods?.length ? <p role="status" className="text-xs text-[#ff6415]">Выберите хотя бы один способ передачи.</p> : null}
+    </section>
     <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={value.anyOffer} onChange={e => onChange({ ...value, anyOffer: e.target.checked })} className="size-5 accent-primary" />Рассмотрю любые предложения</label>
     <p className="text-sm text-muted-foreground">Можно выбрать другие категории. Стоимость вещей не ограничивает возможность обмена.</p>
     <details><summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Интересующие категории ({value.wantedCategoryIds.length}/10)</summary>

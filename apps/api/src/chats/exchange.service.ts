@@ -6,6 +6,7 @@ import { PLATFORM_ASSISTANT_EMAIL, PLATFORM_ASSISTANT_NAME } from '../platform.c
 import { ChatsService } from './chats.service';
 import { getJwtSecret } from '../config/security';
 import { CreateExchangeDto, ExchangeActionDto, ExchangeShipmentDto } from './exchange.dto';
+import { listedHandoffMethods } from '../listings/exchange-preferences';
 
 function fingerprint(l: { title: string; description: string; priceRub: number | null; ownerId: string; city: string; categoryId: string; attributes: unknown; exchangePreferences: unknown; images: { url: string }[] }) {
   return createHash('sha256').update(JSON.stringify([l.title, l.description, l.priceRub, l.ownerId, l.city, l.categoryId, l.attributes, l.exchangePreferences, l.images.map(i => i.url)])).digest('hex');
@@ -55,7 +56,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
     const peer = await this.prisma.chatUser.findFirst({ where: { chatId, userId: { not: userId } } });
     if (!peer) throw new NotFoundException();
     const reserved = await this.prisma.exchangeReservation.findMany({ select: { listingId: true } });
-    return this.prisma.listing.findMany({ where: { ownerId: { in: [userId, peer.userId] }, status: 'ACTIVE', barterEnabled: true, id: { notIn: reserved.map(r => r.listingId) } }, select: { id: true, ownerId: true, title: true, priceRub: true, images: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } } }, take: 200 });
+    return this.prisma.listing.findMany({ where: { ownerId: { in: [userId, peer.userId] }, status: 'ACTIVE', barterEnabled: true, id: { notIn: reserved.map(r => r.listingId) } }, select: { id: true, ownerId: true, title: true, priceRub: true, exchangePreferences: true, images: { orderBy: { sortOrder: 'asc' }, take: 1, select: { url: true } } }, take: 200 });
   }
 
   /**
@@ -147,7 +148,7 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (replay) {
         const give = replay.items.filter(i => i.ownerId === userId).map(i => i.listingId).sort();
         const receive = replay.items.filter(i => i.ownerId !== userId).map(i => i.listingId).sort();
-        if (replay.chatId !== chatId || replay.terms !== dto.terms || replay.handoffMethod !== (dto.handoffMethod ?? 'MEETING') || replay.cashKopecks !== dto.cashKopecks || (replay.previousId ?? undefined) !== dto.previousId || JSON.stringify(give) !== JSON.stringify([...dto.giveIds].sort()) || JSON.stringify(receive) !== JSON.stringify([...dto.receiveIds].sort())) throw new ConflictException('Ключ предложения уже использован');
+        if (replay.chatId !== chatId || replay.terms !== dto.terms || replay.handoffMethod !== (dto.handoffMethod ?? 'MEETING') || replay.handoffException !== (dto.requestHandoffException === true) || replay.cashKopecks !== dto.cashKopecks || (replay.previousId ?? undefined) !== dto.previousId || JSON.stringify(give) !== JSON.stringify([...dto.giveIds].sort()) || JSON.stringify(receive) !== JSON.stringify([...dto.receiveIds].sort())) throw new ConflictException('Ключ предложения уже использован');
         return replay;
       }
       const peer = await tx.chatUser.findFirst({ where: { chatId, userId: { not: userId } } });
@@ -162,10 +163,18 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
       if (new Set(ids).size !== ids.length) throw new BadRequestException('Повторяющиеся вещи');
       const listings = await tx.listing.findMany({ where: { id: { in: ids }, status: 'ACTIVE', barterEnabled: true }, include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } } });
       if (listings.length !== ids.length || listings.some(l => l.ownerId !== (dto.giveIds.includes(l.id) ? userId : peer.userId))) throw new BadRequestException('Вещь недоступна или принадлежит другому пользователю');
+      // Every listing owner must have opted in. Legacy/unconfigured listings do
+      // not implicitly consent to personal meetings or any other handoff.
+      const method = dto.handoffMethod ?? 'MEETING';
+      const compatible = listings.every(l => listedHandoffMethods(l.exchangePreferences).includes(method));
+      if (!compatible && dto.requestHandoffException !== true)
+        throw new ConflictException('Способ передачи не разрешён всеми объявлениями. Согласуйте исключение.');
+      if (compatible && dto.requestHandoffException === true)
+        throw new BadRequestException('Для этого способа передачи исключение не требуется');
       if (await tx.exchangeReservation.count({ where: { listingId: { in: ids } } })) throw new ConflictException('Вещь уже зарезервирована');
       const offer = await tx.exchangeOffer.create({ data: {
         chatId, senderId: userId, recipientId: peer.userId, clientKey: dto.clientKey,
-        previousId: dto.previousId, cashKopecks: dto.cashKopecks, terms: dto.terms, handoffMethod: dto.handoffMethod ?? 'MEETING',
+        previousId: dto.previousId, cashKopecks: dto.cashKopecks, terms: dto.terms, handoffMethod: method, handoffException: !compatible,
         expiresAt: new Date(Date.now() + dto.validDays * 86400000),
         items: { create: listings.map(l => ({ listingId: l.id, ownerId: l.ownerId, snapshot: { title: l.title, priceRub: l.priceRub, imageUrl: l.images[0]?.url ?? null, fingerprint: fingerprint(l) } })) },
         events: { create: { userId, action: 'create' } },
@@ -196,12 +205,19 @@ export class ExchangeService implements OnModuleInit, OnModuleDestroy {
         if (offer.status !== 'PENDING') throw new ConflictException('Предложение уже закрыто');
         status = dto.action === 'accept' ? 'ACCEPTED' : 'DECLINED';
         if (dto.action === 'accept') {
+          if (offer.handoffException && dto.acknowledgeHandoffException !== true)
+            throw new ConflictException('Подтвердите согласие на исключение из указанных способов передачи.');
           await tx.$queryRaw(Prisma.sql`SELECT id FROM "Listing" WHERE id IN (${Prisma.join(offer.items.map(i => i.listingId))}) ORDER BY id FOR UPDATE`);
           const listings = await tx.listing.findMany({ where: { id: { in: offer.items.map(i => i.listingId) } }, include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } } });
           if (listings.length !== offer.items.length || listings.some(l => {
             const item = offer.items.find(i => i.listingId === l.id)!;
             return l.status !== 'ACTIVE' || !l.barterEnabled || l.ownerId !== item.ownerId || fingerprint(l) !== (item.snapshot as any).fingerprint;
           })) throw new ConflictException('Объявление изменилось. Создайте новое предложение.');
+          // A stale legacy proposal or changed preferences must not silently
+          // convert unsupported delivery into an ordinary agreed offer.
+          const allowedNow = listings.every(l => listedHandoffMethods(l.exchangePreferences).includes(offer.handoffMethod as 'MEETING' | 'DELIVERY' | 'ONLINE'));
+          if (!allowedNow && !offer.handoffException)
+            throw new ConflictException('Способ передачи больше не согласован. Создайте новое предложение.');
           await tx.exchangeReservation.createMany({ data: offer.items.map(i => ({ listingId: i.listingId, offerId, expiresAt: new Date(Date.now() + (offer.handoffMethod === 'MEETING' ? 7 : 30) * 86400000) })) });
         }
       } else if (dto.action === 'cancel') {

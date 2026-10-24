@@ -240,7 +240,7 @@ async function installFixture(context, state, theme) {
       state.unexpected.push(method + ' ' + path);
       return json({ message: 'Unexpected fixture mutation' }, 405);
     }
-    if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1, ...(state.oldWishesApi ? {} : { structuredWishesVersion: 1 }) });
+    if (path === '/listings/capabilities') return json(state.oldApi ? null : { tradeModesVersion: 1, exchangePreferencesVersion: 1, handoffPreferencesVersion: 1, ...(state.oldWishesApi ? {} : { structuredWishesVersion: 1 }) });
     if (path === '/categories') return json(referenceCategories);
     if (path === '/categories/fixture-auto/attribute-schema') return state.failCatalog ? json({}, 503) : json(autoSchema);
     if (path === '/categories/fixture-auto/attribute-options') return json(autoOptions.filter(option =>
@@ -554,6 +554,10 @@ async function scenario(browserType, width, theme) {
     await page.getByLabel('Состояние', { exact: true }).selectOption('used_good');
     const exchangeOnly = page.getByRole('radio', { name: /^Только обмен/ });
     await exchangeOnly.check();
+    const handoffChoices=page.getByRole('region',{name:'Допустимые способы передачи при обмене'});
+    await expect(handoffChoices.getByRole('checkbox',{name:/Личная встреча/})).not.toBeChecked();
+    await handoffChoices.getByRole('checkbox',{name:/Личная встреча/}).check();
+    await handoffChoices.getByRole('checkbox',{name:/Доставка/}).check();
     await page.getByLabel('Пожелания к обмену', { exact: true }).fill('Рассмотрю фотоаппарат или велосипед');
     await page.getByLabel('Могу доплатить', { exact: true }).check();
     await page.getByLabel('Моя доплата до, ₽', { exact: true }).fill('15000');
@@ -1038,6 +1042,9 @@ async function scenario(browserType, width, theme) {
       await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
       await page.getByLabel('Оценочная стоимость, ₽').fill('18000');
       await page.getByLabel('Рассмотрю любые предложения', { exact: true }).uncheck();
+      const handoff=page.getByRole('region',{name:'Допустимые способы передачи при обмене'});
+      await handoff.getByRole('checkbox',{name:/Личная встреча/}).check();
+      await handoff.getByRole('checkbox',{name:/Доставка/}).check();
       await page.getByLabel('Пожелания к обмену', { exact: true }).fill('Фотоаппарат с объективом');
       await page.getByLabel('Могу доплатить', { exact: true }).check();
       await page.getByLabel('Моя доплата до, ₽', { exact: true }).fill('5000');
@@ -1063,6 +1070,7 @@ async function scenario(browserType, width, theme) {
       assert.equal(creates[0].body.exchangePreferences.wantedDescription, 'Фотоаппарат с объективом');
       assert.equal(creates[0].body.exchangePreferences.maxCashRub, 5000);
       assert.equal(creates[0].body.exchangePreferences.anyOffer, false);
+      assert.deepEqual(creates[0].body.exchangePreferences.handoffMethods,['MEETING','DELIVERY']);
       assert.deepEqual(creates[0].body.exchangePreferences.wantedItems, [{ categoryId: autoCategory.id, attributes: { auto_make: 'bmw', auto_model: 'bmw/3', auto_generation: 'bmw/3/gen-5' } }]);
       assert(state.catalogReads.includes('condition'), 'catalog options requested for the controlled field');
       assert(!state.catalogReads.includes(null), 'new schema avoids the unscoped catalog payload');

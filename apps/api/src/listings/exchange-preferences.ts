@@ -1,8 +1,18 @@
 import { BadRequestException } from '@nestjs/common';
 
+export const HANDOFF_METHODS = ['MEETING', 'DELIVERY', 'ONLINE'] as const;
+export type HandoffMethod = (typeof HANDOFF_METHODS)[number];
+/** Undefined means an existing listing has not chosen its accepted handoff modes yet. */
+export function listedHandoffMethods(preferences: unknown): HandoffMethod[] {
+  if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return [];
+  const methods = (preferences as Record<string,unknown>).handoffMethods;
+  if (!Array.isArray(methods)) return [];
+  return HANDOFF_METHODS.filter(method => methods.includes(method));
+}
 export type WantedItem = { categoryId: string; attributes: Record<string, string> };
 export type ExchangePreferences = {
   wantedItems?: WantedItem[];
+  handoffMethods?: HandoffMethod[];
   anyOffer: boolean;
   wantedCategoryIds: string[];
   wantedDescription: string;
@@ -17,7 +27,7 @@ export function parseExchangePreferences(value: unknown): ExchangePreferences | 
   const fail = (): never => { throw new BadRequestException('invalid_exchange_preferences'); };
   if (!value || typeof value !== 'object' || Array.isArray(value)) return fail();
   const v = value as Record<string, unknown>;
-  const keys = ['anyOffer', 'wantedCategoryIds', 'wantedDescription', 'canAddCash', 'acceptsCash', 'maxCashRub', 'wantedItems'];
+  const keys = ['anyOffer', 'wantedCategoryIds', 'wantedDescription', 'canAddCash', 'acceptsCash', 'maxCashRub', 'wantedItems', 'handoffMethods'];
   if (Object.keys(v).some(k => !keys.includes(k))) return fail();
   if (typeof v.anyOffer !== 'boolean' || typeof v.canAddCash !== 'boolean' || typeof v.acceptsCash !== 'boolean') return fail();
   if (!Array.isArray(v.wantedCategoryIds) || v.wantedCategoryIds.length > 10 ||
@@ -26,6 +36,7 @@ export function parseExchangePreferences(value: unknown): ExchangePreferences | 
   if (typeof v.wantedDescription !== 'string' || v.wantedDescription.length > 500) return fail();
   const wantedDescription = v.wantedDescription.trim();
   let wantedItems: WantedItem[] | undefined;
+  if (v.handoffMethods !== undefined && (!Array.isArray(v.handoffMethods) || !v.handoffMethods.length || v.handoffMethods.length > 3 || v.handoffMethods.some(m => !HANDOFF_METHODS.includes(m as HandoffMethod)) || new Set(v.handoffMethods).size !== v.handoffMethods.length)) return fail();
   if (v.wantedItems !== undefined) {
     if (!Array.isArray(v.wantedItems) || v.wantedItems.length > 5) return fail();
     wantedItems = v.wantedItems.map(item => {
@@ -44,6 +55,6 @@ export function parseExchangePreferences(value: unknown): ExchangePreferences | 
   if (!v.anyOffer && !v.wantedCategoryIds.length && !wantedDescription && !wantedItems?.length) return fail();
   if (v.maxCashRub !== null && (typeof v.maxCashRub !== 'number' || !Number.isInteger(v.maxCashRub) || v.maxCashRub < 0 || v.maxCashRub > 2147483647)) return fail();
   if (!v.canAddCash && v.maxCashRub !== null) return fail();
-  return { ...(wantedItems !== undefined ? { wantedItems } : {}), anyOffer: v.anyOffer, wantedCategoryIds: v.wantedCategoryIds as string[], wantedDescription,
+  return { ...(v.handoffMethods !== undefined ? { handoffMethods: v.handoffMethods as HandoffMethod[] } : {}), ...(wantedItems !== undefined ? { wantedItems } : {}), anyOffer: v.anyOffer, wantedCategoryIds: v.wantedCategoryIds as string[], wantedDescription,
     canAddCash: v.canAddCash, acceptsCash: v.acceptsCash, maxCashRub: v.maxCashRub as number | null };
 }

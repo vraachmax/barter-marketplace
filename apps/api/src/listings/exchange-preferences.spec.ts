@@ -29,6 +29,12 @@ describe('explicit exchange preferences', () => {
   ])('rejects malformed or contradictory conditions %#', value => {
     expect(() => parseExchangePreferences(value)).toThrow('invalid_exchange_preferences');
   });
+  it('validates configured delivery modes without granting implicit permission to legacy listings', () => {
+    expect(parseExchangePreferences({...valid,handoffMethods:['DELIVERY','MEETING']})?.handoffMethods).toEqual(['DELIVERY','MEETING']);
+    expect(parseExchangePreferences(valid)?.handoffMethods).toBeUndefined();
+    for(const handoffMethods of [[],['MEETING','MEETING'],['TELEPORT'],['MEETING','DELIVERY','ONLINE','EXTRA'],[1],null])
+      expect(() => parseExchangePreferences({...valid,handoffMethods})).toThrow('invalid_exchange_preferences');
+  });
   it('keeps cash directions independent and accepts open or bounded budgets', () => {
     for (const maxCashRub of [null, 0, 15000, 2147483647]) {
       expect(parseExchangePreferences({ ...valid, canAddCash: true, acceptsCash: true, maxCashRub })?.maxCashRub).toBe(maxCashRub);
