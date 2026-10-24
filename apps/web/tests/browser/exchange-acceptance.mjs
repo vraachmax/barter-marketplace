@@ -21,8 +21,8 @@ try {
   for (const theme of ['light','dark']) for (const width of [393,430]) {
     const context = await browser.newContext({ viewport: { width, height: 850 }, colorScheme: theme, isMobile: engine === 'webkit', hasTouch: engine === 'webkit' });
     await context.addInitScript(theme => { localStorage.setItem('barter_token', 'isolated-exchange-fixture'); localStorage.setItem('barter_theme_pref', theme.toUpperCase()); }, theme);
-    const listing = { id: 'iphone', title: 'iPhone 15 Pro 256GB', ownerId: 'peer', priceRub: 65000, previewImageUrl: 'http://localhost:3203/demo-exchange/iphone.jpg', images: [{ url:'http://localhost:3203/demo-exchange/iphone.jpg' }], saleEnabled: true, barterEnabled: true, city: 'Краснодар' };
-    const laptop = { id:'macbook', ownerId:'me', title:'MacBook Air M2', priceRub:70000, images:[{url:'http://localhost:3203/demo-exchange/macbook.jpg'}] };
+    const listing = { id: 'iphone', title: 'iPhone 15 Pro 256GB', ownerId: 'peer', priceRub: 65000, previewImageUrl: 'http://localhost:3203/demo-exchange/iphone.jpg', images: [{ url:'http://localhost:3203/demo-exchange/iphone.jpg' }], saleEnabled: true, barterEnabled: true, exchangePreferences:{handoffMethods:['MEETING','DELIVERY']}, city: 'Краснодар' };
+    const laptop = { id:'macbook', ownerId:'me', title:'MacBook Air M2', priceRub:70000, exchangePreferences:{handoffMethods:['MEETING','DELIVERY']}, images:[{url:'http://localhost:3203/demo-exchange/macbook.jpg'}] };
     const chat = { id:'demo', listing, peer: {id:'peer',name:'Александр'}, myRole:'buyer', unreadCount:0, updatedAt:new Date().toISOString() };
     const messages = [{id:'voice',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()},{id:'welcome',text:'Здравствуйте! Можно обсудить обмен?',senderId:'peer',sender:{id:'peer',name:'Александр'},createdAt:new Date().toISOString()}];
     messages.push({id:'voice-outgoing',text:'Голосовое сообщение',mediaType:'AUDIO',mediaUrl:'http://localhost:3203/fixture-voice.wav',senderId:'me',sender:{id:'me',name:'Максим'},createdAt:new Date().toISOString()});
@@ -246,6 +246,7 @@ try {
       return Boolean(method&&goods&&method.getBoundingClientRect().top<goods.getBoundingClientRect().top);
     });
     assert.equal(methodAboveGoods,true,'Delivery method must appear before item pickers');
+    await expect(formDialog.getByText('Способ передачи разрешён обоими объявлениями.')).toBeVisible();
     // Regression for the iPhone bug: text-input CSS gave radio controls 100%
     // width, producing 2000px-high cards and horizontal scrolling.
     async function assertCompactHandoffCards(selector, review=false) {
@@ -293,6 +294,13 @@ try {
     await page.screenshot({path:join(output,`review-delivery-${width}-${theme}.png`)});
     await reviewMethod.getByRole('radio',{name:'Личная встреча'}).check();
     await expect(formDialog.getByText('После принятия: резерв на 7 дней.',{exact:false})).toBeVisible();
+    // An unapproved ONLINE option must require an explicit exception opt-in.
+    await reviewMethod.getByRole('radio',{name:'Онлайн'}).check();
+    await expect(formDialog.getByText('Этот способ передачи не разрешён всеми выбранными объявлениями.',{exact:false})).toBeVisible();
+    await expect(formDialog.getByRole('button',{name:'Отправить предложение'})).toBeDisabled();
+    await formDialog.getByRole('checkbox',{name:/Я хочу предложить этот способ как исключение/}).check();
+    await expect(formDialog.getByRole('button',{name:'Отправить предложение'})).toBeEnabled();
+    await reviewMethod.getByRole('radio',{name:'Личная встреча'}).check();
     await page.screenshot({path:join(output,`review-${width}-${theme}.png`)});
     const reviewActions=await formDialog.locator('.exchange-form-actions > button').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height};}));
     assert.equal(reviewActions.length,2);
