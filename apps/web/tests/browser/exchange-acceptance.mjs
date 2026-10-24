@@ -309,7 +309,7 @@ try {
     await expect(formDialog.getByText('После принятия: резерв на 7 дней.',{exact:false})).toBeVisible();
     // An unapproved ONLINE option must require an explicit exception opt-in.
     await reviewMethod.getByRole('radio',{name:'Онлайн'}).check();
-    await expect(formDialog.getByText('Этот способ передачи не разрешён всеми выбранными объявлениями.',{exact:false})).toBeVisible();
+    await expect(formDialog.getByText('Условия объявлений не совпадают с выбранным способом.',{exact:false})).toBeVisible();
     await expect(formDialog.getByRole('button',{name:'Отправить предложение'})).toBeDisabled();
     await formDialog.getByRole('checkbox',{name:/Я хочу предложить этот способ как исключение/}).check();
     await expect(formDialog.getByRole('button',{name:'Отправить предложение'})).toBeEnabled();
@@ -393,6 +393,10 @@ try {
     await page.getByRole('button',{name:'Предложить обмен · выбрать способ'}).click();
     await formDialog.locator('.exchange-choice input[type=checkbox]').first().check();
     await expect(formDialog.getByText('Общих способов передачи нет.',{exact:false})).toBeVisible();
+    await expect(formDialog.getByText('Не разрешён вашими объявлениями',{exact:false})).toBeVisible();
+    await formDialog.getByRole('radio',{name:'Личная встреча'}).check();
+    await expect(formDialog.getByText('Не разрешён объявлениями собеседника',{exact:false})).toBeVisible();
+    await formDialog.getByRole('radio',{name:'Доставка'}).check();
     await expect(formDialog.getByRole('button',{name:'Проверить предложение'})).toBeDisabled();
     await formDialog.getByRole('checkbox',{name:/Я хочу предложить этот способ как исключение/}).check();
     await expect(formDialog.getByRole('button',{name:'Проверить предложение'})).toBeEnabled();
