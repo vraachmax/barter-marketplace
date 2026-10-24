@@ -217,8 +217,21 @@ try {
     await voiceDraft.getByRole('button',{name:'Удалить голосовое сообщение'}).click();
     await expect(voiceDraft).toHaveCount(0);
     if (engine === 'webkit') {
+      // The previous iPhone layout bug was invisible to Chromium-only exchange
+      // tests. Verify the actual WebKit method cards before skipping the rest.
+      await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
+      await page.getByRole('button',{name:'Предложить новые условия',exact:true}).click();
+      const webkitForm=page.getByRole('dialog',{name:'Предложить обмен'});
+      await expect(webkitForm.locator('.exchange-method-choice')).toHaveCount(3);
+      const geometries=await webkitForm.locator('.exchange-method-choice').evaluateAll(items=>items.map(item=>{
+        const box=item.getBoundingClientRect(),radio=item.querySelector('input[type=radio]').getBoundingClientRect();
+        return {height:box.height,left:box.left,right:box.right,radioWidth:radio.width};
+      }));
+      assert.ok(geometries.every(g=>g.height>=55&&g.height<=120&&g.left>=0&&g.right<=width+1&&g.radioWidth<=24),
+        'WebKit exchange methods must remain compact, readable and within iPhone viewport');
+      await page.screenshot({path:join(output,`exchange-method-webkit-${width}-${theme}.png`)});
       assert.equal(errors.length,0,errors.join('\n'));
-      console.log(`PASS WebKit mobile ${width} ${theme}: voice alignment, playback and speed`);
+      console.log(`PASS WebKit mobile ${width} ${theme}: voice + compact exchange method cards`);
       await context.close();
       continue;
     }
@@ -362,6 +375,43 @@ try {
     await expect(page.getByRole('button',{name:'Подтвердить выполнение'})).toBeVisible();
     await page.screenshot({path:join(output,`exchange-online-${width}-${theme}.png`)});
     assert.equal(errors.length,0,errors.join('\n'));
+    // Two delivery-only listings must automatically suggest DELIVERY, not a meeting.
+    const originalOffer=offers[0];
+    offers=[];
+    listing.exchangePreferences={handoffMethods:['DELIVERY']};
+    laptop.exchangePreferences={handoffMethods:['DELIVERY']};
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await page.getByRole('button',{name:'Предложить обмен · выбрать способ'}).click();
+    await expect(formDialog.getByRole('radio',{name:'Доставка'})).toBeChecked();
+    await formDialog.locator('.exchange-choice input[type=checkbox]').first().check();
+    await expect(formDialog.getByRole('radio',{name:'Доставка'})).toBeChecked();
+    await expect(formDialog.getByText('Способ передачи разрешён обоими объявлениями.')).toBeVisible();
+    await page.screenshot({path:join(output,`exchange-delivery-only-${width}-${theme}.png`)});
+    await formDialog.getByRole('button',{name:'Закрыть'}).click();
+    // Incompatible listing preferences require a visible exception request.
+    laptop.exchangePreferences={handoffMethods:['MEETING']};
+    await page.getByRole('button',{name:'Предложить обмен · выбрать способ'}).click();
+    await formDialog.locator('.exchange-choice input[type=checkbox]').first().check();
+    await expect(formDialog.getByText('Общих способов передачи нет.',{exact:false})).toBeVisible();
+    await expect(formDialog.getByRole('button',{name:'Проверить предложение'})).toBeDisabled();
+    await formDialog.getByRole('checkbox',{name:/Я хочу предложить этот способ как исключение/}).check();
+    await expect(formDialog.getByRole('button',{name:'Проверить предложение'})).toBeEnabled();
+    await page.screenshot({path:join(output,`exchange-exception-${width}-${theme}.png`)});
+    await formDialog.getByRole('button',{name:'Закрыть'}).click();
+    // Counterparty must explicitly acknowledge an exception before acceptance.
+    offers=[{...originalOffer,status:'PENDING',version:1,handoffMethod:'DELIVERY',handoffException:true,confirmations:[]}];
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await expect(page.locator('.exchange-card')).toHaveCount(1);
+    await expect(page.getByRole('dialog',{name:'Обсудить условия'})).toHaveCount(0);
+    await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
+    await expect(page.getByText('Запрос исключения',{exact:true})).toBeVisible();
+    const consentAccept=page.getByRole('button',{name:'Принять условия',exact:true});
+    await expect(consentAccept).toBeDisabled();
+    await page.getByRole('checkbox',{name:/Я согласен/}).check();
+    await expect(consentAccept).toBeEnabled();
+    await consentAccept.click();
+    assert.ok(writes.some(w=>w.action==='accept'&&w.acknowledgeHandoffException===true),
+      'Acceptance of incompatible delivery requires affirmative recipient consent');
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
   }

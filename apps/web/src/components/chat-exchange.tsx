@@ -7,7 +7,7 @@ import { apiFetchJson, resolveAssetUrl, type ChatMessage, type ChatSummary } fro
 import './chat-exchange.css';
 import QrScannerButton from './qr-scanner-button';
 import { ExchangeHandoffQr } from './exchange-handoff-qr';
-import { listedHandoffMethods } from '@/lib/exchange-preferences';
+import { compatibleHandoffMethods, listedHandoffMethods, suggestedHandoffMethod } from '@/lib/exchange-preferences';
 
 type Item = { listingId: string; ownerId: string; snapshot: { title: string; priceRub: number | null; imageUrl: string | null } };
 type Method = 'MEETING' | 'DELIVERY' | 'ONLINE';
@@ -50,6 +50,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   const [terms, setTerms] = useState('');
   const [days, setDays] = useState('7');
   const [method, setMethod] = useState<Method>('MEETING');
+  const [methodManuallyChosen, setMethodManuallyChosen] = useState(false);
   const [requestException, setRequestException] = useState(false);
   const [acknowledgedException, setAcknowledgedException] = useState(false);
   const [shippingOfferId, setShippingOfferId] = useState<string | null>(null);
@@ -114,6 +115,12 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     try {
       const r = await apiFetchJson<Offer>(`${root}/offers/${offer.id}`, { method: 'POST', body: JSON.stringify({ version: offer.version, action, ...(qrToken ? { qrToken } : {}), ...(acknowledgeException ? { acknowledgeHandoffException: true } : {}) }) });
       if (!r.ok) { setError(r.message); return false; }
+      if (action === 'accept' || action === 'decline' || action === 'cancel') {
+        // The prior discussion must never reopen if a later refresh returns
+        // a pending revision of the same offer.
+        setDiscussId(null);
+        setAcknowledgedException(false);
+      }
       await refresh(); onChanged();
       return true;
     } finally { lock.current = false; setBusy(false); }
@@ -155,11 +162,12 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
     const peerIds = offer?.items.filter(i => i.ownerId === peerId).map(i => i.listingId) ??
       (chat.listing && chat.listing.ownerId === peerId ? [chat.listing.id] : []);
     const selected = r.data.filter(l => [...ownIds, ...peerIds].includes(l.id));
-    const intersection = methodOptions.filter(option => selected.length && selected.length === ownIds.length + peerIds.length &&
-      selected.every(l => listedHandoffMethods(l.exchangePreferences).includes(option.id)));
+    const preferences = selected.map(l => l.exchangePreferences);
+    const recipientPreferences = selected.find(l => l.ownerId === peerId)?.exchangePreferences;
     setChoices(r.data); setPreviousId(offer?.id); setGive(ownIds); setReceive(peerIds);
     setCash(''); setDirection('none'); setTerms(offer?.terms ?? '');
-    setMethod(offer?.handoffMethod ?? intersection[0]?.id ?? 'MEETING');
+    setMethod(offer?.handoffMethod ?? suggestedHandoffMethod(preferences, recipientPreferences));
+    setMethodManuallyChosen(Boolean(offer));
     setRequestException(!!offer?.handoffException); setAcknowledgedException(false);
     setReview(false); setForm(true); setScreen(null);
   }
@@ -174,9 +182,21 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
   const selectedChoices = choices.filter(l => give.includes(l.id) || receive.includes(l.id));
   const totalChoices = give.length + receive.length;
   const haveAllChoices = totalChoices > 0 && selectedChoices.length === totalChoices;
-  const supportedMethods = methodOptions.filter(option => haveAllChoices &&
-    selectedChoices.every(l => listedHandoffMethods(l.exchangePreferences).includes(option.id)));
-  const methodCompatible = supportedMethods.some(option => option.id === method);
+  const supportedMethodIds = haveAllChoices
+    ? compatibleHandoffMethods(selectedChoices.map(l => l.exchangePreferences)) : [];
+  const supportedMethods = methodOptions.filter(option => supportedMethodIds.includes(option.id));
+  const supportedMethodsKey = supportedMethodIds.join('|');
+  useEffect(() => {
+    // Item selection can change which delivery methods both owners permit.
+    // Auto-select only until the user explicitly chooses a method or edits an
+    // existing offer; never overwrite an intentional request for an exception.
+    if (!form || methodManuallyChosen || !supportedMethodIds.length || supportedMethodIds.includes(method)) return;
+    setMethod(supportedMethodIds[0]);
+    setRequestException(false);
+    // supportedMethodsKey is stable across React renders unlike the array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, method, methodManuallyChosen, supportedMethodsKey]);
+  const methodCompatible = supportedMethodIds.includes(method);
   const exceptionRequired = haveAllChoices && !methodCompatible;
   const amount = direction === 'none' ? 0 : Math.round(Number(cash) * 100) * (direction === 'pay' ? 1 : -1);
   const valid = give.length > 0 && receive.length > 0 && haveAllChoices && (!exceptionRequired || requestException) && (direction === 'none' || (Number.isFinite(amount) && Math.abs(amount) > 0 && Math.abs(amount) <= 2000000000));
@@ -202,7 +222,7 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
         return <label key={option.id} className={`exchange-method-choice ${method === option.id ? 'is-selected' : ''}`}>
 
           <input type="radio" name="exchange-handoff-method" value={option.id}
-            checked={method === option.id} onChange={() => { setMethod(option.id); setRequestException(false); }}
+            checked={method === option.id} onChange={() => { setMethod(option.id); setMethodManuallyChosen(true); setRequestException(false); }}
             aria-label={option.title} />
           <span className="exchange-method-icon" aria-hidden="true">
             {option.id === 'MEETING' ? <QrCode size={21} /> : option.id === 'DELIVERY' ? <Truck size={21} /> : <Smartphone size={21} />}
@@ -213,7 +233,8 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
         </label>;
       })}
       {exceptionRequired ? <div className="exchange-method-exception" role="note">
-        <p>Этот способ передачи не разрешён всеми выбранными объявлениями. Можно запросить исключение, но собеседник должен будет отдельно согласиться.</p>
+        {supportedMethods.length === 0 ? <p><b>Общих способов передачи нет.</b> У выбранных объявлений разные условия.</p> : null}
+        <p>Этот способ передачи не разрешён всеми выбранными объявлениями. Можно предложить его как исключение, но собеседник должен будет отдельно согласиться.</p>
         <label><input type="checkbox" checked={requestException} onChange={e => setRequestException(e.target.checked)}/>
           <span>Я хочу предложить этот способ как исключение и понимаю, что он не согласован заранее.</span>
         </label>
