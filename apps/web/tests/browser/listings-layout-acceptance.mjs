@@ -554,7 +554,7 @@ async function scenario(browserType, width, theme) {
     await page.getByLabel('Состояние', { exact: true }).selectOption('used_good');
     const exchangeOnly = page.getByRole('radio', { name: /^Только обмен/ });
     await exchangeOnly.check();
-    const handoffChoices=page.getByRole('group',{name:'Допустимые способы передачи при обмене'});
+    const handoffChoices=page.getByRole('region',{name:'Допустимые способы передачи при обмене'});
     await expect(handoffChoices.getByRole('checkbox',{name:/Личная встреча/})).not.toBeChecked();
     await handoffChoices.getByRole('checkbox',{name:/Личная встреча/}).check();
     await handoffChoices.getByRole('checkbox',{name:/Доставка/}).check();
@@ -1042,7 +1042,7 @@ async function scenario(browserType, width, theme) {
       await expect(page.getByRole('radio', { name: /^Только обмен/ })).toBeChecked();
       await page.getByLabel('Оценочная стоимость, ₽').fill('18000');
       await page.getByLabel('Рассмотрю любые предложения', { exact: true }).uncheck();
-      const handoff=page.getByRole('group',{name:'Допустимые способы передачи при обмене'});
+      const handoff=page.getByRole('region',{name:'Допустимые способы передачи при обмене'});
       await handoff.getByRole('checkbox',{name:/Личная встреча/}).check();
       await handoff.getByRole('checkbox',{name:/Доставка/}).check();
       await page.getByLabel('Пожелания к обмену', { exact: true }).fill('Фотоаппарат с объективом');
