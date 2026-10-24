@@ -9,6 +9,21 @@ export function listedHandoffMethods(value: unknown): HandoffMethod[] {
   const v = (value as { handoffMethods?: unknown }).handoffMethods;
   return Array.isArray(v) ? HANDOFF_METHODS.filter(m => v.includes(m)) : [];
 }
+/** Allowed only when every selected listing owner has explicitly opted in. */
+export function compatibleHandoffMethods(preferences: readonly unknown[]): HandoffMethod[] {
+  if (!preferences.length) return [];
+  return HANDOFF_METHODS.filter(method => preferences.every(value => listedHandoffMethods(value).includes(method)));
+}
+
+/** Prefer mutually allowed handoffs. If none match, suggest the other owner's
+ * stated preference, but never silently treat it as agreed. */
+export function suggestedHandoffMethod(preferences: readonly unknown[], recipientPreferences?: unknown): HandoffMethod {
+  return compatibleHandoffMethods(preferences)[0]
+    ?? listedHandoffMethods(recipientPreferences)[0]
+    ?? preferences.flatMap(value => listedHandoffMethods(value))[0]
+    ?? 'MEETING';
+}
+
 export type WantedItem = { categoryId: string; attributes: Record<string, string> };
 export type ExchangePreferences = {
   wantedItems?: WantedItem[];
