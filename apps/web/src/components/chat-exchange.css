@@ -245,6 +245,25 @@ html:not([data-theme='dark']) .messages-screen.messages-approved-screen:has(.exc
   outline-offset: 2px;
 }
 
+/* A clearly distinguished opt-in is required for unusual delivery terms. */
+.chat-exchange .exchange-method-exception {
+  display: grid;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid #ff6415;
+  border-radius: 15px;
+  background: color-mix(in srgb,#ff6415 9%,var(--bg-surface));
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.chat-exchange .exchange-method-exception p { margin: 0; }
+.chat-exchange .exchange-method-exception label { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; }
+.chat-exchange .exchange-method-exception input[type="checkbox"] {
+  width: 20px; min-width: 20px; height: 20px; margin: 2px 0 0; padding: 0;
+  accent-color: #ff6415;
+}
+.chat-exchange .exchange-method-compatible { margin: 0; color: var(--fg-muted); font-size: 12px; }
 /* Exchange method radio controls must never inherit the full-width text-input
    styles. Give the cards three fixed/responsive columns to prevent horizontal
    overflow and multi-thousand-pixel label heights on iOS WebKit. */
