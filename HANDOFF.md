@@ -1,3 +1,21 @@
+## 2026-10-21: PR82 merged; production deployment blocked by Vercel access
+
+PR82 merged as 9c181972363a5ab5571ee68b098217c8074d8595. Application code
+83adcb5 passed Web quality39582404251 and security39582404794; final PR commit
+16240a8 only adds QA/handoff documentation. Final reference comparison completed.
+
+Production is NOT updated with PR82. Repeated project deployment reads returned no
+deployment for9c18197, and explicit access to the existing production deployment in
+team_1C2wMLOvWO21CLlqN7v7D0iZ returned403: the Vercel connection lacks authorization
+for vraachmaxs-projects. The installed plugin is enabled; no authenticated local CLI
+is available. Do not bypass scope checks or claim release READY. User must regrant
+this connection access to that existing team, then deploy this exact master commit
+and verify the production alias. No new project, tokens or environment changes needed.
+
+PR81 production still provides the working exchange lifecycle and two test accounts.
+Private test access is saved in barter-test-access.txt; never commit its contents.
+Next: restore Vercel team grant and release9c18197, then native iPhone acceptance.
+
 ## 2026-10-21: PR82 reference follow-up ready for release
 
 Application commit 83adcb5a45d91e409d7d29ad9b220f98adc593b8 passed Web quality
