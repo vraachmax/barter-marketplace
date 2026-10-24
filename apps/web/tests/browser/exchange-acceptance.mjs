@@ -217,8 +217,21 @@ try {
     await voiceDraft.getByRole('button',{name:'Удалить голосовое сообщение'}).click();
     await expect(voiceDraft).toHaveCount(0);
     if (engine === 'webkit') {
+      // The previous iPhone layout bug was invisible to Chromium-only exchange
+      // tests. Verify the actual WebKit method cards before skipping the rest.
+      await page.getByRole('button',{name:'Обсудить условия',exact:true}).click();
+      await page.getByRole('button',{name:'Предложить новые условия',exact:true}).click();
+      const webkitForm=page.getByRole('dialog',{name:'Предложить обмен'});
+      await expect(webkitForm.locator('.exchange-method-choice')).toHaveCount(3);
+      const geometries=await webkitForm.locator('.exchange-method-choice').evaluateAll(items=>items.map(item=>{
+        const box=item.getBoundingClientRect(),radio=item.querySelector('input[type=radio]').getBoundingClientRect();
+        return {height:box.height,left:box.left,right:box.right,radioWidth:radio.width};
+      }));
+      assert.ok(geometries.every(g=>g.height>=55&&g.height<=120&&g.left>=0&&g.right<=width+1&&g.radioWidth<=24),
+        'WebKit exchange methods must remain compact, readable and within iPhone viewport');
+      await page.screenshot({path:join(output,`exchange-method-webkit-${width}-${theme}.png`)});
       assert.equal(errors.length,0,errors.join('\n'));
-      console.log(`PASS WebKit mobile ${width} ${theme}: voice alignment, playback and speed`);
+      console.log(`PASS WebKit mobile ${width} ${theme}: voice + compact exchange method cards`);
       await context.close();
       continue;
     }
