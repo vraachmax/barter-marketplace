@@ -362,6 +362,28 @@ try {
     await expect(page.getByRole('button',{name:'Подтвердить выполнение'})).toBeVisible();
     await page.screenshot({path:join(output,`exchange-online-${width}-${theme}.png`)});
     assert.equal(errors.length,0,errors.join('\n'));
+    // Two delivery-only listings must automatically suggest DELIVERY, not a meeting.
+    offers=[];
+    listing.exchangePreferences={handoffMethods:['DELIVERY']};
+    laptop.exchangePreferences={handoffMethods:['DELIVERY']};
+    await page.evaluate(()=>window.dispatchEvent(new Event('barter-exchange-refresh')));
+    await page.getByRole('button',{name:'Предложить обмен · выбрать способ'}).click();
+    await expect(formDialog.getByRole('radio',{name:'Доставка'})).toBeChecked();
+    await formDialog.locator('.exchange-choice input[type=checkbox]').first().check();
+    await expect(formDialog.getByRole('radio',{name:'Доставка'})).toBeChecked();
+    await expect(formDialog.getByText('Способ передачи разрешён обоими объявлениями.')).toBeVisible();
+    await page.screenshot({path:join(output,`exchange-delivery-only-${width}-${theme}.png`)});
+    await formDialog.getByRole('button',{name:'Закрыть'}).click();
+    // Incompatible listing preferences require a visible exception request.
+    laptop.exchangePreferences={handoffMethods:['MEETING']};
+    await page.getByRole('button',{name:'Предложить обмен · выбрать способ'}).click();
+    await formDialog.locator('.exchange-choice input[type=checkbox]').first().check();
+    await expect(formDialog.getByText('Общих способов передачи нет.',{exact:false})).toBeVisible();
+    await expect(formDialog.getByRole('button',{name:'Проверить предложение'})).toBeDisabled();
+    await formDialog.getByRole('checkbox',{name:/Я хочу предложить этот способ как исключение/}).check();
+    await expect(formDialog.getByRole('button',{name:'Проверить предложение'})).toBeEnabled();
+    await page.screenshot({path:join(output,`exchange-exception-${width}-${theme}.png`)});
+    await formDialog.getByRole('button',{name:'Закрыть'}).click();
     console.log(`PASS ${width} ${theme}: exchange review, send, accept, details, search, mute; screenshots captured`);
     await context.close();
   }
