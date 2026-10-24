@@ -17,7 +17,7 @@ async function main() {
   const listings = [];
   const rooms = [];
   try {
-    for (const owner of users) listings.push(await db.listing.create({ data: { title: 'Fixture item', description: 'Not public', city: 'Test', barterEnabled: true, ownerId: owner.id, categoryId: category.id, priceRub: 10000 } }));
+    for (const owner of users) listings.push(await db.listing.create({ data: { title: 'Fixture item', description: 'Not public', city: 'Test', barterEnabled: true, ownerId: owner.id, categoryId: category.id, priceRub: 10000, exchangePreferences: { handoffMethods:['MEETING','DELIVERY','ONLINE'] } } }));
     for (const user of users.slice(1)) rooms.push(await db.chat.create({ data: { listingId: listings[0].id, users: { create: [{ userId: users[0].id }, { userId: user.id }] } } }));
     const dto = i => ({ clientKey: randomUUID(), giveIds: [listings[i].id], receiveIds: [listings[0].id], cashKopecks: 12345, terms: 'Test terms', validDays: 7 });
     const firstBody = dto(1);
@@ -79,8 +79,8 @@ async function main() {
     // Both remote methods must work without QR, still with two independent
     // confirmations. Tracking numbers are self-reported, not carrier verified.
     for (const method of ['DELIVERY','ONLINE']) {
-      const aItem = await db.listing.create({data:{title:'Remote fixture '+method+' A',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[1].id,categoryId:category.id,priceRub:2500}});
-      const bItem = await db.listing.create({data:{title:'Remote fixture '+method+' B',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[0].id,categoryId:category.id,priceRub:2600}});
+      const aItem = await db.listing.create({data:{title:'Remote fixture '+method+' A',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[1].id,categoryId:category.id,priceRub:2500,exchangePreferences:{handoffMethods:['MEETING','DELIVERY','ONLINE']}}});
+      const bItem = await db.listing.create({data:{title:'Remote fixture '+method+' B',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[0].id,categoryId:category.id,priceRub:2600,exchangePreferences:{handoffMethods:['MEETING','DELIVERY','ONLINE']}}});
       const offer = await service.create(rooms[0].id, users[1].id, {
         clientKey:randomUUID(), giveIds:[aItem.id], receiveIds:[bItem.id],
         cashKopecks:0, terms:'Both parties agree to '+method,
