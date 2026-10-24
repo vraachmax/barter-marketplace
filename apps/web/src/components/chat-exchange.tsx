@@ -219,6 +219,13 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
       <legend>{reviewMode ? 'Способ передачи · можно изменить' : 'Как будет проходить обмен?'}</legend>
       {methodOptions.map(option => {
         const compatible = supportedMethods.some(candidate => candidate.id === option.id);
+        const selfListings = selectedChoices.filter(listing => listing.ownerId !== peerId);
+        const peerListings = selectedChoices.filter(listing => listing.ownerId === peerId);
+        const selfAllows = selfListings.length > 0 && selfListings.every(listing => listedHandoffMethods(listing.exchangePreferences).includes(option.id));
+        const peerAllows = peerListings.length > 0 && peerListings.every(listing => listedHandoffMethods(listing.exchangePreferences).includes(option.id));
+        const notAllowedBy = !selfAllows && !peerAllows ? 'Не указан ни у одной стороны'
+          : !selfAllows ? 'Не разрешён вашими объявлениями'
+          : 'Не разрешён объявлениями собеседника';
         return <label key={option.id} className={`exchange-method-choice ${method === option.id ? 'is-selected' : ''}`}>
 
           <input type="radio" name="exchange-handoff-method" value={option.id}
@@ -228,13 +235,13 @@ export function ChatExchange({ chat, messages, peerStatus, onOpenMedia, onChange
             {option.id === 'MEETING' ? <QrCode size={21} /> : option.id === 'DELIVERY' ? <Truck size={21} /> : <Smartphone size={21} />}
           </span>
           <span><b>{option.title}</b>
-            <small>{compatible ? option.description : haveAllChoices ? 'Требует отдельного согласия обоих участников' : 'Выберите товары, чтобы проверить совместимость'}</small>
+            <small>{compatible ? option.description : haveAllChoices ? `${notAllowedBy} · только по взаимному согласию` : 'Выберите товары, чтобы проверить совместимость'}</small>
           </span>
         </label>;
       })}
       {exceptionRequired ? <div className="exchange-method-exception" role="note">
         {supportedMethods.length === 0 ? <p><b>Общих способов передачи нет.</b> У выбранных объявлений разные условия.</p> : null}
-        <p>Этот способ передачи не разрешён всеми выбранными объявлениями. Можно предложить его как исключение, но собеседник должен будет отдельно согласиться.</p>
+        <p>Условия объявлений не совпадают с выбранным способом. Это не согласованный вариант: вы можете попросить об исключении, а второй участник должен отдельно подтвердить согласие перед резервированием товаров.</p>
         <label><input type="checkbox" checked={requestException} onChange={e => setRequestException(e.target.checked)}/>
           <span>Я хочу предложить этот способ как исключение и понимаю, что он не согласован заранее.</span>
         </label>
