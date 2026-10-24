@@ -246,6 +246,35 @@ try {
       return Boolean(method&&goods&&method.getBoundingClientRect().top<goods.getBoundingClientRect().top);
     });
     assert.equal(methodAboveGoods,true,'Delivery method must appear before item pickers');
+    // Regression for the iPhone bug: text-input CSS gave radio controls 100%
+    // width, producing 2000px-high cards and horizontal scrolling.
+    async function assertCompactHandoffCards(selector, review=false) {
+      const result=await formDialog.locator(selector).evaluate(group=>{
+        const items=[...group.querySelectorAll('.exchange-method-choice')];
+        const cards=items.map(item=>{
+          const box=item.getBoundingClientRect();
+          const radio=item.querySelector('input[type=radio]')?.getBoundingClientRect();
+          const label=item.querySelector('span:last-child')?.getBoundingClientRect();
+          return {height:box.height,width:box.width,left:box.left,right:box.right,
+            radioW:radio?.width,radioH:radio?.height,textW:label?.width};
+        });
+        const form=group.closest('.exchange-form')?.getBoundingClientRect();
+        return {cards,formWidth:form?.width,viewport:window.innerWidth,
+          scrollWidth:document.documentElement.scrollWidth};
+      });
+      assert.equal(result.cards.length,3,'All three exchange modes must fit');
+      assert.ok(result.cards.every(card=>card.height>=55&&card.height<=(review?90:120)),
+        'Handoff cards must remain compact, not fill the screen');
+      assert.ok(result.cards.every(card=>card.radioW>=18&&card.radioW<=24&&card.radioH>=18&&card.radioH<=24),
+        'Radio circles must remain exactly touch-sized rather than 100% wide');
+      assert.ok(result.cards.every(card=>card.textW>=110),
+        'Method labels must have enough room to read horizontally');
+      assert.ok(result.cards.every(card=>card.left>=0&&card.right<=result.viewport+1),
+        'Method cards must not extend beyond the phone viewport');
+      assert.ok(result.scrollWidth<=result.viewport+1,
+        'Exchange modal must not create horizontal page overflow');
+    }
+    await assertCompactHandoffCards('.exchange-method-picker');
     await page.getByRole('checkbox').first().check();
     await expect(page.getByRole('radio',{name:/Личная встреча/})).toBeChecked();
     await page.getByRole('radio',{name:/Доставка/}).check();
@@ -256,6 +285,7 @@ try {
     await expect(page.getByText('площадка не проверяет фактическую передачу товаров и денег.',{exact:false})).toBeVisible();
     const reviewMethod=formDialog.locator('.exchange-method-review');
     await expect(reviewMethod).toBeVisible();
+    await assertCompactHandoffCards('.exchange-method-review',true);
     await expect(reviewMethod.getByRole('radio',{name:'Личная встреча'})).toBeChecked();
     await reviewMethod.getByRole('radio',{name:'Доставка'}).check();
     await expect(reviewMethod.getByRole('radio',{name:'Доставка'})).toBeChecked();
