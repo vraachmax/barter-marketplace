@@ -110,6 +110,25 @@ async function main() {
       console.log('PASS '+method+' remote bilateral confirmation without QR and immutable handoff');
     }
 
+    // Different listing-owner preferences require a proposer request and an
+    // explicit recipient opt-in, even when both participants are in the chat.
+    const onlyMeet = await db.listing.create({data:{title:'Meeting only',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[1].id,categoryId:category.id,exchangePreferences:{handoffMethods:['MEETING']}}});
+    const onlyDeliver = await db.listing.create({data:{title:'Delivery only',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[0].id,categoryId:category.id,exchangePreferences:{handoffMethods:['DELIVERY']}}});
+    const mismatch = {clientKey:randomUUID(),giveIds:[onlyMeet.id],receiveIds:[onlyDeliver.id],cashKopecks:0,terms:'Explicit exception',validDays:7,handoffMethod:'MEETING'};
+    await assert.rejects(service.create(rooms[0].id,users[1].id,mismatch),/не разрешён/);
+    const requested = await service.create(rooms[0].id,users[1].id,{...mismatch,requestHandoffException:true});
+    assert.equal(requested.handoffException,true);
+    await assert.rejects(service.create(rooms[0].id,users[1].id,{...mismatch,requestHandoffException:false}),/Ключ предложения/);
+    await assert.rejects(service.act(rooms[0].id,requested.id,users[0].id,{action:'accept',version:1}),/исключение/);
+    const exceptionAccepted = await service.act(rooms[0].id,requested.id,users[0].id,{action:'accept',version:1,acknowledgeHandoffException:true});
+    assert.equal(exceptionAccepted.status,'ACCEPTED');
+    assert.equal(await db.exchangeReservation.count({where:{offerId:requested.id}}),2);
+    await service.act(rooms[0].id,requested.id,users[1].id,{action:'cancel',version:exceptionAccepted.version});
+    // Existing/unconfigured listings do not silently opt in.
+    const legacy = await db.listing.create({data:{title:'Old listing no methods',description:'Fixture',city:'Test',barterEnabled:true,ownerId:users[0].id,categoryId:category.id}});
+    await assert.rejects(service.create(rooms[0].id,users[1].id,{...mismatch,clientKey:randomUUID(),receiveIds:[legacy.id]}),/исключение/);
+    console.log('PASS incompatible modes, explicit recipient consent, idempotency and legacy no-opt-in');
+
     await db.listing.updateMany({ where: { categoryId: category.id }, data: { status: 'ACTIVE' } });
     const stale = await service.create(rooms[0].id, users[1].id, dto(1));
     await db.listing.update({ where: { id: listings[0].id }, data: { description: 'Changed terms' } });
