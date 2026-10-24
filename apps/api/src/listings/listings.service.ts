@@ -511,6 +511,8 @@ export class ListingsService {
     if (value && typeof value === 'object' && !Array.isArray(value) &&
       !Object.hasOwn(value, 'wantedItems') && previous && typeof previous === 'object' &&
       'wantedItems' in previous) value = { ...value, wantedItems: previous.wantedItems };
+    if (value && typeof value === 'object' && !Array.isArray(value) && !Object.hasOwn(value,'handoffMethods') && previous && typeof previous === 'object' && 'handoffMethods' in previous)
+      value = { ...value, handoffMethods: previous.handoffMethods };
     const preferences = parseExchangePreferences(value);
     if (preferences && !barterEnabled) throw new BadRequestException('exchange_preferences_require_barter');
     const wantedIds = [...(preferences?.wantedCategoryIds ?? []), ...(preferences?.wantedItems ?? []).map(item => item.categoryId)];
