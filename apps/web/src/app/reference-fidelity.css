@@ -66,10 +66,11 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   .page-content-spacing { padding-bottom:116px; }
   .listing-grid { gap:12px; }
   .refresh-listing-card .listing-card-copy { padding:10px 12px 12px; }
-  /* Shared dock anchor: the fixed .app-viewport in Safari and installed PWA.
-     Keep geometry in one place; no body-fixed or standalone overrides. */
+  /* The dock is the final non-shrinking flex row of the screen.
+     Neither iOS viewport differences nor scroll changes can leave a gap below it. */
   .app-viewport > .magic-nav {
-    position:absolute; top:auto; left:0; right:0; bottom:0; max-width:520px; margin-inline:auto;
+    position:relative; inset:auto; top:auto; left:auto; right:auto; bottom:auto;
+    flex:0 0 auto; width:100%; max-width:520px; margin-inline:auto;
     box-sizing:border-box; height:calc(55px + var(--mobile-dock-inset)); padding:0 0 var(--mobile-dock-inset);
     display:block; border-radius:25px 25px 0 0; z-index:60; background:var(--bg-page);
     box-shadow:0 -8px 28px rgba(22,22,32,.075);
@@ -1851,15 +1852,10 @@ html[data-theme='dark'] {
 @supports (-webkit-touch-callout: none) {
   @media (display-mode: standalone) and (max-width: 767px) {
     .app-viewport {
-      box-sizing: border-box;
-      top: 0;
-      bottom: auto;
-      height: var(--barter-pwa-shell-height, 100dvh);
       padding-top: max(54px, var(--safe-area-top));
       background: var(--bg-page);
     }
     .app-viewport .app-scroll-root {
-      height: 100%;
       background: var(--bg-page);
     }
     .app-viewport .catalog-mobile-header {
@@ -1871,14 +1867,10 @@ html[data-theme='dark'] {
       box-shadow: none;
       isolation: auto;
       filter: none;
+      transform: none;
+      will-change: auto;
     }
   }
 }
 
-/* The dock is hidden while the iOS software keyboard covers the viewport.
-   It never drifts halfway up the page above the keyboard. */
-@media (max-width: 767px) {
-  .app-viewport[data-keyboard-open='true'] > .magic-nav {
-    display: none;
-  }
-}
+
