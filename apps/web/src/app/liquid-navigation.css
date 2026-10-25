@@ -18,8 +18,8 @@ html[data-theme='dark'] {
   --liquid-add: #ff9b59;
 }
 .magic-nav {
-  position: fixed; left: 12px; right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  position: absolute; left: 0; right: 0;
+  bottom: 0;
   height: 66px; display: flex; align-items: center; gap: 9px; z-index: 40;
   -webkit-tap-highlight-color: transparent;
 }

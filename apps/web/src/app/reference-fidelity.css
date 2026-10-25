@@ -66,10 +66,11 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   .page-content-spacing { padding-bottom:116px; }
   .listing-grid { gap:12px; }
   .refresh-listing-card .listing-card-copy { padding:10px 12px 12px; }
-  /* Full-width floating dock with central brand, as in the approved reference. */
-  .magic-nav {
-    position:fixed; left:0; right:0; bottom:0; max-width:520px; margin-inline:auto;
-    height:calc(55px + var(--mobile-dock-inset)); padding:0 0 var(--mobile-dock-inset);
+  /* Shared dock anchor: the fixed .app-viewport in Safari and installed PWA.
+     Keep geometry in one place; no body-fixed or standalone overrides. */
+  .app-viewport > .magic-nav {
+    position:absolute; top:auto; left:0; right:0; bottom:0; max-width:520px; margin-inline:auto;
+    box-sizing:border-box; height:calc(55px + var(--mobile-dock-inset)); padding:0 0 var(--mobile-dock-inset);
     display:block; border-radius:25px 25px 0 0; z-index:60; background:var(--bg-page);
     box-shadow:0 -8px 28px rgba(22,22,32,.075);
   }
@@ -94,7 +95,7 @@ html[data-theme='dark'] .home-category-tile > span:first-child { box-shadow:0 0 
   .liquid-nav__add:active{ transform:translateX(-50%) scale(.93); }
   .liquid-nav__add::after{display:none}
   .liquid-nav__add .compose-brand-mark { filter:brightness(0) invert(1); width:28px; height:30px; }
-  html[data-theme='dark'] .magic-nav { background:var(--bg-page); box-shadow:0 -8px 28px rgba(0,0,0,.38); }
+  html[data-theme='dark'] .app-viewport > .magic-nav { background:var(--bg-page); box-shadow:0 -8px 28px rgba(0,0,0,.38); }
   html[data-theme='dark'] .liquid-nav__material { background:var(--bg-page); }
   html[data-theme='dark'] .liquid-nav__add { background:linear-gradient(155deg,#ff851f,#ff4d00); }
 }
@@ -1455,15 +1456,7 @@ html[data-theme='dark'] {
    These scoped rules supersede earlier mobile experiments instead of
    requiring new !important transforms or duplicating real listing markup. */
 @media (max-width: 767px) {
-  /* The 62px gap visible below the tab bar came from the old inset-based
-     dock placement winning in the PWA. The entire safe area must be opaque. */
-  body .magic-nav {
-    bottom: 0 !important;
-    height: calc(55px + var(--mobile-dock-inset)) !important;
-    padding-bottom: var(--mobile-dock-inset) !important;
-    background: var(--bg-page);
-    border-radius: 26px 26px 0 0;
-  }
+  /* Vertical dock geometry is defined above; only surface treatment below. */
   body .magic-nav .liquid-nav {
     height: 55px;
     background: var(--bg-page);
@@ -1479,20 +1472,7 @@ html[data-theme='dark'] {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  /* Don't leave a black gap if the environment reports an inset only to
-     the fixed shell and not the tab bar (some installed iOS PWA versions). */
-  body .magic-nav::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: var(--mobile-dock-inset);
-    background: var(--bg-page);
-    pointer-events: none;
-  }
-  .listing-detail .listing-detail-grid {
+    .listing-detail .listing-detail-grid {
     display: contents !important;
   }
   .listing-detail .listing-detail-main > * {
@@ -1872,6 +1852,9 @@ html[data-theme='dark'] {
   @media (display-mode: standalone) and (max-width: 767px) {
     .app-viewport {
       box-sizing: border-box;
+      top: 0;
+      bottom: auto;
+      height: var(--barter-pwa-shell-height, 100dvh);
       padding-top: max(54px, var(--safe-area-top));
       background: var(--bg-page);
     }
@@ -1886,16 +1869,16 @@ html[data-theme='dark'] {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
       box-shadow: none;
-      isolation: isolate;
+      isolation: auto;
+      filter: none;
     }
-    /* Body-fixed positioning can use a different viewport on installed iOS.
-       Anchor the dock to the actual app shell, not the body layout viewport. */
-    .app-viewport > .magic-nav {
-      position: absolute !important;
-      top: auto !important;
-      bottom: 0 !important;
-      height: calc(55px + var(--mobile-dock-inset)) !important;
-      padding-bottom: var(--mobile-dock-inset) !important;
-    }
+  }
+}
+
+/* The dock is hidden while the iOS software keyboard covers the viewport.
+   It never drifts halfway up the page above the keyboard. */
+@media (max-width: 767px) {
+  .app-viewport[data-keyboard-open='true'] > .magic-nav {
+    display: none;
   }
 }
