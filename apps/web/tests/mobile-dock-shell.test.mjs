@@ -2,52 +2,33 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-const source = path => readFileSync(new URL(path, import.meta.url), 'utf8');
-const nav = source('../src/app/liquid-navigation.css');
-const globalCss = source('../src/app/globals.css');
-const reference = source('../src/app/reference-fidelity.css');
-const shell = source('../src/components/app-viewport.tsx');
+const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
+const shell = read('../src/components/app-viewport.tsx');
+const globals = read('../src/app/globals.css');
+const fidelity = read('../src/app/reference-fidelity.css');
 
-test('mobile dock is anchored once inside the fixed app shell, not the body viewport', () => {
-  assert.match(globalCss, /\.app-viewport\s*\{\s*position:\s*fixed;\s*inset:\s*0;/);
-  assert.match(shell, /className="app-viewport"/);
+test('mobile PWA uses one fixed flex-column shell', () => {
+  assert.match(globals, /\.app-viewport\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*display:\s*flex;[^}]*flex-direction:\s*column/s);
+  assert.match(globals, /\.app-scroll-root\s*\{[^}]*flex:\s*1 1 auto;[^}]*min-height:\s*0;/s);
   assert.match(shell, /<LiquidBottomNav \/>/);
-  assert.match(nav, /\.magic-nav\s*\{\s*position:\s*absolute;\s*left:\s*0;\s*right:\s*0;\s*bottom:\s*0;/);
-  const rule = [...reference.matchAll(/^\s*\.app-viewport\s*>\s*\.magic-nav\s*\{/gm)];
-  assert.equal(rule.length, 1, 'one mobile dock geometry rule across Safari and PWA');
-  assert.match(reference, /\.app-viewport\s*>\s*\.magic-nav\s*\{[^}]*position:\s*absolute;[^}]*bottom:\s*0;/s);
-  assert.doesNotMatch(reference, /\.magic-nav\s*\{[^}]*bottom:\s*[^;}]+!important/s);
-  assert.doesNotMatch(reference, /\.magic-nav::before/);
-  assert.doesNotMatch(globalCss, /\.magic-nav\s*\{[^}]*bottom:/s);
+  assert.ok(shell.indexOf('className="app-scroll-root"') < shell.indexOf('<LiquidBottomNav />'));
 });
 
-test('dock safe-area is included exactly once as padding in shell geometry', () => {
-  assert.match(globalCss, /--mobile-dock-inset:\s*clamp\(0px,\s*var\(--safe-area-bottom\),\s*34px\)/);
-  const rule = reference.match(/\.app-viewport\s*>\s*\.magic-nav\s*\{([^}]+)\}/)?.[1];
+test('dock is in flow and cannot shrink or be offset upwards', () => {
+  const rule = fidelity.match(/\.app-viewport\s*>\s*\.magic-nav\s*\{([^}]+)\}/)?.[1];
   assert.ok(rule);
+  assert.match(rule, /position:\s*relative/);
+  assert.match(rule, /flex:\s*0 0 auto/);
+  assert.match(rule, /inset:\s*auto/);
   assert.match(rule, /height:\s*calc\(55px \+ var\(--mobile-dock-inset\)\)/);
   assert.match(rule, /padding:\s*0 0 var\(--mobile-dock-inset\)/);
-  assert.match(rule, /box-sizing:\s*border-box/);
-  assert.doesNotMatch(reference, /position:\s*absolute\s*!important/);
+  assert.doesNotMatch(fidelity, /--barter-pwa-shell-height|data-keyboard-open|position:\s*absolute\s*!important/);
+  assert.doesNotMatch(shell, /screen\.height|visualViewport|--barter-pwa-shell-height/);
+  assert.doesNotMatch(globals, /\.magic-nav\s*\{[^}]*bottom:\s*calc\(/s);
 });
 
-test('Barter Dash route does not mount a second dock or reuse shell scroll position', () => {
-  assert.match(shell, /if \(pathname\.startsWith\('\/games\/barter-dash'\)\) return children;/);
-  assert.match(shell, /scrollRef\.current\?\.scrollTo\(0, 0\)/);
-});
-
-
-test('installed PWA recovers the full screen after an external Barter Dash document', () => {
-  assert.match(shell, /window\.screen\.height\s*\|\|\s*0/);
-  assert.match(shell, /--barter-pwa-shell-height/);
-  assert.match(shell, /window\.addEventListener\('pageshow', sync\)/);
-  assert.match(shell, /window\.visualViewport\?\.addEventListener\('resize', sync\)/);
-  assert.match(reference, /height:\s*var\(--barter-pwa-shell-height, 100dvh\)/);
-  assert.match(reference, /\.app-viewport\[data-keyboard-open='true'\]\s*>\s*\.magic-nav/);
-});
-
-test('sticky PWA header uses an opaque surface without forced isolation', () => {
-  assert.match(reference, /\.app-viewport \.catalog-mobile-header\s*\{[^}]*backdrop-filter:\s*none;/s);
-  assert.match(reference, /\.app-viewport \.catalog-mobile-header\s*\{[^}]*isolation:\s*auto;/s);
-  assert.match(reference, /\.brand-wordmark-sharp\s*\{[^}]*filter:\s*none;/s);
+test('standalone top safe area stays separate from opaque header without its own height', () => {
+  assert.match(fidelity, /@media \(display-mode: standalone\)[\s\S]*\.app-viewport\s*\{[^}]*padding-top:\s*max\(54px, var\(--safe-area-top\)\)/);
+  assert.match(fidelity, /\.app-viewport \.catalog-mobile-header\s*\{[^}]*backdrop-filter:\s*none;[^}]*isolation:\s*auto;[^}]*filter:\s*none;[^}]*transform:\s*none/s);
+  assert.doesNotMatch(fidelity, /height:\s*var\(--barter-pwa-shell-height/);
 });
