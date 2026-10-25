@@ -1852,6 +1852,9 @@ html[data-theme='dark'] {
   @media (display-mode: standalone) and (max-width: 767px) {
     .app-viewport {
       box-sizing: border-box;
+      top: 0;
+      bottom: auto;
+      height: var(--barter-pwa-shell-height, 100dvh);
       padding-top: max(54px, var(--safe-area-top));
       background: var(--bg-page);
     }
@@ -1866,7 +1869,16 @@ html[data-theme='dark'] {
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
       box-shadow: none;
-      isolation: isolate;
+      isolation: auto;
+      filter: none;
     }
+  }
+}
+
+/* The dock is hidden while the iOS software keyboard covers the viewport.
+   It never drifts halfway up the page above the keyboard. */
+@media (max-width: 767px) {
+  .app-viewport[data-keyboard-open='true'] > .magic-nav {
+    display: none;
   }
 }
