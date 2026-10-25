@@ -13,7 +13,7 @@ test('mobile dock is anchored once inside the fixed app shell, not the body view
   assert.match(shell, /className="app-viewport"/);
   assert.match(shell, /<LiquidBottomNav \/>/);
   assert.match(nav, /\.magic-nav\s*\{\s*position:\s*absolute;\s*left:\s*0;\s*right:\s*0;\s*bottom:\s*0;/);
-  const rule = [...reference.matchAll(/\.app-viewport\s*>\s*\.magic-nav\s*\{/g)];
+  const rule = [...reference.matchAll(/^\s*\.app-viewport\s*>\s*\.magic-nav\s*\{/gm)];
   assert.equal(rule.length, 1, 'one mobile dock geometry rule across Safari and PWA');
   assert.match(reference, /\.app-viewport\s*>\s*\.magic-nav\s*\{[^}]*position:\s*absolute;[^}]*bottom:\s*0;/s);
   assert.doesNotMatch(reference, /\.magic-nav\s*\{[^}]*bottom:\s*[^;}]+!important/s);
