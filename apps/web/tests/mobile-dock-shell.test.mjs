@@ -35,3 +35,19 @@ test('Barter Dash route does not mount a second dock or reuse shell scroll posit
   assert.match(shell, /if \(pathname\.startsWith\('\/games\/barter-dash'\)\) return children;/);
   assert.match(shell, /scrollRef\.current\?\.scrollTo\(0, 0\)/);
 });
+
+
+test('installed PWA recovers the full screen after an external Barter Dash document', () => {
+  assert.match(shell, /window\.screen\.height\s*\|\|\s*0/);
+  assert.match(shell, /--barter-pwa-shell-height/);
+  assert.match(shell, /window\.addEventListener\('pageshow', sync\)/);
+  assert.match(shell, /window\.visualViewport\?\.addEventListener\('resize', sync\)/);
+  assert.match(reference, /height:\s*var\(--barter-pwa-shell-height, 100dvh\)/);
+  assert.match(reference, /\.app-viewport\[data-keyboard-open='true'\]\s*>\s*\.magic-nav/);
+});
+
+test('sticky PWA header uses an opaque surface without forced isolation', () => {
+  assert.match(reference, /\.app-viewport \.catalog-mobile-header\s*\{[^}]*backdrop-filter:\s*none;/s);
+  assert.match(reference, /\.app-viewport \.catalog-mobile-header\s*\{[^}]*isolation:\s*auto;/s);
+  assert.match(reference, /\.brand-wordmark-sharp\s*\{[^}]*filter:\s*none;/s);
+});
