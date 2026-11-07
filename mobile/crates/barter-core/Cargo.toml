@@ -7,6 +7,6 @@ publish = false
 [lib]
 name = "barter_core"
 path = "src/lib.rs"
-crate-type = ["rlib", "staticlib"]
+crate-type = ["rlib", "staticlib", "cdylib"]
 
 [dependencies]
