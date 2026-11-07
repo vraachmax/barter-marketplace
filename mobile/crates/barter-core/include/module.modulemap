@@ -1,0 +1,4 @@
+module BarterCore {
+    header "barter_core.h"
+    export *
+}
