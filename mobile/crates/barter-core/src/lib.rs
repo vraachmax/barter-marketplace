@@ -1,31 +1,61 @@
 //! Portable, UI-independent client-side primitives for Barter Mobile.
 //!
-//! This crate intentionally contains no backend authority, network transport,
-//! platform bindings, or production domain assumptions.
+//! The device does not own authoritative listings, accounts, or exchange
+//! state transitions. Those remain exclusively in the NestJS backend.
 
-/// The user-facing listing intent. Server API contracts remain authoritative.
+/// User-facing listing intent. Server API contracts remain authoritative.
+#[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ListingIntent {
-    Sell,
-    Exchange,
-    SellOrExchange,
+    Sell = 0,
+    Exchange = 1,
+    SellOrExchange = 2,
 }
 
 impl ListingIntent {
-    /// Whether this intent allows an exchange proposal.
     pub const fn allows_exchange(self) -> bool {
         matches!(self, Self::Exchange | Self::SellOrExchange)
     }
 
-    /// Whether this intent permits a direct sale.
     pub const fn allows_sale(self) -> bool {
         matches!(self, Self::Sell | Self::SellOrExchange)
     }
 }
 
+impl TryFrom<i32> for ListingIntent {
+    type Error = ();
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Sell),
+            1 => Ok(Self::Exchange),
+            2 => Ok(Self::SellOrExchange),
+            _ => Err(()),
+        }
+    }
+}
+
+/// Stable C ABI boundary for future Swift/Kotlin bindings.
+/// 1 means allowed, 0 means forbidden, -1 means invalid intent.
+/// Do not interpret mode alone as proof a server response has been filtered.
+#[no_mangle]
+pub extern "C" fn barter_mode_allows_exchange(mode: i32) -> i32 {
+    match ListingIntent::try_from(mode) {
+        Ok(mode) => i32::from(mode.allows_exchange()),
+        Err(()) => -1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn barter_mode_allows_sale(mode: i32) -> i32 {
+    match ListingIntent::try_from(mode) {
+        Ok(mode) => i32::from(mode.allows_sale()),
+        Err(()) => -1,
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::ListingIntent;
+    use super::*;
 
     #[test]
     fn intents_have_expected_capabilities() {
@@ -35,5 +65,17 @@ mod tests {
         assert!(!ListingIntent::Exchange.allows_sale());
         assert!(ListingIntent::SellOrExchange.allows_sale());
         assert!(ListingIntent::SellOrExchange.allows_exchange());
+    }
+
+    #[test]
+    fn ffi_rejects_invalid_modes() {
+        assert_eq!(barter_mode_allows_sale(-1), -1);
+        assert_eq!(barter_mode_allows_exchange(42), -1);
+        assert_eq!(barter_mode_allows_sale(0), 1);
+        assert_eq!(barter_mode_allows_exchange(0), 0);
+        assert_eq!(barter_mode_allows_exchange(1), 1);
+        assert_eq!(barter_mode_allows_sale(1), 0);
+        assert_eq!(barter_mode_allows_exchange(2), 1);
+        assert_eq!(barter_mode_allows_sale(2), 1);
     }
 }
