@@ -58,7 +58,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     searchBar
                     modeSelector
-                    Text(mode.hint)
+                    Text(RustCapabilities.explanation(mode))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
@@ -126,15 +126,8 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(BarterPalette.orange.gradient)
-                    .frame(width: 34, height: 38)
-                Text("B")
-                    .font(.system(size: 26, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-            }
-            .accessibilityHidden(true)
+            BubbleBMark()
+                .frame(width: 33, height: 37)
             Text("БАРТЕР")
                 .font(.system(size: 27, weight: .black, design: .rounded))
                 .tracking(-1.2)
