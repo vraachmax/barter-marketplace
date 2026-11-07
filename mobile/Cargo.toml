@@ -1,0 +1,3 @@
+[workspace]
+members = ["crates/barter-core"]
+resolver = "2"
