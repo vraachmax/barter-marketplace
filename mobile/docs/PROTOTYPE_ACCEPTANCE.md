@@ -10,9 +10,11 @@ Approved reference: `docs/design/barter-2026-10/screens/refined-v2/home.webp` (a
 - [x] Separate Rust workspace with tests and stable C ABI signatures
 - [x] Isolated existing API client; no fake catalogue or account data
 - [x] Native OS safe-area/tab control with dynamic text and keyboard handling
-- [ ] Replace placeholder brand/category/hero assets with exact approved art
+- [x] Reproduce the approved Bubble B vector silhouette in native SwiftUI
+- [ ] Port approved category/hero imagery; current versions are still prototypes
 - [ ] Verify actual /categories and /listings response shapes against live authorized API
-- [ ] Link Rust library on iOS device/simulator and test Swift-to-Rust calls
+- [x] Source-configure XcodeGen XCFramework linkage and Swift-to-Rust calls (not built or device tested)
+- [ ] Build XCFramework on macOS, launch simulator and verify native Swift-to-Rust calls
 - [ ] Build and run in Xcode iOS simulator
 - [ ] Test 393/430/440 logical-width layouts; portrait and landscape
 - [ ] Test physical iPhone keyboard, scrolling, VoiceOver, dark mode, memory/60Hz
