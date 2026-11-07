@@ -1,21 +1,31 @@
-# Barter Mobile — iOS home prototype
+# Barter Mobile — native iOS + Rust prototype
 
-An isolated SwiftUI source prototype. Existing web, NestJS API, CI and production deployments remain unchanged.
+This isolated SwiftUI source prototype is developed only on `feat/mobile-rust-foundation`.
+The existing web app, NestJS backend, root npm workspace and production deployments remain unchanged.
 
-## Run
+## Build on macOS
 
-Requires macOS, Xcode (iOS 17+ SDK), and XcodeGen.
+Requires Xcode with iOS 17+ SDK, XcodeGen, Rust and rustup. Xcode Command Line Tools alone are not enough for device/simulator XCFramework creation.
 
 ```sh
 cd mobile/apps/ios
-xcodegen generate
+bash scripts/build-rust.sh       # cargo test + iOS ARM64 / simulator ARM64+x86_64 static libraries
+xcodegen generate                # requires Frameworks/BarterCore.xcframework
 open BarterMobile.xcodeproj
 ```
 
-Select a simulator and run the BarterMobile target. Tap the gear icon to configure the **HTTPS API base URL**; it is saved to the device preferences. No backend keys or credentials are included.
+Select an iPhone simulator, build and run the BarterMobile target. Set the public HTTPS NestJS API origin in Settings using the gear icon. Do not put passwords, keys or auth tokens in this field.
 
-The app has a native safe-area-aware header, search, sale/exchange/both modes, server-provided categories and listing feed, loading/empty/error/retry states, native bottom tabs, and clear placeholders for unimplemented authenticated flows. The endpoint shapes were derived from `apps/web/src/lib/api.ts`; the real endpoint behavior has not yet been tested. No invented seller listings are displayed.
+## Native Rust integration
 
-**Not done:** final pixel-identical approved images, profile/auth/chat/listing detail, filters, Android view, native Rust-Xcode linking, simulator/device validation, and App Store signing. The Rust crate and C ABI exist separately under `mobile/crates/barter-core` and will be wired into both platforms in a later controlled integration. Run `cargo test --workspace` from `mobile` when Rust is available.
+The Rust static library exports `barter_mode_allows_sale` and `barter_mode_allows_exchange` with a stable C ABI. `scripts/build-rust.sh` produces a signed-independent `XCFramework` from the same Rust source for physical iOS devices and ARM64/Intel iOS simulators. XcodeGen links the framework. SwiftUI invokes both functions in `RustCapabilities.explanation`, which provides the description immediately under the real mode switch.
 
-See `mobile/docs/PROTOTYPE_ACCEPTANCE.md`. Do not merge or deploy without review and authorization.
+The visual logo uses a SwiftUI vector shape transcribed from the existing `apps/web/public/brand/bubble-b-v3.svg`. It is not a new generated logo.
+
+The public home screen consumes `GET /categories` and `GET /listings` from the existing API. It has search, sale/exchange/both mode filters, categories, images, empty/loading/error states, retry, and native tabs. Other screens are explicit placeholders. No fabricated listings are shown.
+
+## Limitations
+
+**Not yet compiled, run in Xcode or visually verified.** The build script and integration are source-configured, not independently proven to work on a physical device. No changes have been made to signing, deployment or production. Other approved hero/category imagery has not yet been ported, so the native home view is not pixel-perfect. Android remains a reserved directory.
+
+See `mobile/docs/PROTOTYPE_ACCEPTANCE.md` for the device verification gates. Do not merge or deploy without explicit review and permission.
