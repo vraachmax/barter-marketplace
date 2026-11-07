@@ -79,3 +79,26 @@ mod tests {
         assert_eq!(barter_mode_allows_sale(2), 1);
     }
 }
+
+// Android JNI bridge (package app.barter.mobile, Kotlin object RustBridge).
+// JNI's first two opaque pointers are JNIEnv and jclass; we do not dereference them.
+// Keep native method names and package in sync with Android/RustBridge.kt.
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "system" fn Java_app_barter_mobile_RustBridge_nativeAllowsSale(
+    _env: *mut core::ffi::c_void,
+    _class: *mut core::ffi::c_void,
+    mode: i32,
+) -> i32 {
+    barter_mode_allows_sale(mode)
+}
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "system" fn Java_app_barter_mobile_RustBridge_nativeAllowsExchange(
+    _env: *mut core::ffi::c_void,
+    _class: *mut core::ffi::c_void,
+    mode: i32,
+) -> i32 {
+    barter_mode_allows_exchange(mode)
+}
