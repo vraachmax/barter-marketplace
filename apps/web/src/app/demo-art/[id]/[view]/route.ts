@@ -21,7 +21,7 @@ function xmlEscape(s: string) {
 }
 function illustration(index:number,variant:number,color:string) {
   const x=variant===1?450:430;
-  const group=Math.floor(index/5)%5;
+  const group=[0,1,1,1,4,4,2,2,3,3,0,1,4,2,3,0,1,4,2,3,0,1,4,2,3,0,1,4,2,3][index];
   switch(group) {
     case 0: return `<rect x="${x-110}" y="128" width="220" height="294" rx="34" fill="#1f2937"/>
       <rect x="${x-97}" y="142" width="194" height="260" rx="21" fill="#f8fafc"/>
