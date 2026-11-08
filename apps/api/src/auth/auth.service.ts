@@ -42,7 +42,7 @@ export class AuthService {
       },
       select: { id: true },
     });
-    return { token: this.sign(user.id) };
+    return { token: this.sign(user.id, user.tokenVersion) };
   }
 
   async login(dto: LoginDto) {
@@ -84,9 +84,9 @@ export class AuthService {
           providerAccountId: profile.id,
         },
       },
-      select: { userId: true },
+      select: { userId: true, user: { select: {tokenVersion:true} } },
     });
-    if (existingAccount) return { token: this.sign(existingAccount.userId) };
+    if (existingAccount) return { token: this.sign(existingAccount.userId, existingAccount.user.tokenVersion) };
 
     const name =
       profile.real_name?.trim() ||
@@ -97,10 +97,10 @@ export class AuthService {
         .trim() ||
       null;
 
-    const userId = await this.prisma.$transaction(async (tx) => {
+    const account = await this.prisma.$transaction(async (tx) => {
       const existingUser = await tx.user.findUnique({
         where: { email },
-        select: { id: true, name: true },
+        select: { id: true, name: true, tokenVersion: true },
       });
       const user = existingUser
         ? existingUser.name || !name
@@ -108,11 +108,11 @@ export class AuthService {
           : await tx.user.update({
               where: { id: existingUser.id },
               data: { name },
-              select: { id: true, name: true },
+              select: { id: true, name: true, tokenVersion: true },
             })
         : await tx.user.create({
             data: { email, passwordHash: null, name },
-            select: { id: true, name: true },
+            select: { id: true, name: true, tokenVersion: true },
           });
 
       await tx.oAuthAccount.create({
