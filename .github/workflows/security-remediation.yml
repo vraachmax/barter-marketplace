@@ -31,6 +31,8 @@ jobs:
         run: npm update body-parser qs undici zod fast-uri follow-redirects --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Verify dependency lock consistency
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Enforce patched package versions in the resolved lockfile
+        run: node scripts/check-security-lockfile.cjs
       - name: Generate Prisma client
         run: npx prisma generate --schema apps/api/prisma/schema.prisma
       - name: API build
