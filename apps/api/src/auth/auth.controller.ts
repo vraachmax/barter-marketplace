@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Get,
   Patch,
@@ -103,10 +104,9 @@ export class AuthController {
       return res.redirect(
         `${webUrl}/auth/yandex/callback#token=${encodeURIComponent(token)}`,
       );
-    } catch {
-      return res.redirect(
-        `${webUrl}/auth/yandex/callback?error=exchange_failed`,
-      );
+    } catch (error) {
+      const code = error instanceof ConflictException ? 'account_link_required' : 'exchange_failed';
+      return res.redirect(`${webUrl}/auth/yandex/callback?error=${code}`);
     }
   }
 
