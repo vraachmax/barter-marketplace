@@ -2,6 +2,7 @@ import { MARKETPLACE_CATEGORY_TREE,MARKETPLACE_REQUIRED_ROOTS,validateCategorySe
 import {fieldsForRoot,fieldsForCategory,CATALOG_OPTION_KEYS} from './marketplace-attribute-presets';
 import generationCatalog from './car-generations-2026.10.05.json';
 import {carCatalog} from './car-catalog';
+import { ELECTRONICS_MODELS, ELECTRONICS_BRAND_LABELS, electronicModelId } from './electronics-model-catalog';
 describe('Multi-vertical catalog v5',()=>{
  it('has a real two-level category hierarchy with unique stable slugs',()=>{
    expect(MARKETPLACE_CATEGORY_TREE.length).toBeGreaterThanOrEqual(180);
@@ -26,7 +27,22 @@ describe('Multi-vertical catalog v5',()=>{
    expect(fieldsForCategory('auto','auto-special-equipment').map(f=>f.key)).toContain('operating_hours');
    expect(CATALOG_OPTION_KEYS).toContain('item_condition');
  });
- it('preserves automotive verified parent-model relationships',()=>{
+ it('has scoped brand/model hierarchies in phones, laptops, tablets, games and televisions',()=>{
+   expect(Object.keys(ELECTRONICS_MODELS)).toHaveLength(5);
+   let count=0;
+   for(const [,brands] of Object.entries(ELECTRONICS_MODELS)) {
+     for(const [brand,models] of Object.entries(brands)) {
+       expect(ELECTRONICS_BRAND_LABELS[brand]).toBeTruthy();
+       expect(models.length).toBeGreaterThan(0);
+       expect(new Set(models.map(model=>electronicModelId(brand,model))).size).toBe(models.length);
+       count+=models.length;
+     }
+   }
+   expect(count).toBeGreaterThanOrEqual(180);
+   expect(fieldsForCategory('electronics','electronics-phones').map(field=>field.key))
+    .toEqual(expect.arrayContaining(['device_brand','device_model']));
+ });
+  it('preserves automotive verified parent-model relationships',()=>{
    const models=new Set(carCatalog.models.map(x=>x.id));
    expect(carCatalog.makes.length).toBeGreaterThanOrEqual(308);
    expect(carCatalog.models.length).toBeGreaterThanOrEqual(5455);
