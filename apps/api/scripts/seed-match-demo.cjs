@@ -5,6 +5,7 @@
  */
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { buildAlbums } = require('./commons-demo-photos.cjs');
 const slugOrder = ['electronics','hobby','home','clothes','kids'];
 const offerings = [
   ['iPhone 13 128 ГБ', 29000], ['PlayStation 5 Digital', 38000],
@@ -41,6 +42,8 @@ async function main() {
   const ids = new Map(categories.map(row => [row.slug,row.id]));
   const missing = slugOrder.filter(slug => !ids.has(slug));
   if (missing.length) throw new Error('Missing required category slugs: ' + missing.join(', '));
+  // Resolve all real, licensed photos before creating a single user or listing.
+  const albums = await buildAlbums(2);
   let count = 0;
   for (let i=0; i<15; i++) {
     // Invalid reserved domain: cannot be mistaken for a real person's inbox.
@@ -67,13 +70,19 @@ async function main() {
         description: 'ТЕСТОВОЕ ОБЪЯВЛЕНИЕ. Товар вымышленный, не продаётся и не обменивается. Для проверки Barter Match.',
         priceRub, city: 'Краснодар', saleEnabled: j===0, barterEnabled: true,
         exchangePreferences, categoryId: ids.get(categoryFor(k)), ownerId: user.id,
-        status: 'ACTIVE', attributes: { isDemo: true, isBarter: true },
+        status: 'ACTIVE', attributes: { isDemo: true, isBarter: true,
+          demoPhotoCredits: albums[k].map(({source,author,license,title})=>({source,author,license,title})) },
       };
       await prisma.listing.upsert({where:{id},create:{id,...data},update:data});
+      // Only manage fixture images; do not delete real user uploads.
+      await prisma.listingImage.deleteMany({where:{listingId:id}});
+      await prisma.listingImage.createMany({data:albums[k].map((photo,sortOrder)=>({
+        listingId:id,sortOrder,url:photo.url,
+      }))});
       count++;
     }
   }
-  console.log('Created/updated 15 labelled DEMO users and ' + count + ' DEMO listings.');
+  console.log('Created/updated 15 labelled DEMO users and ' + count + ' DEMO listings with real licensed photo galleries.');
   console.log('If Meilisearch is enabled, run the existing active-listing reindex job.');
 }
 main().catch(err=>{console.error(err);process.exitCode=1;}).finally(()=>prisma.$disconnect());
