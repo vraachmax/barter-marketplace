@@ -54,7 +54,7 @@ jobs:
       - name: Validate clean install
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Generate Prisma client
-        run: npx prisma generate --schema apps/api/prisma/schema.prisma
+        run: node apps/api/node_modules/prisma/build/index.js generate --schema apps/api/prisma/schema.prisma
       - name: API unit tests
         run: npm run test -w @app/api -- --runInBand
       - name: Web unit tests
