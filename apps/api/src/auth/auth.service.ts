@@ -16,8 +16,8 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-  private sign(userId: string) {
-    return this.jwt.sign({ sub: userId });
+  private sign(userId: string, tokenVersion: number) {
+    return this.jwt.sign({ sub: userId, ver: tokenVersion });
   }
 
   async register(dto: RegisterDto) {
@@ -40,7 +40,7 @@ export class AuthService {
         phone: dto.phone ?? null,
         passwordHash,
       },
-      select: { id: true },
+      select: { id: true, tokenVersion: true },
     });
     return { token: this.sign(user.id, user.tokenVersion) };
   }
@@ -63,7 +63,7 @@ export class AuthService {
 
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException();
-    return { token: this.sign(user.id) };
+    return { token: this.sign(user.id, user.tokenVersion) };
   }
 
   async loginWithYandex(profile: {
@@ -122,10 +122,10 @@ export class AuthService {
           userId: user.id,
         },
       });
-      return user.id;
+      return { id: user.id, tokenVersion: user.tokenVersion };
     });
 
-    return { token: this.sign(userId) };
+    return { token: this.sign(account.id, account.tokenVersion) };
   }
 
   async me(userId: string) {
@@ -230,10 +230,11 @@ export class AuthService {
     if (!valid) throw new BadRequestException('wrong_current_password');
 
     const newHash = await bcrypt.hash(dto.newPassword, 10);
-    await this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash: newHash },
+      data: { passwordHash: newHash, tokenVersion: { increment: 1 } },
+      select: { tokenVersion: true },
     });
-    return { ok: true, token: this.sign(userId) };
+    return { ok: true, token: this.sign(userId, updated.tokenVersion) };
   }
 }
