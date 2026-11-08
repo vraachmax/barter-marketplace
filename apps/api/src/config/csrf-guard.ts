@@ -30,11 +30,9 @@ export function isAllowedCookieMutation(input: {
       !input.cookies.token) return true;
   const { headers } = input;
   const originHeader = firstHeader(headers,'origin');
-  const fetchSite = firstHeader(headers,'sec-fetch-site');
-  if (fetchSite === 'cross-site') return false;
-  // Modern browsers send Origin on cross-origin and unsafe same-origin requests.
-  // Missing origin is rejected for cookie-authenticated mutation even if Referer
-  // is present: opaque/null origins must not silently acquire privileges.
+  // Trust the exact Origin allowlist, not Sec-Fetch-Site: Render and Vercel
+  // legitimately have different registrable domains (cross-site).
+  // Missing/null origin is rejected for cookie-authenticated writes.
   const origin = requestOrigin(originHeader);
   if (!origin) return false;
   return origin === input.ownOrigin || input.allowedOrigins.has(origin);
