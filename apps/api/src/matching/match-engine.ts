@@ -7,6 +7,7 @@ export type MatchListing = {
   id: string; ownerId: string; categoryId: string; title: string; city: string;
   barterEnabled: boolean; status: string; priceRub: number | null;
   exchangePreferences?: unknown;
+  attributes?: unknown;
 };
 export type MatchEvent = {
   userId: string; categoryId: string;
@@ -20,6 +21,8 @@ export type MatchResult = {
 type Prefs = {
   anyOffer?: boolean; wantedCategoryIds?: string[]; wantedDescription?: string;
   canAddCash?: boolean; acceptsCash?: boolean; maxCashRub?: number | null;
+  handoffMethods?: string[];
+  wantedItems?: Array<{ categoryId: string; attributes: Record<string,string> }>;
 };
 const bounded = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 const eventWeights: Record<MatchEvent['type'], number> = {
@@ -33,10 +36,20 @@ const words = (s: string) => new Set(s.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu)
 function desire(source: MatchListing, target: MatchListing) {
   const p = prefs(source.exchangePreferences);
   const categories = Array.isArray(p.wantedCategoryIds) ? p.wantedCategoryIds : [];
-  if (categories.includes(target.categoryId)) return { score: 1, reason: 'Подходит желаемая категория' };
+  const items = Array.isArray(p.wantedItems) ? p.wantedItems : [];
+  const attributeMatch = items.find(item => item.categoryId === target.categoryId &&
+    target.attributes && typeof target.attributes === 'object' &&
+    Object.entries(item.attributes ?? {}).every(([key,value]) =>
+      (target.attributes as Record<string,unknown>)[key] === value));
+  if (attributeMatch) return { score: 1, reason: 'Совпадают категория и характеристики' };
+  if (categories.includes(target.categoryId)) return { score: 0.95, reason: 'Подходит желаемая категория' };
   const requested = typeof p.wantedDescription === 'string' ? p.wantedDescription : '';
   const a = words(requested), b = words(target.title);
-  if (a.size && [...a].some(token => b.has(token))) return { score: 0.85, reason: 'Совпадает с пожеланием' };
+  // Common Russian filler words must not create accidental matches.
+  const stopwords = new Set(['обмен','обмена','хочу','хотел','рассмотрю','товар','другой','доплата','купить','можно','любой']);
+  const useful = [...a].filter(token => !stopwords.has(token));
+  if (useful.length > 0 && useful.some(token => b.has(token)))
+    return { score: 0.85, reason: 'Совпадает с пожеланием' };
   if (p.anyOffer) return { score: 0.42, reason: 'Рассматривает разные предложения' };
   return { score: 0, reason: '' };
 }
@@ -71,10 +84,18 @@ export function matchListings(
   return candidates.flatMap((other): MatchResult[] => {
     if (other.id === mine.id || other.ownerId === mine.ownerId ||
         !other.barterEnabled || other.status !== 'ACTIVE') return [];
+    // No common handoff method means the offer needs explicit, separate consent;
+    // it must not appear as a ready-made compatible match.
+    const ours = prefs(mine.exchangePreferences).handoffMethods;
+    const theirs = prefs(other.exchangePreferences).handoffMethods;
+    if (Array.isArray(ours) && ours.length && Array.isArray(theirs) && theirs.length &&
+        !ours.some(method => theirs.includes(method))) return [];
     const forward = desire(mine, other), backward = desire(other, mine);
     if (!forward.score || !backward.score) return [];
     const reasons = [forward.reason, backward.reason === forward.reason ? 'Обоюдный интерес' : 'Вторая сторона: ' + backward.reason];
     let score = 70 * Math.min(forward.score, backward.score) + 15 * ((forward.score + backward.score) / 2);
+    if (Array.isArray(ours) && Array.isArray(theirs) && ours.some(method => theirs.includes(method)))
+      reasons.push('Совместимый способ передачи');
     if (mine.city.trim().toLowerCase() === other.city.trim().toLowerCase()) {
       score += 8; reasons.push('Один город');
     }
@@ -87,7 +108,8 @@ export function matchListings(
       const payeePrefs = prefs(cashGapRub > 0 ? other.exchangePreferences : mine.exchangePreferences);
       if (cashGapRub !== 0 && (payerPrefs.canAddCash === false || payeePrefs.acceptsCash === false ||
           (typeof payerPrefs.maxCashRub === 'number' && Math.abs(cashGapRub) > payerPrefs.maxCashRub))) {
-        score -= 25; reasons.push('Нужна договорённость о доплате');
+        // This is a hard constraint, not a soft ranking penalty.
+        return [];
       }
     }
     // Learned signal can only fine-tune, never override reciprocal intent.
