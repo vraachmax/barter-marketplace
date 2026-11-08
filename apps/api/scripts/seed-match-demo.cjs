@@ -42,13 +42,28 @@ async function main() {
   const ids = new Map(categories.map(row => [row.slug,row.id]));
   const missing = slugOrder.filter(slug => !ids.has(slug));
   if (missing.length) throw new Error('Missing required category slugs: ' + missing.join(', '));
-  // Resolve all real, licensed photos before creating a single user or listing.
-  const albums = await buildAlbums(2);
+  // Original SVG demo art is self-hosted, versioned with the web application.
+  // Never fake photos of merchandise we do not own.
+  const origin = process.env.DEMO_ASSET_ORIGIN || 'https://web-one-blond-66.vercel.app';
+  const albums = process.env.DEMO_IMAGE_MODE === 'illustration'
+    ? offerings.map((offering, index) => [1,2].map(view => ({
+        url: origin + '/demo-art/' + (index+1) + '/' + view,
+        source: origin + '/demo-art/' + (index+1) + '/' + view,
+        author:'Barter',license:'Original illustration',
+        title:'Демо-иллюстрация: ' + offering[0] + ', ракурс ' + view,
+      })))
+    : await buildAlbums(2);
+  if(albums.length!==30 || albums.some(album=>album.length<2 ||
+      album.some(photo=>!photo.url.startsWith('https://'))))
+    throw new Error('Incomplete demo albums. Database unchanged.');
+  console.log('Prepared',albums.length,'demo albums, first:',
+    albums[0].map(photo=>photo.url).join(', '));
   let count = 0;
+  await prisma.$transaction(async tx => {
   for (let i=0; i<15; i++) {
     // Invalid reserved domain: cannot be mistaken for a real person's inbox.
     const email = 'match-demo-' + String(i+1).padStart(2,'0') + '@example.invalid';
-    const user = await prisma.user.upsert({
+    const user = await tx.user.upsert({
       where: {email},
       create: {email, name: 'ДЕМО · ' + names[i], about: 'Тестовый профиль Barter. Объявления не являются реальными предложениями.'},
       update: {name: 'ДЕМО · ' + names[i], about: 'Тестовый профиль Barter. Объявления не являются реальными предложениями.'},
@@ -68,23 +83,24 @@ async function main() {
       const data = {
         title: '[ДЕМО] ' + title,
         description: 'ТЕСТОВОЕ ОБЪЯВЛЕНИЕ. Товар вымышленный, не продаётся и не обменивается. Фотографии иллюстрируют тип товара, могут не соответствовать конкретной модели или комплектации и не отражают реальное состояние. Для проверки Barter Match.\\n\\n' +
-          'Источники и авторы изображений (открытые лицензии):\\n' +
+          'Иллюстрации, источники и авторы:\\n' +
           albums[k].map((photo,index)=>(index+1)+'. '+photo.author+' · '+photo.license+' · '+photo.source).join('\\n'),
         priceRub, city: 'Краснодар', saleEnabled: j===0, barterEnabled: true,
         exchangePreferences, categoryId: ids.get(categoryFor(k)), ownerId: user.id,
         status: 'ACTIVE', attributes: { isDemo: true, isBarter: true,
           demoPhotoCredits: albums[k].map(({source,author,license,title})=>({source,author,license,title})) },
       };
-      await prisma.listing.upsert({where:{id},create:{id,...data},update:data});
+      await tx.listing.upsert({where:{id},create:{id,...data},update:data});
       // Only manage fixture images; do not delete real user uploads.
-      await prisma.listingImage.deleteMany({where:{listingId:id}});
-      await prisma.listingImage.createMany({data:albums[k].map((photo,sortOrder)=>({
+      await tx.listingImage.deleteMany({where:{listingId:id}});
+      await tx.listingImage.createMany({data:albums[k].map((photo,sortOrder)=>({
         listingId:id,sortOrder,url:photo.url,
       }))});
       count++;
     }
   }
-  console.log('Created/updated 15 labelled DEMO users and ' + count + ' DEMO listings with real licensed photo galleries.');
+  }, { timeout: 45000 });
+  console.log('Created/updated 15 labelled DEMO users and ' + count + ' DEMO listings with verified source galleries.');
   console.log('If Meilisearch is enabled, run the existing active-listing reindex job.');
 }
 main().catch(err=>{console.error(err);process.exitCode=1;}).finally(()=>prisma.$disconnect());
