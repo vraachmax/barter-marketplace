@@ -48,6 +48,6 @@ describe('Multi-vertical catalog v5',()=>{
    expect(carCatalog.models.length).toBeGreaterThanOrEqual(5455);
    expect(generationCatalog.generations.every(x=>models.has(x.modelId))).toBe(true);
    expect(new Set(generationCatalog.generations.map(x=>x.id)).size).toBe(generationCatalog.generations.length);
-   expect(new Set(generationCatalog.generations.map(x=>x.modelId))).toEqual(new Set(['bmw/3-series','bmw/x5','toyota/camry','volkswagen/golf','mercedes-benz/c-class','bmw/x3']));
+   expect(new Set(generationCatalog.generations.map(x=>x.modelId))).toEqual(new Set(['bmw/3-series','bmw/x5','toyota/camry','volkswagen/golf','mercedes-benz/c-class','bmw/x3','volkswagen/passat','volkswagen/polo']));
  });
 });
