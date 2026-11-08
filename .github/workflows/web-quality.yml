@@ -20,6 +20,49 @@ permissions:
   contents: read
 
 jobs:
+  regenerate-security-lock:
+    if: github.event_name == 'pull_request' && github.head_ref == 'security/remediate-deps-2026-11-08'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Resolve patched packages with npm (no force)
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm update body-parser qs undici zod fast-uri follow-redirects --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Lockfile security gate
+        run: node scripts/check-security-lockfile.cjs
+      - name: Validate clean install
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Generate Prisma client
+        run: npx prisma generate --schema apps/api/prisma/schema.prisma
+      - name: API unit tests
+        run: npm run test -w @app/api -- --runInBand
+      - name: Web unit tests
+        run: npm run test -w @app/web
+      - name: API build
+        run: npm run build -w @app/api
+      - name: Web build
+        run: npm run build -w @app/web -- --webpack
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Commit validated lockfile only
+        run: |
+          if git diff --quiet -- package-lock.json; then echo 'No lockfile delta'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'security: commit resolved and tested npm lockfile'
+          git push origin HEAD:security/remediate-deps-2026-11-08
   web-quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
