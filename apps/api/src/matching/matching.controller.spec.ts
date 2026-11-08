@@ -42,7 +42,7 @@ describe('Barter Match ownership and API response', () => {
     expect(result.matches[0].listingId).toBe('other');
     expect(result.matches[0].listing?.images).toHaveLength(1);
     expect(result.matches[0].mutual).toBe(true);
-    expect(result.algorithmVersion).toBe('match-v2-heuristic');
+    expect('algorithmVersion' in result && result.algorithmVersion).toBe('match-v2-heuristic');
   });
   it('returns no candidate data for archived listing',async()=>{
     prisma.listing.findUnique.mockResolvedValue({...mine,status:'ARCHIVED'});
