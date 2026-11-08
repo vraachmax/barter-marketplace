@@ -1,0 +1,66 @@
+{
+  "bmw/3-series": {
+    "source": "https://www.bmwgroup.com/en/news/general/2025/50-years-BMW-3-series.html",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  },
+  "bmw/x5": {
+    "source": "https://www.bmwgroup.com/en/news/general/2026/the-new-bmw-x5.html",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  },
+  "toyota/camry": {
+    "source": "https://global.toyota/en/mobility/toyota-brand/gallery/camry.html",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  },
+  "volkswagen/golf": {
+    "source": "https://www.volkswagen-newsroom.com/en/press-releases/a-world-bestseller-celebrates-its-50th-birthday-volkswagen-started-production-of-the-first-golf-on-29-march-1974-18313",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  },
+  "mercedes-benz/c-class": {
+    "source": "https://media.mercedes-benz.com/article/3c077846-2100-4fbd-ba93-b1c15e9d33dd",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  },
+  "bmw/x3": {
+    "source": "https://www.press.bmwgroup.com/poland/photo/compilation/T0443197PL/nowe-bmw-x3?language=pl",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  },
+  "volkswagen/passat": {
+    "source": "https://www.volkswagen-newsroom.com/en/passat-19532",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  },
+  "volkswagen/polo": {
+    "source": "https://www.volkswagen-newsroom.com/en/50-years-of-polo-2025-18618",
+    "verifiedAt": "2026-11-08",
+    "granularity": "generation_family",
+    "market": "varies",
+    "status": "manual_reviewed",
+    "notes": "Engine/trim/market variants are not automatically inferred"
+  }
+}
