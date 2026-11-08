@@ -56,11 +56,11 @@ async function main() {
     for (let j=0; j<2; j++) {
       const k=i*2+j, [title, priceRub] = offerings[k];
       // Every counterpart category appears in a concrete wanted list; anyOffer allows wider discovery.
-      const theirIndex = (i + (j===0 ? 1 : 14)) % 15;
-      const wantSlug = categoryFor(theirIndex*2 + (1-j));
+      const theirIndex = i === 14 ? 0 : (i % 2 === 0 ? i + 1 : i - 1);
+      const wantSlug = categoryFor(theirIndex*2 + j);
       const exchangePreferences = {
         anyOffer: true, wantedCategoryIds: [ids.get(wantSlug)],
-        wantedDescription: 'Рассмотрю обмен на ' + (offerings[theirIndex*2+(1-j)][0]),
+        wantedDescription: 'Рассмотрю обмен на ' + (offerings[theirIndex*2+j][0]),
         canAddCash: true, acceptsCash: true, maxCashRub: 20000,
         handoffMethods: ['MEETING', 'DELIVERY'],
       };
