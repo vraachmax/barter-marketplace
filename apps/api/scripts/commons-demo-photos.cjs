@@ -16,6 +16,16 @@ const SEARCH_TERMS = [
   'child scooter', 'iPhone SE 2022', 'gaming keyboard', 'Braun blender',
   'winter puffer jacket', 'high chair baby',
 ];
+const FALLBACK_TERMS = [
+  'smartphone', 'game console', 'laptop computer', 'handheld game console',
+  'robot vacuum cleaner', 'espresso coffee machine', 'leather jacket', 'sneakers',
+  'baby stroller', 'child bicycle', 'Samsung smartphone', 'game console',
+  'cordless vacuum cleaner', 'wool coat', 'baby car seat', 'tablet computer',
+  'video game controller', 'microwave oven', 'sneakers', 'wooden baby crib',
+  'Google smartphone', 'computer monitor', 'rice cooker', 'travel backpack',
+  'child scooter', 'Apple smartphone', 'mechanical keyboard', 'hand blender',
+  'winter jacket', 'baby high chair',
+];
 const ACCEPTED = /^(?:CC0(?: 1\.0)?|CC BY(?:-SA)?(?: [1-4]\.0)?|Public domain)$/i;
 function plain(html) {
   return String(html || '').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').trim().slice(0,300);
@@ -107,6 +117,12 @@ async function buildAlbums(minPhotos=2) {
   for (let index=0;index<SEARCH_TERMS.length;index++) {
     const term=SEARCH_TERMS[index];
     const hits=await discoverPhotos(term);
+    // If the exact model has too few licensed photos, use images of the
+    // clearly labelled product TYPE rather than fabricate exact-model photos.
+    if(new Set(hits.map(hit=>hit.url)).size < minPhotos) {
+      const broad=await queryOpenverse(FALLBACK_TERMS[index]);
+      hits.push(...broad);
+    }
     // Be considerate to the public Openverse service; requests are serial.
     if(commonsRateLimited) await new Promise(resolve=>setTimeout(resolve,1100));
     const unique=[...new Map(hits.map(hit=>[hit.url,hit])).values()].slice(0,4);
@@ -118,4 +134,4 @@ async function buildAlbums(minPhotos=2) {
   }
   return albums;
 }
-module.exports={buildAlbums,SEARCH_TERMS,ACCEPTED,queryOpenverse};
+module.exports={buildAlbums,SEARCH_TERMS,FALLBACK_TERMS,ACCEPTED,queryOpenverse};
