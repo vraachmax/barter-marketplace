@@ -1,5 +1,5 @@
 /** Versioned append-only taxonomy. Never rename published slugs or delete user categories. */
-export const MARKETPLACE_CATALOG_REVISION = 5;
+export const MARKETPLACE_CATALOG_REVISION = 6;
 export type CategorySeed = { slug:string; title:string; parent:string };
 export const MARKETPLACE_CATEGORY_TREE: readonly CategorySeed[] = [
   {
