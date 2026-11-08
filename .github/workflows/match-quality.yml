@@ -8,6 +8,8 @@ on:
       - 'apps/api/scripts/commons-demo-photos*'
       - 'apps/api/scripts/seed-match-demo.cjs'
       - 'apps/api/src/app.module.ts'
+      - 'apps/api/src/main.ts'
+      - 'apps/web/src/app/demo-art/**'
       - '.github/workflows/match-quality.yml'
   push:
     branches: [master]
@@ -49,5 +51,9 @@ jobs:
             console.log('Preflight PASS',albums.length,'albums',total,'licensed images');
           }).catch(error=>{console.error('Preflight FAIL',error.message);process.exitCode=1});
           NODE
+      - name: Check illustration seed without database writes
+        run: |
+          node --check apps/api/scripts/seed-match-demo.cjs
+          cd apps/api && DEMO_IMAGE_MODE=illustration node scripts/seed-match-demo.cjs
       - name: Check demo seed read-only by default
         run: node --check apps/api/scripts/seed-match-demo.cjs
