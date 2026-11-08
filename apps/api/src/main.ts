@@ -13,6 +13,13 @@ import { getUploadsDirectory, getUploadsRoot } from './storage/uploads-path';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new PrismaClientExceptionFilter());
+  // Safe defaults for static uploads and API JSON; do not alter CORS behavior.
+  app.use((_req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-Frame-Options', 'DENY');
+    next();
+  });
   const uploadsRoot = getUploadsRoot();
   mkdirSync(getUploadsDirectory('listings'), { recursive: true });
   mkdirSync(getUploadsDirectory('chat-media'), { recursive: true });
