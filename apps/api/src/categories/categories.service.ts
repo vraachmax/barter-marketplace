@@ -5,6 +5,7 @@ import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-optio
 import { catalogOwnerId, categoryRoot } from './category-hierarchy';
 import { carCatalog, CAR_CATALOG_REVISION } from './car-catalog';
 import generationCatalog from './car-generations-2026.10.05.json';
+import { ensureMarketplaceCatalog } from './marketplace-catalog-seed';
 
 @Injectable()
 export class CategoriesService {
@@ -113,6 +114,7 @@ export class CategoriesService {
       await this.ensureCarCatalog(auto.id);
       await this.ensureGenerationCatalog(auto.id);
     }
+    await ensureMarketplaceCatalog(this.prisma);
   }
 
   /** Resume safely after an interrupted seed; publish the fields only after all options exist. */
