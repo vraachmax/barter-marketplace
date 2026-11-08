@@ -16,7 +16,7 @@ const SEARCH_TERMS = [
   'child scooter', 'iPhone SE 2022', 'gaming keyboard', 'Braun blender',
   'winter puffer jacket', 'high chair baby',
 ];
-const ACCEPTED = /^(?:CC0|CC BY(?:[- ]SA)?(?: [1-4]\.0)?|Public domain)/i;
+const ACCEPTED = /^(?:CC0(?: 1\.0)?|CC BY(?:-SA)?(?: [1-4]\.0)?|Public domain)$/i;
 function plain(html) {
   return String(html || '').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').trim().slice(0,300);
 }
