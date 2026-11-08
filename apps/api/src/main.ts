@@ -5,12 +5,26 @@ import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { PrismaClientExceptionFilter } from './prisma/prisma-exception.filter';
 import { mkdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { resolve } from 'node:path';
 import express from 'express';
 import { getAllowedCorsOrigins } from './config/security';
 import { isAllowedCookieMutation } from './config/csrf-guard';
 import { getUploadsDirectory, getUploadsRoot } from './storage/uploads-path';
 
 async function bootstrap() {
+  // Explicit one-time deployment operation; disabled unless both flags set.
+  // A failure aborts this deploy (preserving the previous healthy service).
+  if (process.env.APPLY_DEMO_SEED === '1' &&
+      process.env.ALLOW_PUBLIC_DEMO_SEED === '1') {
+    console.log('[demo-seed] owner-approved demo catalog import starting');
+    execFileSync(process.execPath, [resolve(process.cwd(), 'scripts/seed-match-demo.cjs')], {
+      stdio: 'inherit',
+      timeout: 120000,
+      env: { ...process.env, DEMO_IMAGE_MODE: 'illustration' },
+    });
+    console.log('[demo-seed] import finished before API startup');
+  }
   const app = await NestFactory.create(AppModule);
   // Render places a single trusted reverse-proxy hop in front of Express.
   // Resolve actual client IP for per-IP throttling; never trust arbitrary hops.
