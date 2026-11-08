@@ -38,30 +38,56 @@ export function withCatalogFieldDefinitions(
   sections: ListingAttrSection[], schema: CatalogAttributeSchema | null,
 ): ListingAttrSection[] {
   if (!schema) return sections;
-  const fields = new Map(schema.fields.map((field) => [field.key, field]));
-  return sections.map((section) => {
-    const owned = schema.fields.find((field) => field.sectionId === section.id);
-    const mergedFields = [...section.fields];
-    for (const definition of schema.fields.filter(field => field.sectionId === section.id && field.fieldType === 'select')) {
-      if (mergedFields.some(field => field.key === definition.key)) continue;
-      const parentIndex = mergedFields.findIndex(field => field.key === definition.parentKey);
-      mergedFields.splice(parentIndex < 0 ? mergedFields.length : parentIndex + 1, 0, {
-        key: definition.key, label: definition.label, type: 'select',
-        ...(definition.key === 'auto_generation' ? { hint: 'Семейство поколения, не код кузова. Пока заполнено только для BMW 3 Series.' } : {}),
-      });
+  const fieldMap = new Map(schema.fields.map(field => [field.key, field]));
+  const seenKeys = new Set(sections.flatMap(section => section.fields.map(field => field.key)));
+  const asField = (definition:CatalogAttributeSchema['fields'][number]):ListingAttrField => ({
+    key: definition.key,label:definition.label,
+    type: ['select','number','text','textarea'].includes(definition.fieldType)
+      ? definition.fieldType as ListingAttrFieldType : 'text',
+    ...(definition.parentKey ? { dependsOn:definition.parentKey } : {}),
+    ...(definition.fieldType === 'select' ? {options:[]} : {}),
+    ...(definition.key === 'auto_generation'
+      ? {hint:'Поколения доступны только у моделей с подтверждённым справочником. Можно указать вручную в описании.'}
+      : {}),
+  });
+  const merged = sections.map(section => {
+    const own = schema.fields.filter(definition=>definition.sectionId===section.id);
+    const fields:ListingAttrField[]=[...section.fields];
+    for(const definition of own) {
+      if(seenKeys.has(definition.key)) continue;
+      const field=asField(definition);
+      const parentIndex=fields.findIndex(current=>current.key===definition.parentKey);
+      fields.splice(parentIndex<0?fields.length:parentIndex+1,0,field);
+      seenKeys.add(definition.key);
     }
+    const first=own[0];
     return {
       ...section,
-      title: owned?.sectionTitle ?? section.title,
-      fields: mergedFields.map((field) => {
-        const definition = fields.get(field.key);
-        return definition?.sectionId === section.id && definition.fieldType === 'select'
-          ? { ...field, label: definition.label, type: 'select' as const,
-              dependsOn: definition.parentKey ?? undefined, options: [] }
-          : field;
+      title:first?.sectionTitle??section.title,
+      fields:fields.map(field=>{
+        const definition=fieldMap.get(field.key);
+        if(!definition||definition.sectionId!==section.id)return field;
+        if(definition.fieldType==='select')return {
+          ...field,label:definition.label,type:'select' as const,
+          dependsOn:definition.parentKey??undefined,options:[],
+        };
+        return field;
       }),
     };
   });
+  // New category templates may define sections unknown to the old static form.
+  // Surface them instead of silently dropping every new catalog field.
+  const additional=new Map<string,ListingAttrSection>();
+  for(const definition of schema.fields) {
+    if(seenKeys.has(definition.key))continue;
+    const section=additional.get(definition.sectionId)??{
+      id:definition.sectionId,title:definition.sectionTitle,fields:[],
+    };
+    section.fields.push(asField(definition));
+    additional.set(definition.sectionId,section);
+    seenKeys.add(definition.key);
+  }
+  return [...merged,...additional.values()];
 }
 
 /** Overlay server-owned choices without changing the existing field layout. */
