@@ -33,6 +33,24 @@ describe('Barter Match', () => {
     const affinity=learnCategoryAffinity(events,'u1',now);
     expect(affinity.get('games')).toBeGreaterThan(affinity.get('phones') ?? 0);
   });
+  it('rejects incompatible delivery modes', () => {
+    const left=listing({exchangePreferences:{anyOffer:false,wantedCategoryIds:['games'],
+      handoffMethods:['MEETING']}});
+    const right=listing({...mutual,exchangePreferences:{anyOffer:false,wantedCategoryIds:['phones'],
+      handoffMethods:['DELIVERY']}});
+    expect(matchListings(left,[right])).toEqual([]);
+  });
+  it('rejects impossible additional cash rather than hiding the failure in a score', () => {
+    const left=listing({exchangePreferences:{anyOffer:false,wantedCategoryIds:['games'],
+      canAddCash:false}});
+    expect(matchListings(left,[mutual])).toEqual([]);
+  });
+  it('prioritizes structured attribute matches', () => {
+    const left=listing({exchangePreferences:{anyOffer:false,wantedCategoryIds:[],
+      wantedItems:[{categoryId:'games',attributes:{generation:'5'}}]}});
+    const right=listing({...mutual,attributes:{generation:'5'}});
+    expect(matchListings(left,[right])[0].reasons).toContain('Совпадают категория и характеристики');
+  });
   it('never makes learning override missing reciprocal intent', () => {
     const affinity=new Map([['games',1]]);
     const rejected=listing({...mutual,exchangePreferences:{anyOffer:false,wantedCategoryIds:[]}});
