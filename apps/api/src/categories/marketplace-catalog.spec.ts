@@ -5,7 +5,7 @@ import {carCatalog} from './car-catalog';
 import { ELECTRONICS_MODELS, ELECTRONICS_BRAND_LABELS, electronicModelId } from './electronics-model-catalog';
 describe('Multi-vertical catalog v5',()=>{
  it('has a real two-level category hierarchy with unique stable slugs',()=>{
-   expect(MARKETPLACE_CATEGORY_TREE.length).toBeGreaterThanOrEqual(180);
+   expect(MARKETPLACE_CATEGORY_TREE.length).toBeGreaterThanOrEqual(210);
    expect(MARKETPLACE_REQUIRED_ROOTS).toHaveLength(9);
    expect(()=>validateCategorySeed(MARKETPLACE_CATEGORY_TREE)).not.toThrow();
    expect(new Set(MARKETPLACE_CATEGORY_TREE.map(x=>x.slug)).size).toBe(MARKETPLACE_CATEGORY_TREE.length);
@@ -28,7 +28,7 @@ describe('Multi-vertical catalog v5',()=>{
    expect(CATALOG_OPTION_KEYS).toContain('item_condition');
  });
  it('has scoped brand/model hierarchies in phones, laptops, tablets, games and televisions',()=>{
-   expect(Object.keys(ELECTRONICS_MODELS)).toHaveLength(5);
+   expect(Object.keys(ELECTRONICS_MODELS)).toHaveLength(7);
    let count=0;
    for(const [,brands] of Object.entries(ELECTRONICS_MODELS)) {
      for(const [brand,models] of Object.entries(brands)) {
@@ -48,6 +48,6 @@ describe('Multi-vertical catalog v5',()=>{
    expect(carCatalog.models.length).toBeGreaterThanOrEqual(5455);
    expect(generationCatalog.generations.every(x=>models.has(x.modelId))).toBe(true);
    expect(new Set(generationCatalog.generations.map(x=>x.id)).size).toBe(generationCatalog.generations.length);
-   expect(new Set(generationCatalog.generations.map(x=>x.modelId))).toEqual(new Set(['bmw/3-series','bmw/x5','toyota/camry']));
+   expect(new Set(generationCatalog.generations.map(x=>x.modelId))).toEqual(new Set(['bmw/3-series','bmw/x5','toyota/camry','volkswagen/golf','mercedes-benz/c-class','bmw/x3']));
  });
 });
