@@ -255,6 +255,45 @@ export const ELECTRONICS_MODELS:Readonly<Record<string,Readonly<Record<string,re
       "U8K",
       "A6K"
     ]
+  },
+  "electronics-photo-video": {
+    "canon": [
+      "EOS R5",
+      "EOS R5 Mark II",
+      "EOS R6",
+      "EOS R6 Mark II",
+      "EOS R7",
+      "EOS R8",
+      "EOS R10",
+      "EOS R50",
+      "EOS R50 V",
+      "EOS R100",
+      "EOS RP",
+      "EOS R1",
+      "EOS R3"
+    ],
+    "sony": [
+      "Alpha 7 III",
+      "Alpha 7 IV",
+      "Alpha 7 V",
+      "Alpha 7R V",
+      "Alpha 7R VI",
+      "Alpha 7C II",
+      "Alpha 7CR",
+      "Alpha 1",
+      "Alpha 1 II",
+      "ZV-E10"
+    ]
+  },
+  "electronics-appliances": {
+    "dyson": [
+      "V8",
+      "V10",
+      "V11",
+      "V12 Detect Slim",
+      "V15 Detect",
+      "Gen5detect"
+    ]
   }
 } as const;
 export const ELECTRONICS_BRAND_LABELS:Readonly<Record<string,string>>={
@@ -280,7 +319,9 @@ export const ELECTRONICS_BRAND_LABELS:Readonly<Record<string,string>>={
   "valve": "Valve",
   "lg": "LG",
   "tcl": "TCL",
-  "hisense": "Hisense"
+  "hisense": "Hisense",
+  "canon": "Canon",
+  "dyson": "Dyson"
 } as const;
 export function electronicModelId(brand:string,model:string):string {
   const code=model.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');

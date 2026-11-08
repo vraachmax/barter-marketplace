@@ -43,6 +43,6 @@ describe('VehiclesDB seed', () => {
     const calls = option.createMany.mock.calls.length;
     await service.ensureSeed();
     expect(option.createMany.mock.calls.length).toBe(calls + 1); // small starter fields remain idempotent
-    expect(revision).toBe(6);
+    expect(revision).toBe(7);
   });
 });

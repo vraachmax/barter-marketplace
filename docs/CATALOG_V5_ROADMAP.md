@@ -3,8 +3,8 @@
 ## Current release
 - 9 verticals, 199 versioned category/subcategory nodes (append-only, no renaming old IDs).
 - Dynamic server-owned attributes (text, numeric, select) per vertical/group.
-- Model dependent lookup: 311 automotive makes, 5,465 models; 23 verified generation families for just 3 model lines (BMW 3 Series, BMW X5, Toyota Camry). No invented generations.
-- Electronics: 182 curated product models across 5 families, 23 brands.
+- Model dependent lookup: 311 automotive makes, 5,465 models; 55 verified generation families for 8 model lines (BMW 3 Series/X5/X3, Toyota Camry, VW Golf/Passat/Polo, Mercedes C-Class). No invented generations.
+- Electronics: 211 curated product models across 7 families, 26 brands.
 - `GET /categories/coverage` reports exact coverage and missing verified automotive model generations.
 - `GET /categories/:id/auto-fill?selected=<JSON>` proposes a human-reviewed title using ONLY selected labels. No fictional storage, power, engine, area or trim.
 - `/new` now supports hierarchical category navigation and adding previously hidden server-defined attribute sections, with a user-confirmed title suggestion.
