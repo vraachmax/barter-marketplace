@@ -51,12 +51,64 @@ async function queryCommons(term) {
     });
   } finally {clearTimeout(timer);}
 }
+
+/** Openverse indexes Commons and other openly licensed collections.
+ * Use as a fallback when Wikimedia's API is rate-limited.
+ * The license filter is independently rechecked; Openverse metadata is not
+ * evidence that a given photograph depicts the advertised model accurately.
+ */
+async function queryOpenverse(term) {
+  const endpoint=new URL('https://api.openverse.org/v1/images/');
+  endpoint.searchParams.set('q',term);
+  endpoint.searchParams.set('license','cc0,by,by-sa,pdm');
+  endpoint.searchParams.set('page_size','20');
+  endpoint.searchParams.set('mature','false');
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),20000);
+  try {
+    const res=await fetch(endpoint,{signal:controller.signal,headers:{
+      'User-Agent':'Barter-Demo-Seed/1.1 (+https://github.com/vraachmax/barter-marketplace)',
+      'Accept':'application/json'
+    }});
+    if(!res.ok) throw new Error('Openverse HTTP '+res.status);
+    const json=await res.json();
+    return (json.results ?? []).flatMap(hit=>{
+      const type=String(hit.filetype||'').toLowerCase();
+      if(hit.mature || ['svg','gif'].includes(type)) return [];
+      const lic=String(hit.license||'').toLowerCase();
+      if(!['cc0','by','by-sa','pdm'].includes(lic)) return [];
+      const license=lic==='pdm'?'Public domain':lic==='cc0'?'CC0 1.0':
+        'CC '+lic.toUpperCase()+' '+String(hit.license_version||'4.0');
+      if(!ACCEPTED.test(license)) return [];
+      const img=String(hit.url||'');
+      const source=String(hit.foreign_landing_url||hit.detail_url||'');
+      if(!img.startsWith('https://') || !source.startsWith('https://')) return [];
+      return [{url:img,source,license,author:plain(hit.creator)||'Openverse contributor',
+        title:plain(hit.title)||term}];
+    });
+  } finally {clearTimeout(timer);}
+}
+let commonsRateLimited=false;
+async function discoverPhotos(term) {
+  if(!commonsRateLimited) {
+    try {return await queryCommons(term);}
+    catch(err) {
+      if(!/Commons HTTP 429/.test(String(err))) throw err;
+      commonsRateLimited=true;
+      console.warn('Commons API rate-limited; switching to Openverse licensed media search');
+    }
+  }
+  return queryOpenverse(term);
+}
+
 /** Preflight entire album set before any database mutation. */
 async function buildAlbums(minPhotos=2) {
   const albums=[];
   for (let index=0;index<SEARCH_TERMS.length;index++) {
     const term=SEARCH_TERMS[index];
-    const hits=await queryCommons(term);
+    const hits=await discoverPhotos(term);
+    // Be considerate to the public Openverse service; requests are serial.
+    if(commonsRateLimited) await new Promise(resolve=>setTimeout(resolve,1100));
     const unique=[...new Map(hits.map(hit=>[hit.url,hit])).values()].slice(0,4);
     if (unique.length < minPhotos) {
       throw new Error('No licensed photo set ('+unique.length+'/'+minPhotos+
@@ -66,4 +118,4 @@ async function buildAlbums(minPhotos=2) {
   }
   return albums;
 }
-module.exports={buildAlbums,SEARCH_TERMS,ACCEPTED};
+module.exports={buildAlbums,SEARCH_TERMS,ACCEPTED,queryOpenverse};
