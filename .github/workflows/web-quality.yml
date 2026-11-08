@@ -39,6 +39,12 @@ jobs:
         run: |
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
           npm update body-parser qs undici zod fast-uri follow-redirects --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Diagnose version constraints
+        run: |
+          npm explain zod || true
+          npm explain multer || true
+          npm view @nestjs/platform-express version
+          npm view @huggingface/inference version
       - name: Lockfile security gate
         run: node scripts/check-security-lockfile.cjs
       - name: Validate clean install
