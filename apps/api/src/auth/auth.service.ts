@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -99,21 +100,15 @@ export class AuthService {
 
     const account = await this.prisma.$transaction(async (tx) => {
       const existingUser = await tx.user.findUnique({
-        where: { email },
-        select: { id: true, name: true, tokenVersion: true },
+        where: { email }, select: { id: true },
       });
-      const user = existingUser
-        ? existingUser.name || !name
-          ? existingUser
-          : await tx.user.update({
-              where: { id: existingUser.id },
-              data: { name },
-              select: { id: true, name: true, tokenVersion: true },
-            })
-        : await tx.user.create({
-            data: { email, passwordHash: null, name },
-            select: { id: true, name: true, tokenVersion: true },
-          });
+      // Never auto-link a new OAuth identity to an existing account via email
+      // alone. The account owner must authenticate explicitly to link it.
+      if (existingUser) throw new ConflictException('oauth_account_link_required');
+      const user = await tx.user.create({
+        data: { email, passwordHash: null, name },
+        select: { id: true, tokenVersion: true },
+      });
 
       await tx.oAuthAccount.create({
         data: {
