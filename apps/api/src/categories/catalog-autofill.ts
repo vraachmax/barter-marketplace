@@ -36,7 +36,7 @@ export function suggestCatalogTitle(input:{
    const rooms=cleaned('rooms');
    parts=[categoryTitle,rooms && (rooms==='Студия'?'':rooms+' комн.'),selected.area_m2?String(selected.area_m2)+' м²':''];
  }else if(rootSlug==='electronics'){
-   parts=[cleaned('brand_text'),cleaned('model_text')||categoryTitle,cleaned('storage_gb')];
+   parts=[cleaned('device_brand')||cleaned('brand_text'),cleaned('device_model')||cleaned('model_text')||categoryTitle,cleaned('storage_gb')];
  }else{
    parts=[cleaned('brand_text'),categoryTitle,cleaned('item_condition')];
  }
