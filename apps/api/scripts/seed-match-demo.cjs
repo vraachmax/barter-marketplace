@@ -67,7 +67,9 @@ async function main() {
       const id = 'barter-demo-match-20261108-' + String(k+1).padStart(2,'0');
       const data = {
         title: '[ДЕМО] ' + title,
-        description: 'ТЕСТОВОЕ ОБЪЯВЛЕНИЕ. Товар вымышленный, не продаётся и не обменивается. Для проверки Barter Match.',
+        description: 'ТЕСТОВОЕ ОБЪЯВЛЕНИЕ. Товар вымышленный, не продаётся и не обменивается. Фотографии иллюстрируют модель товара, а не его реальное состояние. Для проверки Barter Match.\\n\\n' +
+          'Источники и авторы изображений (Wikimedia Commons):\\n' +
+          albums[k].map((photo,index)=>(index+1)+'. '+photo.author+' · '+photo.license+' · '+photo.source).join('\\n'),
         priceRub, city: 'Краснодар', saleEnabled: j===0, barterEnabled: true,
         exchangePreferences, categoryId: ids.get(categoryFor(k)), ownerId: user.id,
         status: 'ACTIVE', attributes: { isDemo: true, isBarter: true,
