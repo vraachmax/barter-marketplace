@@ -49,7 +49,6 @@
     },
     "@vercel/cli-config": {
       "zod": "4.6.7"
-    },
-    "undici": "6.29.1"
+    }
   }
 }
