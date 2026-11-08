@@ -7,6 +7,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { ChatsModule } from './chats/chats.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ListingsModule } from './listings/listings.module';
+import { MatchingModule } from './matching/matching.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SearchModule } from './search/search.module';
 import { ReviewsModule } from './reviews/reviews.module';
@@ -24,6 +25,7 @@ import { StorageModule } from './storage/storage.module';
     CategoriesModule,
     SearchModule,
     ListingsModule,
+    MatchingModule,
     FavoritesModule,
     ChatsModule,
     ReviewsModule,

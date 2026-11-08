@@ -1,0 +1,53 @@
+name: Barter Match quality
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'apps/api/src/matching/**'
+      - 'apps/api/scripts/commons-demo-photos*'
+      - 'apps/api/scripts/seed-match-demo.cjs'
+      - 'apps/api/src/app.module.ts'
+      - '.github/workflows/match-quality.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'apps/api/src/matching/**'
+      - 'apps/api/scripts/commons-demo-photos*'
+      - 'apps/api/scripts/seed-match-demo.cjs'
+      - 'apps/api/src/app.module.ts'
+      - '.github/workflows/match-quality.yml'
+permissions:
+  contents: read
+jobs:
+  match-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit
+      - run: node scripts/check-security-lockfile.cjs
+      - name: Run photo-license and category tests
+        run: node --test apps/api/scripts/commons-demo-photos.test.cjs
+      - name: Generate Prisma client
+        run: npm run prebuild -w @app/api
+      - name: Full API regression tests including reciprocal ranking
+        run: npm run test -w @app/api -- --runInBand
+      - name: API production build
+        run: npm run build -w @app/api
+      - name: Preflight 30 live demo photo galleries (external service; seed remains fail-closed)
+        continue-on-error: true
+        run: |
+          node - <<'NODE'
+          const {buildAlbums}=require('./apps/api/scripts/commons-demo-photos.cjs');
+          buildAlbums(2).then(albums=>{
+            const total=albums.reduce((n,a)=>n+a.length,0);
+            console.log('Preflight PASS',albums.length,'albums',total,'licensed images');
+          }).catch(error=>{console.error('Preflight FAIL',error.message);process.exitCode=1});
+          NODE
+      - name: Check demo seed read-only by default
+        run: node --check apps/api/scripts/seed-match-demo.cjs

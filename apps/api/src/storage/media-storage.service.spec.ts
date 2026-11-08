@@ -14,7 +14,11 @@ const delMock = jest.mocked(del);
 
 function file(mimetype: string, body = 'image-data'): Express.Multer.File {
   return {
-    buffer: Buffer.from(body),
+    buffer: body === 'image-data' && mimetype === 'image/jpeg'
+      ? Buffer.from([0xff, 0xd8, 0xff, 0xe0, ...Array(16).fill(0)])
+      : body === 'image-data' && mimetype === 'image/webp'
+        ? Buffer.from('RIFF1234WEBP0000')
+        : Buffer.from(body),
     mimetype,
     originalname: 'unsafe-name.exe',
   } as Express.Multer.File;
