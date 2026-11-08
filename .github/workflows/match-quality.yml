@@ -39,5 +39,14 @@ jobs:
         run: npm run test -w @app/api -- --runInBand match-engine
       - name: API production build
         run: npm run build -w @app/api
+      - name: Verify 30 live Commons albums have at least two licensed images
+        run: |
+          node - <<'NODE'
+          const {buildAlbums}=require('./apps/api/scripts/commons-demo-photos.cjs');
+          buildAlbums(2).then(albums=>{
+            const total=albums.reduce((n,a)=>n+a.length,0);
+            console.log('Preflight PASS',albums.length,'albums',total,'licensed images');
+          }).catch(error=>{console.error('Preflight FAIL',error.message);process.exitCode=1});
+          NODE
       - name: Check demo seed read-only by default
         run: node --check apps/api/scripts/seed-match-demo.cjs
