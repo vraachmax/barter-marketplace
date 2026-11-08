@@ -16,7 +16,7 @@ function compare(a,b) {
 let failures=0;
 for(const [name,version] of Object.entries(minimum)) {
   const matches=Object.entries(packages).filter(([path])=>path==='node_modules/'+name || path.endsWith('/node_modules/'+name));
-  if(!matches.length) continue;
+  if(!matches.length) { console.error('MISSING required dependency',name,'in package-lock.json'); failures++; continue; }
   for(const [path,pkg] of matches) {
     if(compare(pkg.version,version)<0) {
       console.error('UNPATCHED',name,pkg.version,'requires >=',version,'at',path); failures++;
