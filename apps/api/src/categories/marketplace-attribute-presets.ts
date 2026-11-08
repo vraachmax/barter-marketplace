@@ -66,3 +66,10 @@ export function fieldsForCategory(rootSlug:string,groupSlug:string):readonly Fie
 }
 export function fieldsForRoot(rootSlug:string):readonly FieldPreset[] {return root[rootSlug]??[];}
 export const CATALOG_FIELD_GROUPS=Object.keys(special);
+
+/** Stable machine-readable select keys for server-side option enforcement. */
+export const CATALOG_OPTION_KEYS = [...new Set(
+  [...Object.values(root).flat(),...Object.values(special).flat()]
+   .filter(field=>field.options?.length)
+   .map(field=>field.key)
+)];
