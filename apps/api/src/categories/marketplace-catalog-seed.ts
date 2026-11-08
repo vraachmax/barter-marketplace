@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { MARKETPLACE_CATEGORY_TREE, MARKETPLACE_REQUIRED_ROOTS, MARKETPLACE_CATALOG_REVISION } from './marketplace-category-tree';
 import { fieldsForCategory, fieldsForRoot, CATALOG_FIELD_GROUPS, FieldPreset } from './marketplace-attribute-presets';
+import { ELECTRONICS_MODELS, ELECTRONICS_BRAND_LABELS, electronicModelId } from './electronics-model-catalog';
 
 /**
  * Reentrant, append-only catalog bootstrap. Existing UUIDs, listings and
@@ -63,6 +64,7 @@ export async function ensureMarketplaceCatalog(prisma: PrismaService): Promise<v
     const root=name.split('-')[0];
     await publishFields(prisma,ownerId,fieldsForCategory(root,name));
   }
+  await seedElectronicsModelOptions(prisma,bySlug);
 }
 
 async function publishFields(prisma:PrismaService,categoryId:string, fields:readonly FieldPreset[]) {
@@ -91,4 +93,39 @@ async function publishFields(prisma:PrismaService,categoryId:string, fields:read
       data:{catalogRevision:MARKETPLACE_CATALOG_REVISION},
     });
   },{timeout:15000});
+}
+
+async function seedElectronicsModelOptions(
+ prisma:PrismaService,bySlug:ReadonlyMap<string,string>,
+) {
+ for(const [group,brands] of Object.entries(ELECTRONICS_MODELS)) {
+   const categoryId=bySlug.get(group);
+   if(!categoryId)throw new Error('electronics_group_missing:'+group);
+   const entries=Object.entries(brands);
+   await prisma.categoryAttributeOption.createMany({
+     data:entries.map(([brand],sortOrder)=>({
+       categoryId,fieldKey:'device_brand',value:brand,
+       label:ELECTRONICS_BRAND_LABELS[brand],sortOrder,
+     })),skipDuplicates:true,
+   });
+   const parents=await prisma.categoryAttributeOption.findMany({
+     where:{categoryId,fieldKey:'device_brand'},
+     select:{id:true,value:true},
+   });
+   const parentIds=new Map(parents.map(row=>[row.value,row.id]));
+   const models=entries.flatMap(([brand,items])=>items.map((label,sortOrder)=>({
+     categoryId,fieldKey:'device_model',value:electronicModelId(brand,label),
+     label,parentOptionId:parentIds.get(brand)!,sortOrder,
+   })));
+   if(models.some(model=>!model.parentOptionId))
+     throw new Error('electronics_brand_missing:'+group);
+   for(let offset=0;offset<models.length;offset+=200)
+     await prisma.categoryAttributeOption.createMany({
+       data:models.slice(offset,offset+200),skipDuplicates:true,
+     });
+   const loaded=await prisma.categoryAttributeOption.count({
+     where:{categoryId,fieldKey:'device_model',value:{in:models.map(row=>row.value)}},
+   });
+   if(loaded!==models.length)throw new Error('electronics_models_incomplete:'+group);
+ }
 }
