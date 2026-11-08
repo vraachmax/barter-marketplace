@@ -59,6 +59,7 @@ import {
 import { useListingAttributeCatalog } from '@/hooks/use-listing-attribute-catalog';
 import ListingCategoryAttributesForm from '@/components/listing-category-attributes-form';
 import { CatalogTitleSuggestion } from '@/components/catalog-title-suggestion';
+import CategoryTreePicker from '@/components/category-tree-picker';
 import {
   getListingAttrSectionsForCategorySlug,
   changeCatalogAttribute,
@@ -879,40 +880,7 @@ function Step1WhatToSell(props: {
         {loadingCats ? (
           <p className="px-4 py-3 text-sm text-muted-foreground">Загружаем категории…</p>
         ) : (
-          <ul className="grid gap-1 border-t border-border p-2">
-            {allCats.map((c) => {
-              const isPicked = c.id === categoryId;
-              return (
-                <li key={c.id}>
-                  <button
-                    type="button"
-                    onClick={() => props.onCategoryPick(c.id)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-muted"
-                    style={
-                      isPicked
-                        ? {
-                            backgroundColor: 'var(--mode-accent-soft)',
-                            color: 'var(--mode-accent)',
-                            fontWeight: 700,
-                          }
-                        : undefined
-                    }
-                  >
-                    <span>{c.parentId ? `${allCats.find((parent) => parent.id === c.parentId)?.title ?? 'Категория'} · ` : ''}{c.title}</span>
-                    {isPicked ? (
-                      <Check
-                        size={16}
-                        strokeWidth={2.2}
-                        className="shrink-0"
-                        style={{ color: 'var(--mode-accent)' }}
-                        aria-hidden
-                      />
-                    ) : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <CategoryTreePicker categories={allCats} selectedId={categoryId} onPick={onCategoryPick} />
         )}
       </details>
     </section>
