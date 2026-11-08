@@ -27,8 +27,12 @@ jobs:
           node-version: '22'
       - name: Resolve patched dependency tree, no force, no audit fix
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Refresh compatible transitive security fixes without major forcing
+        run: npm update body-parser qs undici zod fast-uri follow-redirects --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Verify dependency lock consistency
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Generate Prisma client
+        run: npx prisma generate --schema apps/api/prisma/schema.prisma
       - name: API build
         run: npm run build -w @app/api
       - name: API tests
