@@ -20,6 +20,7 @@ import FeedFavoriteAction from '@/components/feed-favorite-action';
 import { formatListingPrice } from '@/lib/listing-presentation';
 import SellerReviewForm from '@/components/seller-review-form';
 import ListingBotAssistant from '@/components/listing-bot-assistant';
+import MatchSuggestions from '@/components/match-suggestions';
 import ListingPlaceholder from '@/components/listing-placeholder';
 import ListingAttributesDisplay from '@/components/listing-attributes-display';
 import ListingGallery from '@/components/listing-gallery';
@@ -204,6 +205,7 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
               <span className="break-all text-xs text-muted-foreground">Объявление № {listing.id}</span>
               <ListingReportButton listingId={listing.id} title={listing.title} />
             </div>
+            <MatchSuggestions listingId={listing.id} sellerId={listing.owner.id} barterEnabled={Boolean(listing.barterEnabled)} active={listing.status === 'ACTIVE'} />
             <ListingBotAssistant listing={{ id: listing.id, title: listing.title, description: listing.description, city: listing.city, category: listing.category }} similar={similar} />
           </div>
         </div>
