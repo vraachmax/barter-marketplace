@@ -3,44 +3,44 @@ export const MARKETPLACE_CATALOG_REVISION = 5;
 export type CategorySeed = { slug:string; title:string; parent:string };
 export const MARKETPLACE_CATEGORY_TREE: readonly CategorySeed[] = [
   {
-    "slug": "auto-passenger-cars",
+    "slug": "passenger-cars",
     "title": "Легковые автомобили",
     "parent": "auto"
   },
   {
-    "slug": "auto-passenger-cars-sedans",
+    "slug": "passenger-cars-sedans",
     "title": "Седаны",
-    "parent": "auto-passenger-cars"
+    "parent": "passenger-cars"
   },
   {
-    "slug": "auto-passenger-cars-crossovers",
+    "slug": "passenger-cars-crossovers",
     "title": "Кроссоверы и внедорожники",
-    "parent": "auto-passenger-cars"
+    "parent": "passenger-cars"
   },
   {
-    "slug": "auto-passenger-cars-hatchbacks",
+    "slug": "passenger-cars-hatchbacks",
     "title": "Хэтчбеки",
-    "parent": "auto-passenger-cars"
+    "parent": "passenger-cars"
   },
   {
-    "slug": "auto-passenger-cars-wagons",
+    "slug": "passenger-cars-wagons",
     "title": "Универсалы",
-    "parent": "auto-passenger-cars"
+    "parent": "passenger-cars"
   },
   {
-    "slug": "auto-passenger-cars-minivans",
+    "slug": "passenger-cars-minivans",
     "title": "Минивэны",
-    "parent": "auto-passenger-cars"
+    "parent": "passenger-cars"
   },
   {
-    "slug": "auto-passenger-cars-coupe",
+    "slug": "passenger-cars-coupe",
     "title": "Купе и кабриолеты",
-    "parent": "auto-passenger-cars"
+    "parent": "passenger-cars"
   },
   {
-    "slug": "auto-passenger-cars-electric-cars",
+    "slug": "passenger-cars-electric-cars",
     "title": "Электромобили",
-    "parent": "auto-passenger-cars"
+    "parent": "passenger-cars"
   },
   {
     "slug": "auto-motorcycles",
