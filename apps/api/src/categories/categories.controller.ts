@@ -20,6 +20,9 @@ export class CategoriesController {
     return this.categories.attributeOptions(id, { fieldKey, parentFieldKey, parentValue });
   }
 
+  @Get('coverage')
+  catalogCoverage() { return this.categories.catalogCoverage(); }
+
   @Get(':id/auto-fill')
   autoFill(@Param('id') id:string,@Query('selected') selected?:string) {
     return this.categories.autoFill(id,selected);
