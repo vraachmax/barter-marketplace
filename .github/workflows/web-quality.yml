@@ -35,13 +35,9 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Resolve patched packages with npm (no force)
+      - name: Resolve fresh lockfile from declared dependency constraints
         run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          npm update body-parser qs undici zod fast-uri follow-redirects --package-lock-only --ignore-scripts --no-audit --no-fund
-          # npm 10 can retain an obsolete transitive lock entry after an override changes.
-          # Remove only that resolution record; npm will restore the correct integrity URL.
-          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package-lock.json'));const k='node_modules/undici';if(p.packages[k] && p.packages[k].version==='6.28.1'){delete p.packages[k];fs.writeFileSync('package-lock.json',JSON.stringify(p,null,2)+'\\n')}"
+          rm package-lock.json
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Diagnose version constraints
         run: |
