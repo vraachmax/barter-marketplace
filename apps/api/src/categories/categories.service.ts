@@ -2,7 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
 import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
-import { catalogOwnerId, categoryRoot } from './category-hierarchy';
+import { catalogOwnerId, categoryRoot, categoryLineage } from './category-hierarchy';
+import { parseCatalogSelection, suggestCatalogTitle } from './catalog-autofill';
 import { carCatalog, CAR_CATALOG_REVISION } from './car-catalog';
 import generationCatalog from './car-generations-2026.10.05.json';
 import { ensureMarketplaceCatalog } from './marketplace-catalog-seed';
@@ -74,6 +75,29 @@ export class CategoriesService {
       },
     });
     return category ? { version: category.catalogRevision, optionsQueryVersion: 1, fields: category.attributeFields } : null;
+  }
+
+  /** Avito-like form prefill from chosen hierarchy, never guessed specifications. */
+  async autoFill(categoryId:string, rawSelection?:string) {
+    const selected=parseCatalogSelection(rawSelection);
+    const lineage=await categoryLineage(this.prisma,categoryId);
+    const rootSlug=lineage[lineage.length-1].slug;
+    const category=await this.prisma.category.findUniqueOrThrow({
+      where:{id:categoryId},select:{title:true},
+    });
+    const ownerId=await catalogOwnerId(this.prisma,categoryId);
+    const selectedOptions=Object.entries(selected).filter(([,value])=>typeof value==='string');
+    const matches=selectedOptions.length?await this.prisma.categoryAttributeOption.findMany({
+      where:{categoryId:ownerId,OR:selectedOptions.map(([fieldKey,value])=>({fieldKey,value:String(value)}))},
+      select:{fieldKey:true,label:true,value:true},
+    }):[];
+    const labels=new Map(matches.filter(row=>selected[row.fieldKey]===row.value)
+      .map(row=>[row.fieldKey,row.label] as const));
+    return {
+      categoryId, rootSlug, catalogOwnerId:ownerId,
+      ...suggestCatalogTitle({categoryTitle:category.title,rootSlug,selected,labels}),
+      resolvedFields:[...labels.keys()],
+    };
   }
 
   async ensureSeed() {
