@@ -12,6 +12,11 @@ import { getUploadsDirectory, getUploadsRoot } from './storage/uploads-path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Render places a single trusted reverse-proxy hop in front of Express.
+  // Resolve actual client IP for per-IP throttling; never trust arbitrary hops.
+  if (process.env.RENDER === 'true') {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
   app.useGlobalFilters(new PrismaClientExceptionFilter());
   // Safe defaults for static uploads and API JSON; do not alter CORS behavior.
   app.use((_req: express.Request, res: express.Response, next: express.NextFunction) => {
