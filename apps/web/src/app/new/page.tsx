@@ -58,6 +58,7 @@ import {
 } from '@/lib/api';
 import { useListingAttributeCatalog } from '@/hooks/use-listing-attribute-catalog';
 import ListingCategoryAttributesForm from '@/components/listing-category-attributes-form';
+import { CatalogTitleSuggestion } from '@/components/catalog-title-suggestion';
 import {
   getListingAttrSectionsForCategorySlug,
   changeCatalogAttribute,
@@ -611,6 +612,7 @@ export default function NewListingPage() {
             onWishesCatalogStatusChange={setWishesBlocked}
             categories={cats}
             title={title}
+            onTitleChange={setTitle}
             selectedCategory={selectedCategory}
             description={description}
             onDescriptionChange={setDescription}
@@ -925,6 +927,7 @@ function Step2Description(props: {
   tradeMode: ListingTradeMode;
   onTradeModeChange: (value: ListingTradeMode) => void;
   title: string;
+  onTitleChange: (value:string)=>void;
   selectedCategory: Category | null;
   description: string;
   onDescriptionChange: (v: string) => void;
@@ -957,6 +960,7 @@ function Step2Description(props: {
           Объявление
         </p>
         <p className="mt-1 line-clamp-2 text-sm font-bold text-foreground">{title}</p>
+        <CatalogTitleSuggestion categoryId={selectedCategory?.id ?? ''} attributes={attrValues} currentTitle={title} onApply={props.onTitleChange} />
         <div className="mt-3 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
             style={{
