@@ -5,8 +5,8 @@ import generations from './car-generations-2026.10.05.json';
 
 describe('RU catalog supplement', () => {
   it('keeps verified generation families under their published parent models', () => {
-    expect(generations.generations).toHaveLength(23);
-    expect(new Set(generations.generations.map(row => row.id)).size).toBe(23);
+    expect(generations.generations).toHaveLength(40);
+    expect(new Set(generations.generations.map(row => row.id)).size).toBe(40);
     for (const row of generations.generations) {
       expect(carCatalog.models.some(model => model.id === row.modelId)).toBe(true);
       expect(row.id.startsWith(`${row.modelId}/`)).toBe(true);
