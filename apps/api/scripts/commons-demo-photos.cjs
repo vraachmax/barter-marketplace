@@ -73,30 +73,43 @@ async function queryOpenverse(term) {
   endpoint.searchParams.set('license','cc0,by,by-sa,pdm');
   endpoint.searchParams.set('page_size','20');
   endpoint.searchParams.set('mature','false');
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),20000);
-  try {
-    const res=await fetch(endpoint,{signal:controller.signal,headers:{
-      'User-Agent':'Barter-Demo-Seed/1.1 (+https://github.com/vraachmax/barter-marketplace)',
-      'Accept':'application/json'
-    }});
-    if(!res.ok) throw new Error('Openverse HTTP '+res.status);
-    const json=await res.json();
-    return (json.results ?? []).flatMap(hit=>{
-      const type=String(hit.filetype||'').toLowerCase();
-      if(hit.mature || ['svg','gif'].includes(type)) return [];
-      const lic=String(hit.license||'').toLowerCase();
-      if(!['cc0','by','by-sa','pdm'].includes(lic)) return [];
-      const license=lic==='pdm'?'Public domain':lic==='cc0'?'CC0 1.0':
-        'CC '+lic.toUpperCase()+' '+String(hit.license_version||'4.0');
-      if(!ACCEPTED.test(license)) return [];
-      const img=String(hit.url||'');
-      const source=String(hit.foreign_landing_url||hit.detail_url||'');
-      if(!img.startsWith('https://') || !source.startsWith('https://')) return [];
-      return [{url:img,source,license,author:plain(hit.creator)||'Openverse contributor',
-        title:plain(hit.title)||term}];
-    });
-  } finally {clearTimeout(timer);}
+  // Openverse occasionally returns transient 502/503/504 from its public API.
+  // Retry with bounded backoff and honor Retry-After; never hot-loop 429s.
+  for(let attempt=0;attempt<3;attempt++) {
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),20000);
+    let response;
+    try {
+      response=await fetch(endpoint,{signal:controller.signal,headers:{
+        'User-Agent':'Barter-Demo-Seed/1.1 (+https://github.com/vraachmax/barter-marketplace)',
+        'Accept':'application/json'
+      }});
+      if(response.ok) {
+        const json=await response.json();
+        return (json.results ?? []).flatMap(hit=>{
+          const type=String(hit.filetype||'').toLowerCase();
+          if(hit.mature || ['svg','gif'].includes(type)) return [];
+          const lic=String(hit.license||'').toLowerCase();
+          if(!['cc0','by','by-sa','pdm'].includes(lic)) return [];
+          const license=lic==='pdm'?'Public domain':lic==='cc0'?'CC0 1.0':
+            'CC '+lic.toUpperCase()+' '+String(hit.license_version||'4.0');
+          if(!ACCEPTED.test(license)) return [];
+          const img=String(hit.url||'');
+          const source=String(hit.foreign_landing_url||hit.detail_url||'');
+          if(!img.startsWith('https://') || !source.startsWith('https://')) return [];
+          return [{url:img,source,license,author:plain(hit.creator)||'Openverse contributor',
+            title:plain(hit.title)||term}];
+        });
+      }
+    } finally {clearTimeout(timer);}
+    if(![429,502,503,504].includes(response.status)||attempt===2)
+      throw new Error('Openverse HTTP '+response.status);
+    const retryAfter=Number(response.headers.get('retry-after'));
+    const sleepMs=Number.isFinite(retryAfter)&&retryAfter>0 ?
+      Math.min(retryAfter*1000,60000) : [2500,7000][attempt];
+    await new Promise(resolve=>setTimeout(resolve,sleepMs));
+  }
+  throw new Error('Openverse retries exhausted');
 }
 let commonsRateLimited=false;
 async function discoverPhotos(term) {
