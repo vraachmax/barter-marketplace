@@ -15,6 +15,7 @@ const { ChatsController } = require('../dist/chats/chats.controller');
 const { ChatsGateway } = require('../dist/chats/chats.gateway');
 const { PresenceService } = require('../dist/presence/presence.service');
 const { MediaStorageService } = require('../dist/storage/media-storage.service');
+const { PrismaService } = require('../dist/prisma/prisma.service');
 
 function event(socket, name, predicate = () => true, ms = 4000) {
   return new Promise((resolve, reject) => {
@@ -52,6 +53,7 @@ async function main() {
         { provide: JwtService, useValue: jwt },
         { provide: PresenceService, useValue: presence },
         { provide: MediaStorageService, useValue: {} },
+        { provide: PrismaService, useValue: db },
       ],
     }).overrideGuard(AuthGuard('jwt')).useValue({
       canActivate(context) {

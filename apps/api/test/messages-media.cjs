@@ -160,9 +160,9 @@ async function main() {
 
     await attach(post().field('clientMessageId', key).field('text', 'Changed')).expect(409);
     await post().field('clientMessageId', key).field('text', 'Replay photo')
-      .attach('file', Buffer.from('different bytes'), { filename: 'photo.png', contentType: 'image/png' }).expect(409);
+      .attach('file', Buffer.from('different bytes'), { filename: 'photo.png', contentType: 'image/png' }).expect(400);
     await post().field('clientMessageId', key).field('text', 'Replay photo')
-      .attach('file', png, { filename: 'photo.jpg', contentType: 'image/jpeg' }).expect(409);
+      .attach('file', png, { filename: 'photo.jpg', contentType: 'image/jpeg' }).expect(400);
     await request(app.getHttpServer()).post('/chats/' + c.id + '/messages')
       .set('x-fixture-user', u.id).send({ text: 'Replay photo', clientMessageId: key }).expect(409);
     const textKey = randomUUID();
@@ -171,7 +171,7 @@ async function main() {
     await attach(post().field('clientMessageId', textKey).field('text', 'Text first')).expect(409);
     assert.equal(attempts, uploadsBefore);
     await access(diskPath(original.body.mediaUrl));
-    console.log('PASS changed caption, bytes, MIME and message kind conflict before storage');
+    console.log('PASS changed caption/message kind conflict, and signature-spoofed bytes/MIME rejected before storage');
 
     for (const value of ['', 'invalid', '17']) await attach(post().field('clientMessageId', value)).expect(400);
     await attach(post().field('clientMessageId', [key, key])).expect(400);

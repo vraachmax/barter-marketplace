@@ -4,6 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { getUploadsDirectory, getUploadsRoot } from './uploads-path';
+import { assertImageSignature } from './image-signature';
 
 export type MediaFolder = 'listings' | 'chat-media';
 export type MediaStorageDriver = 'local' | 'vercel-blob';
@@ -47,7 +48,10 @@ function safeSegment(raw: string): string {
 export function getMediaType(file: Express.Multer.File): 'IMAGE' | 'VIDEO' | 'AUDIO' {
   const mime = normalizeMimeType(file.mimetype);
   if (mime.startsWith('audio/') && MIME_EXTENSIONS[mime]) return 'AUDIO';
-  if (IMAGE_MIME_TYPES.has(mime)) return 'IMAGE';
+  if (IMAGE_MIME_TYPES.has(mime)) {
+    assertImageSignature(mime,file.buffer);
+    return 'IMAGE';
+  }
   if (VIDEO_MIME_TYPES.has(mime)) return 'VIDEO';
   throw new BadRequestException('unsupported_media_type');
 }
@@ -57,6 +61,7 @@ export function assertListingImage(file: Express.Multer.File): void {
   if (!IMAGE_MIME_TYPES.has(mime)) {
     throw new BadRequestException('unsupported_image_type');
   }
+  assertImageSignature(mime,file.buffer);
 }
 
 export function resolveMediaStorageDriver(

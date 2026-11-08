@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -16,8 +17,8 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-  private sign(userId: string) {
-    return this.jwt.sign({ sub: userId });
+  private sign(userId: string, tokenVersion: number) {
+    return this.jwt.sign({ sub: userId, ver: tokenVersion });
   }
 
   async register(dto: RegisterDto) {
@@ -40,9 +41,9 @@ export class AuthService {
         phone: dto.phone ?? null,
         passwordHash,
       },
-      select: { id: true },
+      select: { id: true, tokenVersion: true },
     });
-    return { token: this.sign(user.id) };
+    return { token: this.sign(user.id, user.tokenVersion) };
   }
 
   async login(dto: LoginDto) {
@@ -63,7 +64,7 @@ export class AuthService {
 
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException();
-    return { token: this.sign(user.id) };
+    return { token: this.sign(user.id, user.tokenVersion) };
   }
 
   async loginWithYandex(profile: {
@@ -84,9 +85,9 @@ export class AuthService {
           providerAccountId: profile.id,
         },
       },
-      select: { userId: true },
+      select: { userId: true, user: { select: {tokenVersion:true} } },
     });
-    if (existingAccount) return { token: this.sign(existingAccount.userId) };
+    if (existingAccount) return { token: this.sign(existingAccount.userId, existingAccount.user.tokenVersion) };
 
     const name =
       profile.real_name?.trim() ||
@@ -97,23 +98,17 @@ export class AuthService {
         .trim() ||
       null;
 
-    const userId = await this.prisma.$transaction(async (tx) => {
+    const account = await this.prisma.$transaction(async (tx) => {
       const existingUser = await tx.user.findUnique({
-        where: { email },
-        select: { id: true, name: true },
+        where: { email }, select: { id: true },
       });
-      const user = existingUser
-        ? existingUser.name || !name
-          ? existingUser
-          : await tx.user.update({
-              where: { id: existingUser.id },
-              data: { name },
-              select: { id: true, name: true },
-            })
-        : await tx.user.create({
-            data: { email, passwordHash: null, name },
-            select: { id: true, name: true },
-          });
+      // Never auto-link a new OAuth identity to an existing account via email
+      // alone. The account owner must authenticate explicitly to link it.
+      if (existingUser) throw new ConflictException('oauth_account_link_required');
+      const user = await tx.user.create({
+        data: { email, passwordHash: null, name },
+        select: { id: true, tokenVersion: true },
+      });
 
       await tx.oAuthAccount.create({
         data: {
@@ -122,10 +117,10 @@ export class AuthService {
           userId: user.id,
         },
       });
-      return user.id;
+      return { id: user.id, tokenVersion: user.tokenVersion };
     });
 
-    return { token: this.sign(userId) };
+    return { token: this.sign(account.id, account.tokenVersion) };
   }
 
   async me(userId: string) {
@@ -230,10 +225,11 @@ export class AuthService {
     if (!valid) throw new BadRequestException('wrong_current_password');
 
     const newHash = await bcrypt.hash(dto.newPassword, 10);
-    await this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash: newHash },
+      data: { passwordHash: newHash, tokenVersion: { increment: 1 } },
+      select: { tokenVersion: true },
     });
-    return { ok: true, token: this.sign(userId) };
+    return { ok: true, token: this.sign(userId, updated.tokenVersion) };
   }
 }

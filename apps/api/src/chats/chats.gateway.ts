@@ -13,6 +13,7 @@ import { PresenceService } from '../presence/presence.service';
 import { getJwtSecret } from '../config/security';
 import { getAllowedCorsOrigins } from '../config/security';
 import { ChatsService } from './chats.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 function getCookieToken(cookieHeader: string | undefined): string | null {
   if (!cookieHeader) return null;
@@ -40,20 +41,28 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private jwt: JwtService,
     private chats: ChatsService,
     private presence: PresenceService,
+    private prisma: PrismaService,
   ) {}
 
-  handleConnection(client: AuthedSocket) {
+  async handleConnection(client: AuthedSocket) {
     try {
       const token = getCookieToken(client.handshake.headers.cookie);
       if (!token) {
         client.disconnect();
         return;
       }
-      const payload = this.jwt.verify<{ sub: string }>(token, {
+      const payload = this.jwt.verify<{ sub: string; ver?: number }>(token, {
         secret: getJwtSecret(),
       });
       const userId = payload.sub;
       if (typeof userId !== 'string' || !userId.trim()) {
+        client.disconnect();
+        return;
+      }
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId }, select: { tokenVersion: true },
+      });
+      if (!user || user.tokenVersion !== (payload.ver ?? 0)) {
         client.disconnect();
         return;
       }

@@ -32,6 +32,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Enforce secure dependency versions
+        run: node scripts/check-security-lockfile.cjs
       - name: Browser acceptance syntax
         run: node --check apps/web/tests/browser/exchange-acceptance.mjs
       - name: Web regression tests

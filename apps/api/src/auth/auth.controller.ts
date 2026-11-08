@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Get,
   Patch,
@@ -13,6 +14,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import { AuthAbuseGuard } from './auth-abuse.guard';
 import { ChangePasswordDto, LoginDto, RegisterDto, UpdateMeDto } from './dto';
 import { YandexOAuthService } from './yandex-oauth.service';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
@@ -102,13 +104,13 @@ export class AuthController {
       return res.redirect(
         `${webUrl}/auth/yandex/callback#token=${encodeURIComponent(token)}`,
       );
-    } catch {
-      return res.redirect(
-        `${webUrl}/auth/yandex/callback?error=exchange_failed`,
-      );
+    } catch (error) {
+      const code = error instanceof ConflictException ? 'account_link_required' : 'exchange_failed';
+      return res.redirect(`${webUrl}/auth/yandex/callback?error=${code}`);
     }
   }
 
+  @UseGuards(AuthAbuseGuard)
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
@@ -120,6 +122,7 @@ export class AuthController {
     return { ok: true, token };
   }
 
+  @UseGuards(AuthAbuseGuard)
   @Post('login')
   async login(
     @Body() dto: LoginDto,

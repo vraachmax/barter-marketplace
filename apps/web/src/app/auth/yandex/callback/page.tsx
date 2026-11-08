@@ -9,6 +9,7 @@ const errors: Record<string, string> = {
   access_denied: "Вход через Яндекс отменён.",
   invalid_state: "Сессия входа устарела. Попробуйте ещё раз.",
   exchange_failed: "Яндекс не подтвердил вход. Попробуйте ещё раз.",
+  account_link_required: "Аккаунт с таким email уже существует. Войдите с паролем. Автоматически объединять аккаунты ради безопасности нельзя.",
 };
 
 export default function YandexCallbackPage() {
