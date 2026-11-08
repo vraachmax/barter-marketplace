@@ -120,7 +120,7 @@ export class CategoriesService {
   /** Resume safely after an interrupted seed; publish the fields only after all options exist. */
   private async ensureGenerationCatalog(categoryId: string) {
     const category = await this.prisma.category.findUniqueOrThrow({ where: { id: categoryId }, select: { catalogRevision: true } });
-    if (category.catalogRevision >= 4) return;
+    if (category.catalogRevision >= 6) return;
     const parents = await this.prisma.categoryAttributeOption.findMany({
       where: { categoryId, fieldKey: 'auto_model', value: { in: generationCatalog.generations.map(row => row.modelId) } },
       select: { id: true, value: true },
@@ -134,7 +134,7 @@ export class CategoriesService {
       })), skipDuplicates: true });
       await tx.categoryAttributeField.createMany({ data: [{ categoryId, key: 'auto_generation', label: 'Поколение',
         sectionId: 'auto_main', sectionTitle: 'Автомобиль', parentKey: 'auto_model', sortOrder: 6 }], skipDuplicates: true });
-      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: 4 } });
+      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: 6 } });
     });
   }
 
