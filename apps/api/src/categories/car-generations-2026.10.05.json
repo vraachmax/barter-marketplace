@@ -1,15 +1,128 @@
 {
-  "version": "2026.10.05",
-  "checkedAt": "2026-10-05",
+  "version": "2026.11.08",
+  "checkedAt": "2026-11-08",
   "source": "https://www.bmwgroup.com/en/news/general/2025/50-years-BMW-3-series.html",
-  "scope": "Seven historical generation families of BMW 3 Series from the manufacturer retrospective published 2025-07-11. Not individual chassis/body codes, facelifts, year restrictions or a complete current catalogue.",
+  "scope": "Verified initial generation families for BMW 3 Series, BMW X5, Toyota Camry; not exhaustive for the other 5,452 vehicle models. No guessed VIN/engine modifications, availability or regions.",
   "generations": [
-    { "id": "bmw/3-series/gen-1", "modelId": "bmw/3-series", "name": "I (семейство E21)" },
-    { "id": "bmw/3-series/gen-2", "modelId": "bmw/3-series", "name": "II (семейство E30)" },
-    { "id": "bmw/3-series/gen-3", "modelId": "bmw/3-series", "name": "III (семейство E36)" },
-    { "id": "bmw/3-series/gen-4", "modelId": "bmw/3-series", "name": "IV (семейство E46)" },
-    { "id": "bmw/3-series/gen-5", "modelId": "bmw/3-series", "name": "V (семейство E90)" },
-    { "id": "bmw/3-series/gen-6", "modelId": "bmw/3-series", "name": "VI (семейство F30)" },
-    { "id": "bmw/3-series/gen-7", "modelId": "bmw/3-series", "name": "VII (семейство G20)" }
+    {
+      "id": "bmw/3-series/gen-1",
+      "modelId": "bmw/3-series",
+      "name": "I (семейство E21)"
+    },
+    {
+      "id": "bmw/3-series/gen-2",
+      "modelId": "bmw/3-series",
+      "name": "II (семейство E30)"
+    },
+    {
+      "id": "bmw/3-series/gen-3",
+      "modelId": "bmw/3-series",
+      "name": "III (семейство E36)"
+    },
+    {
+      "id": "bmw/3-series/gen-4",
+      "modelId": "bmw/3-series",
+      "name": "IV (семейство E46)"
+    },
+    {
+      "id": "bmw/3-series/gen-5",
+      "modelId": "bmw/3-series",
+      "name": "V (семейство E90)"
+    },
+    {
+      "id": "bmw/3-series/gen-6",
+      "modelId": "bmw/3-series",
+      "name": "VI (семейство F30)"
+    },
+    {
+      "id": "bmw/3-series/gen-7",
+      "modelId": "bmw/3-series",
+      "name": "VII (семейство G20)"
+    },
+    {
+      "id": "bmw/x5/gen-e53",
+      "modelId": "bmw/x5",
+      "name": "I · E53 (1999–2006)"
+    },
+    {
+      "id": "bmw/x5/gen-e70",
+      "modelId": "bmw/x5",
+      "name": "II · E70 (2006–2013)"
+    },
+    {
+      "id": "bmw/x5/gen-f15",
+      "modelId": "bmw/x5",
+      "name": "III · F15 (2013–2018)"
+    },
+    {
+      "id": "bmw/x5/gen-g05",
+      "modelId": "bmw/x5",
+      "name": "IV · G05 (2018–2026)"
+    },
+    {
+      "id": "bmw/x5/gen-g65",
+      "modelId": "bmw/x5",
+      "name": "V · G65 (с 2026)"
+    },
+    {
+      "id": "toyota/camry/gen-celica-1980",
+      "modelId": "toyota/camry",
+      "name": "Celica Camry (1980)"
+    },
+    {
+      "id": "toyota/camry/gen-1982",
+      "modelId": "toyota/camry",
+      "name": "Camry II (1982)"
+    },
+    {
+      "id": "toyota/camry/gen-1986",
+      "modelId": "toyota/camry",
+      "name": "Camry III (1986)"
+    },
+    {
+      "id": "toyota/camry/gen-1990",
+      "modelId": "toyota/camry",
+      "name": "Camry IV (1990)"
+    },
+    {
+      "id": "toyota/camry/gen-1994",
+      "modelId": "toyota/camry",
+      "name": "Camry V (1994)"
+    },
+    {
+      "id": "toyota/camry/gen-1996",
+      "modelId": "toyota/camry",
+      "name": "Camry VI (1996)"
+    },
+    {
+      "id": "toyota/camry/gen-2001",
+      "modelId": "toyota/camry",
+      "name": "Camry VII (2001)"
+    },
+    {
+      "id": "toyota/camry/gen-2006",
+      "modelId": "toyota/camry",
+      "name": "Camry VIII (2006)"
+    },
+    {
+      "id": "toyota/camry/gen-2011",
+      "modelId": "toyota/camry",
+      "name": "Camry IX (2011)"
+    },
+    {
+      "id": "toyota/camry/gen-2017",
+      "modelId": "toyota/camry",
+      "name": "Camry X (2017)"
+    },
+    {
+      "id": "toyota/camry/gen-2024",
+      "modelId": "toyota/camry",
+      "name": "Camry (XV80, с 2024)"
+    }
+  ],
+  "sources": [
+    "https://www.bmwgroup.com/en/news/general/2025/50-years-BMW-3-series.html",
+    "https://www.bmwgroup.com/en/news/general/2026/the-new-bmw-x5.html",
+    "https://global.toyota/en/mobility/toyota-brand/gallery/camry.html"
   ]
 }
