@@ -17,10 +17,10 @@ const color=f('item_color','Цвет','Чёрный|Белый|Серый|Син
 const year=f('manufacture_year','Год выпуска',undefined,'number');
 const brandText=f('brand_text','Бренд',undefined,'text');
 const area=f('area_m2','Площадь, м²',undefined,'number');
-const deal=f('deal_type','Тип сделки','Продажа|Аренда длительная|Аренда посуточная');
+const deal:FieldPreset={...f('deal_type','Тип сделки'),options:[['sale','Продажа'],['rent_long','Аренда длительная'],['rent_daily','Аренда посуточная']]};
 const floor=f('floor','Этаж',undefined,'number');
 const floors=f('floors_total','Этажей в доме',undefined,'number');
-const room=f('rooms','Комнат','Студия|1|2|3|4|5+');
+const room:FieldPreset={...f('rooms','Комнат'),options:[['studio','Студия'],['1','1'],['2','2'],['3','3'],['4plus','4+']]};
 const storage=f('storage_gb','Память','16 ГБ|32 ГБ|64 ГБ|128 ГБ|256 ГБ|512 ГБ|1 ТБ|2 ТБ');
 const root:Record<string,readonly FieldPreset[]> = {
  electronics:[condition,color,year,brandText],
@@ -30,8 +30,8 @@ const root:Record<string,readonly FieldPreset[]> = {
  clothes:[condition,color,f('clothing_size','Размер','XS|S|M|L|XL|XXL|3XL|4XL|Другое'),f('clothing_material','Материал','Хлопок|Шерсть|Кожа|Синтетика|Лён|Другой')],
  kids:[condition,color,brandText,f('age_range','Возраст','0-6 мес|6-12 мес|1-3 года|3-6 лет|6-10 лет|10-14 лет|14+')],
  hobby:[condition,brandText],
- services:[f('service_format','Формат','На месте|Выезд|Онлайн'),f('experience_years','Опыт, лет',undefined,'number'),f('price_unit','Оплата','За час|За день|За услугу|По договорённости')],
- job:[f('employment_type','Занятость','Полная|Частичная|Проектная|Стажировка'),f('work_schedule','График','5/2|2/2|Сменный|Гибкий|Удалённый'),f('salary_from','Зарплата от, ₽',undefined,'number')],
+ services:[{...f('service_format','Формат'),options:[['at_client','Выезд к клиенту'],['remote','Онлайн'],['both','Выезд и онлайн']]},f('experience_years','Опыт, лет',undefined,'number'),f('price_unit','Оплата','За час|За день|За услугу|По договорённости')],
+ job:[f('employment_type','Занятость','Полная|Частичная|Проектная|Стажировка'),{...f('work_schedule','График'),options:[['5_2','5/2'],['2_2','2/2'],['6_1','6/1'],['shift','Сменный'],['rotation','Вахта'],['flexible','Гибкий']] },f('salary_from','Зарплата от, ₽',undefined,'number')],
 };
 const electronicsBrand: FieldPreset = {key:'device_brand',label:'Бренд',sectionId:'details',sectionTitle:'Характеристики',fieldType:'select'};
 const electronicsModel: FieldPreset = {key:'device_model',label:'Модель',sectionId:'details',sectionTitle:'Характеристики',fieldType:'select',parentKey:'device_brand'};
@@ -51,7 +51,7 @@ const special:Record<string,readonly FieldPreset[]> = {
  'auto-commercial-vehicles':[condition,year,f('truck_weight_t','Грузоподъёмность, т',undefined,'number'),f('mileage_km','Пробег, км',undefined,'number'),brandText],
  'auto-special-equipment':[condition,year,f('operating_hours','Моточасы',undefined,'number'),f('capacity_t','Грузоподъёмность, т',undefined,'number'),brandText],
  'auto-auto-parts':[condition,f('compatibility','Совместимость с маркой и моделью',undefined,'text'),brandText],
- 'home-furniture':[f('material','Материал','Дерево|МДФ|Металл|Стекло|Пластик|Ткань|Кожа'),f('width_cm','Ширина, см',undefined,'number'),f('height_cm','Высота, см',undefined,'number')],
+ 'home-furniture':[f('furniture_material','Материал','Дерево|МДФ|Металл|Стекло|Пластик|Ткань|Кожа'),f('width_cm','Ширина, см',undefined,'number'),f('height_cm','Высота, см',undefined,'number')],
  'home-tools':[f('tool_type','Тип инструмента',undefined,'text')],
  'home-building-materials':[f('quantity','Количество',undefined,'number'),f('material','Материал',undefined,'text')],
  'clothes-footwear':[f('shoe_size_eu','Размер EU','35|36|37|38|39|40|41|42|43|44|45|46|47')],
