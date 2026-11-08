@@ -1,4 +1,5 @@
 import { CategoriesService } from './categories.service';
+jest.mock('./marketplace-catalog-seed', () => ({ ensureMarketplaceCatalog: jest.fn().mockResolvedValue(undefined) }));
 import catalog from './vehiclesdb-car-2026.09.1.json';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -42,6 +43,6 @@ describe('VehiclesDB seed', () => {
     const calls = option.createMany.mock.calls.length;
     await service.ensureSeed();
     expect(option.createMany.mock.calls.length).toBe(calls + 1); // small starter fields remain idempotent
-    expect(revision).toBe(4);
+    expect(revision).toBe(6);
   });
 });
