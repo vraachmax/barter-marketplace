@@ -2,9 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { categoryAllowsBarter } from './barter-policy';
 import { AUTO_ATTRIBUTE_FIELDS, AUTO_ATTRIBUTE_OPTIONS } from './attribute-options';
-import { catalogOwnerId, categoryRoot } from './category-hierarchy';
+import { catalogOwnerId, categoryRoot, categoryLineage } from './category-hierarchy';
+import { parseCatalogSelection, suggestCatalogTitle } from './catalog-autofill';
 import { carCatalog, CAR_CATALOG_REVISION } from './car-catalog';
 import generationCatalog from './car-generations-2026.10.05.json';
+import { ensureMarketplaceCatalog } from './marketplace-catalog-seed';
+import { MARKETPLACE_CATEGORY_TREE, MARKETPLACE_CATALOG_REVISION } from './marketplace-category-tree';
+import { ELECTRONICS_MODELS } from './electronics-model-catalog';
 
 @Injectable()
 export class CategoriesService {
@@ -75,6 +79,55 @@ export class CategoriesService {
     return category ? { version: category.catalogRevision, optionsQueryVersion: 1, fields: category.attributeFields } : null;
   }
 
+  async catalogCoverage() {
+    const autoParents=new Set(generationCatalog.generations.map(row=>row.modelId));
+    const electronicsBrands=new Set(Object.values(ELECTRONICS_MODELS).flatMap(groups=>Object.keys(groups)));
+    const electronicsModels=Object.values(ELECTRONICS_MODELS).flatMap(groups=>Object.values(groups)).flat().length;
+    const publishedNodes=await this.prisma.category.count();
+    return {
+      revision:MARKETPLACE_CATALOG_REVISION,
+      status:'partial',publishedCategoryCount:publishedNodes,
+      taxonomyNodeCount:MARKETPLACE_CATEGORY_TREE.length,
+      automotive:{
+        brands:carCatalog.makes.length,
+        models:carCatalog.models.length,
+        verifiedGenerationFamilies:generationCatalog.generations.length,
+        modelsWithVerifiedGenerations:autoParents.size,
+        modelsWithoutVerifiedGenerations:carCatalog.models.length-autoParents.size,
+        coverageWarning:'No guessed generations or configuration tables. Model lines and facelifts require verified source data.',
+      },
+      electronics:{
+        coveredProductGroups:Object.keys(ELECTRONICS_MODELS).length,
+        distinctBrands:electronicsBrands.size,curatedModels:electronicsModels,
+        coverageWarning:'Starter model selection, not a complete manufacturer or specification database.',
+      },
+      autofill:'Selected catalog labels only; never invents technical attributes.',
+    };
+  }
+
+    /** Avito-like form prefill from chosen hierarchy, never guessed specifications. */
+  async autoFill(categoryId:string, rawSelection?:string) {
+    const selected=parseCatalogSelection(rawSelection);
+    const lineage=await categoryLineage(this.prisma,categoryId);
+    const rootSlug=lineage[lineage.length-1].slug;
+    const category=await this.prisma.category.findUniqueOrThrow({
+      where:{id:categoryId},select:{title:true},
+    });
+    const ownerId=await catalogOwnerId(this.prisma,categoryId);
+    const selectedOptions=Object.entries(selected).filter(([,value])=>typeof value==='string');
+    const matches=selectedOptions.length?await this.prisma.categoryAttributeOption.findMany({
+      where:{categoryId:ownerId,OR:selectedOptions.map(([fieldKey,value])=>({fieldKey,value:String(value)}))},
+      select:{fieldKey:true,label:true,value:true},
+    }):[];
+    const labels=new Map(matches.filter(row=>selected[row.fieldKey]===row.value)
+      .map(row=>[row.fieldKey,row.label] as const));
+    return {
+      categoryId, rootSlug, catalogOwnerId:ownerId,
+      ...suggestCatalogTitle({categoryTitle:category.title,rootSlug,selected,labels}),
+      resolvedFields:[...labels.keys()],
+    };
+  }
+
   async ensureSeed() {
     const count = await this.prisma.category.count();
     if (count === 0) await this.prisma.category.createMany({
@@ -113,12 +166,13 @@ export class CategoriesService {
       await this.ensureCarCatalog(auto.id);
       await this.ensureGenerationCatalog(auto.id);
     }
+    await ensureMarketplaceCatalog(this.prisma);
   }
 
   /** Resume safely after an interrupted seed; publish the fields only after all options exist. */
   private async ensureGenerationCatalog(categoryId: string) {
     const category = await this.prisma.category.findUniqueOrThrow({ where: { id: categoryId }, select: { catalogRevision: true } });
-    if (category.catalogRevision >= 4) return;
+    if (category.catalogRevision >= 6) return;
     const parents = await this.prisma.categoryAttributeOption.findMany({
       where: { categoryId, fieldKey: 'auto_model', value: { in: generationCatalog.generations.map(row => row.modelId) } },
       select: { id: true, value: true },
@@ -132,7 +186,7 @@ export class CategoriesService {
       })), skipDuplicates: true });
       await tx.categoryAttributeField.createMany({ data: [{ categoryId, key: 'auto_generation', label: 'Поколение',
         sectionId: 'auto_main', sectionTitle: 'Автомобиль', parentKey: 'auto_model', sortOrder: 6 }], skipDuplicates: true });
-      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: 4 } });
+      await tx.category.update({ where: { id: categoryId }, data: { catalogRevision: 6 } });
     });
   }
 

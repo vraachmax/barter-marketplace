@@ -20,7 +20,15 @@ export class CategoriesController {
     return this.categories.attributeOptions(id, { fieldKey, parentFieldKey, parentValue });
   }
 
-  @Get(':id/attribute-schema')
+  @Get('coverage')
+  catalogCoverage() { return this.categories.catalogCoverage(); }
+
+  @Get(':id/auto-fill')
+  autoFill(@Param('id') id:string,@Query('selected') selected?:string) {
+    return this.categories.autoFill(id,selected);
+  }
+
+    @Get(':id/attribute-schema')
   attributeSchema(@Param('id') id: string) {
     return this.categories.attributeSchema(id);
   }
