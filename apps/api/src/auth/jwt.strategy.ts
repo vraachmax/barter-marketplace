@@ -7,6 +7,7 @@ import { getJwtSecret } from '../config/security';
 
 type JwtPayload = {
   sub: string;
+  ver?: number;
 };
 
 @Injectable()
@@ -21,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const userId = payload.sub;
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UnauthorizedException();
+    if (!user || (payload.ver ?? 0) !== user.tokenVersion) throw new UnauthorizedException();
     return { id: user.id };
   }
 }
