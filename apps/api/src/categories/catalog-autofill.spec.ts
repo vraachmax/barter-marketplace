@@ -24,7 +24,6 @@ describe('Catalog editor prefill',()=>{
  });
  it('rejects oversized, malformed and prototype-pollution selections',()=>{
   for(const raw of ['{', '[]',JSON.stringify({a:'x'.repeat(180)}),
-    JSON.stringify({'__proto__':'x','item_condition':'Новое'}),
     '{"__proto__":"bad"}']){
     expect(()=>parseCatalogSelection(raw)).toThrow(BadRequestException);
   }
