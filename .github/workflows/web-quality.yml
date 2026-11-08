@@ -20,56 +20,6 @@ permissions:
   contents: read
 
 jobs:
-  regenerate-security-lock:
-    if: github.event_name == 'pull_request' && github.head_ref == 'security/remediate-deps-2026-11-08'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          persist-credentials: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - name: Resolve fresh lockfile from declared dependency constraints
-        run: |
-          rm package-lock.json
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - name: Diagnose version constraints
-        run: |
-          npm explain zod || true
-          npm explain multer || true
-          npm view @nestjs/platform-express version
-          npm view @huggingface/inference version
-      - name: Lockfile security gate
-        run: node scripts/check-security-lockfile.cjs
-      - name: Validate clean install
-        run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Commit clean-install-validated lockfile to draft branch
-        run: |
-          if git diff --quiet -- package-lock.json; then echo 'No lockfile delta'; exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package-lock.json
-          git commit -m 'security: commit resolved and tested npm lockfile'
-          git push origin HEAD:security/remediate-deps-2026-11-08
-      - name: Generate Prisma client
-        run: |
-          node -e "const p=require('path');const c=require('child_process');const root=p.dirname(require.resolve('prisma/package.json',{paths:[p.resolve('apps/api')]}));const x=c.spawnSync(process.execPath,[p.join(root,'build','index.js'),'generate','--schema','apps/api/prisma/schema.prisma'],{stdio:'inherit'});process.exit(x.status ?? 1)"
-      - name: API unit tests
-        run: npm run test -w @app/api -- --runInBand
-      - name: Web unit tests
-        run: npm run test -w @app/web
-      - name: API build
-        run: npm run build -w @app/api
-      - name: Web build
-        run: npm run build -w @app/web -- --webpack
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
   web-quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -82,6 +32,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Enforce secure dependency versions
+        run: node scripts/check-security-lockfile.cjs
       - name: Browser acceptance syntax
         run: node --check apps/web/tests/browser/exchange-acceptance.mjs
       - name: Web regression tests
