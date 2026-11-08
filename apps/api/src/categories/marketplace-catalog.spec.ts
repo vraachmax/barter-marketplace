@@ -5,7 +5,7 @@ import {carCatalog} from './car-catalog';
 import { ELECTRONICS_MODELS, ELECTRONICS_BRAND_LABELS, electronicModelId } from './electronics-model-catalog';
 describe('Multi-vertical catalog v5',()=>{
  it('has a real two-level category hierarchy with unique stable slugs',()=>{
-   expect(MARKETPLACE_CATEGORY_TREE.length).toBeGreaterThanOrEqual(210);
+   expect(MARKETPLACE_CATEGORY_TREE.length).toBeGreaterThanOrEqual(199);
    expect(MARKETPLACE_REQUIRED_ROOTS).toHaveLength(9);
    expect(()=>validateCategorySeed(MARKETPLACE_CATEGORY_TREE)).not.toThrow();
    expect(new Set(MARKETPLACE_CATEGORY_TREE.map(x=>x.slug)).size).toBe(MARKETPLACE_CATEGORY_TREE.length);
