@@ -11,7 +11,7 @@ async function main() {
     const service = new CategoriesService(db);
     await service.ensureSeed();
     const auto = await db.category.findUniqueOrThrow({ where: { slug: 'auto' } });
-    assert.equal(auto.catalogRevision, 6);
+    assert.equal(auto.catalogRevision, 7);
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_make' } }), 311);
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_model' } }), 5465);
     const schema = await service.attributeSchema(auto.id);
@@ -52,10 +52,10 @@ async function main() {
     await db.category.update({ where: { id: auto.id }, data: { catalogRevision: 2 } });
     await service.ensureSeed();
     assert.equal((await db.categoryAttributeOption.findFirstOrThrow({ where: { categoryId: auto.id, value: 'lada' } })).id, old.id);
-    assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_generation' } }), 23);
-    assert.equal((await db.category.findUniqueOrThrow({ where: { id: auto.id } })).catalogRevision, 6);
+    assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_generation' } }), 40);
+    assert.equal((await db.category.findUniqueOrThrow({ where: { id: auto.id } })).catalogRevision, 7);
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_model' } }), 5465);
-    console.log('PASS 311 makes, 5465 models, 23 generations, cross-vertical taxonomy, 182 electronics models and safe upgrades');
+    console.log('PASS 311 makes, 5465 models, 40 generations, cross-vertical taxonomy, 211 electronics models and safe upgrades');
   } finally {
     await db.$disconnect();
   }
