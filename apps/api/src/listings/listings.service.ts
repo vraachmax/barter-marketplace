@@ -10,6 +10,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { categoryAllowsBarter } from '../categories/barter-policy';
 import { catalogOwnerId, categoryDescendantIds, categoryLineage, categoryRoot } from '../categories/category-hierarchy';
 import { AUTO_ATTRIBUTE_OPTIONS, invalidCatalogOption } from '../categories/attribute-options';
+import { CATALOG_OPTION_KEYS } from '../categories/marketplace-attribute-presets';
 import { PrismaService } from '../prisma/prisma.service';
 import { MeilisearchService } from '../search/meilisearch.service';
 import { searchTermGroups } from '../search/search-synonyms';
@@ -71,7 +72,7 @@ export class ListingsService {
   ) {}
 
   private async validateCategoryOptions(categoryId: string, attributes?: Record<string, unknown>, previous?: Record<string, unknown>) {
-    const managedKeys = [...Object.keys(AUTO_ATTRIBUTE_OPTIONS), 'auto_make', 'auto_model', 'auto_generation'];
+    const managedKeys = [...Object.keys(AUTO_ATTRIBUTE_OPTIONS), 'auto_make', 'auto_model', 'auto_generation', ...CATALOG_OPTION_KEYS];
     const selected = attributes && managedKeys.filter((key) =>
       attributes[key] !== undefined && attributes[key] !== null && attributes[key] !== '');
     if (!attributes || !selected?.length) return;
@@ -98,7 +99,7 @@ export class ListingsService {
     for (const key of selected) {
       const parent = fields.find(field => field.key === key)?.parentKey;
       if (previous && attributes[key] === previous[key] && (!parent || attributes[parent] === previous[parent])) continue;
-      if ((key in AUTO_ATTRIBUTE_OPTIONS || fields.some(field => field.key === key)) &&
+      if ((managedKeys.includes(key) || fields.some(field => field.key === key)) &&
           !options.some((option) => option.fieldKey === key)) {
         throw new BadRequestException(`invalid_catalog_option:${key}`);
       }
