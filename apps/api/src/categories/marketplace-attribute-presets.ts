@@ -33,13 +33,15 @@ const root:Record<string,readonly FieldPreset[]> = {
  services:[f('service_format','Формат','На месте|Выезд|Онлайн'),f('experience_years','Опыт, лет',undefined,'number'),f('price_unit','Оплата','За час|За день|За услугу|По договорённости')],
  job:[f('employment_type','Занятость','Полная|Частичная|Проектная|Стажировка'),f('work_schedule','График','5/2|2/2|Сменный|Гибкий|Удалённый'),f('salary_from','Зарплата от, ₽',undefined,'number')],
 };
+const electronicsBrand: FieldPreset = {key:'device_brand',label:'Бренд',sectionId:'details',sectionTitle:'Характеристики',fieldType:'select'};
+const electronicsModel: FieldPreset = {key:'device_model',label:'Модель',sectionId:'details',sectionTitle:'Характеристики',fieldType:'select',parentKey:'device_brand'};
 const special:Record<string,readonly FieldPreset[]> = {
- 'electronics-phones':[storage,f('sim_type','SIM','Одна SIM|Две SIM|eSIM|SIM + eSIM'),f('screen_condition','Экран','Без царапин|Мелкие царапины|Повреждён')],
- 'electronics-computers':[storage,f('ram_gb','ОЗУ','4 ГБ|8 ГБ|16 ГБ|24 ГБ|32 ГБ|64 ГБ|128 ГБ'),f('processor','Процессор',undefined,'text'),f('graphics','Видеокарта',undefined,'text')],
- 'electronics-tablets':[storage,f('connectivity','Связь','Wi-Fi|Wi-Fi + LTE|Wi-Fi + 5G')],
+ 'electronics-phones':[electronicsBrand,electronicsModel,storage,f('sim_type','SIM','Одна SIM|Две SIM|eSIM|SIM + eSIM'),f('screen_condition','Экран','Без царапин|Мелкие царапины|Повреждён')],
+ 'electronics-computers':[electronicsBrand,electronicsModel,storage,f('ram_gb','ОЗУ','4 ГБ|8 ГБ|16 ГБ|24 ГБ|32 ГБ|64 ГБ|128 ГБ'),f('processor','Процессор',undefined,'text'),f('graphics','Видеокарта',undefined,'text')],
+ 'electronics-tablets':[electronicsBrand,electronicsModel,storage,f('connectivity','Связь','Wi-Fi|Wi-Fi + LTE|Wi-Fi + 5G')],
  'electronics-photo-video':[f('sensor_type','Тип матрицы','Полнокадровая|APS-C|Micro 4/3|Компактная')],
- 'electronics-tv-audio':[f('display_size_in','Диагональ, дюймы',undefined,'number'),f('resolution','Разрешение','HD|Full HD|2K|4K|8K')],
- 'electronics-gaming':[f('platform','Платформа','PlayStation|Xbox|Nintendo|ПК|Другая'),storage],
+ 'electronics-tv-audio':[electronicsBrand,electronicsModel,f('display_size_in','Диагональ, дюймы',undefined,'number'),f('resolution','Разрешение','HD|Full HD|2K|4K|8K')],
+ 'electronics-gaming':[electronicsBrand,electronicsModel,f('platform','Платформа','PlayStation|Xbox|Nintendo|ПК|Другая'),storage],
  'electronics-appliances':[f('energy_class','Класс энергопотребления','A|B|C|D|E|F|G')],
  'realty-apartments':[room,f('bathrooms','Санузел','Совмещённый|Раздельный|Два и более'),f('balcony','Балкон','Нет|Балкон|Лоджия|Несколько')],
  'realty-houses':[room,area,f('land_area_sotka','Участок, соток',undefined,'number'),f('heating','Отопление','Газ|Электричество|Центральное|Твердотопливное|Нет')],
@@ -68,8 +70,8 @@ export function fieldsForRoot(rootSlug:string):readonly FieldPreset[] {return ro
 export const CATALOG_FIELD_GROUPS=Object.keys(special);
 
 /** Stable machine-readable select keys for server-side option enforcement. */
-export const CATALOG_OPTION_KEYS = [...new Set(
+export const CATALOG_OPTION_KEYS = [...new Set(['device_brand','device_model',
   [...Object.values(root).flat(),...Object.values(special).flat()]
    .filter(field=>field.options?.length)
    .map(field=>field.key)
-)];
+])];
