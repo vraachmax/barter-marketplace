@@ -1,6 +1,7 @@
 import { MARKETPLACE_CATEGORY_TREE,MARKETPLACE_REQUIRED_ROOTS,validateCategorySeed } from './marketplace-category-tree';
 import {fieldsForRoot,fieldsForCategory,CATALOG_OPTION_KEYS} from './marketplace-attribute-presets';
 import generationCatalog from './car-generations-2026.10.05.json';
+import provenance from './vehicle-generation-provenance.json';
 import {carCatalog} from './car-catalog';
 import { ELECTRONICS_MODELS, ELECTRONICS_BRAND_LABELS, electronicModelId } from './electronics-model-catalog';
 describe('Multi-vertical catalog v5',()=>{
@@ -41,6 +42,17 @@ describe('Multi-vertical catalog v5',()=>{
    expect(count).toBeGreaterThanOrEqual(180);
    expect(fieldsForCategory('electronics','electronics-phones').map(field=>field.key))
     .toEqual(expect.arrayContaining(['device_brand','device_model']));
+ });
+  it('documents provenance and markets for every verified car model family',()=>{
+   const families=new Set(generationCatalog.generations.map(row=>row.modelId));
+   expect(families.size).toBe(8);
+   expect(Object.keys(provenance).sort()).toEqual([...families].sort());
+   for(const model of families){
+     const item=provenance[model as keyof typeof provenance];
+     expect(item?.source).toMatch(/^https:\/\//);
+     expect(item?.status).toBe('manual_reviewed');
+     expect(item?.granularity).toBe('generation_family');
+   }
  });
   it('preserves automotive verified parent-model relationships',()=>{
    const models=new Set(carCatalog.models.map(x=>x.id));
