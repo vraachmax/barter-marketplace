@@ -7,6 +7,8 @@ import { parseCatalogSelection, suggestCatalogTitle } from './catalog-autofill';
 import { carCatalog, CAR_CATALOG_REVISION } from './car-catalog';
 import generationCatalog from './car-generations-2026.10.05.json';
 import { ensureMarketplaceCatalog } from './marketplace-catalog-seed';
+import { MARKETPLACE_CATEGORY_TREE, MARKETPLACE_CATALOG_REVISION } from './marketplace-category-tree';
+import { ELECTRONICS_MODELS } from './electronics-model-catalog';
 
 @Injectable()
 export class CategoriesService {
@@ -77,7 +79,33 @@ export class CategoriesService {
     return category ? { version: category.catalogRevision, optionsQueryVersion: 1, fields: category.attributeFields } : null;
   }
 
-  /** Avito-like form prefill from chosen hierarchy, never guessed specifications. */
+  async catalogCoverage() {
+    const autoParents=new Set(generationCatalog.generations.map(row=>row.modelId));
+    const electronicsBrands=new Set(Object.values(ELECTRONICS_MODELS).flatMap(groups=>Object.keys(groups)));
+    const electronicsModels=Object.values(ELECTRONICS_MODELS).flatMap(groups=>Object.values(groups)).flat().length;
+    const publishedNodes=await this.prisma.category.count();
+    return {
+      revision:MARKETPLACE_CATALOG_REVISION,
+      status:'partial',publishedCategoryCount:publishedNodes,
+      taxonomyNodeCount:MARKETPLACE_CATEGORY_TREE.length,
+      automotive:{
+        brands:carCatalog.makes.length,
+        models:carCatalog.models.length,
+        verifiedGenerationFamilies:generationCatalog.generations.length,
+        modelsWithVerifiedGenerations:autoParents.size,
+        modelsWithoutVerifiedGenerations:carCatalog.models.length-autoParents.size,
+        coverageWarning:'No guessed generations or configuration tables. Model lines and facelifts require verified source data.',
+      },
+      electronics:{
+        coveredProductGroups:Object.keys(ELECTRONICS_MODELS).length,
+        distinctBrands:electronicsBrands.size,curatedModels:electronicsModels,
+        coverageWarning:'Starter model selection, not a complete manufacturer or specification database.',
+      },
+      autofill:'Selected catalog labels only; never invents technical attributes.',
+    };
+  }
+
+    /** Avito-like form prefill from chosen hierarchy, never guessed specifications. */
   async autoFill(categoryId:string, rawSelection?:string) {
     const selected=parseCatalogSelection(rawSelection);
     const lineage=await categoryLineage(this.prisma,categoryId);
