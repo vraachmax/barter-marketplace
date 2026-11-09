@@ -1,0 +1,35 @@
+name: Generate VehiclesDB open snapshot
+on:
+  push:
+    branches:
+      - feat/catalog-v7-scale-vehiclesdb-20261109
+    paths:
+      - 'apps/api/scripts/build-vehiclesdb-snapshot.cjs'
+      - '.github/workflows/vehiclesdb-snapshot.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download and validate license plus six vehicle kinds
+        run: node apps/api/scripts/build-vehiclesdb-snapshot.cjs
+      - name: Publish immutable versioned snapshot to feature branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/api/data/vehiclesdb-snapshot.json
+          if git diff --cached --quiet; then
+            echo "No upstream changes"
+          else
+            git commit -m "data(catalog): audited VehiclesDB CC-BY 4.0 six-kind snapshot"
+            git push origin HEAD:feat/catalog-v7-scale-vehiclesdb-20261109
+          fi
