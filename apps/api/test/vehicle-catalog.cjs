@@ -55,7 +55,34 @@ async function main() {
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_generation' } }), 55);
     assert.equal((await db.category.findUniqueOrThrow({ where: { id: auto.id } })).catalogRevision, 7);
     assert.equal(await db.categoryAttributeOption.count({ where: { categoryId: auto.id, fieldKey: 'auto_model' } }), 5465);
-    console.log('PASS 311 makes, 5465 models, 55 generations, cross-vertical taxonomy, 211 electronics models and safe upgrades');
+    const { importBulkVehicleCatalog, readVehicleSnapshot }=require('../dist/categories/vehicle-bulk-import');
+    const snapshot=readVehicleSnapshot();
+    const sum=Object.values(snapshot.kinds).reduce((total,kind)=>total+kind.models.length,0);
+    assert(sum>=14000 && sum<=30000,'Require complete independently sourced bulk snapshot');
+    const bulk=await importBulkVehicleCatalog(db);
+    assert.equal(bulk.verified,true);
+    assert.equal(bulk.car.verifiedImported,snapshot.kinds.car.models.length);
+    assert.equal(bulk.motorcycles.verifiedImported,
+      snapshot.kinds.motorcycle.models.length+snapshot.kinds.moped.models.length);
+    assert.equal(bulk.commercials.verifiedImported,
+      snapshot.kinds.van.models.length+snapshot.kinds.truck.models.length+snapshot.kinds.bus.models.length);
+    const motor=await db.category.findUniqueOrThrow({where:{slug:'auto-motorcycles'}});
+    const honda=await service.attributeOptions(motor.id,{fieldKey:'vehicle_make'});
+    assert(honda.some(x=>x.value==='honda'));
+    const hondaModels=await service.attributeOptions(motor.id,{
+      fieldKey:'vehicle_model',parentFieldKey:'vehicle_make',parentValue:'honda'
+    });
+    assert(hondaModels.length>0);
+    assert(hondaModels.every(x=>x.parentValue==='honda'));
+    const stableModel=await db.categoryAttributeOption.findFirstOrThrow({
+      where:{categoryId:auto.id,fieldKey:'auto_model',value:'bmw/x5'},
+      select:{id:true},
+    });
+    await importBulkVehicleCatalog(db);
+    assert.equal((await db.categoryAttributeOption.findFirstOrThrow({
+      where:{categoryId:auto.id,fieldKey:'auto_model',value:'bmw/x5'},select:{id:true},
+    })).id,stableModel.id);
+    console.log('PASS '+snapshot.version+': '+sum+' source models across 6 vehicle kinds, resumable and idempotent');
   } finally {
     await db.$disconnect();
   }
