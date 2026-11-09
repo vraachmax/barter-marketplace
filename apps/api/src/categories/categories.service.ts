@@ -9,6 +9,7 @@ import generationCatalog from './car-generations-2026.10.05.json';
 import { ensureMarketplaceCatalog } from './marketplace-catalog-seed';
 import { MARKETPLACE_CATEGORY_TREE, MARKETPLACE_CATALOG_REVISION } from './marketplace-category-tree';
 import { ELECTRONICS_MODELS } from './electronics-model-catalog';
+import { importBulkVehicleCatalog } from './vehicle-bulk-import';
 
 @Injectable()
 export class CategoriesService {
@@ -167,6 +168,10 @@ export class CategoriesService {
       await this.ensureGenerationCatalog(auto.id);
     }
     await ensureMarketplaceCatalog(this.prisma);
+    if (process.env.APPLY_OPEN_VEHICLE_CATALOG === '1') {
+      const result = await importBulkVehicleCatalog(this.prisma);
+      console.info('[vehicle-bulk] verified',JSON.stringify(result));
+    }
   }
 
   /** Resume safely after an interrupted seed; publish the fields only after all options exist. */
