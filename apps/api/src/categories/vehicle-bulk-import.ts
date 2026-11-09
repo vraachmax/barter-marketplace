@@ -10,7 +10,7 @@ type VehicleSnapshot={
   kinds:Record<Kind,{makes:Make[];models:Model[]}>;
 };
 const kinds:Kind[]=['car','motorcycle','moped','van','truck','bus'];
-const path=resolve(process.cwd(),'data/vehiclesdb-snapshot.json');
+const path=resolve(__dirname,'../../data/vehiclesdb-snapshot.json');
 const batch=350;
 function slices<T>(array:readonly T[],size:number) {
   const result:T[][]=[];
