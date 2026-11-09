@@ -70,7 +70,7 @@ export function fieldsForRoot(rootSlug:string):readonly FieldPreset[] {return ro
 export const CATALOG_FIELD_GROUPS=Object.keys(special);
 
 /** Stable machine-readable select keys for server-side option enforcement. */
-export const CATALOG_OPTION_KEYS = [...new Set(['device_brand','device_model',
+export const CATALOG_OPTION_KEYS = [...new Set(['device_brand','device_model','vehicle_make','vehicle_model',
   ...[...Object.values(root).flat(),...Object.values(special).flat()]
    .filter(field=>field.options?.length)
    .map(field=>field.key)
