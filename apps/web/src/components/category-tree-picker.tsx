@@ -75,6 +75,10 @@ export default function CategoryTreePicker({
        </div>}
      </div>;
    })}
+   <p className="px-3 pt-3 text-[11px] text-muted-foreground">
+     Данные о транспорте: <a className="underline underline-offset-2" href="https://vehiclesdb.com" target="_blank" rel="noopener noreferrer">Vehicle data by VehiclesDB</a> (CC BY 4.0).
+     <a className="ml-1 underline underline-offset-2" href="https://github.com/vehiclesdb/vehiclesdb/blob/main/ATTRIBUTION.md" target="_blank" rel="noopener noreferrer">Источники</a>
+   </p>
   </div>
  );
 }
