@@ -1,3 +1,17 @@
+## 2026-11-08 — roadmap/status sync (documentation only)
+
+Updated `ROADMAP.md` with the current authoritative backlog and acceptance gates. Compared `master` 836234871e with the Android-first source-only native branch `feat/mobile-rust-foundation`.
+
+- Web quality last observed on 2026-11-06: success. Dependency security audit: failed at `osv-scanner-reporter` even though scanner step succeeded. Root cause and vulnerability findings require investigation, not suppression.
+- Screen design acceptance remains open; new screen matrix and approved visual sources are listed in the ROADMAP. iOS PWA issue #100 remains open.
+- Existing chat/exchange features are implemented in the web/backend, but full two-account E2E, mutual matching TXT-05, handoff confirmation, analytics and physical mobile QA remain incomplete or unverified.
+- Native Android (Kotlin/Compose + Rust/JNI) is priority over native iOS (SwiftUI + Rust). The mobile feature branch contains source scaffolds, not a verified APK/IPA. No release or merge authorization implied.
+- Changes in this documentation branch are solely `ROADMAP.md` and `HANDOFF.md`, with no production code changes.
+
+**Next step:** Review/merge documentation PR when approved; independently investigate failed security reporter and continue Android APK build + web acceptance. Do not claim build, device verification or release absent evidence.
+
+---
+
 ## 2026-10-21: PR82 reference follow-up ready for release
 
 Application commit 83adcb5a45d91e409d7d29ad9b220f98adc593b8 passed Web quality
